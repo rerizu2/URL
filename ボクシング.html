@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Boxing Tracker - Date Selection Edition</title>
+    <title>Boxing Tracker - Graph Fix Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f4f7f9; --pdf-header: #b2ffff; }
@@ -11,23 +11,16 @@
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 300px 1fr; gap: 15px; }
-        
         .pdf-table { width: 100%; border-collapse: collapse; min-width: 1100px; border: 1px solid #000; background: #fff; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px; text-align: center; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
         .pdf-table input { width: 60px; border: none; text-align: center; font-size: 13px; background: transparent; padding: 5px 0; }
         .rank-col { width: 35px; color: var(--primary); font-weight: bold; font-size: 11px; }
-
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 15px; margin-top: 10px; }
-        .chart-container { height: 350px; position: relative; }
-
-        /* デザイン調整 */
+        .chart-container { height: 400px; position: relative; }
         .setting-section { margin-bottom: 15px; }
         .setting-section label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--secondary); }
         .setting-section select, .setting-section input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
-        
-        .filter-box { display: flex; gap: 10px; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
-        .filter-box label { font-weight: bold; color: var(--secondary); font-size: 11px; }
     </style>
 </head>
 <body>
@@ -37,32 +30,29 @@
         <div class="card">
             <div class="setting-section">
                 <label>表の日付を選択（履歴から）</label>
-                <select id="dateHistory" onchange="syncDateInput()"><option value="">-- 選択してください --</option></select>
+                <select id="dateHistory" onchange="syncDateInput()"><option value="">-- 読込中 --</option></select>
             </div>
             <div class="setting-section">
-                <label>またはカレンダーから選択</label>
+                <label>カレンダーから新規作成</label>
                 <input type="date" id="recordDate" onchange="loadDateData()">
             </div>
             <hr>
             <h2>選手名簿</h2>
             <textarea id="memberList" style="width:100%; height:120px; font-size:11px; margin-bottom:5px;"></textarea>
-            <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px;">名簿更新</button>
+            <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px;">リスト更新</button>
         </div>
 
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
                 <h2>成長分析グラフ</h2>
-                <div class="filter-box">
-                    <label>選手:</label>
-                    <select id="filterSelect" onchange="updateGraph()"><option value="all">全員表示</option></select>
-                </div>
+                <select id="filterSelect" onchange="updateGraph()" style="padding:5px; border-radius:4px;"><option value="all">全員表示</option></select>
             </div>
             <div class="chart-container"><canvas id="runChart"></canvas></div>
         </div>
     </div>
 
     <div class="card">
-        <div style="font-size:11px; color:#10b981; font-weight:bold; margin-bottom:5px;">● スプレッドシート同期モード（5:00 形式）</div>
+        <div style="font-size:11px; color:#10b981; font-weight:bold; margin-bottom:5px;">● スプレッドシート同期モード</div>
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
                 <thead>
@@ -79,12 +69,12 @@
                 <tbody id="pdfTableBody"></tbody>
             </table>
         </div>
-        <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">スプレッドシートへ送信・上書き保存</button>
+        <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">スプレッドシートへ送信・同期保存</button>
     </div>
 </div>
 
 <script>
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzodqUQe9FaQiR5dkrgv-VzGGBRK8Vx3Wmrnxf0U9b3Y4HTDAwZEVmKV3cq5rVctmx1lg/exec"; 
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyhCGBTRbOHtD1y6bVIa7-MhukZvKV1ECAb4AWqL-cKTC1jkr1jvoYAy-oFjUlmbvBNCA/exec"; 
     const PERMANENT_MEMBERS = "石橋 乃蒼\n川﨑 輝寅\n上窪 聖\n大畑 歩希\n志冨田 凪大\n亀本 快歩\n松嶋 虎鉄\n今井 仁\n岡田 陸翔\n濱田 周摩\n日高 心太\n井上 暁仁\n今中 悠人\n惣田 湧大\n髙峯 将真\n西岡 泰志\n福貴田 泰生\n栗原 翔\n岩原 晴斗\n杉阪 咲太\n安藤 心咲\n大西 義一\n岸上 虎央\n南 悠翔\n石橋 奈樹\n志冨田 明陽\n木下 一颯\n道下 大翔\n柏木 羽空";
     
     let chart;
@@ -96,21 +86,16 @@
         document.getElementById('memberList').value = localStorage.getItem('boxing_members') || PERMANENT_MEMBERS;
         applyMembers();
         initChart();
+        fetchDateHistory();
         loadDateData();
-        fetchDateHistory(); // 履歴リストを取得
         fetchAllDataForGraph();
     };
 
-    // 履歴プルダウンから日付を同期
     function syncDateInput() {
         const val = document.getElementById('dateHistory').value;
-        if(val) {
-            document.getElementById('recordDate').value = val;
-            loadDateData();
-        }
+        if(val) { document.getElementById('recordDate').value = val; loadDateData(); }
     }
 
-    // スプレッドシートにある既存の「日付（シート名）」を取得
     async function fetchDateHistory() {
         if (!GAS_WEBAPP_URL.startsWith('http')) return;
         try {
@@ -152,6 +137,7 @@
         const tbody = document.getElementById('pdfTableBody');
         const fs = document.getElementById('filterSelect');
         tbody.innerHTML = '';
+        const currentFilter = fs.value;
         fs.innerHTML = '<option value="all">全員表示</option>';
         ms.forEach(m => {
             const tr = document.createElement('tr');
@@ -161,6 +147,7 @@
             tbody.appendChild(tr);
             fs.add(new Option(m.trim(), m.trim()));
         });
+        fs.value = currentFilter;
         localStorage.setItem('boxing_members', document.getElementById('memberList').value);
     }
 
@@ -190,7 +177,7 @@
             }
         }
         btn.disabled = false; btn.innerText = "同期完了！";
-        fetchDateHistory(); // 履歴リストを更新
+        fetchDateHistory();
         fetchAllDataForGraph();
     }
 
@@ -203,26 +190,70 @@
         } catch (e) {}
     }
 
+    // グラフの描画（日付と本数をラベルに正しくセット）
     function updateGraph() {
         const filter = document.getElementById('filterSelect').value;
         const filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter));
-        const dataMap = {}; const labelSet = new Set();
+        
+        const dataMap = {}; 
+        const labelSet = new Set();
+
+        // 1. 全データから一意のラベル(日付＋本数)を作成
         filtered.forEach(r => {
-            const label = `${r.date}(${r.count})`; labelSet.add(label);
+            const label = `${r.date} (${r.count})`;
+            labelSet.add(label);
             if(!dataMap[r.name]) dataMap[r.name] = {};
             dataMap[r.name][label] = t2s(r.time);
         });
+
+        // 2. ラベルを日付順にソート
         const sortedLabels = Array.from(labelSet).sort();
+
+        // 3. データセットの作成
         const datasets = [];
-        Object.keys(dataMap).forEach((name, i) => {
-            datasets.push({ label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: colors[i % colors.length], tension: 0.3, spanGaps: true, pointRadius: 4 });
+        const names = Object.keys(dataMap);
+        names.forEach((name, i) => {
+            datasets.push({
+                label: name,
+                data: sortedLabels.map(l => dataMap[name][l] || null), // ラベルに対応するタイム、なければnull
+                borderColor: colors[i % colors.length],
+                tension: 0.3,
+                spanGaps: true,
+                pointRadius: 4
+            });
         });
-        chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update();
+
+        chart.data.labels = sortedLabels;
+        chart.data.datasets = datasets;
+        chart.update();
     }
 
     function initChart() {
         const ctx = document.getElementById('runChart').getContext('2d');
-        chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => Math.floor(v/60) + ":" + String(v%60).padStart(2, '0') } } } } });
+        chart = new Chart(ctx, { 
+            type: 'line', 
+            data: { labels: [], datasets: [] }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { 
+                    y: { reverse: true, ticks: { callback: v => s2t(v) } },
+                    x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 45 } }
+                },
+                plugins: {
+                    tooltip: { callbacks: { label: (ctx) => ctx.dataset.label + ": " + s2t(ctx.raw) } }
+                }
+            } 
+        });
+    }
+
+    function s2t(s) {
+        if (!s) return "";
+        if (s.toString().includes(':')) return s;
+        const val = parseFloat(s);
+        const m = Math.floor(val / 60);
+        const sec = Math.floor(val % 60);
+        return m + ":" + String(sec).padStart(2, '0');
     }
 
     function t2s(v){
