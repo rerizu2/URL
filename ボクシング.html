@@ -3,21 +3,28 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Boxing Tracker - M:SS Fix Edition</title>
+    <title>Boxing Tracker - Individual & Date Filter</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f4f7f9; --pdf-header: #b2ffff; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; }
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
-        .dashboard-grid { display: grid; grid-template-columns: 300px 1fr; gap: 15px; }
+        .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
+        
         .pdf-table { width: 100%; border-collapse: collapse; min-width: 1100px; border: 1px solid #000; background: #fff; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px; text-align: center; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
         .pdf-table input { width: 60px; border: none; text-align: center; font-size: 13px; background: transparent; padding: 5px 0; }
         .rank-col { width: 35px; color: var(--primary); font-weight: bold; font-size: 11px; }
+
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 15px; margin-top: 10px; }
-        .chart-container { height: 320px; position: relative; }
+        .chart-container { height: 400px; position: relative; }
+
+        /* フィルターまわりのデザイン */
+        .filter-box { display: flex; gap: 10px; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
+        .filter-box label { font-weight: bold; color: var(--secondary); font-size: 11px; }
+        .filter-box input, .filter-box select { padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -26,15 +33,27 @@
     <div class="dashboard-grid">
         <div class="card">
             <h2>記録設定・読込</h2>
-            <label style="display:block; font-weight:bold;">日付選択</label>
+            <label style="display:block; font-weight:bold;">表に表示する日付</label>
             <input type="date" id="recordDate" style="width:100%; padding:10px; margin:5px 0 15px 0;" onchange="loadDateData()">
             <h2>選手名簿</h2>
             <textarea id="memberList" style="width:100%; height:120px; font-size:11px;"></textarea>
             <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer;">リスト更新</button>
         </div>
+
         <div class="card">
-            <h2>成長グラフ</h2>
-            <div class="chart-container"><canvas id="runChart"></canvas></div>
+            <h2>成長分析グラフ</h2>
+            <div class="filter-box">
+                <label>選手:</label>
+                <select id="filterSelect" onchange="updateGraph()"><option value="all">全員表示</option></select>
+                <label>期間:</label>
+                <input type="date" id="chartStart" onchange="updateGraph()">
+                <span>〜</span>
+                <input type="date" id="chartEnd" onchange="updateGraph()">
+                <button onclick="resetFilters()" style="padding:4px 8px; font-size:10px; cursor:pointer;">リセット</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="runChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -61,11 +80,12 @@
 </div>
 
 <script>
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyjHI3-XQFL9zqXY3FDandcy3YQ8SV-qezs_MAlqsUezlmYNlt1y_8Zlr2M_U35W-Cbgw/exec"; 
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzw5VyCW4_X0miysYAq3ErFWbeK6UM8EpZQmHdY60Y8Csq7lsTV0v-O-qWpqvVb7FxgKg/exec"; 
     const PERMANENT_MEMBERS = "石橋 乃蒼\n川﨑 輝寅\n上窪 聖\n大畑 歩希\n志冨田 凪大\n亀本 快歩\n松嶋 虎鉄\n今井 仁\n岡田 陸翔\n濱田 周摩\n日高 心太\n井上 暁仁\n今中 悠人\n惣田 湧大\n髙峯 将真\n西岡 泰志\n福貴田 泰生\n栗原 翔\n岩原 晴斗\n杉阪 咲太\n安藤 心咲\n大西 義一\n岸上 虎央\n南 悠翔\n石橋 奈樹\n志冨田 明陽\n木下 一颯\n道下 大翔\n柏木 羽空";
     
     let chart;
-    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557'];
+    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557', '#8b5cf6', '#6d597a', '#7c3aed', '#059669', '#db2777'];
+    let allSheetData = []; // グラフ用の全保持データ
 
     window.onload = () => {
         document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
@@ -73,11 +93,11 @@
         applyMembers();
         initChart();
         loadDateData();
+        fetchAllDataForGraph(); // 全データを取得してグラフを初期表示
     };
 
     function s2t(s) {
-        if (!s || s === "null" || s === "") return "";
-        // すでに 5:00 形式ならそのまま返す
+        if (!s || s === "") return "";
         if (s.toString().includes(':')) return s;
         const val = parseFloat(s);
         const m = Math.floor(val / 60);
@@ -91,6 +111,17 @@
         return parseInt(p[0]) * 60 + parseInt(p[1]);
     }
 
+    // スプレッドシートから全データを一度だけ読み込む
+    async function fetchAllDataForGraph() {
+        if (!GAS_WEBAPP_URL.startsWith('http')) return;
+        try {
+            const res = await fetch(GAS_WEBAPP_URL);
+            allSheetData = await res.json();
+            updateGraph();
+        } catch (e) { console.error("データ取得エラー:", e); }
+    }
+
+    // 入力用の特定日付データの読み込み
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
         if (!GAS_WEBAPP_URL.startsWith('http')) return;
@@ -107,7 +138,6 @@
                     for (let r = 0; r < rows.length; r++) {
                         if (rows[r].cells[0].innerText === name) {
                             for (let c = 1; c <= 6; c++) {
-                                // GAS側から取得した DisplayValue をそのままセット
                                 rows[r].cells[c * 2 - 1].querySelector('input').value = sheetData[i][c * 2 - 1] || '';
                                 rows[r].cells[c * 2].innerText = sheetData[i][c * 2] || '-';
                             }
@@ -116,23 +146,26 @@
                     }
                 }
             }
-            updateGraph();
         } catch (e) { console.error(e); }
     }
 
     function applyMembers() {
         const ms = document.getElementById('memberList').value.trim().split('\n');
         const tbody = document.getElementById('pdfTableBody');
+        const fs = document.getElementById('filterSelect');
         tbody.innerHTML = '';
+        const currentFilter = fs.value;
+        fs.innerHTML = '<option value="all">全員表示</option>';
+
         ms.forEach((m, idx) => {
             const tr = document.createElement('tr');
             let html = `<td style="font-weight:bold; background:#f9f9f9; text-align:left;">${m.trim()}</td>`;
-            for(let i=1; i<=6; i++) {
-                html += `<td><input type="text" class="t-in" oninput="calcRanks(${i})"></td><td class="rank-col rank-col-cell">-</td>`;
-            }
+            for(let i=1; i<=6; i++) html += `<td><input type="text" class="t-in" oninput="calcRanks(${i})"></td><td class="rank-col rank-col-cell">-</td>`;
             tr.innerHTML = html;
             tbody.appendChild(tr);
+            fs.add(new Option(m.trim(), m.trim()));
         });
+        fs.value = currentFilter;
         localStorage.setItem('boxing_members', document.getElementById('memberList').value);
     }
 
@@ -145,9 +178,7 @@
             if(val) times.push({ rowIndex: i, sec: t2s(val) });
             rows[i].cells[colIdx * 2].innerText = '-';
         }
-        times.sort((a,b) => a.sec - b.sec).forEach((t, idx) => {
-            rows[t.rowIndex].cells[colIdx * 2].innerText = idx + 1;
-        });
+        times.sort((a,b) => a.sec - b.sec).forEach((t, idx) => { rows[t.rowIndex].cells[colIdx * 2].innerText = idx + 1; });
     }
 
     async function saveAllSheetData() {
@@ -160,33 +191,59 @@
                 const input = rows[r].cells[c * 2 - 1].querySelector('input');
                 const time = input.value.trim();
                 if (!time) continue;
-                const count = document.getElementById('mainTable').rows[0].cells[c * 2 - 1].innerText;
-                const rank = rows[r].cells[c * 2].innerText;
-                const payload = { date, name: rows[r].cells[0].innerText, count, time, rank, memberList: document.getElementById('memberList').value };
+                const payload = { date, name: rows[r].cells[0].innerText, count: document.getElementById('mainTable').rows[0].cells[c * 2 - 1].innerText, time, rank: rows[r].cells[c * 2].innerText, memberList: document.getElementById('memberList').value };
                 await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
             }
         }
         btn.disabled = false; btn.innerText = "同期完了！";
-        updateGraph();
+        fetchAllDataForGraph(); // グラフを最新に
     }
 
-    async function updateGraph() {
-        if (!GAS_WEBAPP_URL.startsWith('http')) return;
-        const res = await fetch(GAS_WEBAPP_URL);
-        const records = await res.json();
+    // グラフのフィルタリングと描画
+    function updateGraph() {
+        const filter = document.getElementById('filterSelect').value;
+        const start = document.getElementById('chartStart').value;
+        const end = document.getElementById('chartEnd').value;
+
+        // 1. フィルタリング処理
+        let filtered = allSheetData.filter(r => {
+            const nameMatch = (filter === 'all' || r.name === filter);
+            const dateMatch = (!start || r.date >= start) && (!end || r.date <= end);
+            return nameMatch && dateMatch;
+        });
+
+        // 2. データ構造化
         const dataMap = {}; const labelSet = new Set();
-        records.forEach(r => {
+        filtered.forEach(r => {
             const label = `${r.date}(${r.count})`;
             labelSet.add(label);
             if(!dataMap[r.name]) dataMap[r.name] = {};
             dataMap[r.name][label] = t2s(r.time);
         });
+
         const sortedLabels = Array.from(labelSet).sort();
         const datasets = [];
         Object.keys(dataMap).forEach((name, i) => {
-            datasets.push({ label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: colors[i % colors.length], tension: 0.3, spanGaps: true, pointRadius: 3 });
+            datasets.push({
+                label: name,
+                data: sortedLabels.map(l => dataMap[name][l] || null),
+                borderColor: colors[i % colors.length],
+                backgroundColor: colors[i % colors.length] + '22',
+                fill: (filter !== 'all'), // 個人のときは塗りつぶす
+                tension: 0.3, spanGaps: true, pointRadius: 4
+            });
         });
-        chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update();
+
+        chart.data.labels = sortedLabels;
+        chart.data.datasets = datasets;
+        chart.update();
+    }
+
+    function resetFilters() {
+        document.getElementById('filterSelect').value = 'all';
+        document.getElementById('chartStart').value = '';
+        document.getElementById('chartEnd').value = '';
+        updateGraph();
     }
 
     function initChart() {
