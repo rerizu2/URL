@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Boxing Run Tracker - Complete Edition</title>
+    <title>Boxing Run Tracker - Overwrite Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #e63946;
             --secondary: #1d3557;
-            --pdf-header: #b2ffff; /* PDFの水色 */
-            --pdf-yellow: #ffff00; /* PDFの黄色列 */
-            --pdf-male: #00ffff;   /* 男全の青 */
-            --pdf-female: #ff0000; /* 女全の赤 */
+            --pdf-header: #b2ffff;
+            --pdf-yellow: #ffff00;
+            --pdf-male: #00ffff;
+            --pdf-female: #ff0000;
         }
 
         body {
-            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif;
+            font-family: "Helvetica Neue", Arial, sans-serif;
             background-color: #f0f2f5;
             margin: 0;
             padding: 20px;
-            color: #333;
         }
 
         .container { max-width: 1240px; margin: 0 auto; }
@@ -41,20 +40,12 @@
 
         h2 { font-size: 15px; color: var(--secondary); margin: 0 0 15px; border-left: 5px solid var(--secondary); padding-left: 10px; }
 
-        /* ステータス表示 */
         .sync-status {
-            font-size: 10px;
-            color: #10b981;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: bold;
+            font-size: 10px; color: #10b981; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; font-weight: bold;
         }
         .sync-status::before { content: "●"; animation: blink 2s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        /* 入力エリア */
         label { font-size: 11px; font-weight: bold; margin-top: 8px; display: block; color: #555; }
         input, select, textarea {
             width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px;
@@ -66,13 +57,11 @@
         button:hover { opacity: 0.8; }
         .update-btn { background: #6c757d; font-size: 11px; padding: 6px; margin-top: 5px; }
 
-        /* グラフ */
         .chart-container { height: 420px; position: relative; }
 
-        /* PDF再現：早見表 */
         .pdf-title { text-align: center; font-size: 26px; font-weight: bold; margin-bottom: 5px; letter-spacing: 8px; text-decoration: underline; }
         .pdf-table-container { width: 100%; overflow-x: auto; background: white; padding: 5px; border: 1px solid #000; }
-        .reference-table { width: 100%; border-collapse: collapse; font-size: 11px; border: 2px solid #000; table-layout: fixed; }
+        .reference-table { width: 100%; border-collapse: collapse; font-size: 12px; border: 2px solid #000; table-layout: fixed; }
         .reference-table th { background-color: var(--pdf-header); border: 1px solid #000; padding: 6px 0; font-weight: normal; }
         .reference-table td { border: 1px solid #000; padding: 4px 0; text-align: center; height: 22px; white-space: nowrap; }
         .col-yellow { background-color: var(--pdf-yellow); }
@@ -88,7 +77,6 @@
 
 <div class="container">
     <div class="dashboard-grid">
-        <!-- 左：操作パネル -->
         <div class="card">
             <div class="sync-status">スプレッドシート連携：常時同期中</div>
             <h2>記録入力</h2>
@@ -99,14 +87,13 @@
             </div>
             <label>選手名</label><select id="nameSelect"></select>
             <label>タイム (分:秒)</label><input type="text" id="timeInput" placeholder="5:30">
-            <button id="addBtn" onclick="addRecord()">記録を追加（自動送信）</button>
+            <button id="addBtn" onclick="addRecord()">記録を追加（上書き対応）</button>
 
             <h2 style="margin-top:25px;">選手名簿 (確定)</h2>
             <textarea id="memberList" style="height: 100px;" placeholder="名前を改行して入力">田中&#10;鈴木&#10;佐藤</textarea>
             <button class="update-btn" onclick="applyMemberList()">リストを更新する</button>
         </div>
 
-        <!-- 右：グラフ -->
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -122,7 +109,6 @@
         </div>
     </div>
 
-    <!-- 早見表 -->
     <div class="card">
         <div class="pdf-title">ラップタイム算早見表</div>
         <p style="font-size: 11px; text-align: center; margin-bottom: 10px;">※（男全）、（女全）の箇所は陸上近畿大会出場レベル</p>
@@ -139,19 +125,18 @@
         </div>
     </div>
 
-    <!-- ログ -->
     <div class="card">
-        <h2>ローカル履歴ログ (直接編集可能)</h2>
+        <h2>ローカル履歴ログ (修正はこちらから)</h2>
         <textarea id="rawLog" class="log-area" onchange="saveAllToStorage(); renderChart();"></textarea>
-        <button onclick="clearAllData()" style="width: auto; background: #999; padding: 4px 12px; font-size: 10px;">ブラウザの全データを消去</button>
+        <button onclick="clearAllData()" style="width: auto; background: #999; padding: 4px 12px; font-size: 10px;">全消去</button>
     </div>
 </div>
 
 <script>
     // ==========================================
-    // 1. ここにコピーしたウェブアプリURLを貼り付けてください
+    // GASウェブアプリURLをここに貼り付け
     // ==========================================
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyqERh76YI9NpBrHzdGcTTy_7NhB8rl2tDx5lm-AMUiuyg4I6SBAy2zEjKCu5tSV6BpCg/exec"; 
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzmFfykRlfh30UlDQkw24kXrfhn0oh5xqLA0p8zctDa19yUbfWr8Ba_86sQmbzeWhCHEQ/exec"; 
 
     let chart;
     const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557', '#8b5cf6'];
@@ -168,7 +153,6 @@
         renderChart();
     };
 
-    // 小数点第一位までのPDF風表示
     function formatTimePDF(seconds) {
         const fixed = seconds.toFixed(1);
         if (seconds < 60) return fixed;
@@ -177,7 +161,6 @@
         return `${m}'${s.padStart(4, '0')}`;
     }
 
-    // PDF再現表の生成
     function generatePDFTable() {
         const tbody = document.getElementById('refTableBody');
         tbody.innerHTML = '';
@@ -190,14 +173,11 @@
                 let display = formatTimePDF(totalSeconds);
                 if ([1, 3, 6].includes(idx)) td.className = 'col-yellow';
                 if (idx === 9 && base < 15.0) display = '';
-                
-                // 画像内の特定ハイライトを再現
                 if (idx === 5 && base === 15.0) { display += '(男全)'; td.className = 'highlight-male'; }
                 if (idx === 5 && base === 17.0) { display += '(女全)'; td.className = 'highlight-female'; }
                 if (idx === 8 && base === 16.5) { display += '(男全)'; td.className = 'highlight-male'; }
                 if (idx === 8 && base === 18.5) { display += '(女全)'; td.className = 'highlight-female'; }
                 if (idx === 9 && base === 18.0) { display += '(男全)'; td.className = 'highlight-male'; }
-
                 td.innerText = display;
                 tr.appendChild(td);
             });
@@ -205,7 +185,6 @@
         }
     }
 
-    // データの読み書き
     function loadDataFromStorage() {
         document.getElementById('memberList').value = localStorage.getItem('boxing_members') || "田中\n鈴木\n佐藤";
         document.getElementById('rawLog').value = localStorage.getItem('boxing_logs') || "";
@@ -216,11 +195,7 @@
         localStorage.setItem('boxing_logs', document.getElementById('rawLog').value);
     }
 
-    function applyMemberList() {
-        saveAllToStorage();
-        updateMemberDropdownsOnly();
-        alert("リストを確定しました");
-    }
+    function applyMemberList() { saveAllToStorage(); updateMemberDropdownsOnly(); alert("名簿確定"); }
 
     function updateMemberDropdownsOnly() {
         const ms = document.getElementById('memberList').value.trim().split('\n');
@@ -228,15 +203,11 @@
         const fs = document.getElementById('filterSelect');
         const current = ns.value;
         ns.innerHTML = ''; fs.innerHTML = '<option value="all">全員比較</option>';
-        ms.forEach(m => {
-            if(!m.trim()) return;
-            ns.add(new Option(m.trim(), m.trim()));
-            fs.add(new Option(m.trim(), m.trim()));
-        });
+        ms.forEach(m => { if(m.trim()){ ns.add(new Option(m.trim(), m.trim())); fs.add(new Option(m.trim(), m.trim())); }});
         ns.value = current;
     }
 
-    // 記録追加 & 同期
+    // ★上書きロジックを追加した記録関数
     async function addRecord() {
         const date = document.getElementById('recordDate').value;
         const count = document.getElementById('countSelect').value;
@@ -244,34 +215,48 @@
         const name = document.getElementById('nameSelect').value;
         const time = document.getElementById('timeInput').value;
 
-        if(!name || !time.includes(':')) return alert("入力エラー（例 5:30）");
+        if(!name || !time.includes(':')) return alert("入力エラー");
 
-        // ローカルに記録
         const log = document.getElementById('rawLog');
-        log.value += (log.value.trim() ? "\n" : "") + `${date}, ${count}, ${laps}, ${name}, ${time}`;
+        const existingEntries = log.value.trim().split('\n');
+        
+        let found = false;
+        const newEntries = existingEntries.map(line => {
+            const p = line.split(',').map(s => s.trim());
+            // 日付[0], 本数[1], 名前[3] が一致する場合、その行を上書き
+            if (p[0] === date && p[1] === count && p[3] === name) {
+                found = true;
+                return `${date}, ${count}, ${laps}, ${name}, ${time}`;
+            }
+            return line;
+        });
+
+        if (!found) {
+            newEntries.push(`${date}, ${count}, ${laps}, ${name}, ${time}`);
+        }
+
+        // ログを更新（空行を除去して結合）
+        log.value = newEntries.filter(l => l.trim() !== "").join('\n');
+        
         saveAllToStorage();
         renderChart();
 
         // GASへ送信
-        if (GAS_WEBAPP_URL && GAS_WEBAPP_URL !== "ここにURLを貼り付けてください") {
+        if (GAS_WEBAPP_URL && GAS_WEBAPP_URL !== "ここにURLを貼り付け") {
             const btn = document.getElementById('addBtn');
-            btn.disabled = true;
-            btn.innerText = "同期中...";
+            btn.disabled = true; btn.innerText = "同期中...";
             try {
                 await fetch(GAS_WEBAPP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
+                    method: 'POST', mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ date, count, laps, name, time })
                 });
-            } catch (e) { console.error("Sync Error", e); }
-            btn.disabled = false;
-            btn.innerText = "記録を追加（自動送信）";
+            } catch (e) { console.error(e); }
+            btn.disabled = false; btn.innerText = "記録を追加（上書き対応）";
         }
         document.getElementById('timeInput').value = "";
     }
 
-    // グラフ描画
     function initChart(type) {
         if (chart) chart.destroy();
         const ctx = document.getElementById('runChart').getContext('2d');
@@ -311,7 +296,7 @@
         chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update();
     }
 
-    function clearAllData() { if(confirm("全データを消去しますか？")) { localStorage.clear(); location.reload(); } }
+    function clearAllData() { if(confirm("消去？")) { localStorage.clear(); location.reload(); } }
 </script>
 
 </body>
