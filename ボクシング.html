@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Boxing Tracker - Individual & Date Filter</title>
+    <title>Boxing Tracker - Date Selection Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f4f7f9; --pdf-header: #b2ffff; }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; }
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
-        .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
+        .dashboard-grid { display: grid; grid-template-columns: 300px 1fr; gap: 15px; }
         
         .pdf-table { width: 100%; border-collapse: collapse; min-width: 1100px; border: 1px solid #000; background: #fff; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px; text-align: center; }
@@ -19,12 +19,15 @@
         .rank-col { width: 35px; color: var(--primary); font-weight: bold; font-size: 11px; }
 
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 15px; margin-top: 10px; }
-        .chart-container { height: 400px; position: relative; }
+        .chart-container { height: 350px; position: relative; }
 
-        /* フィルターまわりのデザイン */
+        /* デザイン調整 */
+        .setting-section { margin-bottom: 15px; }
+        .setting-section label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--secondary); }
+        .setting-section select, .setting-section input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        
         .filter-box { display: flex; gap: 10px; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
         .filter-box label { font-weight: bold; color: var(--secondary); font-size: 11px; }
-        .filter-box input, .filter-box select { padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -32,33 +35,34 @@
 <div class="container">
     <div class="dashboard-grid">
         <div class="card">
-            <h2>記録設定・読込</h2>
-            <label style="display:block; font-weight:bold;">表に表示する日付</label>
-            <input type="date" id="recordDate" style="width:100%; padding:10px; margin:5px 0 15px 0;" onchange="loadDateData()">
+            <div class="setting-section">
+                <label>表の日付を選択（履歴から）</label>
+                <select id="dateHistory" onchange="syncDateInput()"><option value="">-- 選択してください --</option></select>
+            </div>
+            <div class="setting-section">
+                <label>またはカレンダーから選択</label>
+                <input type="date" id="recordDate" onchange="loadDateData()">
+            </div>
+            <hr>
             <h2>選手名簿</h2>
-            <textarea id="memberList" style="width:100%; height:120px; font-size:11px;"></textarea>
-            <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer;">リスト更新</button>
+            <textarea id="memberList" style="width:100%; height:120px; font-size:11px; margin-bottom:5px;"></textarea>
+            <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px;">名簿更新</button>
         </div>
 
         <div class="card">
-            <h2>成長分析グラフ</h2>
-            <div class="filter-box">
-                <label>選手:</label>
-                <select id="filterSelect" onchange="updateGraph()"><option value="all">全員表示</option></select>
-                <label>期間:</label>
-                <input type="date" id="chartStart" onchange="updateGraph()">
-                <span>〜</span>
-                <input type="date" id="chartEnd" onchange="updateGraph()">
-                <button onclick="resetFilters()" style="padding:4px 8px; font-size:10px; cursor:pointer;">リセット</button>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>成長分析グラフ</h2>
+                <div class="filter-box">
+                    <label>選手:</label>
+                    <select id="filterSelect" onchange="updateGraph()"><option value="all">全員表示</option></select>
+                </div>
             </div>
-            <div class="chart-container">
-                <canvas id="runChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="runChart"></canvas></div>
         </div>
     </div>
 
     <div class="card">
-        <div style="font-size:11px; color:#10b981; font-weight:bold; margin-bottom:5px;">● スプレッドシート同期モード</div>
+        <div style="font-size:11px; color:#10b981; font-weight:bold; margin-bottom:5px;">● スプレッドシート同期モード（5:00 形式）</div>
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
                 <thead>
@@ -75,17 +79,17 @@
                 <tbody id="pdfTableBody"></tbody>
             </table>
         </div>
-        <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">スプレッドシートへ送信・同期</button>
+        <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">スプレッドシートへ送信・上書き保存</button>
     </div>
 </div>
 
 <script>
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzw5VyCW4_X0miysYAq3ErFWbeK6UM8EpZQmHdY60Y8Csq7lsTV0v-O-qWpqvVb7FxgKg/exec"; 
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzodqUQe9FaQiR5dkrgv-VzGGBRK8Vx3Wmrnxf0U9b3Y4HTDAwZEVmKV3cq5rVctmx1lg/exec"; 
     const PERMANENT_MEMBERS = "石橋 乃蒼\n川﨑 輝寅\n上窪 聖\n大畑 歩希\n志冨田 凪大\n亀本 快歩\n松嶋 虎鉄\n今井 仁\n岡田 陸翔\n濱田 周摩\n日高 心太\n井上 暁仁\n今中 悠人\n惣田 湧大\n髙峯 将真\n西岡 泰志\n福貴田 泰生\n栗原 翔\n岩原 晴斗\n杉阪 咲太\n安藤 心咲\n大西 義一\n岸上 虎央\n南 悠翔\n石橋 奈樹\n志冨田 明陽\n木下 一颯\n道下 大翔\n柏木 羽空";
     
     let chart;
-    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557', '#8b5cf6', '#6d597a', '#7c3aed', '#059669', '#db2777'];
-    let allSheetData = []; // グラフ用の全保持データ
+    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557', '#8b5cf6'];
+    let allSheetData = [];
 
     window.onload = () => {
         document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
@@ -93,35 +97,31 @@
         applyMembers();
         initChart();
         loadDateData();
-        fetchAllDataForGraph(); // 全データを取得してグラフを初期表示
+        fetchDateHistory(); // 履歴リストを取得
+        fetchAllDataForGraph();
     };
 
-    function s2t(s) {
-        if (!s || s === "") return "";
-        if (s.toString().includes(':')) return s;
-        const val = parseFloat(s);
-        const m = Math.floor(val / 60);
-        const sec = Math.floor(val % 60);
-        return m + ":" + String(sec).padStart(2, '0');
+    // 履歴プルダウンから日付を同期
+    function syncDateInput() {
+        const val = document.getElementById('dateHistory').value;
+        if(val) {
+            document.getElementById('recordDate').value = val;
+            loadDateData();
+        }
     }
 
-    function t2s(v) {
-        if (!v || !v.toString().includes(':')) return parseFloat(v) || 0;
-        const p = v.split(':');
-        return parseInt(p[0]) * 60 + parseInt(p[1]);
-    }
-
-    // スプレッドシートから全データを一度だけ読み込む
-    async function fetchAllDataForGraph() {
+    // スプレッドシートにある既存の「日付（シート名）」を取得
+    async function fetchDateHistory() {
         if (!GAS_WEBAPP_URL.startsWith('http')) return;
         try {
-            const res = await fetch(GAS_WEBAPP_URL);
-            allSheetData = await res.json();
-            updateGraph();
-        } catch (e) { console.error("データ取得エラー:", e); }
+            const res = await fetch(`${GAS_WEBAPP_URL}?mode=listDates`);
+            const dates = await res.json();
+            const select = document.getElementById('dateHistory');
+            select.innerHTML = '<option value="">-- 過去の練習日を選択 --</option>';
+            dates.forEach(d => select.add(new Option(d, d)));
+        } catch (e) { console.error("日付リスト取得エラー"); }
     }
 
-    // 入力用の特定日付データの読み込み
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
         if (!GAS_WEBAPP_URL.startsWith('http')) return;
@@ -134,14 +134,12 @@
                 const sheetData = result.data;
                 const rows = document.getElementById('pdfTableBody').rows;
                 for (let i = 1; i < sheetData.length; i++) {
-                    const name = sheetData[i][0];
                     for (let r = 0; r < rows.length; r++) {
-                        if (rows[r].cells[0].innerText === name) {
+                        if (rows[r].cells[0].innerText === sheetData[i][0]) {
                             for (let c = 1; c <= 6; c++) {
                                 rows[r].cells[c * 2 - 1].querySelector('input').value = sheetData[i][c * 2 - 1] || '';
                                 rows[r].cells[c * 2].innerText = sheetData[i][c * 2] || '-';
                             }
-                            break;
                         }
                     }
                 }
@@ -154,10 +152,8 @@
         const tbody = document.getElementById('pdfTableBody');
         const fs = document.getElementById('filterSelect');
         tbody.innerHTML = '';
-        const currentFilter = fs.value;
         fs.innerHTML = '<option value="all">全員表示</option>';
-
-        ms.forEach((m, idx) => {
+        ms.forEach(m => {
             const tr = document.createElement('tr');
             let html = `<td style="font-weight:bold; background:#f9f9f9; text-align:left;">${m.trim()}</td>`;
             for(let i=1; i<=6; i++) html += `<td><input type="text" class="t-in" oninput="calcRanks(${i})"></td><td class="rank-col rank-col-cell">-</td>`;
@@ -165,7 +161,6 @@
             tbody.appendChild(tr);
             fs.add(new Option(m.trim(), m.trim()));
         });
-        fs.value = currentFilter;
         localStorage.setItem('boxing_members', document.getElementById('memberList').value);
     }
 
@@ -189,66 +184,50 @@
         for (let r = 0; r < rows.length; r++) {
             for (let c = 1; c <= 6; c++) {
                 const input = rows[r].cells[c * 2 - 1].querySelector('input');
-                const time = input.value.trim();
-                if (!time) continue;
-                const payload = { date, name: rows[r].cells[0].innerText, count: document.getElementById('mainTable').rows[0].cells[c * 2 - 1].innerText, time, rank: rows[r].cells[c * 2].innerText, memberList: document.getElementById('memberList').value };
+                if (!input.value.trim()) continue;
+                const payload = { date, name: rows[r].cells[0].innerText, count: document.getElementById('mainTable').rows[0].cells[c * 2 - 1].innerText, time: input.value.trim(), rank: rows[r].cells[c * 2].innerText, memberList: document.getElementById('memberList').value };
                 await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
             }
         }
         btn.disabled = false; btn.innerText = "同期完了！";
-        fetchAllDataForGraph(); // グラフを最新に
+        fetchDateHistory(); // 履歴リストを更新
+        fetchAllDataForGraph();
     }
 
-    // グラフのフィルタリングと描画
+    async function fetchAllDataForGraph() {
+        if (!GAS_WEBAPP_URL.startsWith('http')) return;
+        try {
+            const res = await fetch(GAS_WEBAPP_URL);
+            allSheetData = await res.json();
+            updateGraph();
+        } catch (e) {}
+    }
+
     function updateGraph() {
         const filter = document.getElementById('filterSelect').value;
-        const start = document.getElementById('chartStart').value;
-        const end = document.getElementById('chartEnd').value;
-
-        // 1. フィルタリング処理
-        let filtered = allSheetData.filter(r => {
-            const nameMatch = (filter === 'all' || r.name === filter);
-            const dateMatch = (!start || r.date >= start) && (!end || r.date <= end);
-            return nameMatch && dateMatch;
-        });
-
-        // 2. データ構造化
+        const filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter));
         const dataMap = {}; const labelSet = new Set();
         filtered.forEach(r => {
-            const label = `${r.date}(${r.count})`;
-            labelSet.add(label);
+            const label = `${r.date}(${r.count})`; labelSet.add(label);
             if(!dataMap[r.name]) dataMap[r.name] = {};
             dataMap[r.name][label] = t2s(r.time);
         });
-
         const sortedLabels = Array.from(labelSet).sort();
         const datasets = [];
         Object.keys(dataMap).forEach((name, i) => {
-            datasets.push({
-                label: name,
-                data: sortedLabels.map(l => dataMap[name][l] || null),
-                borderColor: colors[i % colors.length],
-                backgroundColor: colors[i % colors.length] + '22',
-                fill: (filter !== 'all'), // 個人のときは塗りつぶす
-                tension: 0.3, spanGaps: true, pointRadius: 4
-            });
+            datasets.push({ label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: colors[i % colors.length], tension: 0.3, spanGaps: true, pointRadius: 4 });
         });
-
-        chart.data.labels = sortedLabels;
-        chart.data.datasets = datasets;
-        chart.update();
-    }
-
-    function resetFilters() {
-        document.getElementById('filterSelect').value = 'all';
-        document.getElementById('chartStart').value = '';
-        document.getElementById('chartEnd').value = '';
-        updateGraph();
+        chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update();
     }
 
     function initChart() {
         const ctx = document.getElementById('runChart').getContext('2d');
-        chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => s2t(v) } } } } });
+        chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => Math.floor(v/60) + ":" + String(v%60).padStart(2, '0') } } } } });
+    }
+
+    function t2s(v){
+        if(!v || !v.toString().includes(':')) return parseFloat(v) || 0;
+        const p = v.split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]);
     }
 </script>
 </body>
