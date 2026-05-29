@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Boxing Tracker - Full Sync Edition</title>
+    <title>Boxing Tracker - Full Timeline Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f4f7f9; --pdf-header: #b2ffff; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; }
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
-        .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
+        .dashboard-grid { display: grid; grid-template-columns: 300px 1fr; gap: 15px; }
         .pdf-table { width: 100%; border-collapse: collapse; min-width: 1100px; border: 1px solid #000; background: #fff; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px; text-align: center; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
-        .pdf-table input { width: 60px; border: none; text-align: center; font-size: 13px; background: transparent; padding: 5px 0; }
+        .pdf-table input { width: 55px; border: none; text-align: center; font-size: 13px; background: transparent; padding: 5px 0; }
         .rank-col { width: 35px; color: var(--primary); font-weight: bold; font-size: 11px; }
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 15px; margin-top: 10px; }
         .chart-container { height: 400px; position: relative; }
@@ -22,7 +22,6 @@
         .setting-section label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--secondary); }
         .setting-section select, .setting-section input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
         .filter-box { display: flex; gap: 10px; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
-        .filter-box label { font-weight: bold; color: var(--secondary); font-size: 11px; }
     </style>
 </head>
 <body>
@@ -33,11 +32,11 @@
         <div class="card">
             <div class="setting-section">
                 <label>表の日付を選択（履歴から）</label>
-                <select id="dateHistory" onchange="syncDateAndGraph()"><option value="">-- 読込中 --</option></select>
+                <select id="dateHistory" onchange="syncDateFromHistory()"><option value="">-- 読込中 --</option></select>
             </div>
             <div class="setting-section">
-                <label>またはカレンダーから選択</label>
-                <input type="date" id="recordDate" onchange="loadDateData(); updateGraph();">
+                <label>カレンダーから新規作成</label>
+                <input type="date" id="recordDate" onchange="loadDateData()">
             </div>
             <hr>
             <h2>選手名簿</h2>
@@ -48,11 +47,10 @@
         <!-- 右：グラフエリア -->
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-                <h2>成長・当日分析グラフ</h2>
+                <h2>成長推移グラフ (全期間)</h2>
                 <div class="filter-box">
-                    <label>選手:</label>
+                    <label>表示する選手:</label>
                     <select id="filterSelect" onchange="updateGraph()"><option value="all">全員表示</option></select>
-                    <button onclick="resetGraph()" style="font-size:10px; padding:2px 5px; cursor:pointer;">全履歴を表示</button>
                 </div>
             </div>
             <div class="chart-container"><canvas id="runChart"></canvas></div>
@@ -87,9 +85,8 @@
     const PERMANENT_MEMBERS = "石橋 乃蒼\n川﨑 輝寅\n上窪 聖\n大畑 歩希\n志冨田 凪大\n亀本 快歩\n松嶋 虎鉄\n今井 仁\n岡田 陸翔\n濱田 周摩\n日高 心太\n井上 暁仁\n今中 悠人\n惣田 湧大\n髙峯 将真\n西岡 泰志\n福貴田 泰生\n栗原 翔\n岩原 晴斗\n杉阪 咲太\n安藤 心咲\n大西 義一\n岸上 虎央\n南 悠翔\n石橋 奈樹\n志冨田 明陽\n木下 一颯\n道下 大翔\n柏木 羽空";
     
     let chart;
-    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557', '#8b5cf6'];
+    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557', '#8b5cf6', '#6d597a'];
     let allSheetData = [];
-    let isFilteredByDate = true; // 初回は日付で絞り込む
 
     window.onload = () => {
         const today = new Date().toISOString().split('T')[0];
@@ -98,25 +95,19 @@
         applyMembers();
         initChart();
         fetchDateHistory();
-        loadDateData();
-        fetchAllDataForGraph();
+        loadDateData(); // 初期表の読込
+        fetchAllDataForGraph(); // 初期グラフの読込
     };
 
-    // 【新機能】日付履歴から選んだ時、表とグラフの両方を更新
-    function syncDateAndGraph() {
+    // 履歴から日付を選んだとき
+    function syncDateFromHistory() {
         const selectedDate = document.getElementById('dateHistory').value;
         if(selectedDate) {
             document.getElementById('recordDate').value = selectedDate;
-            isFilteredByDate = true; // 日付フィルタを有効にする
-            loadDateData(); // 表を更新
-            updateGraph(); // グラフを更新
+            loadDateData(); // 表だけをその日のデータに更新
+            // グラフは updateGraph() を呼ぶが、中身で日付フィルタをしない
+            updateGraph(); 
         }
-    }
-
-    // グラフのリセット（全履歴表示）
-    function resetGraph() {
-        isFilteredByDate = false;
-        updateGraph();
     }
 
     async function fetchDateHistory() {
@@ -213,16 +204,12 @@
         } catch (e) {}
     }
 
+    // グラフ描画：日付に関係なくすべて（全履歴）を表示する
     function updateGraph() {
         const filter = document.getElementById('filterSelect').value;
-        const currentDay = document.getElementById('recordDate').value;
         
-        // 日付フィルタが有効な場合はその日だけ、無効な場合は全履歴
-        let filtered = allSheetData.filter(r => {
-            const nameMatch = (filter === 'all' || r.name === filter);
-            const dateMatch = isFilteredByDate ? (r.date === currentDay) : true;
-            return nameMatch && dateMatch;
-        });
+        // グラフ用データは日付で絞り込まず、選手名だけで絞り込む
+        let filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter));
         
         const dataMap = {}; const labelSet = new Set();
         filtered.forEach(r => {
@@ -246,8 +233,7 @@
     function initChart() {
         const ctx = document.getElementById('runChart').getContext('2d');
         chart = new Chart(ctx, { 
-            type: 'line', 
-            data: { labels: [], datasets: [] }, 
+            type: 'line', data: { labels: [], datasets: [] }, 
             options: { 
                 responsive: true, maintainAspectRatio: false, 
                 scales: { 
