@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Boxing Tracker - Live Spreadsheet Sync</title>
+    <title>Boxing Tracker - Full Data Sync</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f4f7f9; --pdf-header: #b2ffff; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; }
         .container { max-width: 1400px; margin: 0 auto; }
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 20px; }
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 300px 1fr; gap: 15px; }
-        .pdf-entry-table { width: 100%; border-collapse: collapse; min-width: 1100px; border: 1px solid #000; }
-        .pdf-entry-table th, .pdf-entry-table td { border: 1px solid #000; padding: 4px; text-align: center; }
-        .pdf-entry-table thead th { background: var(--pdf-header); font-weight: normal; }
-        .pdf-entry-table input { width: 55px; border: 1px solid #eee; text-align: center; font-size: 13px; }
-        .rank-col { width: 30px; color: var(--primary); font-weight: bold; font-size: 11px; background: #fafafa; }
-        .chart-container { height: 350px; position: relative; }
-        .btn-main { background: var(--secondary); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        .btn-send { background: var(--primary); font-size: 15px; padding: 18px; }
-        .sync-status { font-size: 11px; color: #10b981; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
-        @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        
+        /* 表のデザイン */
+        .sheet-container { overflow-x: auto; }
+        .pdf-table { width: 100%; border-collapse: collapse; min-width: 1100px; border: 1px solid #000; background: #fff; }
+        .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px; text-align: center; }
+        .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
+        .pdf-table input { width: 55px; border: none; text-align: center; font-size: 13px; background: transparent; }
+        .rank-col { width: 30px; color: var(--primary); font-weight: bold; font-size: 11px; }
+
+        .sync-status { font-size: 11px; color: #10b981; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 15px; margin-top: 10px; }
+        .chart-container { height: 300px; position: relative; }
     </style>
 </head>
 <body>
@@ -29,29 +31,27 @@
     <div class="dashboard-grid">
         <div class="card">
             <h2>選手名簿 (確定)</h2>
-            <textarea id="memberList" style="width:100%; height:120px;">石橋 乃蒼&#10;川﨑 輝寅&#10;上窪 聖&#10;大畑 歩希&#10;志冨田 凪大&#10;亀本 快歩&#10;松嶋 虎鉄&#10;今井 仁&#10;岡田 陸翔&#10;濱田 周摩&#10;日高 心太&#10;井上 暁仁&#10;今中 悠人&#10;惣田 湧大&#10;髙峯 将真&#10;西岡 泰志&#10;福貴田 泰生&#10;栗原 翔&#10;岩原 晴斗&#10;杉阪 咲太&#10;安藤 心咲&#10;大西 義一&#10;岸上 虎央&#10;南 悠翔&#10;石橋 奈樹&#10;志冨田 明陽&#10;木下 一颯&#10;道下 大翔&#10;柏木 羽空</textarea>
-            <button class="btn-main" style="background:#6c757d; font-size:11px;" onclick="applyMembers()">リストを更新</button>
+            <textarea id="memberList" style="width:100%; height:120px; font-size:11px;">石橋 乃蒼&#10;川﨑 輝寅&#10;上窪 聖&#10;大畑 歩希&#10;志冨田 凪大&#10;亀本 快歩&#10;松嶋 虎鉄&#10;今井 仁&#10;岡田 陸翔&#10;濱田 周摩&#10;日高 心太&#10;井上 暁仁&#10;今中 悠人&#10;惣田 湧大&#10;髙峯 将真&#10;西岡 泰志&#10;福貴田 泰生&#10;栗原 翔&#10;岩原 晴斗&#10;杉阪 咲太&#10;安藤 心咲&#10;大西 義一&#10;岸上 虎央&#10;南 悠翔&#10;石橋 奈樹&#10;志冨田 明陽&#10;木下 一颯&#10;道下 大翔&#10;柏木 羽空</textarea>
+            <button onclick="applyMembers()" style="width:100%; padding:5px; margin-top:5px; font-size:10px;">リスト更新</button>
+            
             <label style="display:block; margin-top:15px; font-weight:bold;">日付選択</label>
-            <input type="date" id="recordDate" style="width:100%; padding:8px; margin-top:5px;">
-            <button class="btn-main" style="background:#457b9d;" onclick="fetchFromSheet()">🔄 スプレッドシートからデータ読込</button>
+            <input type="date" id="recordDate" style="width:100%; padding:8px; margin-top:5px;" onchange="loadDateData()">
+            <p style="font-size:10px; color:#666; margin-top:5px;">※日付を変えると、その日のデータをシートから読み込みます。</p>
         </div>
 
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2>スプレッドシート連動グラフ</h2>
-                <select id="filterSelect" onchange="renderChart()" style="padding:3px;"><option value="all">全員比較</option></select>
-            </div>
+            <h2>成長グラフ</h2>
             <div class="chart-container"><canvas id="runChart"></canvas></div>
         </div>
     </div>
 
     <div class="card">
         <div class="sync-status">
-            <span>● リアルタイム同期モード</span>
-            <span id="loadStatus" style="color:#666;">待機中...</span>
+            <span id="connLabel">● スプレッドシート同期モード</span>
+            <span id="lastSync" style="color:#666; font-weight:normal;">最終更新: ---</span>
         </div>
-        <div style="overflow-x:auto;">
-            <table class="pdf-entry-table">
+        <div class="sheet-container">
+            <table class="pdf-table" id="mainTable">
                 <thead>
                     <tr>
                         <th style="width:120px;">週 × 本</th>
@@ -66,43 +66,72 @@
                 <tbody id="pdfTableBody"></tbody>
             </table>
         </div>
-        <button id="saveBtn" class="btn-main btn-send" onclick="saveAllSheetData()">すべての記録を送信・シート保存</button>
+        <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">すべての記録をスプレッドシートへ送信・上書き</button>
     </div>
 </div>
 
 <script>
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz4NwDEkZHYnZYpnzoXi4e4uOJCH-R2Z2FML7vQBmfJ4sqf7ei408JKSGGbZVqXWhUKhQ/exec"; 
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxeLTrBtHEZFCkz_xBCWl-Er7sScHdkKLaddlFz-OPf5diEmxVcw9ZnnAJ-EBXD2BtOLQ/exec"; 
     let chart;
-    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557', '#8b5cf6', '#6d597a'];
-    let globalRecords = []; // スプレッドシートから読み込んだデータ
+    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557'];
 
     window.onload = () => {
         document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
         applyMembers();
         initChart();
-        fetchFromSheet(); // 起動時に自動読み込み
+        loadDateData(); // 起動時に今日の日付のデータを読込
     };
 
-    // スプレッドシートからデータを取得
-    async function fetchFromSheet() {
+    // スプレッドシートから特定の日付のデータを読み込んで表に入れる
+    async function loadDateData() {
+        const date = document.getElementById('recordDate').value;
         if (!GAS_WEBAPP_URL.startsWith('http')) return;
-        document.getElementById('loadStatus').innerText = "シートから読込中...";
+        
+        document.getElementById('connLabel').innerText = "⌛ データ読込中...";
         try {
-            const response = await fetch(GAS_WEBAPP_URL);
-            globalRecords = await response.json();
-            renderChart();
-            document.getElementById('loadStatus').innerText = "最終同期: " + new Date().toLocaleTimeString();
+            const response = await fetch(`${GAS_WEBAPP_URL}?date=${date}`);
+            const result = await response.json();
+            
+            // 入力欄と順位をリセット
+            document.querySelectorAll('.t-in').forEach(el => el.value = '');
+            document.querySelectorAll('.rank-col-cell').forEach(el => el.innerText = '-');
+
+            if (result.found) {
+                const sheetData = result.data; // スプレッドシートの行列
+                const header = sheetData[0];
+                const rows = document.getElementById('pdfTableBody').rows;
+
+                for (let i = 1; i < sheetData.length; i++) {
+                    const rowData = sheetData[i];
+                    const name = rowData[0];
+                    // HTMLの表から同じ名前の行を探す
+                    for (let r = 0; r < rows.length; r++) {
+                        if (rows[r].cells[0].innerText === name) {
+                            // タイムと順位をセット
+                            for (let c = 1; c <= 6; c++) {
+                                const timeVal = rowData[c * 2 - 1];
+                                const rankVal = rowData[c * 2];
+                                rows[r].cells[c * 2 - 1].querySelector('input').value = timeVal || '';
+                                rows[r].cells[c * 2].innerText = rankVal || '-';
+                            }
+                            break;
+                        }
+                    }
+                }
+                document.getElementById('connLabel').innerText = "● 読込完了";
+            } else {
+                document.getElementById('connLabel').innerText = "● 新規データ作成";
+            }
+            updateGraph(); // グラフもついでに更新
         } catch (e) {
-            document.getElementById('loadStatus').innerText = "読込失敗";
+            document.getElementById('connLabel').innerText = "● 接続エラー";
         }
     }
 
     function applyMembers() {
         const ms = document.getElementById('memberList').value.trim().split('\n');
         const tbody = document.getElementById('pdfTableBody');
-        const fs = document.getElementById('filterSelect');
         tbody.innerHTML = '';
-        fs.innerHTML = '<option value="all">全員比較</option>';
         ms.forEach((m, idx) => {
             const name = m.trim(); if(!name) return;
             const tr = document.createElement('tr');
@@ -110,11 +139,10 @@
             for(let i=1; i<=6; i++){
                 const countLabel = i === 6 ? "追加" : i + "本目";
                 html += `<td><input type="text" class="t-in" data-name="${name}" data-count="${countLabel}" oninput="calcRanks(${i})"></td>
-                         <td class="rank-col" id="rank-${idx}-${i}">-</td>`;
+                         <td class="rank-col rank-col-cell" id="rank-${idx}-${i}">-</td>`;
             }
             tr.innerHTML = html;
             tbody.appendChild(tr);
-            fs.add(new Option(name, name));
         });
     }
 
@@ -122,15 +150,15 @@
         const rows = document.getElementById('pdfTableBody').rows;
         let times = [];
         for(let i=0; i<rows.length; i++){
-            const input = rows[i].querySelectorAll('.t-in')[colIdx-1];
+            const input = rows[i].cells[colIdx * 2 - 1].querySelector('input');
             const val = input.value.trim();
             if(val && (val.includes(':') || !isNaN(val))){
                 times.push({ rowIndex: i, sec: t2s(val) });
             }
-            document.getElementById(`rank-${i}-${colIdx}`).innerText = '-';
+            rows[i].cells[colIdx * 2].innerText = '-';
         }
         times.sort((a,b) => a.sec - b.sec).forEach((t, index) => {
-            document.getElementById(`rank-${t.rowIndex}-${colIdx}`).innerText = index + 1;
+            rows[t.rowIndex].cells[colIdx * 2].innerText = index + 1;
         });
     }
 
@@ -148,42 +176,37 @@
         for (const input of inputs) {
             const time = input.value.trim();
             if (!time) continue;
-            const rank = document.getElementById(`rank-${input.closest('tr').rowIndex}-${Array.from(input.closest('tr').querySelectorAll('.t-in')).indexOf(input)+1}`).innerText;
+            const rank = input.parentElement.nextElementSibling.innerText;
             const payload = { date, name: input.dataset.name, count: input.dataset.count, time, rank, memberList: document.getElementById('memberList').value };
             await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
         }
-        await fetchFromSheet(); // 保存後に再読み込みしてグラフ更新
-        btn.disabled = false; btn.innerText = "送信完了・グラフ更新済み";
+        btn.disabled = false; btn.innerText = "送信完了！";
+        document.getElementById('lastSync').innerText = "同期完了: " + new Date().toLocaleTimeString();
+        updateGraph();
     }
 
-    function initChart() {
-        const ctx = document.getElementById('runChart').getContext('2d');
-        chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => Math.floor(v/60) + ":" + String(v%60).padStart(2, '0') } } } } });
-    }
-
-    function renderChart() {
-        const filter = document.getElementById('filterSelect').value;
+    async function updateGraph() {
+        const response = await fetch(GAS_WEBAPP_URL);
+        const records = await response.json();
+        const filter = "all";
         const dataMap = {}; const labelSet = new Set();
-
-        globalRecords.forEach(r => {
+        records.forEach(r => {
             const label = `${r.date}(${r.count})`;
             labelSet.add(label);
             if(!dataMap[r.name]) dataMap[r.name] = {};
             dataMap[r.name][label] = t2s(r.time);
         });
-
         const sortedLabels = Array.from(labelSet).sort();
         const datasets = [];
         Object.keys(dataMap).forEach((name, i) => {
-            if(filter !== 'all' && name !== filter) return;
-            datasets.push({
-                label: name,
-                data: sortedLabels.map(l => dataMap[name][l] || null),
-                borderColor: colors[i % colors.length],
-                tension: 0.3, spanGaps: true, pointRadius: 4
-            });
+            datasets.push({ label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: colors[i % colors.length], tension: 0.3, spanGaps: true, pointRadius: 3 });
         });
         chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update();
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('runChart').getContext('2d');
+        chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => Math.floor(v/60) + ":" + String(v%60).padStart(2, '0') } } } } });
     }
 </script>
 </body>
