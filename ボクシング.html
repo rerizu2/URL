@@ -3,73 +3,53 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Boxing Tracker - Editable Laps Edition</title>
+    <title>Boxing Tracker - Spreadsheet Header Sync</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #e63946; --secondary: #1d3557; --bg: #f4f7f9; --pdf-header: #b2ffff; }
+        :root { --primary: #e63946; --secondary: #1d3557; --bg: #f4f7f9; --pdf-header: #b2ffff; --pdf-yellow: #ffff00; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; }
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 300px 1fr; gap: 15px; }
-        
         .pdf-table { width: 100%; border-collapse: collapse; min-width: 1100px; border: 1px solid #000; background: #fff; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px; text-align: center; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
         .pdf-table input { width: 55px; border: none; text-align: center; font-size: 13px; background: transparent; padding: 5px 0; }
         .rank-col { width: 35px; color: var(--primary); font-weight: bold; font-size: 11px; }
-
-        /* 周回数編集用入力欄 */
         .lap-edit { width: 30px !important; border: 1px solid #999 !important; background: #fff !important; border-radius: 3px; font-weight: bold; color: var(--primary); margin: 0 2px; }
-
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 15px; margin-top: 10px; }
         .chart-container { height: 400px; position: relative; }
-        
-        .setting-section { margin-bottom: 15px; }
-        .setting-section label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--secondary); }
-        .setting-section select, .setting-section input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
-        
-        .filter-box { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 10px; }
-        .filter-box label { font-weight: bold; font-size: 11px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="dashboard-grid">
+        <!-- 左：設定 -->
         <div class="card">
-            <div class="setting-section">
-                <label>表の日付を選択（履歴）</label>
-                <select id="dateHistory" onchange="onDateHistoryChange()"><option value="">-- 読込中 --</option></select>
-            </div>
-            <div class="setting-section">
-                <label>またはカレンダーから選択</label>
-                <input type="date" id="recordDate" onchange="onCalendarChange()">
-            </div>
+            <label style="font-weight:bold;">履歴から日付を選択</label>
+            <select id="dateHistory" onchange="onDateHistoryChange()" style="width:100%; padding:8px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
+            <label style="font-weight:bold;">カレンダーから選択</label>
+            <input type="date" id="recordDate" onchange="onCalendarChange()" style="width:100%; padding:8px; margin-bottom:15px;">
             <hr>
-            <h2>選手名簿 (確定)</h2>
-            <textarea id="memberList" style="width:100%; height:120px; font-size:11px; margin-bottom:5px;"></textarea>
-            <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px;">名簿更新</button>
+            <h2>選手名簿</h2>
+            <textarea id="memberList" style="width:100%; height:120px; font-size:11px;"></textarea>
+            <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer;">リスト更新</button>
         </div>
 
+        <!-- 右：グラフ -->
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h2>タイム分析グラフ</h2>
-                <div class="filter-box">
-                    <label>表示選手:</label>
-                    <select id="filterSelect" onchange="updateGraph()"><option value="all">全員表示</option></select>
-                    <label>表示範囲:</label>
-                    <select id="graphRange" onchange="updateGraph()">
-                        <option value="today">選択中の日付のみ</option>
-                        <option value="all" selected>全期間</option>
-                    </select>
-                </div>
+                <select id="filterSelect" onchange="updateGraph()" style="padding:5px; border-radius:4px;"><option value="all">全員表示</option></select>
             </div>
             <div class="chart-container"><canvas id="runChart"></canvas></div>
         </div>
     </div>
 
+    <!-- 表 -->
     <div class="card">
-        <div style="font-size:11px; color:#10b981; font-weight:bold; margin-bottom:5px;">● スプレッドシート同期モード（見出しの周回数は編集可能です）</div>
+        <div style="font-size:11px; color:#10b981; font-weight:bold; margin-bottom:5px;">● 同期モード：スプレッドシートの見出しに「周」が反映されます</div>
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
                 <thead>
@@ -86,16 +66,16 @@
                 <tbody id="pdfTableBody"></tbody>
             </table>
         </div>
-        <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">スプレッドシートへ送信・同期保存</button>
+        <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">スプレッドシートへ送信・同期</button>
     </div>
 </div>
 
 <script>
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyW7pxHaPj33S0va0XE_N9B4suKt8slyG7wSw_qySLqrWqQoutBWDp-hudpC_9F5erHhw/exec"; 
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxBHx9zt4ovpzK8QQfQt8wIIWINsJzJYHsnyPV6wE_WsdFhuqc6eCtgCtlCCgOlDfRwUw/exec"; 
     const PERMANENT_MEMBERS = "石橋 乃蒼\n川﨑 輝寅\n上窪 聖\n大畑 歩希\n志冨田 凪大\n亀本 快歩\n松嶋 虎鉄\n今井 仁\n岡田 陸翔\n濱田 周摩\n日高 心太\n井上 暁仁\n今中 悠人\n惣田 湧大\n髙峯 将真\n西岡 泰志\n福貴田 泰生\n栗原 翔\n岩原 晴斗\n杉阪 咲太\n安藤 心咲\n大西 義一\n岸上 虎央\n南 悠翔\n石橋 奈樹\n志冨田 明陽\n木下 一颯\n道下 大翔\n柏木 羽空";
     
     let chart;
-    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557', '#8b5cf6', '#6d597a'];
+    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557'];
     let allSheetData = [];
 
     window.onload = async () => {
@@ -109,36 +89,20 @@
     };
 
     async function onDateHistoryChange() {
-        const selected = document.getElementById('dateHistory').value;
-        if (selected) {
-            document.getElementById('recordDate').value = selected;
-            await loadDateData();
-            updateGraph();
-        }
+        const val = document.getElementById('dateHistory').value;
+        if(val) { document.getElementById('recordDate').value = val; await loadDateData(); updateGraph(); }
     }
 
-    async function onCalendarChange() {
-        await loadDateData();
-        updateGraph();
-    }
+    async function onCalendarChange() { await loadDateData(); updateGraph(); }
 
     async function fetchDateHistory() {
         if (!GAS_WEBAPP_URL.startsWith('http')) return;
         try {
             const res = await fetch(`${GAS_WEBAPP_URL}?mode=listDates`);
-            const dates = await res.json();
             const select = document.getElementById('dateHistory');
+            const dates = await res.json();
             select.innerHTML = '<option value="">-- 過去の練習日を選択 --</option>';
             dates.forEach(d => select.add(new Option(d, d)));
-        } catch (e) {}
-    }
-
-    async function fetchAllDataForGraph() {
-        if (!GAS_WEBAPP_URL.startsWith('http')) return;
-        try {
-            const res = await fetch(GAS_WEBAPP_URL);
-            allSheetData = await res.json();
-            updateGraph();
         } catch (e) {}
     }
 
@@ -153,6 +117,14 @@
             if (result.found) {
                 const sheetData = result.data;
                 const rows = document.getElementById('pdfTableBody').rows;
+                // ヘッダーから周回数を復元
+                for(let c=1; c<=6; c++) {
+                    const h = sheetData[0][c*2-1];
+                    if(h.includes('周')) {
+                        const laps = h.match(/\((.*?)周\)/)[1];
+                        document.getElementById(`lap-${c}`).value = laps;
+                    }
+                }
                 for (let i = 1; i < sheetData.length; i++) {
                     for (let r = 0; r < rows.length; r++) {
                         if (rows[r].cells[0].innerText === sheetData[i][0]) {
@@ -176,9 +148,13 @@
         fs.innerHTML = '<option value="all">全員表示</option>';
         ms.forEach(m => {
             const tr = document.createElement('tr');
-            let html = `<td style="font-weight:bold; background:#f9f9f9; text-align:left; padding-left:5px;">${m.trim()}</td>`;
-            for(let i=1; i<=6; i++) html += `<td><input type="text" class="t-in" oninput="calcRanks(${i})"></td><td class="rank-col rank-col-cell">-</td>`;
-            tr.innerHTML = html;
+            tr.innerHTML = `<td style="font-weight:bold; background:#f9f9f9; text-align:left; padding-left:5px;">${m.trim()}</td>` +
+                           `<td><input type="text" class="t-in" oninput="calcRanks(1)"></td><td class="rank-col rank-col-cell">-</td>` +
+                           `<td><input type="text" class="t-in" oninput="calcRanks(2)"></td><td class="rank-col rank-col-cell">-</td>` +
+                           `<td><input type="text" class="t-in" oninput="calcRanks(3)"></td><td class="rank-col rank-col-cell">-</td>` +
+                           `<td><input type="text" class="t-in" oninput="calcRanks(4)"></td><td class="rank-col rank-col-cell">-</td>` +
+                           `<td><input type="text" class="t-in" oninput="calcRanks(5)"></td><td class="rank-col rank-col-cell">-</td>` +
+                           `<td><input type="text" class="t-in" oninput="calcRanks(6)"></td><td class="rank-col rank-col-cell">-</td>`;
             tbody.appendChild(tr);
             fs.add(new Option(m.trim(), m.trim()));
         });
@@ -191,8 +167,7 @@
         let times = [];
         for(let i=0; i<rows.length; i++){
             const input = rows[i].cells[colIdx * 2 - 1].querySelector('input');
-            const val = input.value.trim();
-            if(val) times.push({ rowIndex: i, sec: t2s(val) });
+            if(input.value.trim()) times.push({ rowIndex: i, sec: t2s(input.value.trim()) });
             rows[i].cells[colIdx * 2].innerText = '-';
         }
         times.sort((a,b) => a.sec - b.sec).forEach((t, idx) => { rows[t.rowIndex].cells[colIdx * 2].innerText = idx + 1; });
@@ -203,62 +178,49 @@
         const date = document.getElementById('recordDate').value;
         const rows = document.getElementById('pdfTableBody').rows;
         btn.disabled = true; btn.innerText = "同期中...";
-        
         for (let r = 0; r < rows.length; r++) {
             for (let c = 1; c <= 6; c++) {
                 const input = rows[r].cells[c * 2 - 1].querySelector('input');
                 if (!input.value.trim()) continue;
-                
-                // 【重要】ヘッダーにある入力済みの周回数を取得
-                const lapValue = document.getElementById(`lap-${c}`).value;
-                const countHeader = ["1本目", "2本目", "3本目", "4本目", "5本目", "追加"][c-1];
-
-                const payload = { 
-                    date, 
-                    name: rows[r].cells[0].innerText, 
-                    count: countHeader, 
-                    laps: lapValue, // 編集された周回数を送信
-                    time: input.value.trim(), 
-                    rank: rows[r].cells[c * 2].innerText, 
-                    memberList: document.getElementById('memberList').value 
-                };
+                const laps = document.getElementById(`lap-${c}`).value;
+                const count = ["1本目", "2本目", "3本目", "4本目", "5本目", "追加"][c-1];
+                const payload = { date, name: rows[r].cells[0].innerText, count, laps, time: input.value.trim(), rank: rows[r].cells[c * 2].innerText, memberList: document.getElementById('memberList').value };
                 await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
             }
         }
         btn.disabled = false; btn.innerText = "同期完了！";
-        await fetchDateHistory();
         await fetchAllDataForGraph();
+    }
+
+    async function fetchAllDataForGraph() {
+        if (!GAS_WEBAPP_URL.startsWith('http')) return;
+        try {
+            const res = await fetch(GAS_WEBAPP_URL);
+            allSheetData = await res.json();
+            updateGraph();
+        } catch (e) {}
     }
 
     function updateGraph() {
         const filter = document.getElementById('filterSelect').value;
-        const range = document.getElementById('graphRange').value;
-        const currentDay = document.getElementById('recordDate').value;
-        let filtered = allSheetData.filter(r => {
-            const nameMatch = (filter === 'all' || r.name === filter);
-            const dateMatch = (range === 'today') ? (r.date === currentDay) : true;
-            return nameMatch && dateMatch;
-        });
+        const filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter));
         const dataMap = {}; const labelSet = new Set();
         filtered.forEach(r => {
-            const label = (range === 'today') ? r.count : `${r.date} (${r.count})`;
-            labelSet.add(label);
+            const label = `${r.date} (${r.count})`; labelSet.add(label);
             if(!dataMap[r.name]) dataMap[r.name] = {};
             dataMap[r.name][label] = t2s(r.time);
         });
-        const sortedLabels = Array.from(labelSet).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+        const sortedLabels = Array.from(labelSet).sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
         const datasets = [];
         Object.keys(dataMap).forEach((name, i) => {
             datasets.push({ label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: colors[i % colors.length], tension: 0.3, spanGaps: true, pointRadius: 4 });
         });
-        chart.data.labels = sortedLabels;
-        chart.data.datasets = datasets;
-        chart.update();
+        chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update();
     }
 
     function initChart() {
         const ctx = document.getElementById('runChart').getContext('2d');
-        chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => s2t(v) } }, x: { ticks: { maxRotation: 45, minRotation: 45 } } } } });
+        chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => s2t(v) } } } } });
     }
 
     function s2t(s) {
