@@ -36,19 +36,25 @@
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
+        /* --- 印刷設定 --- */
         @media print {
-            @page { margin: 3mm; } 
+            @page { margin: 5mm; } 
             body { background: white; padding: 0; margin: 0; }
             .no-print, .no-print-area, #saveBtn, .lap-edit, button, select, hr { display: none !important; }
-            .pdf-table { width: 100% !important; min-width: 100% !important; }
-            .pdf-table th, .pdf-table td { font-size: 9px !important; padding: 1px !important; height: 16px !important; line-height: 1.0 !important; }
-            .page-break { page-break-before: always; }
-            .print-only-header { display: block !important; text-align: center; border-bottom: 1px solid #000; margin-bottom: 5px; }
+            .print-hidden { display: none !important; }
+            
+            /* 他の項目がある時に記録表を次のページへ送る用クラス */
+            .force-page-break { page-break-before: always !important; margin-top: 20px !important; }
+            
+            .container { max-width: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            .dashboard-grid { display: block; margin: 0; padding: 0; }
+            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 10px; }
+            .pdf-table { width: 100% !important; min-width: 100% !important; table-layout: fixed !important; }
+            .pdf-table th, .pdf-table td { font-size: 9px !important; padding: 1px !important; height: 16px !important; line-height: 1.0 !important; border: 0.5px solid #000 !important; }
+            .col-name { width: 90px !important; }
+            .print-only-header { display: block !important; text-align: center; border-bottom: 1px solid #000; margin-bottom: 10px; }
         }
         .print-only-header { display: none; }
-        .col-y { background: var(--pdf-yellow) !important; }
-        .highlight-male { background-color: var(--pdf-male) !important; font-weight: bold; }
-        .highlight-female { background-color: var(--pdf-female) !important; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -60,7 +66,7 @@
 
 <div class="container">
     <div class="no-print-area">
-        <div style="font-weight:bold; color:var(--secondary); min-width:100px;">表示・印刷設定:</div>
+        <div style="font-weight:bold; color:var(--secondary); min-width:100px;">印刷・表示設定:</div>
         <label><input type="checkbox" id="check-graph" checked> グラフ</label>
         <label><input type="checkbox" id="check-rank" checked> ランキング</label>
         <label><input type="checkbox" id="check-table" checked> 記録表</label>
@@ -82,8 +88,8 @@
     </div>
 
     <div class="dashboard-grid" id="main-dashboard-container">
+        <!-- サイドバー（印刷除外） -->
         <div class="card no-print">
-            <div style="font-size:10px; color:#10b981; font-weight:bold; margin-bottom:10px;">● スプレッドシート同期中</div>
             <label style="font-weight:bold;">履歴選択</label>
             <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
             <input type="date" id="recordDate" onchange="onDateChange()" style="width:100%; padding:8px; margin-bottom:15px;">
@@ -93,6 +99,7 @@
             <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
         </div>
 
+        <!-- 分析エリア -->
         <div class="card" id="card-analysis">
             <div id="section-graph">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -115,6 +122,7 @@
         </div>
     </div>
 
+    <!-- 記録表 -->
     <div class="card" id="section-table">
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
@@ -154,21 +162,56 @@
         await loadDateData();
     };
 
+    // --- 印刷準備とページレイアウト制御 ---
+    function preparePrint() {
+        const showGraph = document.getElementById('check-graph').checked;
+        const showRank = document.getElementById('check-rank').checked;
+        const showTable = document.getElementById('check-table').checked;
+        const scope = document.getElementById('print-scope').value;
+        const targetName = document.getElementById('print-name-select').value;
+        const tableCard = document.getElementById('section-table');
+
+        // 表示項目のON/OFF
+        document.getElementById('section-graph').classList.toggle('print-hidden', !showGraph);
+        document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
+        document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
+
+        // 【重要】改ページの制御
+        // グラフまたはランキングがあり、かつ記録表もある場合は改ページを入れる
+        const hasAnalysis = showGraph || showRank;
+        if (hasAnalysis && showTable) {
+            tableCard.classList.add('force-page-break');
+        } else {
+            tableCard.classList.remove('force-page-break');
+        }
+
+        // タイトルの設定
+        if (scope === 'individual') {
+            document.getElementById('print-title').innerText = `ボクシング個人レポート: ${targetName}`;
+            document.getElementById('print-date-display').innerText = `出力日: ${new Date().toLocaleDateString()}`;
+        } else {
+            document.getElementById('print-title').innerText = `トレーニング記録レポート`;
+            document.getElementById('print-date-display').innerText = `実施日: ${document.getElementById('recordDate').value}`;
+        }
+
+        const orientation = document.getElementById('print-orientation').value;
+        document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orientation}; } }`;
+
+        window.print();
+    }
+
     function onPrintScopeChange() {
         const scope = document.getElementById('print-scope').value;
         document.getElementById('print-name-select').style.display = (scope === 'individual') ? 'inline-block' : 'none';
         renderTable(); updateGraph(); renderRanking();
     }
 
-    // --- 順位計算用ヘルパー ---
+    // 順位計算用
     function getHistoricalRank(date, countLabel, timeStr) {
         if (!timeStr) return "-";
         const mySec = t2s(timeStr);
-        // 同じ日・同じ本目の全データ抽出
         const dayRecords = allSheetData.filter(d => d.date === date && d.count === countLabel);
         if (dayRecords.length === 0) return "-";
-        
-        // タイムでソートして順位を出す
         const times = dayRecords.map(d => t2s(d.time)).sort((a, b) => a - b);
         const rank = times.indexOf(mySec) + 1;
         return rank > 0 ? rank : "-";
@@ -196,14 +239,12 @@
             saveBtn.style.display = 'none';
             const personData = allSheetData.filter(d => d.name === targetName);
             const dateGroups = [...new Set(personData.map(d => d.date))].sort((a,b) => b.localeCompare(a));
-            
             dateGroups.forEach(date => {
                 let formattedRow = [date, "", "", "", "", "", "", "", "", "", "", "", ""];
                 ["1本目", "2本目", "3本目", "4本目", "5本目", "追加"].forEach((label, i) => {
                     const record = personData.find(d => d.date === date && d.count === label);
                     if (record) {
                         formattedRow[i * 2 + 1] = record.time;
-                        // ここでリアルタイムに順位を計算してセット
                         formattedRow[i * 2 + 2] = getHistoricalRank(date, label, record.time);
                     }
                 });
@@ -229,11 +270,10 @@
         const targetName = document.getElementById('print-name-select').value;
         const rankBox2 = document.getElementById('rankLaps2');
         const rankBox1 = document.getElementById('rankLaps1');
-        const title2 = document.getElementById('rankTitle2');
-        const title1 = document.getElementById('rankTitle1');
 
         if (scope === 'all') {
-            title2.innerText = "🏆 2周 歴代トップ5(全員)"; title1.innerText = "🏆 1周 歴代トップ5(全員)";
+            document.getElementById('rankTitle2').innerText = "🏆 2周 歴代トップ5(全員)";
+            document.getElementById('rankTitle1').innerText = "🏆 1周 歴代トップ5(全員)";
             let pBest2 = {}; let pBest1 = {};
             allSheetData.forEach(r => {
                 const sec = t2s(r.time);
@@ -246,10 +286,10 @@
             };
             draw(rankBox2, pBest2); draw(rankBox1, pBest1);
         } else {
-            title2.innerText = `🏆 ${targetName} 自己ベスト5 (2周)`; title1.innerText = `🏆 ${targetName} 自己ベスト5 (1周)`;
-            const myData = allSheetData.filter(d => d.name === targetName);
-            const myBest2 = myData.filter(d => d.laps == "2").sort((a,b) => t2s(a.time) - t2s(b.time)).slice(0,5);
-            const myBest1 = myData.filter(d => d.laps == "1").sort((a,b) => t2s(a.time) - t2s(b.time)).slice(0,5);
+            document.getElementById('rankTitle2').innerText = `🏆 ${targetName} 自己ベスト5 (2周)`;
+            document.getElementById('rankTitle1').innerText = `🏆 ${targetName} 自己ベスト5 (1周)`;
+            const myBest2 = allSheetData.filter(d => d.name === targetName && d.laps == "2").sort((a,b) => t2s(a.time) - t2s(b.time)).slice(0,5);
+            const myBest1 = allSheetData.filter(d => d.name === targetName && d.laps == "1").sort((a,b) => t2s(a.time) - t2s(b.time)).slice(0,5);
             const drawMy = (el, arr) => {
                 el.innerHTML = arr.map((x,i) => `<div class="rank-item"><span>${i+1}</span><span class="rank-name">${x.date}</span><span class="rank-time">${x.time}</span></div>`).join('') || 'なし';
             };
@@ -299,6 +339,7 @@
         }
         times.sort((a,b) => a.sec - b.sec).forEach((t, idx) => { rows[t.rowIndex].cells[colIdx * 2].innerText = idx + 1; });
     }
+
     function formatTimeInput(el, colIdx) {
         let val = el.value.trim();
         if (/^\d{3,4}$/.test(val)) { el.value = val.slice(0, -2) + ":" + val.slice(-2); el.setAttribute('value', el.value); calcRanks(colIdx); }
@@ -362,19 +403,6 @@
         if(sel) { document.getElementById('recordDate').value = sel; loadDateData(); }
     }
     function onDateChange() { loadDateData(); }
-
-    function preparePrint() {
-        const scope = document.getElementById('print-scope').value;
-        const targetName = document.getElementById('print-name-select').value;
-        document.getElementById('print-title').innerText = (scope === 'individual') ? `ボクシング個人レポート: ${targetName}` : `トレーニング記録レポート`;
-        document.getElementById('print-date-display').innerText = (scope === 'individual') ? `出力日: ${new Date().toLocaleDateString()}` : `実施日: ${document.getElementById('recordDate').value}`;
-        const orientation = document.getElementById('print-orientation').value;
-        document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orientation}; } }`;
-        document.getElementById('section-graph').classList.toggle('print-hidden', !document.getElementById('check-graph').checked);
-        document.getElementById('section-rank').classList.toggle('print-hidden', !document.getElementById('check-rank').checked);
-        document.getElementById('section-table').classList.toggle('print-hidden', !document.getElementById('check-table').checked);
-        window.print();
-    }
 </script>
 </body>
 </html>
