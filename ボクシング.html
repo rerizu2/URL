@@ -194,7 +194,6 @@
         const showTable = document.getElementById('check-table').checked;
         const orientation = document.getElementById('print-orientation').value;
 
-        // 印刷用の動的スタイル設定
         document.getElementById('dynamic-print-style').innerHTML = `
             @media print {
                 @page { size: A4 ${orientation}; margin: 5mm; }
@@ -202,13 +201,11 @@
             }
         `;
 
-        // 表示・非表示切り替え
         document.getElementById('section-graph').classList.toggle('print-hidden', !showGraph);
         document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
         document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
         document.getElementById('card-analysis').classList.toggle('print-hidden', (!showGraph && !showRank));
 
-        // 重要：グラフ/ランクがあり、かつ記録表もある場合は、記録表を2枚目へ
         if ((showGraph || showRank) && showTable) {
             document.getElementById('section-table').classList.add('page-break');
         } else {
@@ -220,7 +217,6 @@
         window.print();
     }
 
-    // --- 同期・計算ロジック ---
     async function syncDateAndLoad() {
         const sel = document.getElementById('dateHistory').value;
         if(sel) { document.getElementById('recordDate').value = sel; await loadDateData(); updateGraph(); }
@@ -290,8 +286,9 @@
         ms.forEach(m => {
             if(!m.trim()) return;
             const tr = document.createElement('tr');
+            // onblurを追加して、入力を終えた瞬間にフォーマットが実行されるようにしました
             tr.innerHTML = `<td class="col-name" style="background:#f9f9f9;">${m.trim()}</td>` +
-                           Array(6).fill(0).map((_,i) => `<td class="col-time"><input type="text" class="t-in" oninput="handleInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">-</td>`).join('');
+                           Array(6).fill(0).map((_,i) => `<td class="col-time"><input type="text" class="t-in" oninput="handleInput(this, ${i+1})" onblur="formatTimeInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">-</td>`).join('');
             tbody.appendChild(tr);
             fs.add(new Option(m.trim(), m.trim()));
         });
@@ -299,9 +296,24 @@
         localStorage.setItem('boxing_members', document.getElementById('memberList').value);
     }
 
+    // 入力中の処理（順位のリアルタイム計算など）
     function handleInput(el, colIdx) {
         el.setAttribute('value', el.value);
         calcRanks(colIdx);
+    }
+
+    // 【追加】数字のみを入力した際（例: 500）に 5:00 に自動変換する関数
+    function formatTimeInput(el, colIdx) {
+        let val = el.value.trim();
+        // 3桁（500）または4桁（1230）の数字のみの場合に変換
+        if (/^\d{3,4}$/.test(val)) {
+            const min = val.slice(0, -2); // 下2桁より前を「分」
+            const sec = val.slice(-2);    // 下2桁を「秒」
+            el.value = min + ":" + sec;
+            el.setAttribute('value', el.value);
+            // 変換後の値で順位を再計算
+            calcRanks(colIdx);
+        }
     }
 
     function calcRanks(colIdx) {
@@ -406,8 +418,11 @@
         return m + "'" + String(sec).padStart(4, '0');
     }
     function t2s(v){
-        if(!v || !v.toString().includes(':')) return parseFloat(v) || 0;
-        const p = v.split(':'); return parseInt(p[0])*60 + parseInt(p[1]);
+        if(!v) return 0;
+        const sVal = v.toString();
+        if(!sVal.includes(':')) return parseFloat(sVal) || 0;
+        const p = sVal.split(':'); 
+        return (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0);
     }
 </script>
 </body>
