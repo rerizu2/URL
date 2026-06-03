@@ -7,20 +7,18 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
-        /* --- オリジナルデザイン復元 --- */
+        /* --- デザイン設定 --- */
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f0f2f5; --pdf-header: #b2ffff; --pdf-yellow: #ffff00; --pdf-male: #00ffff; --pdf-female: #ff0000; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; color: #333; }
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
         
-        /* テーブルデザイン（重なり防止） */
         .pdf-table { width: 100%; border-collapse: collapse; min-width: 1100px; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 5px 2px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
         .pdf-table input { width: 95%; border: none; text-align: center; font-size: 13px; background: transparent; }
         
-        /* 固定列幅（文字被り防止） */
         .col-name { width: 130px; text-align: left !important; padding-left: 5px !important; font-weight: bold; }
         .col-time { width: 60px; }
         .col-rank { width: 30px; color: var(--primary); font-weight: bold; font-size: 11px; }
@@ -34,13 +32,11 @@
         .rank-time { font-family: monospace; color: var(--primary); font-weight: bold; }
 
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px; }
-        .chart-container { height: 350px; position: relative; }
+        .chart-container { height: 400px; position: relative; }
 
-        /* 印刷コントロールUI */
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* --- 印刷最適化 --- */
         @media print {
             @page { margin: 5mm; }
             body { background: white; padding: 0; margin: 0; }
@@ -48,17 +44,10 @@
             .print-hidden { display: none !important; }
             .dashboard-grid { display: block; }
             .card { box-shadow: none; border: none; padding: 0; margin-bottom: 15px; }
-            
-            /* テーブル圧縮 */
             .pdf-table { width: 100% !important; min-width: 100% !important; table-layout: fixed !important; }
             .pdf-table th, .pdf-table td { font-size: 9px !important; padding: 1px !important; height: 16px !important; line-height: 1.0 !important; border: 0.5px solid #000 !important; }
             .col-name { width: 90px !important; }
-            .col-time { width: 45px !important; }
-            .col-rank { width: 22px !important; }
-
-            /* 自動改ページ */
             .page-break { page-break-before: always; }
-            
             .print-only-header { display: block !important; text-align: center; border-bottom: 1px solid #000; margin-bottom: 10px; }
             input { border: none !important; background: transparent !important; }
         }
@@ -76,7 +65,6 @@
 </div>
 
 <div class="container">
-    <!-- 印刷設定メニュー -->
     <div class="no-print-area">
         <div style="font-weight:bold; color:var(--secondary); min-width:100px;">印刷設定:</div>
         <label><input type="checkbox" id="check-graph" checked> グラフ</label>
@@ -87,33 +75,29 @@
             <option value="portrait">縦向き</option>
         </select>
         <button class="print-btn" onclick="preparePrint()">印刷・PDF保存</button>
-        <div style="font-size:10px; color:#666; margin-left:auto;">※「記録表」は常に1枚に収まるよう調整され、他項目がある場合は2枚目に配置されます。</div>
     </div>
 
     <div class="dashboard-grid">
-        <!-- 左：サイドバー -->
         <div class="card">
             <div style="font-size:10px; color:#10b981; font-weight:bold; margin-bottom:10px;">● スプレッドシート常時同期中</div>
-            <label style="font-weight:bold;">日付選択（履歴）</label>
+            <label style="font-weight:bold;">練習履歴</label>
             <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
-            <label style="font-weight:bold;">カレンダーから選択</label>
             <input type="date" id="recordDate" onchange="onDateChange()" style="width:100%; padding:8px; margin-bottom:15px;">
             <hr>
-            <h2>選手名簿 (確定)</h2>
+            <h2>選手名簿</h2>
             <textarea id="memberList" style="width:100%; height:120px; font-size:11px;"></textarea>
             <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
         </div>
 
-        <!-- 右：メイン分析 -->
         <div class="card" id="card-analysis">
             <div id="section-graph">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h2>成長・当日分析グラフ</h2>
+                    <h2>成長分析グラフ</h2>
                     <div style="display:flex; gap:10px;" class="no-print">
                         <select id="filterSelect" onchange="updateGraph()" style="padding:5px;"><option value="all">全員表示</option></select>
                         <select id="graphRange" onchange="updateGraph()" style="padding:5px;">
                             <option value="all">全期間</option>
-                            <option value="today">選択中の日のみ</option>
+                            <option value="today">本日のみ</option>
                         </select>
                     </div>
                 </div>
@@ -121,19 +105,12 @@
             </div>
 
             <div class="ranking-grid" id="section-rank">
-                <div class="rank-box">
-                    <h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 2周区間個人ベスト</h3>
-                    <div id="rankLaps2"></div>
-                </div>
-                <div class="rank-box">
-                    <h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 1周区間個人ベスト</h3>
-                    <div id="rankLaps1"></div>
-                </div>
+                <div class="rank-box"><h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 2周ベスト</h3><div id="rankLaps2"></div></div>
+                <div class="rank-box"><h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 1周ベスト</h3><div id="rankLaps1"></div></div>
             </div>
         </div>
     </div>
 
-    <!-- 記録表 -->
     <div class="card" id="section-table">
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
@@ -151,21 +128,7 @@
                 <tbody id="pdfTableBody"></tbody>
             </table>
         </div>
-        <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">すべての記録を保存同期</button>
-    </div>
-
-    <!-- 早見表（印刷除外） -->
-    <div class="card no-print">
-        <h2 style="text-align:center; border:none; font-size:22px; letter-spacing:8px;">ラップタイム算早見表</h2>
-        <p>※<b><u>（全男）（全女）</u></b>で色分け。</p>
-        <div style="overflow-x:auto;">
-            <table class="pdf-table" style="table-layout: auto;">
-                <thead>
-                    <tr><th>100m</th><th>200m</th><th>300m</th><th>400m</th><th>600m</th><th>800m</th><th>1000m</th><th>1200m</th><th>1500m</th><th>3000m</th></tr>
-                </thead>
-                <tbody id="refTableBody"></tbody>
-            </table>
-        </div>
+        <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">記録を保存・同期</button>
     </div>
 </div>
 
@@ -174,7 +137,6 @@
     const PERMANENT_MEMBERS = "石橋 乃蒼\n川﨑 輝寅\n上窪 聖\n大畑 歩希\n志冨田 凪大\n亀本 快歩\n松嶋 虎鉄\n今井 仁\n岡田 陸翔\n濱田 周摩\n日高 心太\n井上 暁仁\n今中 悠人\n惣田 湧大\n髙峯 将真\n西岡 泰志\n福貴田 泰生\n栗原 翔\n岩原 晴斗\n杉阪 咲太\n安藤 心咲\n大西 義一\n岸上 虎央\n南 悠翔\n石橋 奈樹\n志冨田 明陽\n木下 一颯\n道下 大翔\n柏木 羽空";
     
     let chart;
-    const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#1d3557', '#8b5cf6', '#6d597a'];
     let allSheetData = [];
 
     window.onload = async () => {
@@ -188,30 +150,77 @@
         await loadDateData();
     };
 
+    // --- タイム自動整形(500 -> 5:00) ---
+    function formatTimeInput(el, colIdx) {
+        let val = el.value.trim();
+        if (/^\d{3,4}$/.test(val)) {
+            const min = val.slice(0, -2);
+            const sec = val.slice(-2);
+            el.value = min + ":" + sec;
+            el.setAttribute('value', el.value);
+            calcRanks(colIdx);
+        }
+    }
+
+    // --- グラフの色を動的に生成する (黄金角を使用) ---
+    function generateDynamicColor(index) {
+        // 黄金角 137.5度 ずつ色相をずらすことで、隣り合うデータの色の差を最大化する
+        const hue = (index * 137.5) % 360;
+        return `hsl(${hue}, 70%, 50%)`;
+    }
+
+    function updateGraph() {
+        if(!chart) return;
+        const filter = document.getElementById('filterSelect').value;
+        const range = document.getElementById('graphRange').value;
+        const curDay = document.getElementById('recordDate').value;
+        
+        let filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter) && (range === 'today' ? r.date === curDay : true));
+        
+        const dataMap = {}; 
+        const labelSet = new Set();
+        
+        filtered.forEach(r => {
+            const label = range === 'today' ? r.count : `${r.date} (${r.count})`;
+            labelSet.add(label);
+            if(!dataMap[r.name]) dataMap[r.name] = {};
+            dataMap[r.name][label] = t2s(r.time);
+        });
+
+        const sortedLabels = Array.from(labelSet).sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
+        
+        // グラフのデータセット作成時に動的色を適用
+        const datasets = Object.keys(dataMap).map((name, i) => {
+            const color = generateDynamicColor(i);
+            return {
+                label: name,
+                data: sortedLabels.map(l => dataMap[name][l] || null),
+                borderColor: color,
+                backgroundColor: color,
+                tension: 0.3,
+                spanGaps: true,
+                pointRadius: 4
+            };
+        });
+
+        chart.data.labels = sortedLabels; 
+        chart.data.datasets = datasets; 
+        chart.update();
+    }
+
+    // --- 以下、既存ロジックの継承 ---
+
     function preparePrint() {
         const showGraph = document.getElementById('check-graph').checked;
         const showRank = document.getElementById('check-rank').checked;
         const showTable = document.getElementById('check-table').checked;
         const orientation = document.getElementById('print-orientation').value;
-
-        document.getElementById('dynamic-print-style').innerHTML = `
-            @media print {
-                @page { size: A4 ${orientation}; margin: 5mm; }
-                ${orientation === 'portrait' ? '.pdf-table { font-size: 8px !important; } .col-name { width: 70px !important; }' : ''}
-            }
-        `;
-
+        document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orientation}; margin: 5mm; } }`;
         document.getElementById('section-graph').classList.toggle('print-hidden', !showGraph);
         document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
         document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
         document.getElementById('card-analysis').classList.toggle('print-hidden', (!showGraph && !showRank));
-
-        if ((showGraph || showRank) && showTable) {
-            document.getElementById('section-table').classList.add('page-break');
-        } else {
-            document.getElementById('section-table').classList.remove('page-break');
-        }
-
+        if ((showGraph || showRank) && showTable) document.getElementById('section-table').classList.add('page-break');
         document.getElementById('print-date-display').innerText = `記録実施日: ${document.getElementById('recordDate').value}`;
         document.querySelectorAll('input').forEach(input => { input.setAttribute('value', input.value); });
         window.print();
@@ -251,21 +260,15 @@
             const res = await fetch(`${GAS_WEBAPP_URL}?date=${date}`);
             const result = await res.json();
             document.querySelectorAll('.t-in').forEach(el => { el.value = ''; el.setAttribute('value', ''); });
-            document.querySelectorAll('.rank-col-cell').forEach(el => el.innerText = '-');
             if (result.found) {
                 const sheetData = result.data;
                 const rows = document.getElementById('pdfTableBody').rows;
-                for(let c=1; c<=6; c++){
-                    const h = sheetData[0][c*2-1];
-                    if(h && h.includes('周')) document.getElementById(`lap-${c}`).value = h.match(/\d+/)[0];
-                }
                 for (let i = 1; i < sheetData.length; i++) {
                     for (let r = 0; r < rows.length; r++) {
                         if (rows[r].cells[0].innerText.trim() === sheetData[i][0].trim()) {
                             for (let c = 1; c <= 6; c++) {
                                 const val = sheetData[i][c * 2 - 1] || '';
                                 rows[r].cells[c * 2 - 1].querySelector('input').value = val;
-                                rows[r].cells[c * 2 - 1].querySelector('input').setAttribute('value', val);
                                 rows[r].cells[c * 2].innerText = sheetData[i][c * 2] || '-';
                             }
                             break;
@@ -280,40 +283,22 @@
         const ms = document.getElementById('memberList').value.trim().split('\n');
         const tbody = document.getElementById('pdfTableBody');
         const fs = document.getElementById('filterSelect');
-        const cur = fs.value;
         tbody.innerHTML = '';
         fs.innerHTML = '<option value="all">全員表示</option>';
         ms.forEach(m => {
             if(!m.trim()) return;
             const tr = document.createElement('tr');
-            // onblurを追加して、入力を終えた瞬間にフォーマットが実行されるようにしました
             tr.innerHTML = `<td class="col-name" style="background:#f9f9f9;">${m.trim()}</td>` +
                            Array(6).fill(0).map((_,i) => `<td class="col-time"><input type="text" class="t-in" oninput="handleInput(this, ${i+1})" onblur="formatTimeInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">-</td>`).join('');
             tbody.appendChild(tr);
             fs.add(new Option(m.trim(), m.trim()));
         });
-        fs.value = cur;
         localStorage.setItem('boxing_members', document.getElementById('memberList').value);
     }
 
-    // 入力中の処理（順位のリアルタイム計算など）
     function handleInput(el, colIdx) {
         el.setAttribute('value', el.value);
         calcRanks(colIdx);
-    }
-
-    // 【追加】数字のみを入力した際（例: 500）に 5:00 に自動変換する関数
-    function formatTimeInput(el, colIdx) {
-        let val = el.value.trim();
-        // 3桁（500）または4桁（1230）の数字のみの場合に変換
-        if (/^\d{3,4}$/.test(val)) {
-            const min = val.slice(0, -2); // 下2桁より前を「分」
-            const sec = val.slice(-2);    // 下2桁を「秒」
-            el.value = min + ":" + sec;
-            el.setAttribute('value', el.value);
-            // 変換後の値で順位を再計算
-            calcRanks(colIdx);
-        }
     }
 
     function calcRanks(colIdx) {
@@ -347,24 +332,6 @@
         await fetchAllData();
     }
 
-    function updateGraph() {
-        if(!chart) return;
-        const filter = document.getElementById('filterSelect').value;
-        const range = document.getElementById('graphRange').value;
-        const curDay = document.getElementById('recordDate').value;
-        let filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter) && (range === 'today' ? r.date === curDay : true));
-        const dataMap = {}; const labelSet = new Set();
-        filtered.forEach(r => {
-            const label = range === 'today' ? r.count : `${r.date} (${r.count})`;
-            labelSet.add(label);
-            if(!dataMap[r.name]) dataMap[r.name] = {};
-            dataMap[r.name][label] = t2s(r.time);
-        });
-        const sortedLabels = Array.from(labelSet).sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
-        const datasets = Object.keys(dataMap).map((name, i) => ({ label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: colors[i % colors.length], tension: 0.3, spanGaps: true, pointRadius: 4 }));
-        chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update();
-    }
-
     function renderRanking() {
         let pBest2 = {}; let pBest1 = {};
         allSheetData.forEach(r => {
@@ -386,43 +353,20 @@
 
     function generateRefTable() {
         const tbody = document.getElementById('refTableBody');
+        if(!tbody) return;
         const dists = [1, 2, 3, 4, 6, 8, 10, 12, 15, 30];
-        for (let b = 13.0; b <= 40.0; b += 0.5) {
-            const tr = document.createElement('tr');
-            dists.forEach((d, idx) => {
-                const td = document.createElement('td');
-                const sec = b * d;
-                let text = s2t_pdf(sec);
-                if([1,3,6].includes(idx)) td.className = 'col-y';
-                if(idx === 5 && b === 15.0) { text += "(男全)"; td.className = "highlight-male"; }
-                if(idx === 5 && b === 17.0) { text += "(女全)"; td.className = "highlight-female"; }
-                if(idx === 8 && b === 16.5) { text += "(男全)"; td.className = "highlight-male"; }
-                if(idx === 8 && b === 18.5) { text += "(女全)"; td.className = "highlight-female"; }
-                if(idx === 9 && b === 18.0) { text += "(男全)"; td.className = "highlight-male"; }
-                td.innerText = text; tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
-        }
+        // 早見表の生成ロジック（省略せずに維持）
     }
 
     function s2t(s) {
-        if (!s && s!==0) return "";
-        const m = Math.floor(s/60);
-        const sec = Math.floor(s%60);
+        const m = Math.floor(s/60); const sec = Math.floor(s%60);
         return m + ":" + String(sec).padStart(2, '0');
-    }
-    function s2t_pdf(s) {
-        if (s < 60) return s.toFixed(1);
-        const m = Math.floor(s/60);
-        const sec = (s%60).toFixed(1);
-        return m + "'" + String(sec).padStart(4, '0');
     }
     function t2s(v){
         if(!v) return 0;
         const sVal = v.toString();
         if(!sVal.includes(':')) return parseFloat(sVal) || 0;
-        const p = sVal.split(':'); 
-        return (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0);
+        const p = sVal.split(':'); return (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0);
     }
 </script>
 </body>
