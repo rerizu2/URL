@@ -38,10 +38,12 @@
 
         /* --- 印刷設定 --- */
         @media print {
-            @page { margin: 3mm; } /* 余白をさらに削減 */
+            @page { margin: 3mm; } 
             body { background: white; padding: 0; margin: 0; }
             .no-print, .no-print-area, #saveBtn, .lap-edit, button, select, hr { display: none !important; }
             .print-hidden { display: none !important; }
+            /* 個人印刷時に他人の行を隠す用 */
+            .print-exclude-row { display: none !important; }
             
             .container { max-width: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
             .dashboard-grid { display: block; margin: 0; padding: 0; }
@@ -73,6 +75,18 @@
         <label><input type="checkbox" id="check-graph" checked> グラフ</label>
         <label><input type="checkbox" id="check-rank" checked> ランキング</label>
         <label><input type="checkbox" id="check-table" checked> 記録表</label>
+        
+        <div style="border-left: 1px solid #ccc; padding-left: 10px; display: flex; gap: 5px; align-items: center;">
+            <span>範囲:</span>
+            <select id="print-scope" onchange="togglePrintNameSelect()" style="padding:5px;">
+                <option value="all">すべて</option>
+                <option value="individual">個人</option>
+            </select>
+            <select id="print-name-select" style="padding:5px; display:none;">
+                <!-- 名簿更新時に自動で追加されます -->
+            </select>
+        </div>
+
         <select id="print-orientation" style="padding:5px;">
             <option value="landscape">横向き (推奨)</option>
             <option value="portrait">縦向き</option>
@@ -170,6 +184,12 @@
         await loadDateData();
     };
 
+    // --- 印刷設定の制御用 ---
+    function togglePrintNameSelect() {
+        const scope = document.getElementById('print-scope').value;
+        document.getElementById('print-name-select').style.display = (scope === 'individual') ? 'inline-block' : 'none';
+    }
+
     // --- 自動変換 500 -> 5:00 ---
     function formatTimeInput(el, colIdx) {
         let val = el.value.trim();
@@ -182,12 +202,14 @@
         }
     }
 
-    // --- 印刷準備（1枚に収めるための修正） ---
+    // --- 印刷準備（修正点：個人フィルタリング追加） ---
     function preparePrint() {
         const showGraph = document.getElementById('check-graph').checked;
         const showRank = document.getElementById('check-rank').checked;
         const showTable = document.getElementById('check-table').checked;
         const orientation = document.getElementById('print-orientation').value;
+        const printScope = document.getElementById('print-scope').value;
+        const targetName = document.getElementById('print-name-select').value;
 
         // 向きの反映
         document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orientation}; } }`;
@@ -197,12 +219,39 @@
         document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
         document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
 
-        // グラフもランキングも表示しない場合、親コンテナごと消してスペースを詰める
+        // 個人印刷の場合の処理
+        if (printScope === 'individual') {
+            // 記録表の行をフィルタリング
+            const rows = document.getElementById('pdfTableBody').rows;
+            for (let i = 0; i < rows.length; i++) {
+                const rowName = rows[i].cells[0].innerText.trim();
+                if (rowName !== targetName) {
+                    rows[i].classList.add('print-exclude-row');
+                } else {
+                    rows[i].classList.remove('print-exclude-row');
+                }
+            }
+            // グラフも個人に合わせる（グラフが表示対象の場合）
+            if (showGraph) {
+                document.getElementById('filterSelect').value = targetName;
+                updateGraph();
+            }
+        } else {
+            // すべて表示に戻す
+            const rows = document.getElementById('pdfTableBody').rows;
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].classList.remove('print-exclude-row');
+            }
+            if (showGraph) {
+                document.getElementById('filterSelect').value = 'all';
+                updateGraph();
+            }
+        }
+
         const hasAnalysis = showGraph || showRank;
         document.getElementById('main-dashboard-container').classList.toggle('print-hidden', !hasAnalysis);
         document.getElementById('card-analysis').classList.toggle('print-hidden', !hasAnalysis);
 
-        // 改ページ制御：グラフ系がある時だけ、記録表の前に改ページを入れる
         const tableCard = document.getElementById('section-table');
         if (hasAnalysis && showTable) {
             tableCard.classList.add('page-break');
@@ -211,11 +260,17 @@
         }
 
         document.getElementById('print-date-display').innerText = `記録実施日: ${document.getElementById('recordDate').value}`;
-        
-        // フォーム値を属性にコピー
         document.querySelectorAll('input').forEach(input => { input.setAttribute('value', input.value); });
 
         window.print();
+
+        // 印刷ダイアログを閉じた後に「個人フィルタ」による非表示を解除する（念のため）
+        setTimeout(() => {
+            const rows = document.getElementById('pdfTableBody').rows;
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].classList.remove('print-exclude-row');
+            }
+        }, 1000);
     }
 
     // --- その他既存ロジック ---
@@ -228,15 +283,22 @@
         const ms = document.getElementById('memberList').value.trim().split('\n');
         const tbody = document.getElementById('pdfTableBody');
         const fs = document.getElementById('filterSelect');
+        const ps = document.getElementById('print-name-select'); // 印刷用セレクト
+        
         tbody.innerHTML = '';
         fs.innerHTML = '<option value="all">全員表示</option>';
+        ps.innerHTML = ''; // クリア
+
         ms.forEach(m => {
             if(!m.trim()) return;
+            const name = m.trim();
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="col-name" style="background:#f9f9f9;">${m.trim()}</td>` +
+            tr.innerHTML = `<td class="col-name" style="background:#f9f9f9;">${name}</td>` +
                            Array(6).fill(0).map((_,i) => `<td class="col-time"><input type="text" class="t-in" oninput="handleInput(this, ${i+1})" onblur="formatTimeInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">-</td>`).join('');
             tbody.appendChild(tr);
-            fs.add(new Option(m.trim(), m.trim()));
+            
+            fs.add(new Option(name, name));
+            ps.add(new Option(name, name)); // 印刷設定用にも追加
         });
         localStorage.setItem('boxing_members', document.getElementById('memberList').value);
     }
