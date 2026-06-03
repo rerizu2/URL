@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシング記録 - 1枚集約・印刷完全版</title>
+    <title>ボクシング記録 - 完全版（日付修正済）</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -12,12 +12,11 @@
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         
-        /* 記録表テーブルデザイン */
+        /* 記録表テーブルデザイン（1枚に収める設定） */
         .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px 2px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
         .pdf-table thead th { background: var(--pdf-header); font-size: 11px; font-weight: bold; }
         
-        /* 列幅固定設定 */
         .col-name { width: 110px; text-align: left !important; padding-left: 5px !important; }
         .col-time { width: 55px; }
         .col-rank { width: 28px; color: var(--primary); font-weight: bold; background: #fffaf0; }
@@ -26,7 +25,7 @@
         .lap-edit { width: 30px !important; border: 1px solid #ccc !important; background: #fff !important; color: var(--primary); font-weight: bold; border-radius: 3px; }
 
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
-        .chart-container { height: 320px; position: relative; margin-bottom: 10px; }
+        .chart-container { height: 350px; position: relative; margin-bottom: 10px; }
 
         /* ランキング */
         .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; }
@@ -40,7 +39,6 @@
         .print-options { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         
-        /* ラップ早見表用 */
         .col-y { background: var(--pdf-yellow) !important; }
         .highlight-male { background-color: var(--pdf-male) !important; font-weight: bold; }
         .highlight-female { background-color: var(--pdf-female) !important; color: white; font-weight: bold; }
@@ -51,15 +49,12 @@
             .print-hidden { display: none !important; }
             .dashboard-grid { display: block; }
             .card { box-shadow: none; border: none; padding: 0; margin-bottom: 15px; }
-            
-            /* 記録表を1枚に収めるための強制調整 */
             .pdf-table { width: 100% !important; table-layout: fixed; }
             .pdf-table th, .pdf-table td { font-size: 9px; padding: 2px 1px !important; height: 16px; border: 0.5px solid #000; }
             .col-name { width: 90px !important; }
             .col-time { width: 45px !important; }
             .col-rank { width: 22px !important; }
             input { font-size: 9px !important; border: none !important; }
-            
             .page-break { page-break-before: always; }
             .print-only-header { display: block !important; text-align: center; border-bottom: 1px solid #000; margin-bottom: 10px; }
         }
@@ -84,35 +79,42 @@
             
             <span style="margin-left:10px; border-left:1px solid #ccc; padding-left:15px;">向き:</span>
             <select id="print-orientation" style="padding:5px; border-radius:4px;">
-                <option value="landscape">横向き (1枚に収まりやすい)</option>
+                <option value="landscape">横向き (推奨)</option>
                 <option value="portrait">縦向き</option>
             </select>
 
             <button class="print-btn" onclick="preparePrint()">印刷・PDF保存を実行</button>
         </div>
-        <div style="font-size:11px; color:#666; margin-top:8px;">
-            ※「記録表」は大人数でも1枚に収まるよう自動調整されます。「横向き」が最も確実です。
-        </div>
     </div>
 
     <div class="dashboard-grid">
+        <!-- 左サイド：設定パネル（ここが「設定できなくなった」部分の修正） -->
         <div class="card">
-            <div style="font-size:10px; color:#10b981; font-weight:bold; margin-bottom:10px;">● スプレッドシート同期中</div>
-            <label style="font-weight:bold;">日付/履歴選択</label>
-            <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:5px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
-            <input type="date" id="recordDate" onchange="onDateChange()" style="width:100%; padding:5px; margin-bottom:15px;">
+            <div style="font-size:10px; color:#10b981; font-weight:bold; margin-bottom:10px;">● スプレッドシート常時同期中</div>
+            
+            <label style="font-weight:bold;">1. 過去の履歴から読み込む</label>
+            <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:15px;"><option value="">-- 読込中 --</option></select>
+            
+            <label style="font-weight:bold;">2. 日付を直接選ぶ</label>
+            <input type="date" id="recordDate" onchange="onDateChange()" style="width:100%; padding:8px; margin-bottom:20px;">
+            
             <hr>
-            <h2>選手名簿</h2>
+            <h2 style="font-size:14px;">選手名簿 (改行で区切る)</h2>
             <textarea id="memberList" style="width:100%; height:150px; font-size:11px;"></textarea>
-            <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">名簿更新</button>
+            <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
         </div>
 
+        <!-- 右サイド：グラフとランキング -->
         <div class="card" id="card-analysis">
             <div id="section-graph">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <h2 style="font-size:14px; margin:0;">成長・当日分析グラフ</h2>
-                    <div class="no-print">
-                        <select id="filterSelect" onchange="updateGraph()" style="font-size:11px;"></select>
+                    <div style="display:flex; gap:10px;" class="no-print">
+                        <select id="filterSelect" onchange="updateGraph()" style="font-size:11px;"><option value="all">全員表示</option></select>
+                        <select id="graphRange" onchange="updateGraph()" style="font-size:11px;">
+                            <option value="all">全期間を表示</option>
+                            <option value="today">選択中の日のみ表示</option>
+                        </select>
                     </div>
                 </div>
                 <div class="chart-container"><canvas id="runChart"></canvas></div>
@@ -131,19 +133,19 @@
         </div>
     </div>
 
-    <!-- 記録表 -->
+    <!-- 記録表パネル -->
     <div class="card" id="section-table">
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
                 <thead>
                     <tr>
                         <th class="col-name">氏名</th>
-                        <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2">)</th><th class="col-rank">順</th>
-                        <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2">)</th><th class="col-rank">順</th>
-                        <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1">)</th><th class="col-rank">順</th>
-                        <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1">)</th><th class="col-rank">順</th>
-                        <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1">)</th><th class="col-rank">順</th>
-                        <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1">)</th><th class="col-rank">順</th>
+                        <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2">周)</th><th class="col-rank">順位</th>
+                        <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2">周)</th><th class="col-rank">順位</th>
+                        <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1">周)</th><th class="col-rank">順位</th>
+                        <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1">周)</th><th class="col-rank">順位</th>
+                        <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1">周)</th><th class="col-rank">順位</th>
+                        <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1">周)</th><th class="col-rank">順位</th>
                     </tr>
                 </thead>
                 <tbody id="pdfTableBody"></tbody>
@@ -152,9 +154,9 @@
         <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">すべての記録を保存同期</button>
     </div>
 
-    <!-- 早見表（印刷除外） -->
+    <!-- ラップタイム早見表（印刷除外） -->
     <div class="card no-print">
-        <h2 style="font-size:16px; text-align:center;">ラップタイム算早見表</h2>
+        <h2 style="font-size:16px; text-align:center;">ラップタイム算早見表 (画面確認用)</h2>
         <div style="overflow-x:auto;">
             <table class="pdf-table" style="table-layout: auto;">
                 <thead>
@@ -191,7 +193,6 @@
         const showTable = document.getElementById('check-table').checked;
         const orientation = document.getElementById('print-orientation').value;
 
-        // 動的スタイルの生成
         document.getElementById('dynamic-print-style').innerHTML = `
             @media print {
                 @page { size: A4 ${orientation}; margin: 5mm; }
@@ -211,54 +212,8 @@
         }
 
         document.getElementById('print-date-display').innerText = `記録実施日: ${document.getElementById('recordDate').value}`;
-        
-        document.querySelectorAll('input').forEach(input => {
-            input.setAttribute('value', input.value);
-        });
-
+        document.querySelectorAll('input').forEach(input => { input.setAttribute('value', input.value); });
         window.print();
-    }
-
-    // --- ロジック ---
-    function initChart() {
-        const ctx = document.getElementById('runChart').getContext('2d');
-        chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { font: { size: 10 }, callback: v => s2t(v) } } } } });
-    }
-
-    function applyMembers() {
-        const ms = document.getElementById('memberList').value.trim().split('\n');
-        const tbody = document.getElementById('pdfTableBody');
-        const fs = document.getElementById('filterSelect');
-        const cur = fs.value;
-        tbody.innerHTML = '';
-        fs.innerHTML = '<option value="all">全員表示</option>';
-        ms.forEach(m => {
-            if(!m.trim()) return;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="col-name">${m.trim()}</td>` +
-                           Array(6).fill(0).map((_,i) => `<td class="col-time"><input type="text" class="t-in" oninput="handleInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">-</td>`).join('');
-            tbody.appendChild(tr);
-            fs.add(new Option(m.trim(), m.trim()));
-        });
-        fs.value = cur;
-        localStorage.setItem('boxing_members', document.getElementById('memberList').value);
-    }
-
-    function handleInput(el, colIdx) {
-        el.setAttribute('value', el.value);
-        calcRanks(colIdx);
-    }
-
-    function calcRanks(colIdx) {
-        const rows = document.getElementById('pdfTableBody').rows;
-        let times = [];
-        for(let i=0; i<rows.length; i++){
-            const input = rows[i].cells[colIdx * 2 - 1].querySelector('input');
-            const val = input.value.trim();
-            if(val) times.push({ rowIndex: i, sec: t2s(val) });
-            rows[i].cells[colIdx * 2].innerText = '-';
-        }
-        times.sort((a,b) => a.sec - b.sec).forEach((t, idx) => { rows[t.rowIndex].cells[colIdx * 2].innerText = idx + 1; });
     }
 
     async function syncDateAndLoad() {
@@ -304,7 +259,6 @@
                     if(h && h.includes('周')) {
                         const val = h.match(/\d+/)[0];
                         document.getElementById(`lap-${c}`).value = val;
-                        document.getElementById(`lap-${c}`).setAttribute('value', val);
                     }
                 }
                 for (let i = 1; i < sheetData.length; i++) {
@@ -312,8 +266,7 @@
                         if (rows[r].cells[0].innerText.trim() === sheetData[i][0].trim()) {
                             for (let c = 1; c <= 6; c++) {
                                 const val = sheetData[i][c * 2 - 1] || '';
-                                const inp = rows[r].cells[c * 2 - 1].querySelector('input');
-                                inp.value = val; inp.setAttribute('value', val);
+                                rows[r].cells[c * 2 - 1].querySelector('input').value = val;
                                 rows[r].cells[c * 2].innerText = sheetData[i][c * 2] || '-';
                             }
                             break;
@@ -324,11 +277,47 @@
         } catch (e) {}
     }
 
+    function applyMembers() {
+        const ms = document.getElementById('memberList').value.trim().split('\n');
+        const tbody = document.getElementById('pdfTableBody');
+        const fs = document.getElementById('filterSelect');
+        const cur = fs.value;
+        tbody.innerHTML = '';
+        fs.innerHTML = '<option value="all">全員表示</option>';
+        ms.forEach(m => {
+            if(!m.trim()) return;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td class="col-name" style="font-weight:bold; background:#f9f9f9;">${m.trim()}</td>` +
+                           Array(6).fill(0).map((_,i) => `<td class="col-time"><input type="text" class="t-in" oninput="handleInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">-</td>`).join('');
+            tbody.appendChild(tr);
+            fs.add(new Option(m.trim(), m.trim()));
+        });
+        fs.value = cur;
+        localStorage.setItem('boxing_members', document.getElementById('memberList').value);
+    }
+
+    function handleInput(el, colIdx) {
+        el.setAttribute('value', el.value);
+        calcRanks(colIdx);
+    }
+
+    function calcRanks(colIdx) {
+        const rows = document.getElementById('pdfTableBody').rows;
+        let times = [];
+        for(let i=0; i<rows.length; i++){
+            const input = rows[i].cells[colIdx * 2 - 1].querySelector('input');
+            const val = input.value.trim();
+            if(val) times.push({ rowIndex: i, sec: t2s(val) });
+            rows[i].cells[colIdx * 2].innerText = '-';
+        }
+        times.sort((a,b) => a.sec - b.sec).forEach((t, idx) => { rows[t.rowIndex].cells[colIdx * 2].innerText = idx + 1; });
+    }
+
     async function saveAllSheetData() {
         const btn = document.getElementById('saveBtn');
         const date = document.getElementById('recordDate').value;
         const rows = document.getElementById('pdfTableBody').rows;
-        btn.disabled = true; btn.innerText = "同期中...";
+        btn.disabled = true; btn.innerText = "保存中...";
         for (let r = 0; r < rows.length; r++) {
             for (let c = 1; c <= 6; c++) {
                 const input = rows[r].cells[c * 2 - 1].querySelector('input');
@@ -346,17 +335,26 @@
     function updateGraph() {
         if(!chart) return;
         const filter = document.getElementById('filterSelect').value;
-        let filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter));
+        const range = document.getElementById('graphRange').value;
+        const curDay = document.getElementById('recordDate').value;
+
+        // データの絞り込み
+        let filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter) && (range === 'today' ? r.date === curDay : true));
+        
         const dataMap = {}; const labelSet = new Set();
         filtered.forEach(r => {
-            const label = `${r.date} (${r.count})`;
+            const label = range === 'today' ? r.count : `${r.date} (${r.count})`;
             labelSet.add(label);
             if(!dataMap[r.name]) dataMap[r.name] = {};
             dataMap[r.name][label] = t2s(r.time);
         });
-        const sortedLabels = Array.from(labelSet).sort((a,b) => a.localeCompare(b, undefined, {numeric:true})).slice(-15);
-        const datasets = Object.keys(dataMap).map((name, i) => ({ label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: colors[i % colors.length], tension: 0.3, spanGaps: true, pointRadius: 3 }));
-        chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update();
+
+        const sortedLabels = Array.from(labelSet).sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
+        const datasets = Object.keys(dataMap).map((name, i) => ({ label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: colors[i % colors.length], tension: 0.3, spanGaps: true, pointRadius: 4 }));
+        
+        chart.data.labels = sortedLabels; 
+        chart.data.datasets = datasets; 
+        chart.update();
     }
 
     function renderRanking() {
@@ -373,10 +371,15 @@
         draw('rankLaps2', pBest2); draw('rankLaps1', pBest1);
     }
 
+    function initChart() {
+        const ctx = document.getElementById('runChart').getContext('2d');
+        chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => s2t(v) } } } } });
+    }
+
     function generateRefTable() {
         const tbody = document.getElementById('refTableBody');
         const dists = [1, 2, 3, 4, 6, 8, 10, 12, 15, 30];
-        for (let b = 13.0; b <= 30.0; b += 0.5) {
+        for (let b = 13.0; b <= 40.0; b += 0.5) {
             const tr = document.createElement('tr');
             dists.forEach((d, idx) => {
                 const td = document.createElement('td');
@@ -401,6 +404,7 @@
         return m + ":" + String(sec).padStart(2, '0');
     }
     function s2t_pdf(s) {
+        if (s < 60) return s.toFixed(1);
         const m = Math.floor(s/60);
         const sec = (s%60).toFixed(1);
         return m + "'" + String(sec).padStart(4, '0');
