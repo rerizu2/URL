@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録 - 印刷対応版</title>
+    <title>ボクシングタイム記録 - 印刷項目選択版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f0f2f5; --pdf-header: #b2ffff; --pdf-yellow: #ffff00; --pdf-male: #00ffff; --pdf-female: #ff0000; }
@@ -35,50 +35,55 @@
         .highlight-male { background-color: var(--pdf-male) !important; font-weight: bold; }
         .highlight-female { background-color: var(--pdf-female) !important; color: white; font-weight: bold; }
 
-        /* 印刷ボタン用スタイル */
-        .no-print-area { background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; border: 2px solid var(--secondary); }
-        .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        /* 印刷設定用UI */
+        .no-print-area { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid var(--secondary); }
+        .print-options { display: flex; gap: 20px; align-items: center; margin-top: 10px; }
+        .print-options label { cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
 
-        /* 印刷用設定（@media print） */
+        /* 印刷用CSS */
         @media print {
-            /* 画面上のボタンやサイドバー、早見表を非表示にする */
             .no-print, .no-print-area, #saveBtn, .dashboard-grid > .card:first-child, .lap-edit, button, select, hr {
                 display: none !important;
             }
+            /* チェックされていないセクションを非表示にする */
+            .print-hidden { display: none !important; }
+
             body { background: white; padding: 0; margin: 0; }
             .container { max-width: 100%; width: 100%; margin: 0; }
             .dashboard-grid { display: block; }
-            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 40px; page-break-inside: avoid; }
-            .chart-container { height: 450px !important; width: 100% !important; margin-bottom: 20px; }
-            .pdf-table { min-width: 100% !important; font-size: 12px; }
-            .ranking-grid { display: flex; gap: 20px; margin-top: 20px; }
+            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 30px; page-break-inside: avoid; }
+            .chart-container { height: 450px !important; }
+            .pdf-table { min-width: 100% !important; font-size: 11px; }
+            .ranking-grid { display: flex; gap: 15px; }
             .rank-box { flex: 1; border: 1px solid #000; }
             .print-only-header { display: block !important; text-align: center; border-bottom: 2px solid #000; margin-bottom: 20px; }
             input { border: none !important; }
-            /* 改ページの制御 */
-            #print-section-table { page-break-before: always; } 
         }
         .print-only-header { display: none; }
     </style>
 </head>
 <body>
 
-<!-- 印刷用ヘッダー -->
 <div class="print-only-header">
-    <h1 style="margin:5px 0;">ボクシング トレーニング記録レポート</h1>
+    <h1 style="margin:5px 0;">ボクシング トレーニング記録</h1>
     <p id="print-date-display" style="font-size:18px; margin:5px 0;"></p>
 </div>
 
 <div class="container">
-    <!-- 印刷ボタンエリア -->
+    <!-- 印刷選択メニュー -->
     <div class="no-print-area">
-        <span style="font-weight:bold; color:var(--secondary);">【印刷メニュー】</span>
-        <button class="print-btn" onclick="preparePrint()">グラフ・表を印刷する</button>
-        <span style="font-size:11px; color:#666;">※早見表は印刷されません。</span>
+        <div style="font-weight:bold; color:var(--secondary); font-size:14px; border-bottom:1px solid #eee; padding-bottom:5px;">🖨 印刷設定（PDFに含める項目を選択）</div>
+        <div class="print-options">
+            <label><input type="checkbox" id="check-graph" checked> グラフ</label>
+            <label><input type="checkbox" id="check-rank" checked> ランキング</label>
+            <label><input type="checkbox" id="check-table" checked> タイム記録表</label>
+            <button class="print-btn" onclick="preparePrint()">選択した項目をPDF印刷</button>
+        </div>
     </div>
 
     <div class="dashboard-grid">
-        <!-- 左サイド：設定（非表示） -->
+        <!-- 左サイド設定（非印刷） -->
         <div class="card">
             <div style="font-size:10px; color:#10b981; font-weight:bold; margin-bottom:10px;">● 同期中</div>
             <label style="font-weight:bold;">日付選択</label>
@@ -90,35 +95,37 @@
             <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
         </div>
 
-        <!-- 右：グラフとランキング（印刷対象） -->
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h2 style="margin:0;">分析グラフ</h2>
-                <div style="display:flex; gap:10px;" class="no-print">
-                    <select id="filterSelect" onchange="updateGraph()"></select>
-                    <select id="graphRange" onchange="updateGraph()">
-                        <option value="all">全期間</option>
-                        <option value="today">選択日のみ</option>
-                    </select>
+        <!-- 右：グラフとランキング -->
+        <div class="card" id="card-analysis">
+            <div id="section-graph">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h2 style="margin:0;">分析グラフ</h2>
+                    <div style="display:flex; gap:10px;" class="no-print">
+                        <select id="filterSelect" onchange="updateGraph()"></select>
+                        <select id="graphRange" onchange="updateGraph()">
+                            <option value="all">全期間</option>
+                            <option value="today">選択日のみ</option>
+                        </select>
+                    </div>
                 </div>
+                <div class="chart-container"><canvas id="runChart"></canvas></div>
             </div>
-            <div class="chart-container"><canvas id="runChart"></canvas></div>
 
-            <div class="ranking-grid">
+            <div class="ranking-grid" id="section-rank">
                 <div class="rank-box">
-                    <h3 style="text-align:center; font-size:12px; margin:5px 0;">🏆 2周区間ベスト5</h3>
+                    <h3 style="text-align:center; font-size:12px; margin:5px 0;">🏆 2周区間ベスト</h3>
                     <div id="rankLaps2"></div>
                 </div>
                 <div class="rank-box">
-                    <h3 style="text-align:center; font-size:12px; margin:5px 0;">🏆 1周区間ベスト5</h3>
+                    <h3 style="text-align:center; font-size:12px; margin:5px 0;">🏆 1周区間ベスト</h3>
                     <div id="rankLaps1"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 記録表（印刷対象：2ページ目） -->
-    <div class="card" id="print-section-table">
+    <!-- 記録表 -->
+    <div class="card" id="section-table">
         <h2 class="print-only-header" style="border:none; display:none; text-align:left; font-size:16px;">■ タイム記録一覧</h2>
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
@@ -139,10 +146,9 @@
         <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">すべての記録を保存同期</button>
     </div>
 
-    <!-- 早見表（no-print クラスにより印刷から完全に除外） -->
+    <!-- 早見表（常に印刷除外） -->
     <div class="card no-print">
         <h2 style="text-align:center; border:none; font-size:22px; letter-spacing:8px;">ラップタイム算早見表</h2>
-        <p>※ここは印刷されません（画面確認用）。</p>
         <div style="overflow-x:auto;">
             <table class="pdf-table">
                 <thead>
@@ -174,20 +180,31 @@
     };
 
     function preparePrint() {
+        const showGraph = document.getElementById('check-graph').checked;
+        const showRank = document.getElementById('check-rank').checked;
+        const showTable = document.getElementById('check-table').checked;
+
+        // クラスの付け替えで表示/非表示を制御
+        document.getElementById('section-graph').classList.toggle('print-hidden', !showGraph);
+        document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
+        document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
+        
+        // グラフとランキング両方オフならカードごと消す
+        document.getElementById('card-analysis').classList.toggle('print-hidden', (!showGraph && !showRank));
+
+        // 日付表示
         const dateVal = document.getElementById('recordDate').value;
         document.getElementById('print-date-display').innerText = `記録日: ${dateVal}`;
         
-        // inputの値を印刷に反映させるための処理
-        const inputs = document.querySelectorAll('input');
-        inputs.forEach(input => {
+        // 入力値を固定
+        document.querySelectorAll('input').forEach(input => {
             input.setAttribute('value', input.value);
         });
 
         window.print();
     }
 
-    // --- 以下、ロジック部分は元のプログラムを維持 ---
-
+    // --- 以下ロジック（変更なし） ---
     async function syncDateAndLoad() {
         const sel = document.getElementById('dateHistory').value;
         if(sel) { document.getElementById('recordDate').value = sel; await loadDateData(); updateGraph(); }
