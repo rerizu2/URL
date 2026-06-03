@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録</title>
+    <title>ボクシングタイム記録（インポート機能付）</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -31,33 +31,29 @@
         .rank-time { font-family: monospace; color: var(--primary); font-weight: bold; }
 
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px; }
+        .btn-import { background: #10b981; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 5px; font-weight: bold; }
         .chart-container { height: 400px; position: relative; }
 
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
+        /* インポートエリアのスタイル */
+        .import-section { background: #fef3c7; border: 1px solid #f59e0b; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .import-textarea { width: 100%; height: 80px; font-size: 11px; border: 1px solid #ccc; border-radius: 4px; padding: 5px; box-sizing: border-box; }
+
         /* --- 印刷設定 --- */
         @media print {
-            @page { margin: 3mm; } /* 余白をさらに削減 */
+            @page { margin: 3mm; }
             body { background: white; padding: 0; margin: 0; }
-            .no-print, .no-print-area, #saveBtn, .lap-edit, button, select, hr { display: none !important; }
-            .print-hidden { display: none !important; }
-            
+            .no-print, .no-print-area, #saveBtn, .lap-edit, button, select, hr, .import-section { display: none !important; }
             .container { max-width: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
             .dashboard-grid { display: block; margin: 0; padding: 0; }
             .card { box-shadow: none; border: none; padding: 0; margin-bottom: 5px; }
-            
             .pdf-table { width: 100% !important; min-width: 100% !important; table-layout: fixed !important; }
             .pdf-table th, .pdf-table td { font-size: 9px !important; padding: 1px !important; height: 16px !important; line-height: 1.0 !important; border: 0.5px solid #000 !important; }
             .col-name { width: 90px !important; }
-            
-            .page-break { page-break-before: always; }
-            .print-only-header { display: block !important; text-align: center; border-bottom: 1px solid #000; margin-bottom: 5px; }
         }
         .print-only-header { display: none; }
-        .col-y { background: var(--pdf-yellow) !important; }
-        .highlight-male { background-color: var(--pdf-male) !important; font-weight: bold; }
-        .highlight-female { background-color: var(--pdf-female) !important; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -80,7 +76,14 @@
         <button class="print-btn" onclick="preparePrint()">印刷・PDF保存</button>
     </div>
 
-    <!-- 印刷時に制御するためIDを付与 -->
+    <!-- 写真解析用インポートエリア -->
+    <div class="import-section no-print">
+        <h3 style="margin-top:0; font-size:14px; color:#92400e;">📸 写真読み取りテキスト貼り付け</h3>
+        <p style="font-size:10px; margin:2px 0;">写真からコピーしたテキスト（名前とタイムが並んでいるもの）を下に貼り付けてください。</p>
+        <textarea id="ocrInput" class="import-textarea" placeholder="例：石橋 乃蒼 2:05 2:10 1:05..."></textarea>
+        <button class="btn-import" onclick="importFromOCR()">表に反映させる</button>
+    </div>
+
     <div class="dashboard-grid" id="main-dashboard-container">
         <!-- 左：サイドバー -->
         <div class="card no-print">
@@ -137,19 +140,6 @@
         </div>
         <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">同期保存</button>
     </div>
-
-    <!-- 早見表（印刷除外） -->
-    <div class="card no-print">
-        <h2 style="text-align:center; font-size:22px; letter-spacing:8px;">ラップタイム早見表</h2>
-        <div style="overflow-x:auto;">
-            <table class="pdf-table" style="table-layout: auto;">
-                <thead>
-                    <tr><th>100m</th><th>200m</th><th>300m</th><th>400m</th><th>600m</th><th>800m</th><th>1000m</th><th>1200m</th><th>1500m</th><th>3000m</th></tr>
-                </thead>
-                <tbody id="refTableBody"></tbody>
-            </table>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -164,13 +154,54 @@
         document.getElementById('memberList').value = localStorage.getItem('boxing_members') || PERMANENT_MEMBERS;
         applyMembers();
         initChart();
-        generateRefTable();
         await fetchDateHistory();
         await fetchAllData();
         await loadDateData();
     };
 
-    // --- 自動変換 500 -> 5:00 ---
+    // --- 【新機能】写真テキストからのインポートロジック ---
+    function importFromOCR() {
+        const text = document.getElementById('ocrInput').value;
+        if (!text) return alert("テキストを貼り付けてください");
+
+        const lines = text.split('\n');
+        const rows = document.getElementById('pdfTableBody').rows;
+        let matchCount = 0;
+
+        lines.forEach(line => {
+            // 名前を探す（名簿の各名前がラインに含まれているか）
+            for (let r = 0; r < rows.length; r++) {
+                const nameInTable = rows[r].cells[0].innerText.trim();
+                // ラインに名前が含まれている場合
+                if (line.includes(nameInTable)) {
+                    // その行からタイムっぽい形式 (例 2:05, 2.05, 205) を抽出
+                    const timePattern = /(\d[:：\.]\d{2}|\d{3,4})/g;
+                    const foundTimes = line.match(timePattern) || [];
+                    
+                    foundTimes.forEach((timeStr, idx) => {
+                        if (idx < 6) {
+                            const input = rows[r].cells[(idx + 1) * 2 - 1].querySelector('input');
+                            // 205 などの形式を 2:05 に補正
+                            let formatted = timeStr.replace(/[：\.]/g, ':');
+                            if (/^\d{3,4}$/.test(formatted)) {
+                                formatted = formatted.slice(0, -2) + ":" + formatted.slice(-2);
+                            }
+                            input.value = formatted;
+                            input.setAttribute('value', formatted);
+                        }
+                    });
+                    matchCount++;
+                    break;
+                }
+            }
+        });
+
+        // 全カラムの順位を再計算
+        for (let i = 1; i <= 6; i++) calcRanks(i);
+        updateGraph();
+        alert(`${matchCount} 名のデータを反映しました。値が正しいか確認してください。`);
+    }
+
     function formatTimeInput(el, colIdx) {
         let val = el.value.trim();
         if (/^\d{3,4}$/.test(val)) {
@@ -182,43 +213,23 @@
         }
     }
 
-    // --- 印刷準備（1枚に収めるための修正） ---
     function preparePrint() {
         const showGraph = document.getElementById('check-graph').checked;
         const showRank = document.getElementById('check-rank').checked;
         const showTable = document.getElementById('check-table').checked;
         const orientation = document.getElementById('print-orientation').value;
-
-        // 向きの反映
         document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orientation}; } }`;
-
-        // 表示切り替え
         document.getElementById('section-graph').classList.toggle('print-hidden', !showGraph);
         document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
         document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
-
-        // グラフもランキングも表示しない場合、親コンテナごと消してスペースを詰める
         const hasAnalysis = showGraph || showRank;
         document.getElementById('main-dashboard-container').classList.toggle('print-hidden', !hasAnalysis);
         document.getElementById('card-analysis').classList.toggle('print-hidden', !hasAnalysis);
-
-        // 改ページ制御：グラフ系がある時だけ、記録表の前に改ページを入れる
-        const tableCard = document.getElementById('section-table');
-        if (hasAnalysis && showTable) {
-            tableCard.classList.add('page-break');
-        } else {
-            tableCard.classList.remove('page-break');
-        }
-
         document.getElementById('print-date-display').innerText = `記録実施日: ${document.getElementById('recordDate').value}`;
-        
-        // フォーム値を属性にコピー
         document.querySelectorAll('input').forEach(input => { input.setAttribute('value', input.value); });
-
         window.print();
     }
 
-    // --- その他既存ロジック ---
     function generateDynamicColor(index) {
         const hue = (index * 137.5) % 360;
         return `hsl(${hue}, 70%, 50%)`;
@@ -268,34 +279,6 @@
         if(!sVal.includes(':')) return parseFloat(sVal) || 0;
         const p = sVal.split(':');
         return (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0);
-    }
-
-    function s2t_pdf(s) {
-        if (s < 60) return s.toFixed(1);
-        const m = Math.floor(s/60);
-        const sec = (s%60).toFixed(1);
-        return m + "'" + String(sec).padStart(4, '0');
-    }
-
-    function generateRefTable() {
-        const tbody = document.getElementById('refTableBody');
-        const dists = [1, 2, 3, 4, 6, 8, 10, 12, 15, 30];
-        for (let b = 13.0; b <= 40.0; b += 0.5) {
-            const tr = document.createElement('tr');
-            dists.forEach((d, idx) => {
-                const td = document.createElement('td');
-                const sec = b * d;
-                let text = s2t_pdf(sec);
-                if([1,3,6].includes(idx)) td.className = 'col-y';
-                if(idx === 5 && b === 15.0) { text += "(男全)"; td.className = "highlight-male"; }
-                if(idx === 5 && b === 17.0) { text += "(女全)"; td.className = "highlight-female"; }
-                if(idx === 8 && b === 16.5) { text += "(男全)"; td.className = "highlight-male"; }
-                if(idx === 8 && b === 18.5) { text += "(女全)"; td.className = "highlight-female"; }
-                if(idx === 9 && b === 18.0) { text += "(男全)"; td.className = "highlight-male"; }
-                td.innerText = text; tr.appendChild(td);
-            });
-            tbody.appendChild(tr);
-        }
     }
 
     function initChart() {
