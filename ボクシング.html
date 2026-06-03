@@ -40,14 +40,9 @@
             @page { margin: 5mm; } 
             body { background: white; padding: 0; margin: 0; }
             .no-print, .no-print-area, #saveBtn, .lap-edit, button, select, hr { display: none !important; }
-            .print-hidden { display: none !important; }
             .force-page-break { page-break-before: always !important; margin-top: 20px !important; }
-            .container { max-width: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
-            .dashboard-grid { display: block; margin: 0; padding: 0; }
-            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 10px; }
-            .pdf-table { width: 100% !important; min-width: 100% !important; table-layout: fixed !important; }
-            .pdf-table th, .pdf-table td { font-size: 9px !important; padding: 1px !important; height: 16px !important; line-height: 1.0 !important; border: 0.5px solid #000 !important; }
-            .col-name { width: 90px !important; }
+            .pdf-table { width: 100% !important; min-width: 100% !important; }
+            .pdf-table th, .pdf-table td { font-size: 9px !important; padding: 1px !important; height: 16px !important; border: 0.5px solid #000 !important; }
             .print-only-header { display: block !important; text-align: center; border-bottom: 1px solid #000; margin-bottom: 10px; }
         }
         .print-only-header { display: none; }
@@ -56,29 +51,28 @@
 <body>
 
 <div class="print-only-header">
-    <h2 style="margin:0; font-size:18px;" id="print-title">ボクシング トレーニング記録レポート</h2>
+    <h2 style="margin:0; font-size:18px;" id="print-title">トレーニング記録レポート</h2>
     <p id="print-date-display" style="margin:5px 0; font-size:12px; font-weight:bold;"></p>
 </div>
 
 <div class="container">
-    <!-- 印刷設定（レイアウトのみ） -->
     <div class="no-print-area">
-        <div style="font-weight:bold; color:var(--secondary); min-width:100px;">印刷設定:</div>
+        <div style="font-weight:bold; color:var(--secondary); min-width:100px;">印刷項目:</div>
         <label><input type="checkbox" id="check-graph" checked> グラフ</label>
         <label><input type="checkbox" id="check-rank" checked> ランキング</label>
         <label><input type="checkbox" id="check-table" checked> 記録表</label>
         <select id="print-orientation" style="padding:5px;">
-            <option value="landscape">横向き (推奨)</option>
+            <option value="landscape">横向き</option>
             <option value="portrait">縦向き</option>
         </select>
         <button class="print-btn" onclick="preparePrint()">印刷・PDF保存</button>
     </div>
 
     <div class="dashboard-grid" id="main-dashboard-container">
-        <!-- 左：サイドバー（管理用） -->
+        <!-- 左：サイドバー -->
         <div class="card no-print">
             <div style="font-size:10px; color:#10b981; font-weight:bold; margin-bottom:10px;">● スプレッドシート同期中</div>
-            <label style="font-weight:bold;">履歴選択</label>
+            <label style="font-weight:bold;">履歴読込</label>
             <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
             <input type="date" id="recordDate" onchange="onDateChange()" style="width:100%; padding:8px; margin-bottom:15px;">
             <hr>
@@ -87,20 +81,17 @@
             <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
         </div>
 
-        <!-- 右：分析エリア（ここですべてをコントロール） -->
+        <!-- 右：分析エリア（自動更新の要） -->
         <div class="card" id="card-analysis">
             <div id="section-graph">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap: wrap; gap:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
                     <h2 style="margin:0;">成長分析グラフ</h2>
                     <div style="display:flex; gap:10px; align-items:center;" class="no-print">
-                        <!-- ここにコントロールを集約 -->
                         <select id="displayScope" onchange="syncUI()" style="padding:5px; font-weight:bold; border:2px solid var(--secondary);">
                             <option value="all">全員表示</option>
                             <option value="individual">個人表示</option>
                         </select>
-                        <select id="filterSelect" onchange="syncUI()" style="padding:5px; display:none;">
-                            <!-- 名簿から自動生成 -->
-                        </select>
+                        <select id="filterSelect" onchange="syncUI()" style="padding:5px; display:none;"></select>
                         <select id="graphRange" onchange="syncUI()" style="padding:5px;">
                             <option value="all">全期間</option>
                             <option value="today">本日のみ</option>
@@ -110,7 +101,6 @@
                 <div class="chart-container"><canvas id="runChart"></canvas></div>
             </div>
 
-            <!-- ランキング（全員/個人で自動切替） -->
             <div class="ranking-grid" id="section-rank">
                 <div class="rank-box"><h3 id="rankTitle2" style="text-align:center; font-size:11px; margin-top:0;">🏆 2周ランキング</h3><div id="rankLaps2"></div></div>
                 <div class="rank-box"><h3 id="rankTitle1" style="text-align:center; font-size:11px; margin-top:0;">🏆 1周ランキング</h3><div id="rankLaps1"></div></div>
@@ -118,7 +108,7 @@
         </div>
     </div>
 
-    <!-- 記録表（全員当日/個人全履歴で自動切替） -->
+    <!-- 記録表 -->
     <div class="card" id="section-table">
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
@@ -158,122 +148,63 @@
         await loadDateData();
     };
 
-    // --- 【コア機能】グラフエリアの変更をすべてに同期 ---
+    // --- 自動更新のハブ ---
     function syncUI() {
         const scope = document.getElementById('displayScope').value;
-        const filterSelect = document.getElementById('filterSelect');
+        document.getElementById('filterSelect').style.display = (scope === 'individual') ? 'inline-block' : 'none';
         
-        // 個人表示なら名前選択を出し、全員表示なら隠す
-        filterSelect.style.display = (scope === 'individual') ? 'inline-block' : 'none';
-
-        // 1. グラフ更新
         updateGraph();
-        // 2. ランキング更新
         renderRanking();
-        // 3. 記録表更新
         renderTable();
     }
 
-    // 順位計算用
-    function getHistoricalRank(date, countLabel, timeStr) {
-        if (!timeStr) return "-";
-        const mySec = t2s(timeStr);
-        const dayRecords = allSheetData.filter(d => d.date === date && d.count === countLabel);
-        const times = dayRecords.map(d => t2s(d.time)).sort((a, b) => a - b);
-        const rank = times.indexOf(mySec) + 1;
-        return rank > 0 ? rank : "-";
+    // 入力した瞬間に呼ばれる関数
+    function handleInput(el, colIdx) {
+        el.setAttribute('value', el.value);
+        calcRanks(colIdx); // 順位を再計算
+        updateGraph();    // グラフを即時更新
     }
 
-    function renderTable() {
-        const scope = document.getElementById('displayScope').value;
-        const targetName = document.getElementById('filterSelect').value;
-        const tbody = document.getElementById('pdfTableBody');
-        const firstCol = document.getElementById('table-first-col');
-        const saveBtn = document.getElementById('saveBtn');
-        tbody.innerHTML = '';
-
-        if (scope === 'all') {
-            firstCol.innerText = '氏名';
-            saveBtn.style.display = 'block';
-            const ms = document.getElementById('memberList').value.trim().split('\n');
-            ms.forEach(name => {
-                if(!name.trim()) return;
-                const rowData = currentDayData.find(d => d[0] === name.trim());
-                addRowToTable(name.trim(), rowData);
-            });
-        } else {
-            firstCol.innerText = '実施日';
-            saveBtn.style.display = 'none';
-            const personData = allSheetData.filter(d => d.name === targetName);
-            const dateGroups = [...new Set(personData.map(d => d.date))].sort((a,b) => b.localeCompare(a));
-            dateGroups.forEach(date => {
-                let formattedRow = [date, "", "", "", "", "", "", "", "", "", "", "", ""];
-                ["1本目", "2本目", "3本目", "4本目", "5本目", "追加"].forEach((label, i) => {
-                    const record = personData.find(d => d.date === date && d.count === label);
-                    if (record) {
-                        formattedRow[i * 2 + 1] = record.time;
-                        formattedRow[i * 2 + 2] = getHistoricalRank(date, label, record.time);
-                    }
-                });
-                addRowToTable(date, formattedRow);
-            });
+    function calcRanks(colIdx) {
+        const rows = document.getElementById('pdfTableBody').rows;
+        let times = [];
+        for(let i=0; i<rows.length; i++){
+            const input = rows[i].cells[colIdx * 2 - 1].querySelector('input');
+            const val = input.value.trim();
+            if(val) times.push({ rowIndex: i, sec: t2s(val) });
+            rows[i].cells[colIdx * 2].innerText = '-';
         }
-    }
-
-    function addRowToTable(firstColText, dataArray) {
-        const tbody = document.getElementById('pdfTableBody');
-        const tr = document.createElement('tr');
-        let cells = `<td class="col-name" style="background:#f9f9f9;">${firstColText}</td>`;
-        for (let i = 0; i < 6; i++) {
-            const timeVal = dataArray ? (dataArray[i * 2 + 1] || '') : '';
-            const rankVal = dataArray ? (dataArray[i * 2 + 2] || '-') : '-';
-            cells += `<td class="col-time"><input type="text" class="t-in" value="${timeVal}" oninput="handleInput(this, ${i+1})" onblur="formatTimeInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">${rankVal}</td>`;
-        }
-        tr.innerHTML = cells; tbody.appendChild(tr);
-    }
-
-    function renderRanking() {
-        const scope = document.getElementById('displayScope').value;
-        const targetName = document.getElementById('filterSelect').value;
-        const rankBox2 = document.getElementById('rankLaps2');
-        const rankBox1 = document.getElementById('rankLaps1');
-
-        if (scope === 'all') {
-            document.getElementById('rankTitle2').innerText = "🏆 2周 歴代トップ5(全員)";
-            document.getElementById('rankTitle1').innerText = "🏆 1周 歴代トップ5(全員)";
-            let pBest2 = {}; let pBest1 = {};
-            allSheetData.forEach(r => {
-                const sec = t2s(r.time);
-                if (r.laps == "2") { if (!pBest2[r.name] || sec < pBest2[r.name]) pBest2[r.name] = sec; }
-                else if (r.laps == "1") { if (!pBest1[r.name] || sec < pBest1[r.name]) pBest1[r.name] = sec; }
-            });
-            const draw = (el, obj) => {
-                const arr = Object.entries(obj).sort((a,b) => a[1]-b[1]).slice(0,5);
-                el.innerHTML = arr.map((x,i) => `<div class="rank-item"><span>${i+1}</span><span class="rank-name">${x[0]}</span><span class="rank-time">${s2t(x[1])}</span></div>`).join('') || 'なし';
-            };
-            draw(rankBox2, pBest2); draw(rankBox1, pBest1);
-        } else {
-            document.getElementById('rankTitle2').innerText = `🏆 ${targetName} 自己ベスト5 (2周)`;
-            document.getElementById('rankTitle1').innerText = `🏆 ${targetName} 自己ベスト5 (1周)`;
-            const myBest2 = allSheetData.filter(d => d.name === targetName && d.laps == "2").sort((a,b) => t2s(a.time) - t2s(b.time)).slice(0,5);
-            const myBest1 = allSheetData.filter(d => d.name === targetName && d.laps == "1").sort((a,b) => t2s(a.time) - t2s(b.time)).slice(0,5);
-            const drawMy = (el, arr) => {
-                el.innerHTML = arr.map((x,i) => `<div class="rank-item"><span>${i+1}</span><span class="rank-name">${x.date}</span><span class="rank-time">${x.time}</span></div>`).join('') || 'なし';
-            };
-            drawMy(rankBox2, myBest2); drawMy(rankBox1, myBest1);
-        }
+        times.sort((a,b) => a.sec - b.sec).forEach((t, idx) => { rows[t.rowIndex].cells[colIdx * 2].innerText = idx + 1; });
     }
 
     function updateGraph() {
         if(!chart) return;
         const scope = document.getElementById('displayScope').value;
-        const filter = (scope === 'individual') ? document.getElementById('filterSelect').value : 'all';
+        const targetName = document.getElementById('filterSelect').value;
         const range = document.getElementById('graphRange').value;
         const curDay = document.getElementById('recordDate').value;
-        let filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter) && (range === 'today' ? r.date === curDay : true));
+        
+        let graphData = [];
+
+        if (scope === 'all') {
+            // 「全員」かつ「本日」の場合、入力中のテーブルからリアルタイムに値を拾う
+            const rows = document.getElementById('pdfTableBody').rows;
+            for(let r=0; r<rows.length; r++) {
+                const name = rows[r].cells[0].innerText;
+                for(let c=1; c<=6; c++) {
+                    const val = rows[r].cells[c*2-1].querySelector('input').value;
+                    if(val) graphData.push({ name, count: ["1本目","2本目","3本目","4本目","5本目","追加"][c-1], time: val, date: curDay });
+                }
+            }
+        } else {
+            // 「個人」の場合、DB(全データ)からその人の全期間を拾う
+            graphData = allSheetData.filter(r => r.name === targetName);
+        }
+
+        // グラフ描画ロジック
         const dataMap = {}; const labelSet = new Set();
-        filtered.forEach(r => {
-            const label = range === 'today' ? r.count : `${r.date} (${r.count})`;
+        graphData.forEach(r => {
+            const label = (scope === 'all') ? r.count : `${r.date} (${r.count})`;
             labelSet.add(label);
             if(!dataMap[r.name]) dataMap[r.name] = {};
             dataMap[r.name][label] = t2s(r.time);
@@ -286,79 +217,135 @@
         chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update('none'); 
     }
 
+    // 記録表の描画
+    function renderTable() {
+        const scope = document.getElementById('displayScope').value;
+        const targetName = document.getElementById('filterSelect').value;
+        const tbody = document.getElementById('pdfTableBody');
+        const firstCol = document.getElementById('table-first-col');
+        const saveBtn = document.getElementById('saveBtn');
+        
+        if (scope === 'all') {
+            firstCol.innerText = '氏名';
+            saveBtn.style.display = 'block';
+            tbody.innerHTML = '';
+            const ms = document.getElementById('memberList').value.trim().split('\n');
+            ms.forEach(name => {
+                if(!name.trim()) return;
+                const rowData = currentDayData.find(d => d[0] === name.trim());
+                addRowToTable(name.trim(), rowData);
+            });
+            for(let i=1; i<=6; i++) calcRanks(i); // 読み込み後の順位付け
+        } else {
+            firstCol.innerText = '実施日';
+            saveBtn.style.display = 'none';
+            tbody.innerHTML = '';
+            const personData = allSheetData.filter(d => d.name === targetName);
+            const dateGroups = [...new Set(personData.map(d => d.date))].sort((a,b) => b.localeCompare(a));
+            dateGroups.forEach(date => {
+                let row = [date, "", "", "", "", "", "", "", "", "", "", "", ""];
+                ["1本目","2本目","3本目","4本目","5本目","追加"].forEach((lbl, i) => {
+                    const rec = personData.find(d => d.date === date && d.count === lbl);
+                    if (rec) { row[i*2+1] = rec.time; row[i*2+2] = getRankFromAll(date, lbl, rec.time); }
+                });
+                addRowToTable(date, row);
+            });
+        }
+    }
+
+    function addRowToTable(txt, data) {
+        const tbody = document.getElementById('pdfTableBody');
+        const tr = document.createElement('tr');
+        let html = `<td class="col-name" style="background:#f9f9f9;">${txt}</td>`;
+        for (let i = 0; i < 6; i++) {
+            const time = data ? (data[i*2+1] || '') : '';
+            const rank = data ? (data[i*2+2] || '-') : '-';
+            html += `<td class="col-time"><input type="text" class="t-in" value="${time}" oninput="handleInput(this, ${i+1})" onblur="formatTimeInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">${rank}</td>`;
+        }
+        tr.innerHTML = html; tbody.appendChild(tr);
+    }
+
+    function getRankFromAll(date, count, time) {
+        const sec = t2s(time);
+        const dayRecs = allSheetData.filter(d => d.date === date && d.count === count);
+        const times = dayRecs.map(d => t2s(d.time)).sort((a,b) => a-b);
+        const r = times.indexOf(sec) + 1;
+        return r > 0 ? r : "-";
+    }
+
+    function renderRanking() {
+        const scope = document.getElementById('displayScope').value;
+        const targetName = document.getElementById('filterSelect').value;
+        const rankBox2 = document.getElementById('rankLaps2');
+        const rankBox1 = document.getElementById('rankLaps1');
+
+        if (scope === 'all') {
+            document.getElementById('rankTitle2').innerText = "🏆 2周 歴代トップ5(全員)";
+            document.getElementById('rankTitle1').innerText = "🏆 1周 歴代トップ5(全員)";
+            let pB2 = {}; let pB1 = {};
+            allSheetData.forEach(r => {
+                const s = t2s(r.time);
+                if (r.laps == "2") { if(!pB2[r.name] || s < pB2[r.name]) pB2[r.name] = s; }
+                else if (r.laps == "1") { if(!pB1[r.name] || s < pB1[r.name]) pB1[r.name] = s; }
+            });
+            const draw = (el, obj) => {
+                const arr = Object.entries(obj).sort((a,b) => a[1]-b[1]).slice(0,5);
+                el.innerHTML = arr.map((x,i) => `<div class="rank-item"><span>${i+1}</span><span class="rank-name">${x[0]}</span><span class="rank-time">${s2t(x[1])}</span></div>`).join('') || 'なし';
+            };
+            draw(rankBox2, pB2); draw(rankBox1, pB1);
+        } else {
+            document.getElementById('rankTitle2').innerText = `🏆 ${targetName} 自己ベスト5 (2周)`;
+            document.getElementById('rankTitle1').innerText = `🏆 ${targetName} 自己ベスト5 (1周)`;
+            const myB2 = allSheetData.filter(d => d.name === targetName && d.laps == "2").sort((a,b) => t2s(a.time) - t2s(b.time)).slice(0,5);
+            const myB1 = allSheetData.filter(d => d.name === targetName && d.laps == "1").sort((a,b) => t2s(a.time) - t2s(b.time)).slice(0,5);
+            const drawMy = (el, arr) => {
+                el.innerHTML = arr.map((x,i) => `<div class="rank-item"><span>${i+1}</span><span class="rank-name">${x.date}</span><span class="rank-time">${x.time}</span></div>`).join('') || 'なし';
+            };
+            drawMy(rankBox2, myB2); drawMy(rankBox1, myB1);
+        }
+    }
+
+    // --- 基本系 ---
+    function t2s(v){ if(!v) return 9999; const sVal = v.toString(); if(!sVal.includes(':')) return parseFloat(sVal) || 0; const p = sVal.split(':'); return (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0); }
+    function s2t(s) { if (!s || s === 9999) return ""; const m = Math.floor(s/60); const sec = Math.floor(s%60); return m + ":" + String(sec).padStart(2, '0'); }
+    function formatTimeInput(el, colIdx) {
+        let val = el.value.trim();
+        if (/^\d{3,4}$/.test(val)) { el.value = val.slice(0, -2) + ":" + val.slice(-2); el.setAttribute('value', el.value); handleInput(el, colIdx); }
+    }
     function initChart() {
         const ctx = document.getElementById('runChart').getContext('2d');
         chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => s2t(v) } } } } });
     }
-
-    function t2s(v){ if(!v) return 9999; const sVal = v.toString(); if(!sVal.includes(':')) return parseFloat(sVal) || 0; const p = sVal.split(':'); return (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0); }
-    function s2t(s) { if (!s || s === 9999) return ""; const m = Math.floor(s/60); const sec = Math.floor(s%60); return m + ":" + String(sec).padStart(2, '0'); }
-    function handleInput(el, colIdx) { el.setAttribute('value', el.value); calcRanks(colIdx); }
-    function calcRanks(colIdx) {
-        const rows = document.getElementById('pdfTableBody').rows;
-        let times = [];
-        for(let i=0; i<rows.length; i++){
-            const input = rows[i].cells[colIdx * 2 - 1].querySelector('input');
-            const val = input.value.trim();
-            if(val) times.push({ rowIndex: i, sec: t2s(val) });
-            rows[i].cells[colIdx * 2].innerText = '-';
-        }
-        times.sort((a,b) => a.sec - b.sec).forEach((t, idx) => { rows[t.rowIndex].cells[colIdx * 2].innerText = idx + 1; });
-    }
-    function formatTimeInput(el, colIdx) {
-        let val = el.value.trim();
-        if (/^\d{3,4}$/.test(val)) { el.value = val.slice(0, -2) + ":" + val.slice(-2); el.setAttribute('value', el.value); calcRanks(colIdx); }
-    }
-
     function applyMembers() {
         const ms = document.getElementById('memberList').value.trim().split('\n');
         const fs = document.getElementById('filterSelect');
         fs.innerHTML = '';
         ms.forEach(m => { if(!m.trim()) return; fs.add(new Option(m.trim(), m.trim())); });
         localStorage.setItem('boxing_members', document.getElementById('memberList').value);
-        renderTable();
+        syncUI();
     }
-
     async function fetchAllData() {
-        if (!GAS_WEBAPP_URL.startsWith('http')) return;
         try {
             const res = await fetch(GAS_WEBAPP_URL);
             allSheetData = await res.json();
             syncUI();
         } catch (e) {}
     }
-
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
-        if (!GAS_WEBAPP_URL.startsWith('http')) return;
         try {
             const res = await fetch(`${GAS_WEBAPP_URL}?date=${date}`);
             const result = await res.json();
             currentDayData = result.found ? result.data : [];
-            renderTable();
+            syncUI();
         } catch (e) {}
     }
-
-    async function saveAllSheetData() {
-        const btn = document.getElementById('saveBtn'); const date = document.getElementById('recordDate').value; const rows = document.getElementById('pdfTableBody').rows;
-        btn.disabled = true; btn.innerText = "同期中...";
-        for (let r = 0; r < rows.length; r++) {
-            for (let c = 1; c <= 6; c++) {
-                const input = rows[r].cells[c * 2 - 1].querySelector('input'); if (!input.value.trim()) continue;
-                const payload = { date, name: rows[r].cells[0].innerText, count: ["1本目", "2本目", "3本目", "4本目", "5本目", "追加"][c-1], laps: document.getElementById(`lap-${c}`).value, time: input.value.trim(), rank: rows[r].cells[c * 2].innerText, memberList: document.getElementById('memberList').value };
-                await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            }
-        }
-        btn.disabled = false; btn.innerText = "同期完了！"; await fetchAllData();
-    }
-
     async function fetchDateHistory() {
-        if (!GAS_WEBAPP_URL.startsWith('http')) return;
         try {
             const res = await fetch(`${GAS_WEBAPP_URL}?mode=listDates`);
             const dates = await res.json();
             const select = document.getElementById('dateHistory');
-            select.innerHTML = '<option value="">-- 練習履歴を選択 --</option>';
+            select.innerHTML = '<option value="">-- 履歴を選択 --</option>';
             dates.forEach(d => select.add(new Option(d, d)));
         } catch (e) {}
     }
@@ -368,30 +355,39 @@
     }
     function onDateChange() { loadDateData(); }
 
+    async function saveAllSheetData() {
+        const btn = document.getElementById('saveBtn'); const date = document.getElementById('recordDate').value; const rows = document.getElementById('pdfTableBody').rows;
+        btn.disabled = true; btn.innerText = "同期中...";
+        for (let r = 0; r < rows.length; r++) {
+            for (let c = 1; c <= 6; c++) {
+                const input = rows[r].cells[c * 2 - 1].querySelector('input'); if (!input.value.trim()) continue;
+                const payload = { date, name: rows[r].cells[0].innerText, count: ["1本目","2本目","3本目","4本目","5本目","追加"][c-1], laps: document.getElementById(`lap-${c}`).value, time: input.value.trim(), rank: rows[r].cells[c * 2].innerText, memberList: document.getElementById('memberList').value };
+                await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            }
+        }
+        btn.disabled = false; btn.innerText = "同期完了！"; await fetchAllData();
+    }
+
     function preparePrint() {
-        const showGraph = document.getElementById('check-graph').checked;
-        const showRank = document.getElementById('check-rank').checked;
-        const showTable = document.getElementById('check-table').checked;
+        const showG = document.getElementById('check-graph').checked;
+        const showR = document.getElementById('check-rank').checked;
+        const showT = document.getElementById('check-table').checked;
         const scope = document.getElementById('displayScope').value;
-        const targetName = document.getElementById('filterSelect').value;
+        const target = document.getElementById('filterSelect').value;
+        
+        document.getElementById('section-graph').classList.toggle('print-hidden', !showG);
+        document.getElementById('section-rank').classList.toggle('print-hidden', !showR);
+        document.getElementById('section-table').classList.toggle('print-hidden', !showT);
+        
         const tableCard = document.getElementById('section-table');
-
-        document.getElementById('section-graph').classList.toggle('print-hidden', !showGraph);
-        document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
-        document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
-
-        if ((showGraph || showRank) && showTable) tableCard.classList.add('force-page-break');
+        if ((showG || showR) && showT) tableCard.classList.add('force-page-break');
         else tableCard.classList.remove('force-page-break');
 
-        if (scope === 'individual') {
-            document.getElementById('print-title').innerText = `ボクシング個人レポート: ${targetName}`;
-            document.getElementById('print-date-display').innerText = `出力日: ${new Date().toLocaleDateString()}`;
-        } else {
-            document.getElementById('print-title').innerText = `トレーニング記録レポート`;
-            document.getElementById('print-date-display').innerText = `実施日: ${document.getElementById('recordDate').value}`;
-        }
-        const orientation = document.getElementById('print-orientation').value;
-        document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orientation}; } }`;
+        document.getElementById('print-title').innerText = (scope === 'individual') ? `個人記録: ${target}` : `トレーニング記録`;
+        document.getElementById('print-date-display').innerText = (scope === 'individual') ? `出力日: ${new Date().toLocaleDateString()}` : `実施日: ${document.getElementById('recordDate').value}`;
+        
+        const orient = document.getElementById('print-orientation').value;
+        document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orient}; } }`;
         window.print();
     }
 </script>
