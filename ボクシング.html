@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録</title>
+    <title>ボクシングタイム記録 - 印刷対応版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f0f2f5; --pdf-header: #b2ffff; --pdf-yellow: #ffff00; --pdf-male: #00ffff; --pdf-female: #ff0000; }
@@ -34,11 +34,45 @@
         .col-y { background: var(--pdf-yellow) !important; }
         .highlight-male { background-color: var(--pdf-male) !important; font-weight: bold; }
         .highlight-female { background-color: var(--pdf-female) !important; color: white; font-weight: bold; }
+
+        /* 印刷ボタン用スタイル */
+        .no-print-area { background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; border: 2px solid var(--secondary); }
+        .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .print-btn:hover { opacity: 0.8; }
+
+        /* 印刷用設定 @media print */
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print-area, #saveBtn, .dashboard-grid > .card:first-child, .lap-edit, button { display: none !important; }
+            .dashboard-grid { display: block; }
+            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 30px; page-break-inside: avoid; }
+            .container { max-width: 100%; margin: 0; }
+            .pdf-table { min-width: 100%; font-size: 10px; }
+            .chart-container { height: 400px; width: 100%; }
+            input { border: none !important; }
+            .ranking-grid { display: flex; gap: 20px; }
+            .rank-box { flex: 1; }
+            .print-only-header { display: block !important; text-align: center; margin-bottom: 20px; }
+        }
+        .print-only-header { display: none; }
     </style>
 </head>
 <body>
 
+<!-- 印刷用ヘッダー（印刷時のみ表示） -->
+<div class="print-only-header">
+    <h1 style="margin:0;">ボクシング トレーニング記録</h1>
+    <p id="print-date-display" style="font-size:16px;"></p>
+</div>
+
 <div class="container">
+    <!-- 印刷コントロールパネル -->
+    <div class="no-print-area">
+        <span style="font-weight:bold; color:var(--secondary);">【印刷メニュー】</span>
+        <button class="print-btn" onclick="preparePrint()">このページを印刷 / PDF保存</button>
+        <span style="font-size:11px; color:#666;">※グラフ・ランキング・表が自動でレイアウトされます。</span>
+    </div>
+
     <div class="dashboard-grid">
         <div class="card">
             <div style="font-size:10px; color:#10b981; font-weight:bold; margin-bottom:10px;">● スプレッドシート常時同期中</div>
@@ -52,10 +86,10 @@
             <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
         </div>
 
-        <div class="card">
+        <div class="card" id="print-section-graph">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h2>成長・当日分析グラフ</h2>
-                <div style="display:flex; gap:10px;">
+                <div style="display:flex; gap:10px;" class="no-print">
                     <select id="filterSelect" onchange="updateGraph()" style="padding:5px;"><option value="all">全員表示</option></select>
                     <select id="graphRange" onchange="updateGraph()" style="padding:5px;">
                         <option value="all">全期間</option>
@@ -65,7 +99,7 @@
             </div>
             <div class="chart-container"><canvas id="runChart"></canvas></div>
 
-            <div class="ranking-grid">
+            <div class="ranking-grid" id="print-section-rank">
                 <div class="rank-box">
                     <h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 2周区間個人ベスト</h3>
                     <div id="rankLaps2"></div>
@@ -78,7 +112,7 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="print-section-table">
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
                 <thead>
@@ -98,7 +132,7 @@
         <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">すべての記録を保存同期</button>
     </div>
 
-    <div class="card">
+    <div class="card no-print">
         <h2 style="text-align:center; border:none; font-size:22px; letter-spacing:8px;">ラップタイム算早見表</h2>
         <p>※<b><u>（全男）（全女）</u></b>で色が変わっているところは陸上近畿大会出場レベルです。</p>
         <div style="overflow-x:auto;">
@@ -113,6 +147,7 @@
 </div>
 
 <script>
+    // URLは元のものを維持
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby4wv9HDVi099vlKKXq_whz6uQ1X-tQ5E1D47-xbi7Un_KkNO00yp7obVCsp-3201lL9Q/exec"; 
     const PERMANENT_MEMBERS = "石橋 乃蒼\n川﨑 輝寅\n上窪 聖\n大畑 歩希\n志冨田 凪大\n亀本 快歩\n松嶋 虎鉄\n今井 仁\n岡田 陸翔\n濱田 周摩\n日高 心太\n井上 暁仁\n今中 悠人\n惣田 湧大\n髙峯 将真\n西岡 泰志\n福貴田 泰生\n栗原 翔\n岩原 晴斗\n杉阪 咲太\n安藤 心咲\n大西 義一\n岸上 虎央\n南 悠翔\n石橋 奈樹\n志冨田 明陽\n木下 一颯\n道下 大翔\n柏木 羽空";
     
@@ -130,6 +165,21 @@
         await fetchAllData();
         await loadDateData();
     };
+
+    // 印刷用の準備関数
+    function preparePrint() {
+        // 現在の日付を表示用にセット
+        const dateVal = document.getElementById('recordDate').value;
+        document.getElementById('print-date-display').innerText = `実施日: ${dateVal}`;
+        
+        // inputに入力された値をvalue属性に固定（ブラウザの印刷仕様対策）
+        const inputs = document.querySelectorAll('input[type="text"], input[type="number"]');
+        inputs.forEach(input => {
+            input.setAttribute('value', input.value);
+        });
+
+        window.print();
+    }
 
     async function syncDateAndLoad() {
         const sel = document.getElementById('dateHistory').value;
@@ -164,20 +214,27 @@
         try {
             const res = await fetch(`${GAS_WEBAPP_URL}?date=${date}`);
             const result = await res.json();
-            document.querySelectorAll('.t-in').forEach(el => el.value = '');
+            document.querySelectorAll('.t-in').forEach(el => { el.value = ''; el.setAttribute('value', ''); });
             document.querySelectorAll('.rank-col-cell').forEach(el => el.innerText = '-');
             if (result.found) {
                 const sheetData = result.data;
                 const rows = document.getElementById('pdfTableBody').rows;
                 for(let c=1; c<=6; c++){
                     const h = sheetData[0][c*2-1];
-                    if(h.includes('周')) document.getElementById(`lap-${c}`).value = h.match(/\d+/)[0];
+                    if(h.includes('周')) {
+                        const val = h.match(/\d+/)[0];
+                        document.getElementById(`lap-${c}`).value = val;
+                        document.getElementById(`lap-${c}`).setAttribute('value', val);
+                    }
                 }
                 for (let i = 1; i < sheetData.length; i++) {
                     for (let r = 0; r < rows.length; r++) {
                         if (rows[r].cells[0].innerText.trim() === sheetData[i][0].trim()) {
                             for (let c = 1; c <= 6; c++) {
-                                rows[r].cells[c * 2 - 1].querySelector('input').value = sheetData[i][c * 2 - 1] || '';
+                                const val = sheetData[i][c * 2 - 1] || '';
+                                const input = rows[r].cells[c * 2 - 1].querySelector('input');
+                                input.value = val;
+                                input.setAttribute('value', val);
                                 rows[r].cells[c * 2].innerText = sheetData[i][c * 2] || '-';
                             }
                             break;
@@ -198,12 +255,17 @@
         ms.forEach(m => {
             const tr = document.createElement('tr');
             tr.innerHTML = `<td style="font-weight:bold; background:#f9f9f9; text-align:left; padding-left:5px;">${m.trim()}</td>` +
-                           Array(6).fill(0).map((_,i) => `<td><input type="text" class="t-in" oninput="calcRanks(${i+1})"></td><td class="rank-col rank-col-cell">-</td>`).join('');
+                           Array(6).fill(0).map((_,i) => `<td><input type="text" class="t-in" oninput="handleInput(this, ${i+1})"></td><td class="rank-col rank-col-cell">-</td>`).join('');
             tbody.appendChild(tr);
             fs.add(new Option(m.trim(), m.trim()));
         });
         fs.value = cur;
         localStorage.setItem('boxing_members', document.getElementById('memberList').value);
+    }
+
+    function handleInput(el, colIdx) {
+        el.setAttribute('value', el.value); // 印刷用
+        calcRanks(colIdx);
     }
 
     function calcRanks(colIdx) {
@@ -288,7 +350,7 @@
                 if(idx === 8 && b === 16.5) { text += "(男全)"; td.className = "highlight-male"; }
                 if(idx === 8 && b === 18.5) { text += "(女全)"; td.className = "highlight-female"; }
                 if(idx === 9 && b === 18.0) { text += "(男全)"; td.className = "highlight-male"; }
-                if(idx === 9 && b < 15.0) text = ""; // 3000mは15.0から
+                if(idx === 9 && b < 15.0) text = ""; 
                 td.innerText = text; tr.appendChild(td);
             });
             tbody.appendChild(tr);
