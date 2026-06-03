@@ -38,81 +38,88 @@
         /* 印刷ボタン用スタイル */
         .no-print-area { background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; border: 2px solid var(--secondary); }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .print-btn:hover { opacity: 0.8; }
 
-        /* 印刷用設定 @media print */
+        /* 印刷用設定（@media print） */
         @media print {
-            body { background: white; padding: 0; }
-            .no-print-area, #saveBtn, .dashboard-grid > .card:first-child, .lap-edit, button { display: none !important; }
+            /* 画面上のボタンやサイドバー、早見表を非表示にする */
+            .no-print, .no-print-area, #saveBtn, .dashboard-grid > .card:first-child, .lap-edit, button, select, hr {
+                display: none !important;
+            }
+            body { background: white; padding: 0; margin: 0; }
+            .container { max-width: 100%; width: 100%; margin: 0; }
             .dashboard-grid { display: block; }
-            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 30px; page-break-inside: avoid; }
-            .container { max-width: 100%; margin: 0; }
-            .pdf-table { min-width: 100%; font-size: 10px; }
-            .chart-container { height: 400px; width: 100%; }
+            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 40px; page-break-inside: avoid; }
+            .chart-container { height: 450px !important; width: 100% !important; margin-bottom: 20px; }
+            .pdf-table { min-width: 100% !important; font-size: 12px; }
+            .ranking-grid { display: flex; gap: 20px; margin-top: 20px; }
+            .rank-box { flex: 1; border: 1px solid #000; }
+            .print-only-header { display: block !important; text-align: center; border-bottom: 2px solid #000; margin-bottom: 20px; }
             input { border: none !important; }
-            .ranking-grid { display: flex; gap: 20px; }
-            .rank-box { flex: 1; }
-            .print-only-header { display: block !important; text-align: center; margin-bottom: 20px; }
+            /* 改ページの制御 */
+            #print-section-table { page-break-before: always; } 
         }
         .print-only-header { display: none; }
     </style>
 </head>
 <body>
 
-<!-- 印刷用ヘッダー（印刷時のみ表示） -->
+<!-- 印刷用ヘッダー -->
 <div class="print-only-header">
-    <h1 style="margin:0;">ボクシング トレーニング記録</h1>
-    <p id="print-date-display" style="font-size:16px;"></p>
+    <h1 style="margin:5px 0;">ボクシング トレーニング記録レポート</h1>
+    <p id="print-date-display" style="font-size:18px; margin:5px 0;"></p>
 </div>
 
 <div class="container">
-    <!-- 印刷コントロールパネル -->
+    <!-- 印刷ボタンエリア -->
     <div class="no-print-area">
         <span style="font-weight:bold; color:var(--secondary);">【印刷メニュー】</span>
-        <button class="print-btn" onclick="preparePrint()">このページを印刷 / PDF保存</button>
-        <span style="font-size:11px; color:#666;">※グラフ・ランキング・表が自動でレイアウトされます。</span>
+        <button class="print-btn" onclick="preparePrint()">グラフ・表を印刷する</button>
+        <span style="font-size:11px; color:#666;">※早見表は印刷されません。</span>
     </div>
 
     <div class="dashboard-grid">
+        <!-- 左サイド：設定（非表示） -->
         <div class="card">
-            <div style="font-size:10px; color:#10b981; font-weight:bold; margin-bottom:10px;">● スプレッドシート常時同期中</div>
-            <label style="font-weight:bold;">日付選択（履歴）</label>
+            <div style="font-size:10px; color:#10b981; font-weight:bold; margin-bottom:10px;">● 同期中</div>
+            <label style="font-weight:bold;">日付選択</label>
             <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
-            <label style="font-weight:bold;">カレンダーから選択</label>
             <input type="date" id="recordDate" onchange="onDateChange()" style="width:100%; padding:8px; margin-bottom:15px;">
             <hr>
-            <h2>選手名簿 (確定)</h2>
+            <h2>選手名簿</h2>
             <textarea id="memberList" style="width:100%; height:120px; font-size:11px;"></textarea>
             <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
         </div>
 
-        <div class="card" id="print-section-graph">
+        <!-- 右：グラフとランキング（印刷対象） -->
+        <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h2>成長・当日分析グラフ</h2>
+                <h2 style="margin:0;">分析グラフ</h2>
                 <div style="display:flex; gap:10px;" class="no-print">
-                    <select id="filterSelect" onchange="updateGraph()" style="padding:5px;"><option value="all">全員表示</option></select>
-                    <select id="graphRange" onchange="updateGraph()" style="padding:5px;">
+                    <select id="filterSelect" onchange="updateGraph()"></select>
+                    <select id="graphRange" onchange="updateGraph()">
                         <option value="all">全期間</option>
-                        <option value="today">選択中の日のみ</option>
+                        <option value="today">選択日のみ</option>
                     </select>
                 </div>
             </div>
             <div class="chart-container"><canvas id="runChart"></canvas></div>
 
-            <div class="ranking-grid" id="print-section-rank">
+            <div class="ranking-grid">
                 <div class="rank-box">
-                    <h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 2周区間個人ベスト</h3>
+                    <h3 style="text-align:center; font-size:12px; margin:5px 0;">🏆 2周区間ベスト5</h3>
                     <div id="rankLaps2"></div>
                 </div>
                 <div class="rank-box">
-                    <h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 1周区間個人ベスト</h3>
+                    <h3 style="text-align:center; font-size:12px; margin:5px 0;">🏆 1周区間ベスト5</h3>
                     <div id="rankLaps1"></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- 記録表（印刷対象：2ページ目） -->
     <div class="card" id="print-section-table">
+        <h2 class="print-only-header" style="border:none; display:none; text-align:left; font-size:16px;">■ タイム記録一覧</h2>
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
                 <thead>
@@ -132,9 +139,10 @@
         <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">すべての記録を保存同期</button>
     </div>
 
+    <!-- 早見表（no-print クラスにより印刷から完全に除外） -->
     <div class="card no-print">
         <h2 style="text-align:center; border:none; font-size:22px; letter-spacing:8px;">ラップタイム算早見表</h2>
-        <p>※<b><u>（全男）（全女）</u></b>で色が変わっているところは陸上近畿大会出場レベルです。</p>
+        <p>※ここは印刷されません（画面確認用）。</p>
         <div style="overflow-x:auto;">
             <table class="pdf-table">
                 <thead>
@@ -147,7 +155,6 @@
 </div>
 
 <script>
-    // URLは元のものを維持
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby4wv9HDVi099vlKKXq_whz6uQ1X-tQ5E1D47-xbi7Un_KkNO00yp7obVCsp-3201lL9Q/exec"; 
     const PERMANENT_MEMBERS = "石橋 乃蒼\n川﨑 輝寅\n上窪 聖\n大畑 歩希\n志冨田 凪大\n亀本 快歩\n松嶋 虎鉄\n今井 仁\n岡田 陸翔\n濱田 周摩\n日高 心太\n井上 暁仁\n今中 悠人\n惣田 湧大\n髙峯 将真\n西岡 泰志\n福貴田 泰生\n栗原 翔\n岩原 晴斗\n杉阪 咲太\n安藤 心咲\n大西 義一\n岸上 虎央\n南 悠翔\n石橋 奈樹\n志冨田 明陽\n木下 一颯\n道下 大翔\n柏木 羽空";
     
@@ -166,20 +173,20 @@
         await loadDateData();
     };
 
-    // 印刷用の準備関数
     function preparePrint() {
-        // 現在の日付を表示用にセット
         const dateVal = document.getElementById('recordDate').value;
-        document.getElementById('print-date-display').innerText = `実施日: ${dateVal}`;
+        document.getElementById('print-date-display').innerText = `記録日: ${dateVal}`;
         
-        // inputに入力された値をvalue属性に固定（ブラウザの印刷仕様対策）
-        const inputs = document.querySelectorAll('input[type="text"], input[type="number"]');
+        // inputの値を印刷に反映させるための処理
+        const inputs = document.querySelectorAll('input');
         inputs.forEach(input => {
             input.setAttribute('value', input.value);
         });
 
         window.print();
     }
+
+    // --- 以下、ロジック部分は元のプログラムを維持 ---
 
     async function syncDateAndLoad() {
         const sel = document.getElementById('dateHistory').value;
@@ -221,7 +228,7 @@
                 const rows = document.getElementById('pdfTableBody').rows;
                 for(let c=1; c<=6; c++){
                     const h = sheetData[0][c*2-1];
-                    if(h.includes('周')) {
+                    if(h && h.includes('周')) {
                         const val = h.match(/\d+/)[0];
                         document.getElementById(`lap-${c}`).value = val;
                         document.getElementById(`lap-${c}`).setAttribute('value', val);
@@ -253,6 +260,7 @@
         tbody.innerHTML = '';
         fs.innerHTML = '<option value="all">全員表示</option>';
         ms.forEach(m => {
+            if(!m.trim()) return;
             const tr = document.createElement('tr');
             tr.innerHTML = `<td style="font-weight:bold; background:#f9f9f9; text-align:left; padding-left:5px;">${m.trim()}</td>` +
                            Array(6).fill(0).map((_,i) => `<td><input type="text" class="t-in" oninput="handleInput(this, ${i+1})"></td><td class="rank-col rank-col-cell">-</td>`).join('');
@@ -264,7 +272,7 @@
     }
 
     function handleInput(el, colIdx) {
-        el.setAttribute('value', el.value); // 印刷用
+        el.setAttribute('value', el.value);
         calcRanks(colIdx);
     }
 
@@ -295,11 +303,12 @@
                 await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
             }
         }
-        btn.disabled = false; btn.innerText = "同期完了！";
+        btn.disabled = false; btn.innerText = "保存完了！";
         await fetchAllData();
     }
 
     function updateGraph() {
+        if(!chart) return;
         const filter = document.getElementById('filterSelect').value;
         const range = document.getElementById('graphRange').value;
         const curDay = document.getElementById('recordDate').value;
