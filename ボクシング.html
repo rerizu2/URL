@@ -3,117 +3,102 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシング記録 - 完全版（日付修正済）</title>
+    <title>ボクシングタイム記録</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
+        /* 1. オリジナルデザインの復元 */
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f0f2f5; --pdf-header: #b2ffff; --pdf-yellow: #ffff00; --pdf-male: #00ffff; --pdf-female: #ff0000; }
-        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; color: #333; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; color: #333; }
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
-        
-        /* 記録表テーブルデザイン（1枚に収める設定） */
-        .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; table-layout: fixed; }
-        .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px 2px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-        .pdf-table thead th { background: var(--pdf-header); font-size: 11px; font-weight: bold; }
-        
-        .col-name { width: 110px; text-align: left !important; padding-left: 5px !important; }
-        .col-time { width: 55px; }
-        .col-rank { width: 28px; color: var(--primary); font-weight: bold; background: #fffaf0; }
-
-        .pdf-table input { width: 95%; border: none; text-align: center; font-size: 13px; background: transparent; outline: none; }
-        .lap-edit { width: 30px !important; border: 1px solid #ccc !important; background: #fff !important; color: var(--primary); font-weight: bold; border-radius: 3px; }
-
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
-        .chart-container { height: 350px; position: relative; margin-bottom: 10px; }
+        
+        /* 表のデザイン */
+        .pdf-table { width: 100%; border-collapse: collapse; min-width: 1100px; border: 1px solid #000; background: #fff; }
+        .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 5px; text-align: center; }
+        .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
+        .pdf-table input { width: 55px; border: none; text-align: center; font-size: 13px; background: transparent; padding: 5px 0; }
+        .rank-col { width: 30px; color: var(--primary); font-weight: bold; font-size: 11px; }
+        .lap-edit { width: 35px !important; border: 1px solid #ccc !important; background: #fff !important; color: var(--primary); font-weight: bold; border-radius: 3px; }
 
         /* ランキング */
-        .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; }
-        .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; }
-        .rank-item { display: flex; align-items: center; padding: 3px 0; border-bottom: 1px solid #eee; font-size: 11px; }
-        .rank-name { flex: 1; font-weight: bold; margin-left: 5px; overflow: hidden; text-overflow: ellipsis; }
+        .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
+        .rank-item { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 11px; }
+        .rank-name { flex: 1; font-weight: bold; margin-left: 10px; }
         .rank-time { font-family: monospace; color: var(--primary); font-weight: bold; }
 
-        /* 印刷設定UI */
-        .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .print-options { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
-        .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px; transition: 0.2s; }
+        .chart-container { height: 350px; position: relative; }
         
-        .col-y { background: var(--pdf-yellow) !important; }
-        .highlight-male { background-color: var(--pdf-male) !important; font-weight: bold; }
-        .highlight-female { background-color: var(--pdf-female) !important; color: white; font-weight: bold; }
+        /* 2. 印刷用設定（追加分） */
+        .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; }
+        .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
         @media print {
             @page { margin: 5mm; }
             .no-print, .no-print-area, #saveBtn, .dashboard-grid > .card:first-child, .lap-edit, button, select:not(.print-select), hr { display: none !important; }
             .print-hidden { display: none !important; }
             .dashboard-grid { display: block; }
-            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 15px; }
-            .pdf-table { width: 100% !important; table-layout: fixed; }
-            .pdf-table th, .pdf-table td { font-size: 9px; padding: 2px 1px !important; height: 16px; border: 0.5px solid #000; }
-            .col-name { width: 90px !important; }
-            .col-time { width: 45px !important; }
-            .col-rank { width: 22px !important; }
-            input { font-size: 9px !important; border: none !important; }
+            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 20px; }
+            .pdf-table { width: 100% !important; min-width: 100% !important; table-layout: fixed; }
+            .pdf-table th, .pdf-table td { font-size: 9px; padding: 2px 1px !important; border: 0.5px solid #000; }
             .page-break { page-break-before: always; }
             .print-only-header { display: block !important; text-align: center; border-bottom: 1px solid #000; margin-bottom: 10px; }
+            input { border: none !important; background: transparent !important; }
         }
         .print-only-header { display: none; }
+        .col-y { background: var(--pdf-yellow) !important; }
+        .highlight-male { background-color: var(--pdf-male) !important; font-weight: bold; }
+        .highlight-female { background-color: var(--pdf-female) !important; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="print-only-header">
     <h2 style="margin:0;">ボクシング トレーニング記録レポート</h2>
-    <p id="print-date-display" style="margin:5px 0; font-size:12px;"></p>
+    <p id="print-date-display" style="margin:5px 0; font-size:14px;"></p>
 </div>
 
 <div class="container">
-    <!-- 印刷詳細設定パネル -->
+    <!-- 印刷設定パネル（追加機能） -->
     <div class="no-print-area">
-        <div style="font-weight:bold; color:var(--secondary); font-size:14px;">🖨 印刷・PDF出力設定（1枚集約モード）</div>
-        <div class="print-options">
-            <label><input type="checkbox" id="check-graph" checked> グラフ</label>
-            <label><input type="checkbox" id="check-rank" checked> ランキング</label>
-            <label><input type="checkbox" id="check-table" checked> タイム記録表</label>
-            
-            <span style="margin-left:10px; border-left:1px solid #ccc; padding-left:15px;">向き:</span>
-            <select id="print-orientation" style="padding:5px; border-radius:4px;">
-                <option value="landscape">横向き (推奨)</option>
-                <option value="portrait">縦向き</option>
-            </select>
-
-            <button class="print-btn" onclick="preparePrint()">印刷・PDF保存を実行</button>
-        </div>
+        <div style="font-weight:bold; color:var(--secondary);">印刷設定:</div>
+        <label><input type="checkbox" id="check-graph" checked> グラフ</label>
+        <label><input type="checkbox" id="check-rank" checked> ランキング</label>
+        <label><input type="checkbox" id="check-table" checked> 記録表</label>
+        <select id="print-orientation" style="padding:5px;">
+            <option value="landscape">横向き</option>
+            <option value="portrait">縦向き</option>
+        </select>
+        <button class="print-btn" onclick="preparePrint()">印刷・PDF保存</button>
     </div>
 
     <div class="dashboard-grid">
-        <!-- 左サイド：設定パネル（ここが「設定できなくなった」部分の修正） -->
+        <!-- 左：サイドバー（デザインを元通りに） -->
         <div class="card">
             <div style="font-size:10px; color:#10b981; font-weight:bold; margin-bottom:10px;">● スプレッドシート常時同期中</div>
-            
-            <label style="font-weight:bold;">1. 過去の履歴から読み込む</label>
-            <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:15px;"><option value="">-- 読込中 --</option></select>
-            
-            <label style="font-weight:bold;">2. 日付を直接選ぶ</label>
-            <input type="date" id="recordDate" onchange="onDateChange()" style="width:100%; padding:8px; margin-bottom:20px;">
-            
+            <label style="font-weight:bold;">日付選択（履歴）</label>
+            <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
+            <label style="font-weight:bold;">カレンダーから選択</label>
+            <input type="date" id="recordDate" onchange="onDateChange()" style="width:100%; padding:8px; margin-bottom:15px;">
             <hr>
-            <h2 style="font-size:14px;">選手名簿 (改行で区切る)</h2>
-            <textarea id="memberList" style="width:100%; height:150px; font-size:11px;"></textarea>
+            <h2>選手名簿 (確定)</h2>
+            <textarea id="memberList" style="width:100%; height:120px; font-size:11px;"></textarea>
             <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
         </div>
 
-        <!-- 右サイド：グラフとランキング -->
+        <!-- 右：メイン分析エリア -->
         <div class="card" id="card-analysis">
             <div id="section-graph">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h2 style="font-size:14px; margin:0;">成長・当日分析グラフ</h2>
+                    <h2>成長・当日分析グラフ</h2>
                     <div style="display:flex; gap:10px;" class="no-print">
-                        <select id="filterSelect" onchange="updateGraph()" style="font-size:11px;"><option value="all">全員表示</option></select>
-                        <select id="graphRange" onchange="updateGraph()" style="font-size:11px;">
-                            <option value="all">全期間を表示</option>
-                            <option value="today">選択中の日のみ表示</option>
+                        <select id="filterSelect" onchange="updateGraph()" style="padding:5px;"><option value="all">全員表示</option></select>
+                        <select id="graphRange" onchange="updateGraph()" style="padding:5px;">
+                            <option value="all">全期間</option>
+                            <option value="today">選択中の日のみ</option>
                         </select>
                     </div>
                 </div>
@@ -122,11 +107,11 @@
 
             <div class="ranking-grid" id="section-rank">
                 <div class="rank-box">
-                    <h3 style="text-align:center; font-size:11px; margin:0 0 5px 0;">🏆 2周区間ベスト</h3>
+                    <h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 2周区間個人ベスト</h3>
                     <div id="rankLaps2"></div>
                 </div>
                 <div class="rank-box">
-                    <h3 style="text-align:center; font-size:11px; margin:0 0 5px 0;">🏆 1周区間ベスト</h3>
+                    <h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 1周区間個人ベスト</h3>
                     <div id="rankLaps1"></div>
                 </div>
             </div>
@@ -139,13 +124,13 @@
             <table class="pdf-table" id="mainTable">
                 <thead>
                     <tr>
-                        <th class="col-name">氏名</th>
-                        <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2">周)</th><th class="col-rank">順位</th>
-                        <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2">周)</th><th class="col-rank">順位</th>
-                        <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1">周)</th><th class="col-rank">順位</th>
-                        <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1">周)</th><th class="col-rank">順位</th>
-                        <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1">周)</th><th class="col-rank">順位</th>
-                        <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1">周)</th><th class="col-rank">順位</th>
+                        <th style="width:140px;">氏名</th>
+                        <th>1本目(<input type="number" class="lap-edit" id="lap-1" value="2">周)</th><th class="rank-col">順位</th>
+                        <th>2本目(<input type="number" class="lap-edit" id="lap-2" value="2">周)</th><th class="rank-col">順位</th>
+                        <th>3本目(<input type="number" class="lap-edit" id="lap-3" value="1">周)</th><th class="rank-col">順位</th>
+                        <th>4本目(<input type="number" class="lap-edit" id="lap-4" value="1">周)</th><th class="rank-col">順位</th>
+                        <th>5本目(<input type="number" class="lap-edit" id="lap-5" value="1">周)</th><th class="rank-col">順位</th>
+                        <th>追加(<input type="number" class="lap-edit" id="lap-6" value="1">周)</th><th class="rank-col">順位</th>
                     </tr>
                 </thead>
                 <tbody id="pdfTableBody"></tbody>
@@ -154,11 +139,12 @@
         <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">すべての記録を保存同期</button>
     </div>
 
-    <!-- ラップタイム早見表（印刷除外） -->
+    <!-- 早見表（印刷除外） -->
     <div class="card no-print">
-        <h2 style="font-size:16px; text-align:center;">ラップタイム算早見表 (画面確認用)</h2>
+        <h2 style="text-align:center; border:none; font-size:22px; letter-spacing:8px;">ラップタイム算早見表</h2>
+        <p>※<b><u>（全男）（全女）</u></b>で色が変わっているところは陸上近畿大会出場レベルです。</p>
         <div style="overflow-x:auto;">
-            <table class="pdf-table" style="table-layout: auto;">
+            <table class="pdf-table">
                 <thead>
                     <tr><th>100m</th><th>200m</th><th>300m</th><th>400m</th><th>600m</th><th>800m</th><th>1000m</th><th>1200m</th><th>1500m</th><th>3000m</th></tr>
                 </thead>
@@ -196,7 +182,7 @@
         document.getElementById('dynamic-print-style').innerHTML = `
             @media print {
                 @page { size: A4 ${orientation}; margin: 5mm; }
-                ${orientation === 'portrait' ? '.pdf-table td { font-size: 8px !important; } .col-name { width: 70px !important; }' : ''}
+                ${orientation === 'portrait' ? '.pdf-table th, .pdf-table td { font-size: 8px !important; }' : ''}
             }
         `;
 
@@ -256,10 +242,7 @@
                 const rows = document.getElementById('pdfTableBody').rows;
                 for(let c=1; c<=6; c++){
                     const h = sheetData[0][c*2-1];
-                    if(h && h.includes('周')) {
-                        const val = h.match(/\d+/)[0];
-                        document.getElementById(`lap-${c}`).value = val;
-                    }
+                    if(h && h.includes('周')) document.getElementById(`lap-${c}`).value = h.match(/\d+/)[0];
                 }
                 for (let i = 1; i < sheetData.length; i++) {
                     for (let r = 0; r < rows.length; r++) {
@@ -267,6 +250,7 @@
                             for (let c = 1; c <= 6; c++) {
                                 const val = sheetData[i][c * 2 - 1] || '';
                                 rows[r].cells[c * 2 - 1].querySelector('input').value = val;
+                                rows[r].cells[c * 2 - 1].querySelector('input').setAttribute('value', val);
                                 rows[r].cells[c * 2].innerText = sheetData[i][c * 2] || '-';
                             }
                             break;
@@ -287,8 +271,8 @@
         ms.forEach(m => {
             if(!m.trim()) return;
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="col-name" style="font-weight:bold; background:#f9f9f9;">${m.trim()}</td>` +
-                           Array(6).fill(0).map((_,i) => `<td class="col-time"><input type="text" class="t-in" oninput="handleInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">-</td>`).join('');
+            tr.innerHTML = `<td style="font-weight:bold; background:#f9f9f9; text-align:left; padding-left:5px;">${m.trim()}</td>` +
+                           Array(6).fill(0).map((_,i) => `<td><input type="text" class="t-in" oninput="handleInput(this, ${i+1})"></td><td class="rank-col rank-col-cell">-</td>`).join('');
             tbody.appendChild(tr);
             fs.add(new Option(m.trim(), m.trim()));
         });
@@ -317,7 +301,7 @@
         const btn = document.getElementById('saveBtn');
         const date = document.getElementById('recordDate').value;
         const rows = document.getElementById('pdfTableBody').rows;
-        btn.disabled = true; btn.innerText = "保存中...";
+        btn.disabled = true; btn.innerText = "同期中...";
         for (let r = 0; r < rows.length; r++) {
             for (let c = 1; c <= 6; c++) {
                 const input = rows[r].cells[c * 2 - 1].querySelector('input');
@@ -337,10 +321,7 @@
         const filter = document.getElementById('filterSelect').value;
         const range = document.getElementById('graphRange').value;
         const curDay = document.getElementById('recordDate').value;
-
-        // データの絞り込み
         let filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter) && (range === 'today' ? r.date === curDay : true));
-        
         const dataMap = {}; const labelSet = new Set();
         filtered.forEach(r => {
             const label = range === 'today' ? r.count : `${r.date} (${r.count})`;
@@ -348,13 +329,9 @@
             if(!dataMap[r.name]) dataMap[r.name] = {};
             dataMap[r.name][label] = t2s(r.time);
         });
-
         const sortedLabels = Array.from(labelSet).sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
         const datasets = Object.keys(dataMap).map((name, i) => ({ label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: colors[i % colors.length], tension: 0.3, spanGaps: true, pointRadius: 4 }));
-        
-        chart.data.labels = sortedLabels; 
-        chart.data.datasets = datasets; 
-        chart.update();
+        chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update();
     }
 
     function renderRanking() {
