@@ -7,22 +7,24 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
-        /* --- オリジナルデザイン --- */
+        /* --- オリジナルデザイン復元 --- */
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f0f2f5; --pdf-header: #b2ffff; --pdf-yellow: #ffff00; --pdf-male: #00ffff; --pdf-female: #ff0000; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; color: #333; }
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
         
-        /* 画面用テーブル */
+        /* テーブルデザイン（重なり防止） */
         .pdf-table { width: 100%; border-collapse: collapse; min-width: 1100px; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 5px 2px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
         .pdf-table input { width: 95%; border: none; text-align: center; font-size: 13px; background: transparent; }
         
-        .col-name { width: 120px; text-align: left !important; padding-left: 5px !important; }
+        /* 固定列幅（文字被り防止） */
+        .col-name { width: 130px; text-align: left !important; padding-left: 5px !important; font-weight: bold; }
         .col-time { width: 60px; }
         .col-rank { width: 30px; color: var(--primary); font-weight: bold; font-size: 11px; }
+        
         .lap-edit { width: 35px !important; border: 1px solid #ccc !important; background: #fff !important; color: var(--primary); font-weight: bold; border-radius: 3px; }
 
         .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
@@ -34,34 +36,30 @@
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px; }
         .chart-container { height: 350px; position: relative; }
 
-        /* 印刷コントロール */
-        .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; }
+        /* 印刷コントロールUI */
+        .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* --- 1枚に強制的に収める印刷設定 --- */
+        /* --- 印刷最適化 --- */
         @media print {
-            @page { margin: 3mm; } /* 余白を最小に */
+            @page { margin: 5mm; }
             body { background: white; padding: 0; margin: 0; }
             .no-print, .no-print-area, #saveBtn, .dashboard-grid > .card:first-child, .lap-edit, button, select:not(.print-select), hr { display: none !important; }
             .print-hidden { display: none !important; }
             .dashboard-grid { display: block; }
-            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 10px; }
+            .card { box-shadow: none; border: none; padding: 0; margin-bottom: 15px; }
             
-            /* テーブルの極限圧縮 */
-            .pdf-table { width: 100% !important; min-width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; }
-            .pdf-table th, .pdf-table td { font-size: 9px !important; padding: 1px !important; height: 15px !important; line-height: 1.0 !important; border: 0.5px solid #000 !important; }
-            .col-name { width: 85px !important; }
+            /* テーブル圧縮 */
+            .pdf-table { width: 100% !important; min-width: 100% !important; table-layout: fixed !important; }
+            .pdf-table th, .pdf-table td { font-size: 9px !important; padding: 1px !important; height: 16px !important; line-height: 1.0 !important; border: 0.5px solid #000 !important; }
+            .col-name { width: 90px !important; }
             .col-time { width: 45px !important; }
             .col-rank { width: 22px !important; }
-            .pdf-table input { font-size: 9px !important; width: 100% !important; }
 
-            /* グラフとランキングを小さくして高さを節約 */
-            .chart-container { height: 220px !important; }
-            .ranking-grid { margin-top: 5px; gap: 5px; }
-            .rank-box { padding: 5px; }
-            .rank-item { padding: 1px 0; font-size: 9px; }
-
-            .print-only-header { display: block !important; text-align: center; border-bottom: 1px solid #000; margin-bottom: 5px; }
+            /* 自動改ページ */
+            .page-break { page-break-before: always; }
+            
+            .print-only-header { display: block !important; text-align: center; border-bottom: 1px solid #000; margin-bottom: 10px; }
             input { border: none !important; background: transparent !important; }
         }
         .print-only-header { display: none; }
@@ -73,22 +71,23 @@
 <body>
 
 <div class="print-only-header">
-    <h2 style="margin:0; font-size:16px;">ボクシング トレーニング記録レポート</h2>
-    <p id="print-date-display" style="margin:2px 0; font-size:11px;"></p>
+    <h2 style="margin:0; font-size:18px;">ボクシング トレーニング記録レポート</h2>
+    <p id="print-date-display" style="margin:5px 0; font-size:12px; font-weight:bold;"></p>
 </div>
 
 <div class="container">
-    <!-- 印刷コントロールパネル -->
+    <!-- 印刷設定メニュー -->
     <div class="no-print-area">
-        <div style="font-weight:bold; color:var(--secondary);">🖨 1枚集約印刷設定:</div>
+        <div style="font-weight:bold; color:var(--secondary); min-width:100px;">印刷設定:</div>
         <label><input type="checkbox" id="check-graph" checked> グラフ</label>
         <label><input type="checkbox" id="check-rank" checked> ランキング</label>
         <label><input type="checkbox" id="check-table" checked> 記録表</label>
         <select id="print-orientation" style="padding:5px;">
-            <option value="landscape">横向き (推奨: より綺麗に1枚に収まります)</option>
+            <option value="landscape">横向き (推奨)</option>
             <option value="portrait">縦向き</option>
         </select>
-        <button class="print-btn" onclick="preparePrint()">1枚に収めて印刷/PDF</button>
+        <button class="print-btn" onclick="preparePrint()">印刷・PDF保存</button>
+        <div style="font-size:10px; color:#666; margin-left:auto;">※「記録表」は常に1枚に収まるよう調整され、他項目がある場合は2枚目に配置されます。</div>
     </div>
 
     <div class="dashboard-grid">
@@ -105,7 +104,7 @@
             <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
         </div>
 
-        <!-- 右：メイン分析エリア -->
+        <!-- 右：メイン分析 -->
         <div class="card" id="card-analysis">
             <div id="section-graph">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -134,7 +133,7 @@
         </div>
     </div>
 
-    <!-- 記録表パネル -->
+    <!-- 記録表 -->
     <div class="card" id="section-table">
         <div style="overflow-x: auto;">
             <table class="pdf-table" id="mainTable">
@@ -158,8 +157,9 @@
     <!-- 早見表（印刷除外） -->
     <div class="card no-print">
         <h2 style="text-align:center; border:none; font-size:22px; letter-spacing:8px;">ラップタイム算早見表</h2>
+        <p>※<b><u>（全男）（全女）</u></b>で色分け。</p>
         <div style="overflow-x:auto;">
-            <table class="pdf-table" style="min-width: 1000px;">
+            <table class="pdf-table" style="table-layout: auto;">
                 <thead>
                     <tr><th>100m</th><th>200m</th><th>300m</th><th>400m</th><th>600m</th><th>800m</th><th>1000m</th><th>1200m</th><th>1500m</th><th>3000m</th></tr>
                 </thead>
@@ -194,29 +194,33 @@
         const showTable = document.getElementById('check-table').checked;
         const orientation = document.getElementById('print-orientation').value;
 
-        // 印刷用の動的CSS
+        // 印刷用の動的スタイル設定
         document.getElementById('dynamic-print-style').innerHTML = `
             @media print {
-                @page { size: A4 ${orientation}; margin: 3mm; }
-                /* 縦向きの場合はさらにフォントを小さくして横幅に押し込む */
-                ${orientation === 'portrait' ? '.pdf-table th, .pdf-table td { font-size: 7.5px !important; } .col-name { width: 75px !important; }' : ''}
+                @page { size: A4 ${orientation}; margin: 5mm; }
+                ${orientation === 'portrait' ? '.pdf-table { font-size: 8px !important; } .col-name { width: 70px !important; }' : ''}
             }
         `;
 
+        // 表示・非表示切り替え
         document.getElementById('section-graph').classList.toggle('print-hidden', !showGraph);
         document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
         document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
         document.getElementById('card-analysis').classList.toggle('print-hidden', (!showGraph && !showRank));
 
-        document.getElementById('print-date-display').innerText = `記録実施日: ${document.getElementById('recordDate').value}`;
-        
-        // inputの値を印刷に反映
-        document.querySelectorAll('input').forEach(input => { input.setAttribute('value', input.value); });
+        // 重要：グラフ/ランクがあり、かつ記録表もある場合は、記録表を2枚目へ
+        if ((showGraph || showRank) && showTable) {
+            document.getElementById('section-table').classList.add('page-break');
+        } else {
+            document.getElementById('section-table').classList.remove('page-break');
+        }
 
+        document.getElementById('print-date-display').innerText = `記録実施日: ${document.getElementById('recordDate').value}`;
+        document.querySelectorAll('input').forEach(input => { input.setAttribute('value', input.value); });
         window.print();
     }
 
-    // --- ロジック ---
+    // --- 同期・計算ロジック ---
     async function syncDateAndLoad() {
         const sel = document.getElementById('dateHistory').value;
         if(sel) { document.getElementById('recordDate').value = sel; await loadDateData(); updateGraph(); }
@@ -229,7 +233,7 @@
             const res = await fetch(`${GAS_WEBAPP_URL}?mode=listDates`);
             const dates = await res.json();
             const select = document.getElementById('dateHistory');
-            select.innerHTML = '<option value="">-- 過去の練習日を選択 --</option>';
+            select.innerHTML = '<option value="">-- 練習履歴を選択 --</option>';
             dates.forEach(d => select.add(new Option(d, d)));
         } catch (e) {}
     }
@@ -286,7 +290,7 @@
         ms.forEach(m => {
             if(!m.trim()) return;
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="col-name" style="font-weight:bold; background:#f9f9f9;">${m.trim()}</td>` +
+            tr.innerHTML = `<td class="col-name" style="background:#f9f9f9;">${m.trim()}</td>` +
                            Array(6).fill(0).map((_,i) => `<td class="col-time"><input type="text" class="t-in" oninput="handleInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">-</td>`).join('');
             tbody.appendChild(tr);
             fs.add(new Option(m.trim(), m.trim()));
