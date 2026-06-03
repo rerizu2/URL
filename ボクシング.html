@@ -42,7 +42,6 @@
             body { background: white; padding: 0; margin: 0; }
             .no-print, .no-print-area, #saveBtn, .lap-edit, button, select, hr { display: none !important; }
             .print-hidden { display: none !important; }
-            /* 個人印刷時に他人の行を隠す用 */
             .print-exclude-row { display: none !important; }
             
             .container { max-width: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
@@ -77,13 +76,13 @@
         <label><input type="checkbox" id="check-table" checked> 記録表</label>
         
         <div style="border-left: 1px solid #ccc; padding-left: 10px; display: flex; gap: 5px; align-items: center;">
-            <span>範囲:</span>
-            <select id="print-scope" onchange="togglePrintNameSelect()" style="padding:5px;">
+            <span>印刷範囲:</span>
+            <select id="print-scope" onchange="onPrintScopeChange()" style="padding:5px;">
                 <option value="all">すべて</option>
                 <option value="individual">個人</option>
             </select>
-            <select id="print-name-select" style="padding:5px; display:none;">
-                <!-- 名簿更新時に自動で追加されます -->
+            <select id="print-name-select" onchange="updateGraph()" style="padding:5px; display:none;">
+                <!-- 名簿更新時に追加 -->
             </select>
         </div>
 
@@ -94,7 +93,6 @@
         <button class="print-btn" onclick="preparePrint()">印刷・PDF保存</button>
     </div>
 
-    <!-- 印刷時に制御するためIDを付与 -->
     <div class="dashboard-grid" id="main-dashboard-container">
         <!-- 左：サイドバー -->
         <div class="card no-print">
@@ -184,25 +182,55 @@
         await loadDateData();
     };
 
-    // --- 印刷設定の制御用 ---
-    function togglePrintNameSelect() {
+    // --- 印刷設定の制御 ---
+    function onPrintScopeChange() {
         const scope = document.getElementById('print-scope').value;
-        document.getElementById('print-name-select').style.display = (scope === 'individual') ? 'inline-block' : 'none';
+        const nameSelect = document.getElementById('print-name-select');
+        nameSelect.style.display = (scope === 'individual') ? 'inline-block' : 'none';
+        
+        // 印刷設定を切り替えたら即グラフを更新
+        updateGraph();
     }
 
-    // --- 自動変換 500 -> 5:00 ---
-    function formatTimeInput(el, colIdx) {
-        let val = el.value.trim();
-        if (/^\d{3,4}$/.test(val)) {
-            const min = val.slice(0, -2);
-            const sec = val.slice(-2);
-            el.value = min + ":" + sec;
-            el.setAttribute('value', el.value);
-            calcRanks(colIdx);
+    // --- グラフ更新（一瞬で反映させるための修正） ---
+    function updateGraph() {
+        if(!chart) return;
+
+        // 印刷設定が「個人」なら、印刷用の名前プルダウンを優先する
+        const scope = document.getElementById('print-scope').value;
+        let filter = document.getElementById('filterSelect').value;
+        if (scope === 'individual') {
+            filter = document.getElementById('print-name-select').value;
         }
+
+        const range = document.getElementById('graphRange').value;
+        const curDay = document.getElementById('recordDate').value;
+        
+        let filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter) && (range === 'today' ? r.date === curDay : true));
+        
+        const dataMap = {}; 
+        const labelSet = new Set();
+        
+        filtered.forEach(r => {
+            const label = range === 'today' ? r.count : `${r.date} (${r.count})`;
+            labelSet.add(label);
+            if(!dataMap[r.name]) dataMap[r.name] = {};
+            dataMap[r.name][label] = t2s(r.time);
+        });
+        
+        const sortedLabels = Array.from(labelSet).sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
+        const datasets = Object.keys(dataMap).map((name, i) => {
+            const color = generateDynamicColor(i);
+            return { label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: color, backgroundColor: color, tension: 0.3, spanGaps: true, pointRadius: 4 };
+        });
+        
+        chart.data.labels = sortedLabels; 
+        chart.data.datasets = datasets; 
+        
+        // 'none' を指定してアニメーションなしで即時更新
+        chart.update('none'); 
     }
 
-    // --- 印刷準備（修正点：個人フィルタリング追加） ---
     function preparePrint() {
         const showGraph = document.getElementById('check-graph').checked;
         const showRank = document.getElementById('check-rank').checked;
@@ -211,52 +239,21 @@
         const printScope = document.getElementById('print-scope').value;
         const targetName = document.getElementById('print-name-select').value;
 
-        // 向きの反映
         document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orientation}; } }`;
 
-        // 表示切り替え
         document.getElementById('section-graph').classList.toggle('print-hidden', !showGraph);
         document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
         document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
 
-        // 個人印刷の場合の処理
+        // 個人印刷の行フィルタリング
+        const rows = document.getElementById('pdfTableBody').rows;
         if (printScope === 'individual') {
-            // 記録表の行をフィルタリング
-            const rows = document.getElementById('pdfTableBody').rows;
             for (let i = 0; i < rows.length; i++) {
                 const rowName = rows[i].cells[0].innerText.trim();
-                if (rowName !== targetName) {
-                    rows[i].classList.add('print-exclude-row');
-                } else {
-                    rows[i].classList.remove('print-exclude-row');
-                }
-            }
-            // グラフも個人に合わせる（グラフが表示対象の場合）
-            if (showGraph) {
-                document.getElementById('filterSelect').value = targetName;
-                updateGraph();
+                rows[i].classList.toggle('print-exclude-row', rowName !== targetName);
             }
         } else {
-            // すべて表示に戻す
-            const rows = document.getElementById('pdfTableBody').rows;
-            for (let i = 0; i < rows.length; i++) {
-                rows[i].classList.remove('print-exclude-row');
-            }
-            if (showGraph) {
-                document.getElementById('filterSelect').value = 'all';
-                updateGraph();
-            }
-        }
-
-        const hasAnalysis = showGraph || showRank;
-        document.getElementById('main-dashboard-container').classList.toggle('print-hidden', !hasAnalysis);
-        document.getElementById('card-analysis').classList.toggle('print-hidden', !hasAnalysis);
-
-        const tableCard = document.getElementById('section-table');
-        if (hasAnalysis && showTable) {
-            tableCard.classList.add('page-break');
-        } else {
-            tableCard.classList.remove('page-break');
+            for (let i = 0; i < rows.length; i++) rows[i].classList.remove('print-exclude-row');
         }
 
         document.getElementById('print-date-display').innerText = `記録実施日: ${document.getElementById('recordDate').value}`;
@@ -264,31 +261,35 @@
 
         window.print();
 
-        // 印刷ダイアログを閉じた後に「個人フィルタ」による非表示を解除する（念のため）
+        // 印刷後、画面表示を戻す
         setTimeout(() => {
-            const rows = document.getElementById('pdfTableBody').rows;
-            for (let i = 0; i < rows.length; i++) {
-                rows[i].classList.remove('print-exclude-row');
-            }
-        }, 1000);
+            for (let i = 0; i < rows.length; i++) rows[i].classList.remove('print-exclude-row');
+        }, 500);
     }
 
     // --- その他既存ロジック ---
-    function generateDynamicColor(index) {
-        const hue = (index * 137.5) % 360;
-        return `hsl(${hue}, 70%, 50%)`;
+    function initChart() {
+        const ctx = document.getElementById('runChart').getContext('2d');
+        chart = new Chart(ctx, { 
+            type: 'line', 
+            data: { labels: [], datasets: [] }, 
+            options: { 
+                animation: false, // アニメーションをグローバルで無効化
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { y: { reverse: true, ticks: { callback: v => s2t(v) } } } 
+            } 
+        });
     }
 
     function applyMembers() {
         const ms = document.getElementById('memberList').value.trim().split('\n');
         const tbody = document.getElementById('pdfTableBody');
         const fs = document.getElementById('filterSelect');
-        const ps = document.getElementById('print-name-select'); // 印刷用セレクト
-        
+        const ps = document.getElementById('print-name-select');
         tbody.innerHTML = '';
         fs.innerHTML = '<option value="all">全員表示</option>';
-        ps.innerHTML = ''; // クリア
-
+        ps.innerHTML = '';
         ms.forEach(m => {
             if(!m.trim()) return;
             const name = m.trim();
@@ -296,11 +297,15 @@
             tr.innerHTML = `<td class="col-name" style="background:#f9f9f9;">${name}</td>` +
                            Array(6).fill(0).map((_,i) => `<td class="col-time"><input type="text" class="t-in" oninput="handleInput(this, ${i+1})" onblur="formatTimeInput(this, ${i+1})"></td><td class="col-rank rank-col-cell">-</td>`).join('');
             tbody.appendChild(tr);
-            
             fs.add(new Option(name, name));
-            ps.add(new Option(name, name)); // 印刷設定用にも追加
+            ps.add(new Option(name, name));
         });
         localStorage.setItem('boxing_members', document.getElementById('memberList').value);
+    }
+
+    function generateDynamicColor(index) {
+        const hue = (index * 137.5) % 360;
+        return `hsl(${hue}, 70%, 50%)`;
     }
 
     function calcRanks(colIdx) {
@@ -332,6 +337,17 @@
         return (parseInt(p[0]) || 0) * 60 + (parseInt(p[1]) || 0);
     }
 
+    function formatTimeInput(el, colIdx) {
+        let val = el.value.trim();
+        if (/^\d{3,4}$/.test(val)) {
+            const min = val.slice(0, -2);
+            const sec = val.slice(-2);
+            el.value = min + ":" + sec;
+            el.setAttribute('value', el.value);
+            calcRanks(colIdx);
+        }
+    }
+
     function s2t_pdf(s) {
         if (s < 60) return s.toFixed(1);
         const m = Math.floor(s/60);
@@ -360,11 +376,6 @@
         }
     }
 
-    function initChart() {
-        const ctx = document.getElementById('runChart').getContext('2d');
-        chart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => s2t(v) } } } } });
-    }
-
     async function saveAllSheetData() {
         const btn = document.getElementById('saveBtn');
         const date = document.getElementById('recordDate').value;
@@ -382,27 +393,6 @@
         }
         btn.disabled = false; btn.innerText = "同期完了！";
         await fetchAllData();
-    }
-
-    function updateGraph() {
-        if(!chart) return;
-        const filter = document.getElementById('filterSelect').value;
-        const range = document.getElementById('graphRange').value;
-        const curDay = document.getElementById('recordDate').value;
-        let filtered = allSheetData.filter(r => (filter === 'all' || r.name === filter) && (range === 'today' ? r.date === curDay : true));
-        const dataMap = {}; const labelSet = new Set();
-        filtered.forEach(r => {
-            const label = range === 'today' ? r.count : `${r.date} (${r.count})`;
-            labelSet.add(label);
-            if(!dataMap[r.name]) dataMap[r.name] = {};
-            dataMap[r.name][label] = t2s(r.time);
-        });
-        const sortedLabels = Array.from(labelSet).sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
-        const datasets = Object.keys(dataMap).map((name, i) => {
-            const color = generateDynamicColor(i);
-            return { label: name, data: sortedLabels.map(l => dataMap[name][l] || null), borderColor: color, backgroundColor: color, tension: 0.3, spanGaps: true, pointRadius: 4 };
-        });
-        chart.data.labels = sortedLabels; chart.data.datasets = datasets; chart.update();
     }
 
     function renderRanking() {
