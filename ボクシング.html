@@ -30,7 +30,7 @@
         /* --- 基本デザイン --- */
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f0f2f5; --pdf-header: #b2ffff; --pdf-yellow: #ffff00; --pdf-male: #00ffff; --pdf-female: #ff0000; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; color: #333; }
-        #app-content { display: none; } /* 初期状態は非表示 */
+        #app-content { display: none; }
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
@@ -80,7 +80,6 @@
 </head>
 <body>
 
-<!-- パスワード入力画面 -->
 <div id="login-overlay">
     <div class="login-box">
         <h2>Authentication</h2>
@@ -90,7 +89,6 @@
     </div>
 </div>
 
-<!-- メインコンテンツ -->
 <div id="app-content">
     <div class="print-only-header">
         <h2 style="margin:0; font-size:18px;" id="print-title">トレーニング記録レポート</h2>
@@ -113,7 +111,6 @@
         </div>
 
         <div class="dashboard-grid" id="main-dashboard-container">
-            <!-- サイドバー -->
             <div class="card no-print">
                 <label style="font-weight:bold;">履歴選択</label>
                 <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
@@ -124,7 +121,6 @@
                 <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
             </div>
 
-            <!-- メイン表示エリア -->
             <div class="card" id="card-analysis">
                 <div id="section-graph">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
@@ -151,7 +147,6 @@
             </div>
         </div>
 
-        <!-- 記録表 -->
         <div class="card" id="section-table">
             <div style="overflow-x: auto;">
                 <table class="pdf-table" id="mainTable">
@@ -172,7 +167,6 @@
             <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">同期保存</button>
         </div>
 
-        <!-- ラップタイム早見表（印刷除外） -->
         <div class="card no-print">
             <h2 style="text-align:center; font-size:22px; letter-spacing:8px;">ラップタイム早見表</h2>
             <p>※<u><b>（全男）</b></u>、<u><b>（全女）</b></u>のところは陸上競技近畿大会出場レベルです。<p>
@@ -189,27 +183,35 @@
 </div>
 
 <script>
-    // --- パスワード認証ロジック ---
-    const CORRECT_PASSWORD = "ojithsboxing";
+    /* --- パスワード認証（SHA-256ハッシュ化対応） --- */
+    const HASHED_PASSWORD = "f332c0d024b4f0b2f70335035252815598141666e8509315539401770e5a8731";
 
-    function checkPassword() {
+    async function checkPassword() {
         const input = document.getElementById('password-input').value;
-        if (input === CORRECT_PASSWORD) {
+        const inputHash = await sha256(input);
+
+        if (inputHash === HASHED_PASSWORD) {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-content').style.display = 'block';
             sessionStorage.setItem('isBoxingAuth', 'true');
-            initApp(); // 認証後にアプリを初期化
+            initApp();
         } else {
             alert('パスワードが正しくありません。');
         }
     }
 
-    // Enterキーでもログインできるように設定
+    // 文字列をSHA-256ハッシュに変換する関数
+    async function sha256(text) {
+        const msgUint8 = new TextEncoder().encode(text);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     document.getElementById('password-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') checkPassword();
     });
 
-    // ページ読み込み時の処理
     window.onload = () => {
         if (sessionStorage.getItem('isBoxingAuth') === 'true') {
             document.getElementById('login-overlay').style.display = 'none';
@@ -218,7 +220,7 @@
         }
     };
 
-    // --- アプリ本体のロジック ---
+    /* --- アプリ本体のロジック（変更なし） --- */
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby4wv9HDVi099vlKKXq_whz6uQ1X-tQ5E1D47-xbi7Un_KkNO00yp7obVCsp-3201lL9Q/exec"; 
     
     let chart;
@@ -236,7 +238,6 @@
         await loadDateData();
     }
 
-    // --- 以降、元のプログラムと同じロジック ---
     function generateRefTable() {
         const tbody = document.getElementById('refTableBody');
         const dists = [1, 2, 3, 4, 6, 8, 10, 12, 15, 30]; 
