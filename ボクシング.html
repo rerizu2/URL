@@ -80,6 +80,7 @@
 </head>
 <body>
 
+<!-- パスワード入力画面 -->
 <div id="login-overlay">
     <div class="login-box">
         <h2>Authentication</h2>
@@ -89,6 +90,7 @@
     </div>
 </div>
 
+<!-- メインコンテンツ -->
 <div id="app-content">
     <div class="print-only-header">
         <h2 style="margin:0; font-size:18px;" id="print-title">トレーニング記録レポート</h2>
@@ -111,6 +113,7 @@
         </div>
 
         <div class="dashboard-grid" id="main-dashboard-container">
+            <!-- サイドバー -->
             <div class="card no-print">
                 <label style="font-weight:bold;">履歴選択</label>
                 <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
@@ -121,6 +124,7 @@
                 <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
             </div>
 
+            <!-- メイン表示エリア -->
             <div class="card" id="card-analysis">
                 <div id="section-graph">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
@@ -147,6 +151,7 @@
             </div>
         </div>
 
+        <!-- 記録表 -->
         <div class="card" id="section-table">
             <div style="overflow-x: auto;">
                 <table class="pdf-table" id="mainTable">
@@ -167,6 +172,7 @@
             <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">同期保存</button>
         </div>
 
+        <!-- ラップタイム早見表（印刷除外） -->
         <div class="card no-print">
             <h2 style="text-align:center; font-size:22px; letter-spacing:8px;">ラップタイム早見表</h2>
             <p>※<u><b>（全男）</b></u>、<u><b>（全女）</b></u>のところは陸上競技近畿大会出場レベルです。<p>
@@ -183,23 +189,12 @@
 </div>
 
 <script>
-    // --- パスワード認証ロジック (SHA-256対応) ---
-    // 元のパスワード "ojithsboxing" のSHA-256ハッシュ値
-    const HASHED_PASSWORD_KEY = "840003e6f9175440be542be8cc79c9da6063675037be7f3e800d367f08c3baaa";
+    // --- パスワード認証ロジック ---
+    const CORRECT_PASSWORD = "ojithsboxing";
 
-    // 文字列をSHA-256ハッシュ値に変換する非同期関数
-    async function sha256(message) {
-        const msgBuffer = new TextEncoder().encode(message);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    async function checkPassword() {
+    function checkPassword() {
         const input = document.getElementById('password-input').value;
-        const inputHashed = await sha256(input); // 入力されたパスワードをハッシュ化
-
-        if (inputHashed === HASHED_PASSWORD_KEY) {
+        if (input === CORRECT_PASSWORD) {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('app-content').style.display = 'block';
             sessionStorage.setItem('isBoxingAuth', 'true');
@@ -210,8 +205,8 @@
     }
 
     // Enterキーでもログインできるように設定
-    document.getElementById('password-input').addEventListener('keypress', async (e) => {
-        if (e.key === 'Enter') await checkPassword();
+    document.getElementById('password-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkPassword();
     });
 
     // ページ読み込み時の処理
@@ -241,7 +236,7 @@
         await loadDateData();
     }
 
-    // --- 既存のアプリロジックはそのまま維持 ---
+    // --- 以降、元のプログラムと同じロジック ---
     function generateRefTable() {
         const tbody = document.getElementById('refTableBody');
         const dists = [1, 2, 3, 4, 6, 8, 10, 12, 15, 30]; 
