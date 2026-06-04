@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録 - 周数連動グラフ版</title>
+    <title>ボクシングタイム記録 - 動的周数選択版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -33,7 +33,7 @@
         .col-name { width: 120px; text-align: left !important; padding-left: 5px !important; font-weight: bold; background: #f9f9f9; }
         .col-time { width: 55px; }
         .col-rank { width: 25px; color: var(--primary); font-weight: bold; font-size: 10px; }
-        .lap-edit { width: 30px !important; border: 1px solid #ccc !important; background: #fff !important; font-weight: bold; border-radius: 3px; color: var(--primary); }
+        .lap-edit { width: 30px !important; border: 1px solid #ccc !important; background: #fff !important; font-weight: bold; border-radius: 3px; color: var(--primary); text-align: center; }
 
         .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
@@ -107,7 +107,8 @@
                         <div class="no-print" style="display:flex; gap:5px;">
                             <select id="displayScope" onchange="syncUI()"><option value="all">全員表示</option><option value="individual">個人表示</option></select>
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
-                            <select id="lapFilter" onchange="syncUI()"><option value="all">全ての周</option><option value="1">1周のみ</option><option value="2">2周のみ</option><option value="3">3周のみ</option></select>
+                            <!-- 動的に中身が変わる周数フィルター -->
+                            <select id="lapFilter" onchange="updateGraph()"></select>
                             <select id="graphRange" onchange="syncUI()"><option value="all">全期間</option><option value="today">本日のみ</option></select>
                         </div>
                     </div>
@@ -128,12 +129,12 @@
                     <thead>
                         <tr>
                             <th class="col-name" id="table-first-col">氏名</th>
-                            <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2" oninput="syncUI()">)</th><th class="col-rank">順</th>
-                            <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2" oninput="syncUI()">)</th><th class="col-rank">順</th>
-                            <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1" oninput="syncUI()">)</th><th class="col-rank">順</th>
-                            <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1" oninput="syncUI()">)</th><th class="col-rank">順</th>
-                            <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1" oninput="syncUI()">)</th><th class="col-rank">順</th>
-                            <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1" oninput="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
                         </tr>
                     </thead>
                     <tbody id="pdfTableBody"></tbody>
@@ -172,6 +173,41 @@
         fetchDateHistory();
         await fetchAllData();
         await loadDateData();
+        updateLapFilterDropdown(); // 初回プルダウン作成
+    }
+
+    // 見出しの周数が変わった時の処理
+    function onLapHeaderChange() {
+        updateLapFilterDropdown();
+        syncUI();
+    }
+
+    // プルダウンの選択肢を現在の記録表の見出しから作成する
+    function updateLapFilterDropdown() {
+        const lapFilter = document.getElementById('lapFilter');
+        const currentSelected = lapFilter.value; // 現在の選択を記憶
+
+        // 1本目〜追加までの入力値を取得
+        const laps = [];
+        for(let i=1; i<=6; i++) {
+            const val = document.getElementById(`lap-${i}`).value;
+            if(val) laps.push(val);
+        }
+        const uniqueLaps = [...new Set(laps)].sort();
+
+        // プルダウンを再構成
+        lapFilter.innerHTML = '<option value="all">全ての周</option>';
+        uniqueLaps.forEach(l => {
+            const opt = document.createElement('option');
+            opt.value = l;
+            opt.innerText = l + '周のみ';
+            lapFilter.appendChild(opt);
+        });
+
+        // 以前の選択がまだ存在すれば戻す
+        if ([...lapFilter.options].some(o => o.value === currentSelected)) {
+            lapFilter.value = currentSelected;
+        }
     }
 
     function applyMembers() {
@@ -273,20 +309,17 @@
         let graphData = [];
         
         if (range === 'today') {
-            // 本日のグラフ：現在の入力欄から取得
             const rows = document.getElementById('pdfTableBody').rows;
             for(let r=0; r<rows.length; r++) {
                 const nameInRow = rows[r].cells[0].innerText;
-                
-                // 個人表示なら対象者のみ
                 if (scope === 'individual' && nameInRow !== curDay) continue; 
 
                 for(let c=1; c<=6; c++) {
                     const input = rows[r].cells[c*2-1].querySelector('input');
                     const val = input ? input.value : "";
-                    const headerLap = document.getElementById(`lap-${c}`).value; // 見出しの周数
+                    const headerLap = document.getElementById(`lap-${c}`).value;
 
-                    // グラフのフィルタ条件チェック
+                    // 周数フィルターの適用
                     if (lapFilter !== 'all' && headerLap !== lapFilter) continue;
 
                     if(val) {
@@ -296,7 +329,6 @@
                 }
             }
         } else {
-            // 全期間のグラフ：クラウドデータから取得
             graphData = (scope === 'all') ? [...allSheetData] : allSheetData.filter(d => d.name === targetName);
             if(lapFilter !== 'all') {
                 graphData = graphData.filter(d => String(d.laps) === lapFilter);
@@ -332,34 +364,18 @@
         chart.update();
     }
 
-    function t2s(v){ 
-        if(!v || v === "") return null; 
-        const p = v.toString().split(':'); 
-        if(p.length > 1) return (parseInt(p[0]) * 60 + parseInt(p[1]));
-        return parseFloat(v) || null;
-    }
-    function s2t(s) { 
-        if (s === null || isNaN(s)) return ""; 
-        const m = Math.floor(s/60); 
-        const sec = Math.floor(s%60);
-        return m + ":" + String(sec).padStart(2, '0'); 
-    }
+    function t2s(v){ if(!v || v === "") return null; const p = v.toString().split(':'); if(p.length > 1) return (parseInt(p[0]) * 60 + parseInt(p[1])); return parseFloat(v) || null; }
+    function s2t(s) { if (s === null || isNaN(s)) return ""; const m = Math.floor(s/60); const sec = Math.floor(s%60); return m + ":" + String(sec).padStart(2, '0'); }
 
-    async function fetchAllData() {
-        try {
-            const res = await fetch(GAS_WEBAPP_URL);
-            const json = await res.json();
-            allSheetData = Array.isArray(json) ? json : [];
-            syncUI();
-        } catch (e) { console.error("Data Fetch Error", e); }
-    }
-
+    async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); const json = await res.json(); allSheetData = Array.isArray(json) ? json : []; syncUI(); } catch (e) {} }
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
         try {
             const res = await fetch(`${GAS_WEBAPP_URL}?date=${date}`);
             const result = await res.json();
             currentDayData = result.found ? result.data : [];
+            // 日付が変わったらプルダウンの選択肢も更新
+            updateLapFilterDropdown();
             syncUI();
         } catch (e) {}
     }
@@ -417,20 +433,16 @@
         const showR = document.getElementById('check-rank').checked;
         const showT = document.getElementById('check-table').checked;
         const orient = document.getElementById('print-orientation').value;
-
         document.getElementById('section-graph').classList.toggle('print-hidden', !showG);
         document.getElementById('section-rank').classList.toggle('print-hidden', !showR);
         document.getElementById('section-table').classList.toggle('print-hidden', !showT);
         document.getElementById('card-analysis').classList.toggle('print-hidden', (!showG && !showR));
-
         const tableSection = document.getElementById('section-table');
         if ((showG || showR) && showT) tableSection.classList.add('force-page-break');
         else tableSection.classList.remove('force-page-break');
-
         document.getElementById('print-title').innerText = "トレーニング記録レポート";
         document.getElementById('print-date-display').innerText = `実施日: ${document.getElementById('recordDate').value}`;
         document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orient}; } }`;
-
         setTimeout(() => { window.print(); }, 200);
     }
 
