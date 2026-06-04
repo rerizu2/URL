@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録 - グラフ・個人表示修正版</title>
+    <title>ボクシングタイム記録 - 周数フィルタ版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -104,10 +104,11 @@
                 <div id="section-graph">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                         <h2 style="margin:0;">分析グラフ</h2>
-                        <div class="no-print">
-                            <select id="displayScope" onchange="syncUI()"><option value="all">全員表示</option><option value="individual">個人表示</option></select>
+                        <div class="no-print" style="display:flex; gap:5px;">
+                            <select id="displayScope" onchange="syncUI()"><option value="all">全員</option><option value="individual">個人</option></select>
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
-                            <select id="graphRange" onchange="syncUI()"><option value="all">全期間</option><option value="today">本日のみ</option></select>
+                            <select id="lapFilter" onchange="syncUI()"><option value="all">全ての周</option><option value="1">1周のみ</option><option value="2">2周のみ</option></select>
+                            <select id="graphRange" onchange="syncUI()"><option value="all">全期間</option><option value="today">本日</option></select>
                         </div>
                     </div>
                     <div class="chart-container"><canvas id="runChart"></canvas></div>
@@ -127,12 +128,12 @@
                     <thead>
                         <tr>
                             <th class="col-name" id="table-first-col">氏名</th>
-                            <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2">)</th><th class="col-rank">順</th>
-                            <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2">)</th><th class="col-rank">順</th>
-                            <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1">)</th><th class="col-rank">順</th>
-                            <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1">)</th><th class="col-rank">順</th>
-                            <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1">)</th><th class="col-rank">順</th>
-                            <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1">)</th><th class="col-rank">順</th>
+                            <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2" onchange="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2" onchange="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1" onchange="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1" onchange="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1" onchange="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1" onchange="syncUI()">)</th><th class="col-rank">順</th>
                         </tr>
                     </thead>
                     <tbody id="pdfTableBody"></tbody>
@@ -265,47 +266,49 @@
         const scope = document.getElementById('displayScope').value;
         const targetName = document.getElementById('filterSelect').value;
         const range = document.getElementById('graphRange').value;
+        const lapFilter = document.getElementById('lapFilter').value;
         const curDay = document.getElementById('recordDate').value;
         
         let graphData = [];
-        // データの抽出
         if (range === 'today') {
-            // 本日のみの場合はテーブルの入力値から取得
             const rows = document.getElementById('pdfTableBody').rows;
             for(let r=0; r<rows.length; r++) {
-                const name = (scope === 'all') ? rows[r].cells[0].innerText : targetName;
-                if (scope === 'individual' && rows[r].cells[0].innerText !== targetName && scope === 'all') continue;
-                
-                // 個人表示モードで、テーブルが「実施日リスト」になっている場合への対応
-                let currentNameInRow = rows[r].cells[0].innerText;
+                const rowName = (scope === 'all') ? rows[r].cells[0].innerText : targetName;
+                if (scope === 'individual' && rows[r].cells[0].innerText !== curDay) continue; // 個人表は1列目が日付
 
                 for(let c=1; c<=6; c++) {
                     const input = rows[r].cells[c*2-1].querySelector('input');
                     const val = input ? input.value : "";
+                    const currentLapSetting = document.getElementById(`lap-${c}`).value;
+
+                    // 周数フィルターの適用
+                    if(lapFilter !== 'all' && currentLapSetting !== lapFilter) continue;
+
                     if(val) {
-                        // 個人モードなら対象者のみ、全員モードなら全員
-                        if(scope === 'individual' && currentNameInRow === curDay) {
-                            graphData.push({ name: targetName, count: lapLabels[c-1], time: val, date: curDay });
-                        } else if (scope === 'all') {
-                            graphData.push({ name: currentNameInRow, count: lapLabels[c-1], time: val, date: curDay });
+                        if (scope === 'all') {
+                            graphData.push({ name: rows[r].cells[0].innerText, count: lapLabels[c-1], time: val, date: curDay, laps: currentLapSetting });
+                        } else if (scope === 'individual' && rows[r].cells[0].innerText === curDay) {
+                            graphData.push({ name: targetName, count: lapLabels[c-1], time: val, date: curDay, laps: currentLapSetting });
                         }
                     }
                 }
             }
         } else {
-            // 全期間の場合はクラウドデータから取得
+            // クラウド全データから取得
             graphData = (scope === 'all') ? [...allSheetData] : allSheetData.filter(d => d.name === targetName);
+            // 周数フィルターの適用
+            if(lapFilter !== 'all') {
+                graphData = graphData.filter(d => String(d.laps) === lapFilter);
+            }
         }
 
         if(graphData.length === 0) { chart.data.datasets = []; chart.update(); return; }
 
-        // 日付と本目でソート（古い順）
         graphData.sort((a,b) => {
             if(a.date !== b.date) return a.date.localeCompare(b.date);
             return lapLabels.indexOf(a.count) - lapLabels.indexOf(b.count);
         });
 
-        // X軸ラベルの作成
         const labels = [...new Set(graphData.map(d => range === 'today' ? d.count : `${d.date} ${d.count}`))];
         const names = (scope === 'all') ? [...new Set(graphData.map(d => d.name))] : [targetName];
         
