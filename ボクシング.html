@@ -7,10 +7,35 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
+        /* --- パスワード画面用スタイル --- */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1d3557; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10000;
+            color: white; font-family: sans-serif;
+        }
+        .login-box {
+            background: white; padding: 30px; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center; color: #333;
+        }
+        .login-box h2 { margin-top: 0; color: #e63946; }
+        .login-box input {
+            width: 80%; padding: 10px; margin: 15px 0;
+            border: 2px solid #ddd; border-radius: 6px; font-size: 16px;
+        }
+        .login-box button {
+            background: #e63946; color: white; border: none;
+            padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold;
+        }
+        .login-box button:hover { background: #c12a36; }
+        #error-msg { color: #e63946; font-size: 14px; margin-top: 10px; height: 1em; }
+
         /* --- 基本デザイン --- */
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f0f2f5; --pdf-header: #b2ffff; --pdf-yellow: #ffff00; --pdf-male: #00ffff; --pdf-female: #ff0000; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; color: #333; }
         .container { max-width: 1400px; margin: 0 auto; }
+        #main-content { display: none; } /* 初期状態は非表示 */
+
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
         
@@ -59,114 +84,157 @@
 </head>
 <body>
 
-<div class="print-only-header">
-    <h2 style="margin:0; font-size:18px;" id="print-title">トレーニング記録レポート</h2>
-    <p id="print-date-display" style="margin:5px 0; font-size:12px; font-weight:bold;"></p>
+<!-- 認証用オーバーレイ -->
+<div id="login-overlay">
+    <div class="login-box">
+        <h2>Authentication</h2>
+        <p>パスワードを入力してください</p>
+        <input type="password" id="pass-input" placeholder="Password">
+        <br>
+        <button onclick="verifyAccess()">ログイン</button>
+        <p id="error-msg"></p>
+    </div>
 </div>
 
-<div class="container">
-    <div class="no-print-area">
-        <div style="font-weight:bold; color:var(--secondary); min-width:80px;">印刷項目:</div>
-        <label><input type="checkbox" id="check-graph" checked> グラフ</label>
-        <label><input type="checkbox" id="check-rank" checked> ランキング</label>
-        <label><input type="checkbox" id="check-table" checked> 記録表</label>
-        <div style="border-left: 1px solid #ccc; padding-left: 15px; display: flex; gap: 10px; align-items: center;">
-            <select id="print-orientation" style="padding:5px;">
-                <option value="landscape">横向き (推奨)</option>
-                <option value="portrait">縦向き</option>
-            </select>
-            <button class="print-btn" onclick="preparePrint()">印刷・PDF保存</button>
-        </div>
+<div id="main-content">
+    <div class="print-only-header">
+        <h2 style="margin:0; font-size:18px;" id="print-title">トレーニング記録レポート</h2>
+        <p id="print-date-display" style="margin:5px 0; font-size:12px; font-weight:bold;"></p>
     </div>
 
-    <div class="dashboard-grid" id="main-dashboard-container">
-        <!-- サイドバー -->
-        <div class="card no-print">
-            <label style="font-weight:bold;">履歴選択</label>
-            <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
-            <input type="date" id="recordDate" onchange="onDateChange()" style="width:100%; padding:8px; margin-bottom:15px;">
-            <hr>
-            <h2>選手名簿</h2>
-            <textarea id="memberList" style="width:100%; height:120px; font-size:11px;"></textarea>
-            <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
+    <div class="container">
+        <div class="no-print-area">
+            <div style="font-weight:bold; color:var(--secondary); min-width:80px;">印刷項目:</div>
+            <label><input type="checkbox" id="check-graph" checked> グラフ</label>
+            <label><input type="checkbox" id="check-rank" checked> ランキング</label>
+            <label><input type="checkbox" id="check-table" checked> 記録表</label>
+            <div style="border-left: 1px solid #ccc; padding-left: 15px; display: flex; gap: 10px; align-items: center;">
+                <select id="print-orientation" style="padding:5px;">
+                    <option value="landscape">横向き (推奨)</option>
+                    <option value="portrait">縦向き</option>
+                </select>
+                <button class="print-btn" onclick="preparePrint()">印刷・PDF保存</button>
+            </div>
         </div>
 
-        <!-- メイン表示エリア -->
-        <div class="card" id="card-analysis">
-            <div id="section-graph">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
-                    <h2 style="margin:0;">成長分析グラフ</h2>
-                    <div style="display:flex; gap:10px; align-items:center;" class="no-print">
-                        <select id="displayScope" onchange="syncUI()" style="padding:5px; font-weight:bold; border:2px solid var(--secondary);">
-                            <option value="all">全員表示</option>
-                            <option value="individual">個人表示</option>
-                        </select>
-                        <select id="filterSelect" onchange="syncUI()" style="padding:5px; display:none;"></select>
-                        <select id="graphRange" onchange="syncUI()" style="padding:5px;">
-                            <option value="all">全期間</option>
-                            <option value="today">本日のみ</option>
-                        </select>
+        <div class="dashboard-grid" id="main-dashboard-container">
+            <!-- サイドバー -->
+            <div class="card no-print">
+                <label style="font-weight:bold;">履歴選択</label>
+                <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:10px;"><option value="">-- 読込中 --</option></select>
+                <input type="date" id="recordDate" onchange="onDateChange()" style="width:100%; padding:8px; margin-bottom:15px;">
+                <hr>
+                <h2>選手名簿</h2>
+                <textarea id="memberList" style="width:100%; height:120px; font-size:11px;"></textarea>
+                <button onclick="applyMembers()" style="width:100%; padding:8px; background:#6c757d; color:#fff; border:none; border-radius:4px; font-size:11px; cursor:pointer; margin-top:5px;">名簿更新</button>
+            </div>
+
+            <!-- メイン表示エリア -->
+            <div class="card" id="card-analysis">
+                <div id="section-graph">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+                        <h2 style="margin:0;">成長分析グラフ</h2>
+                        <div style="display:flex; gap:10px; align-items:center;" class="no-print">
+                            <select id="displayScope" onchange="syncUI()" style="padding:5px; font-weight:bold; border:2px solid var(--secondary);">
+                                <option value="all">全員表示</option>
+                                <option value="individual">個人表示</option>
+                            </select>
+                            <select id="filterSelect" onchange="syncUI()" style="padding:5px; display:none;"></select>
+                            <select id="graphRange" onchange="syncUI()" style="padding:5px;">
+                                <option value="all">全期間</option>
+                                <option value="today">本日のみ</option>
+                            </select>
+                        </div>
                     </div>
+                    <div class="chart-container"><canvas id="runChart"></canvas></div>
                 </div>
-                <div class="chart-container"><canvas id="runChart"></canvas></div>
-            </div>
 
-            <div class="ranking-grid" id="section-rank">
-                <div class="rank-box"><h3 id="rankTitle2" style="text-align:center; font-size:11px; margin-top:0;">🏆 2周ランキング</h3><div id="rankLaps2"></div></div>
-                <div class="rank-box"><h3 id="rankTitle1" style="text-align:center; font-size:11px; margin-top:0;">🏆 1周ランキング</h3><div id="rankLaps1"></div></div>
+                <div class="ranking-grid" id="section-rank">
+                    <div class="rank-box"><h3 id="rankTitle2" style="text-align:center; font-size:11px; margin-top:0;">🏆 2周ランキング</h3><div id="rankLaps2"></div></div>
+                    <div class="rank-box"><h3 id="rankTitle1" style="text-align:center; font-size:11px; margin-top:0;">🏆 1周ランキング</h3><div id="rankLaps1"></div></div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- 記録表 -->
-    <div class="card" id="section-table">
-        <div style="overflow-x: auto;">
-            <table class="pdf-table" id="mainTable">
-                <thead>
-                    <tr>
-                        <th class="col-name" id="table-first-col">氏名</th>
-                        <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2">)</th><th class="col-rank">順</th>
-                        <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2">)</th><th class="col-rank">順</th>
-                        <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1">)</th><th class="col-rank">順</th>
-                        <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1">)</th><th class="col-rank">順</th>
-                        <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1">)</th><th class="col-rank">順</th>
-                        <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1">)</th><th class="col-rank">順</th>
-                    </tr>
-                </thead>
-                <tbody id="pdfTableBody"></tbody>
-            </table>
+        <!-- 記録表 -->
+        <div class="card" id="section-table">
+            <div style="overflow-x: auto;">
+                <table class="pdf-table" id="mainTable">
+                    <thead>
+                        <tr>
+                            <th class="col-name" id="table-first-col">氏名</th>
+                            <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2">)</th><th class="col-rank">順</th>
+                            <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2">)</th><th class="col-rank">順</th>
+                            <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1">)</th><th class="col-rank">順</th>
+                            <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1">)</th><th class="col-rank">順</th>
+                            <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1">)</th><th class="col-rank">順</th>
+                            <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1">)</th><th class="col-rank">順</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pdfTableBody"></tbody>
+                </table>
+            </div>
+            <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">同期保存</button>
         </div>
-        <button id="saveBtn" class="btn-send" onclick="saveAllSheetData()">同期保存</button>
-    </div>
 
-    <!-- ラップタイム早見表（印刷除外） -->
-    <div class="card no-print">
-        <h2 style="text-align:center; font-size:22px; letter-spacing:8px;">ラップタイム早見表</h2>
-        <p>※<u><b>（全男）</b></u>、<u><b>（全女）</b></u>のところは陸上競技近畿大会出場レベルです。<p>
-        <div style="overflow-x:auto;">
-            <table class="pdf-table" style="table-layout: auto;">
-                <thead>
-                    <tr><th>100m</th><th>200m</th><th>300m</th><th>400m</th><th>600m</th><th>800m</th><th>1000m</th><th>1200m</th><th>1500m</th><th>3000m</th></tr>
-                </thead>
-                <tbody id="refTableBody"></tbody>
-            </table>
+        <!-- ラップタイム早見表（印刷除外） -->
+        <div class="card no-print">
+            <h2 style="text-align:center; font-size:22px; letter-spacing:8px;">ラップタイム早見表</h2>
+            <p>※<u><b>（全男）</b></u>、<u><b>（全女）</b></u>のところは陸上競技近畿大会出場レベルです。<p>
+            <div style="overflow-x:auto;">
+                <table class="pdf-table" style="table-layout: auto;">
+                    <thead>
+                        <tr><th>100m</th><th>200m</th><th>300m</th><th>400m</th><th>600m</th><th>800m</th><th>1000m</th><th>1200m</th><th>1500m</th><th>3000m</th></tr>
+                    </thead>
+                    <tbody id="refTableBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+    // --- パスワード認証ロジック ---
+    const SECURE_TOKEN = "3856b3b27b5883d69b91c890632230303866d953905c1496a75f0f3531649980";
+
+    async function verifyAccess() {
+        const input = document.getElementById('pass-input').value;
+        const msg = document.getElementById('error-msg');
+        
+        // 入力値をハッシュ化して比較
+        const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        if (hashHex === SECURE_TOKEN) {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            initializeApp(); // 認証成功後に初期化
+        } else {
+            msg.innerText = "パスワードが正しくありません。";
+        }
+    }
+
+    // Enterキーでもログイン可能にする
+    document.getElementById('pass-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') verifyAccess();
+    });
+
+
+    // --- メインアプリケーションロジック ---
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby4wv9HDVi099vlKKXq_whz6uQ1X-tQ5E1D47-xbi7Un_KkNO00yp7obVCsp-3201lL9Q/exec"; 
     
     let chart;
     let allSheetData = []; 
     let currentDayData = [];
 
-    window.onload = async () => {
+    // 元の window.onload を関数化して認証後に実行
+    async function initializeApp() {
         document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('memberList').value = localStorage.getItem('boxing_members') || "";
         applyMembers();
         initChart();
-        generateRefTable(); // 早見表の生成
+        generateRefTable(); 
         await fetchDateHistory();
         await fetchAllData();
         await loadDateData();
@@ -175,7 +243,7 @@
     // --- ラップタイム早見表 生成ロジック ---
     function generateRefTable() {
         const tbody = document.getElementById('refTableBody');
-        const dists = [1, 2, 3, 4, 6, 8, 10, 12, 15, 30]; // 100m単位の倍数
+        const dists = [1, 2, 3, 4, 6, 8, 10, 12, 15, 30]; 
         tbody.innerHTML = '';
         for (let b = 13.0; b <= 40.0; b += 0.5) {
             const tr = document.createElement('tr');
@@ -184,7 +252,6 @@
                 const sec = b * d;
                 let text = s2t_pdf(sec);
                 if([1,3,6].includes(idx)) td.className = 'col-y';
-                // 特定基準のハイライト
                 if(idx === 5 && b === 15.0) { text += "(男全)"; td.className = "highlight-male"; }
                 if(idx === 5 && b === 17.0) { text += "(女全)"; td.className = "highlight-female"; }
                 if(idx === 8 && b === 16.5) { text += "(男全)"; td.className = "highlight-male"; }
@@ -203,7 +270,6 @@
         return m + "'" + String(sec).padStart(4, '0');
     }
 
-    // --- 連動UI制御 ---
     function syncUI() {
         const scope = document.getElementById('displayScope').value;
         document.getElementById('filterSelect').style.display = (scope === 'individual') ? 'inline-block' : 'none';
