@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録 - 周数フィルタ版</title>
+    <title>ボクシングタイム記録 - 周数連動グラフ版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -33,7 +33,7 @@
         .col-name { width: 120px; text-align: left !important; padding-left: 5px !important; font-weight: bold; background: #f9f9f9; }
         .col-time { width: 55px; }
         .col-rank { width: 25px; color: var(--primary); font-weight: bold; font-size: 10px; }
-        .lap-edit { width: 30px !important; border: 1px solid #ccc !important; background: #fff !important; font-weight: bold; border-radius: 3px; }
+        .lap-edit { width: 30px !important; border: 1px solid #ccc !important; background: #fff !important; font-weight: bold; border-radius: 3px; color: var(--primary); }
 
         .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
@@ -105,10 +105,10 @@
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                         <h2 style="margin:0;">分析グラフ</h2>
                         <div class="no-print" style="display:flex; gap:5px;">
-                            <select id="displayScope" onchange="syncUI()"><option value="all">全員</option><option value="individual">個人</option></select>
+                            <select id="displayScope" onchange="syncUI()"><option value="all">全員表示</option><option value="individual">個人表示</option></select>
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
-                            <select id="lapFilter" onchange="syncUI()"><option value="all">全ての周</option><option value="1">1周のみ</option><option value="2">2周のみ</option></select>
-                            <select id="graphRange" onchange="syncUI()"><option value="all">全期間</option><option value="today">本日</option></select>
+                            <select id="lapFilter" onchange="syncUI()"><option value="all">全ての周</option><option value="1">1周のみ</option><option value="2">2周のみ</option><option value="3">3周のみ</option></select>
+                            <select id="graphRange" onchange="syncUI()"><option value="all">全期間</option><option value="today">本日のみ</option></select>
                         </div>
                     </div>
                     <div class="chart-container"><canvas id="runChart"></canvas></div>
@@ -128,12 +128,12 @@
                     <thead>
                         <tr>
                             <th class="col-name" id="table-first-col">氏名</th>
-                            <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2" onchange="syncUI()">)</th><th class="col-rank">順</th>
-                            <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2" onchange="syncUI()">)</th><th class="col-rank">順</th>
-                            <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1" onchange="syncUI()">)</th><th class="col-rank">順</th>
-                            <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1" onchange="syncUI()">)</th><th class="col-rank">順</th>
-                            <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1" onchange="syncUI()">)</th><th class="col-rank">順</th>
-                            <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1" onchange="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2" oninput="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2" oninput="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1" oninput="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">4本目(<input type="number" class="lap-edit" id="lap-4" value="1" oninput="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">5本目(<input type="number" class="lap-edit" id="lap-5" value="1" oninput="syncUI()">)</th><th class="col-rank">順</th>
+                            <th class="col-time">追加(<input type="number" class="lap-edit" id="lap-6" value="1" oninput="syncUI()">)</th><th class="col-rank">順</th>
                         </tr>
                     </thead>
                     <tbody id="pdfTableBody"></tbody>
@@ -196,6 +196,7 @@
         const scope = document.getElementById('displayScope').value;
         const targetName = document.getElementById('filterSelect').value;
         const tbody = document.getElementById('pdfTableBody');
+        if(!tbody) return;
         tbody.innerHTML = '';
 
         if (scope === 'all') {
@@ -270,33 +271,33 @@
         const curDay = document.getElementById('recordDate').value;
         
         let graphData = [];
+        
         if (range === 'today') {
+            // 本日のグラフ：現在の入力欄から取得
             const rows = document.getElementById('pdfTableBody').rows;
             for(let r=0; r<rows.length; r++) {
-                const rowName = (scope === 'all') ? rows[r].cells[0].innerText : targetName;
-                if (scope === 'individual' && rows[r].cells[0].innerText !== curDay) continue; // 個人表は1列目が日付
+                const nameInRow = rows[r].cells[0].innerText;
+                
+                // 個人表示なら対象者のみ
+                if (scope === 'individual' && nameInRow !== curDay) continue; 
 
                 for(let c=1; c<=6; c++) {
                     const input = rows[r].cells[c*2-1].querySelector('input');
                     const val = input ? input.value : "";
-                    const currentLapSetting = document.getElementById(`lap-${c}`).value;
+                    const headerLap = document.getElementById(`lap-${c}`).value; // 見出しの周数
 
-                    // 周数フィルターの適用
-                    if(lapFilter !== 'all' && currentLapSetting !== lapFilter) continue;
+                    // グラフのフィルタ条件チェック
+                    if (lapFilter !== 'all' && headerLap !== lapFilter) continue;
 
                     if(val) {
-                        if (scope === 'all') {
-                            graphData.push({ name: rows[r].cells[0].innerText, count: lapLabels[c-1], time: val, date: curDay, laps: currentLapSetting });
-                        } else if (scope === 'individual' && rows[r].cells[0].innerText === curDay) {
-                            graphData.push({ name: targetName, count: lapLabels[c-1], time: val, date: curDay, laps: currentLapSetting });
-                        }
+                        const nameToUse = (scope === 'individual') ? targetName : nameInRow;
+                        graphData.push({ name: nameToUse, count: lapLabels[c-1], time: val, date: curDay, laps: headerLap });
                     }
                 }
             }
         } else {
-            // クラウド全データから取得
+            // 全期間のグラフ：クラウドデータから取得
             graphData = (scope === 'all') ? [...allSheetData] : allSheetData.filter(d => d.name === targetName);
-            // 周数フィルターの適用
             if(lapFilter !== 'all') {
                 graphData = graphData.filter(d => String(d.laps) === lapFilter);
             }
@@ -400,7 +401,7 @@
         const rBox2 = document.getElementById('rankLaps2'); const rBox1 = document.getElementById('rankLaps1');
         const scope = document.getElementById('displayScope').value; const target = document.getElementById('filterSelect').value;
         const getTop5 = (laps, nameFilter = null) => {
-            let data = allSheetData.filter(d => d.laps == laps); if(nameFilter) data = data.filter(d => d.name === nameFilter);
+            let data = allSheetData.filter(d => String(d.laps) === String(laps)); if(nameFilter) data = data.filter(d => d.name === nameFilter);
             const bests = {}; data.forEach(d => { 
                 const s = t2s(d.time);
                 if(s && (!bests[d.name] || s < bests[d.name].sec)) bests[d.name] = {sec: s, time: d.time}; 
