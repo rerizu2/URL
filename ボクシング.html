@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録 - 周数完全同期版</title>
+    <title>ボクシングタイム記録 - 周数同期システム</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -18,13 +18,10 @@
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
-        
-        /* テーブルスタイル */
         .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px 2px; text-align: center; overflow: hidden; white-space: nowrap; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
         .pdf-table input { width: 95%; border: none; text-align: center; font-size: 13px; background: transparent; }
-        
         .col-name { width: 130px; text-align: left !important; padding-left: 5px !important; font-weight: bold; background: #f9f9f9; }
         .col-time { width: 60px; }
         .col-rank { width: 30px; color: var(--primary); font-weight: bold; font-size: 10px; }
@@ -47,7 +44,6 @@
         .rank-name { flex: 1; font-weight: bold; margin-left: 10px; overflow: hidden; text-overflow: ellipsis; }
         .rank-time { font-family: monospace; color: var(--primary); font-weight: bold; }
         .my-rank-highlight { background: #fff0f0; border: 1px solid var(--primary); border-radius: 4px; margin-top: 5px; padding: 2px 5px; }
-
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
         .chart-container { height: 380px; position: relative; }
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
@@ -65,6 +61,7 @@
             .pdf-table { width: 100% !important; table-layout: fixed !important; font-size: 9px !important; }
             .pdf-table th, .pdf-table td { padding: 1px !important; border: 0.5px solid #000 !important; }
             .lap-edit { border: none !important; width: auto !important; appearance: none; color: #000 !important; }
+            .col-name { width: 15% !important; }
             .print-only-header { display: block !important; text-align: center; margin-bottom: 5px; border-bottom: 1px solid #000; }
         }
         .print-only-header { display: none; }
@@ -328,7 +325,7 @@
 
     async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); allSheetData = await res.json(); syncUI(); } catch (e) {} }
     
-    // スプレッドシートの1行目(ヘッダー)から「(〇周)」の数字を読み取って入力枠に反映
+    // スプレッドシートの1行目(ヘッダー)から周数を読み取ってHTMLの lap-edit に同期
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
         try { 
@@ -336,10 +333,10 @@
             const result = await res.json(); 
             currentDayData = result.found ? result.data : [];
             
+            // スプレッドシートのヘッダー「1本目(2周)」から「2」を抽出してセット
             if(result.found && currentDayData.length > 0) {
-                const headerRow = currentDayData[0]; // スプレッドシートの1行目を取得
+                const headerRow = currentDayData[0];
                 for (let j = 1; j < headerRow.length; j += 2) {
-                    // 「1本目(2周)」といった文字列から数字だけを抽出
                     const match = headerRow[j].match(/\d+/);
                     if(match) {
                         const colIdx = (j + 1) / 2;
@@ -364,6 +361,7 @@
     function syncDateAndLoad() { const sel = document.getElementById('dateHistory').value; if(sel) { document.getElementById('recordDate').value = sel; loadDateData(); } }
     function onDateChange() { loadDateData(); }
 
+    // 保存時にHTML上の周数（lap-editの値）をスプレッドシートへ送信
     async function saveAllSheetData() {
         const btn = document.getElementById('saveBtn'); const date = document.getElementById('recordDate').value; const rows = document.getElementById('pdfTableBody').rows;
         btn.disabled = true; btn.innerText = "同期中...";
@@ -375,7 +373,7 @@
                 const input = rows[r].cells[c*2-1].querySelector('input'); 
                 const time = input.value.trim();
                 const rank = rows[r].cells[c*2].innerText;
-                const laps = document.getElementById(`lap-${c}`).value;
+                const laps = document.getElementById(`lap-${c}`).value; // 現在の入力枠の数字
 
                 if (!time && r > 0) continue; 
 
