@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録 - リアルタイムグラフ版</title>
+    <title>ボクシングタイム記録 - 周数分離グラフ版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -34,16 +34,13 @@
         .chart-container { height: 400px; position: relative; }
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-
+        
         @media print {
             @page { margin: 5mm; }
-            body { background: white; padding: 0; margin: 0; }
+            body { background: white; padding: 0; }
             .no-print, .no-print-area, #saveBtn, button, select, hr { display: none !important; }
-            .force-page-break { page-break-before: always !important; }
-            .container { max-width: 100% !important; width: 100% !important; }
-            .dashboard-grid { display: block !important; }
             .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin-bottom: 10px !important; }
-            .pdf-table { width: 100% !important; table-layout: fixed !important; font-size: 9px !important; }
+            .pdf-table { width: 100% !important; font-size: 9px !important; }
             .pdf-table th, .pdf-table td { padding: 1px !important; border: 0.5px solid #000 !important; }
             .lap-edit { border: none !important; width: auto !important; appearance: none; color: #000 !important; }
         }
@@ -63,7 +60,7 @@
 <div id="app-content">
     <div class="container">
         <div class="no-print-area">
-            <strong>印刷項目:</strong>
+            <strong>印刷設定:</strong>
             <label><input type="checkbox" id="check-graph" checked> グラフ</label>
             <label><input type="checkbox" id="check-rank" checked> ランキング</label>
             <label><input type="checkbox" id="check-table" checked> 記録表</label>
@@ -90,6 +87,7 @@
                         <div class="no-print" style="display:flex; gap:5px;">
                             <select id="displayScope" onchange="syncUI()"><option value="all">全員表示</option><option value="individual">個人表示</option></select>
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
+                            <!-- 周数選択プルダウン -->
                             <select id="lapFilter" onchange="updateGraph()"></select>
                             <select id="graphRange" onchange="syncUI()"><option value="all">全期間</option><option value="today">本日のみ</option></select>
                         </div>
@@ -151,8 +149,10 @@
         initChart(); applyMembers(); await fetchDateHistory(); await fetchAllData(); await loadDateData();
     }
 
+    // 入力枠の周数が変わった時の処理
     function onLapHeaderChange() { updateLapFilterDropdown(); updateGraph(); }
 
+    // グラフの周選択プルダウンを現在の設定から作成
     function updateLapFilterDropdown() {
         const lapFilter = document.getElementById('lapFilter');
         const currentSelected = lapFilter.value;
@@ -213,6 +213,13 @@
         }
     }
 
+    function getRankOnDate(date, count, time) {
+        const sec = t2s(time); if(!sec) return "-";
+        const dayRecs = allSheetData.filter(d => d.date === date && d.count === count);
+        const times = dayRecs.map(d => t2s(d.time)).sort((a,b) => a - b);
+        return times.indexOf(sec) + 1 || "-";
+    }
+
     function addRowToTable(txt, data) {
         const tr = document.createElement('tr');
         let html = `<td class="col-name">${txt}</td>`;
@@ -264,15 +271,23 @@
         let graphData = [];
         if (range === 'today') {
             const rows = document.getElementById('pdfTableBody').rows;
-            for(let r=0; r<rows.length; r++) {
+            for(let r = 0; r < rows.length; r++) {
                 const nameInRow = rows[r].cells[0].innerText;
+                // 個人表示なら対象者のみ
                 if (scope === 'individual' && nameInRow !== curDay) continue; 
-                for(let c=1; c<=6; c++) {
+
+                for(let c = 1; c <= 6; c++) {
                     const input = rows[r].cells[c*2-1].querySelector('input');
                     const val = input ? input.value : "";
                     const headerLap = document.getElementById(`lap-${c}`).value;
+                    
+                    // 周選択フィルターの適用
                     if (lapFilter !== 'all' && headerLap !== lapFilter) continue;
-                    if(val) graphData.push({ name: (scope === 'individual' ? targetName : nameInRow), count: lapLabels[c-1], time: val, date: curDay, laps: headerLap });
+
+                    if(val) {
+                        const actualName = (scope === 'individual') ? targetName : nameInRow;
+                        graphData.push({ name: actualName, count: lapLabels[c-1], time: val, date: curDay, laps: headerLap });
+                    }
                 }
             }
         } else {
@@ -282,7 +297,10 @@
 
         if(graphData.length === 0) { chart.data.datasets = []; chart.update(); return; }
 
+        // 並び替え（日付と本数順）
         graphData.sort((a,b) => (a.date !== b.date) ? a.date.localeCompare(b.date) : lapLabels.indexOf(a.count) - lapLabels.indexOf(b.count));
+        
+        // 横軸（ラベル）の作成
         const labels = [...new Set(graphData.map(d => range === 'today' ? d.count : `${d.date} ${d.count}`))];
         const names = (scope === 'all' ? [...new Set(graphData.map(d => d.name))] : [targetName]);
         
@@ -354,7 +372,7 @@
                 });
             }
         }
-        alert("保存完了"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
+        alert("同期が完了しました"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
     }
 
     function renderRanking() {
@@ -382,9 +400,6 @@
         document.getElementById('section-graph').classList.toggle('print-hidden', !document.getElementById('check-graph').checked);
         document.getElementById('section-rank').classList.toggle('print-hidden', !document.getElementById('check-rank').checked);
         document.getElementById('section-table').classList.toggle('print-hidden', !document.getElementById('check-table').checked);
-        const tableSection = document.getElementById('section-table');
-        if ((document.getElementById('check-graph').checked || document.getElementById('check-rank').checked) && document.getElementById('check-table').checked) tableSection.classList.add('force-page-break');
-        else tableSection.classList.remove('force-page-break');
         document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orient}; } }`;
         setTimeout(() => { window.print(); }, 300);
     }
