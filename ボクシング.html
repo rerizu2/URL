@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録 - 周数同期システム</title>
+    <title>ボクシングタイム記録 - 周数同期修正版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -21,7 +21,6 @@
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
         
-        /* テーブルスタイル */
         .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px 2px; text-align: center; overflow: hidden; white-space: nowrap; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
@@ -31,7 +30,6 @@
         .col-time { width: 60px; }
         .col-rank { width: 30px; color: var(--primary); font-weight: bold; font-size: 10px; }
         
-        /* 周数設定入力枠のスタイル */
         .lap-edit { 
             width: 32px !important; 
             border: 1px solid #ccc !important; 
@@ -40,7 +38,6 @@
             border-radius: 4px; 
             color: var(--primary); 
             text-align: center;
-            margin: 0 2px;
         }
 
         .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
@@ -55,7 +52,6 @@
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* 印刷用スタイル（1枚に収める） */
         @media print {
             @page { margin: 5mm; }
             body { background: white; padding: 0; margin: 0; }
@@ -140,7 +136,6 @@
                     <thead>
                         <tr>
                             <th class="col-name" id="table-first-col">氏名</th>
-                            <!-- ヘッダーのカッコ内の数字がスプレッドシートと同期します -->
                             <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
                             <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
                             <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
@@ -330,7 +325,7 @@
 
     async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); allSheetData = await res.json(); syncUI(); } catch (e) {} }
     
-    // スプレッドシートの1行目(ヘッダー)から「(〇周)」の数字を読み取ってWebの枠へ反映
+    // スプレッドシートの1行目(ヘッダー)からカッコ内の数字(周数)を確実に抽出してWeb反映
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
         try { 
@@ -339,15 +334,15 @@
             currentDayData = result.found ? result.data : [];
             
             if(result.found && currentDayData.length > 0) {
-                const headerRow = currentDayData[0]; // スプレッドシートのヘッダー行
+                const headerRow = currentDayData[0];
                 for (let j = 1; j <= 11; j += 2) {
                     const colIdx = (j + 1) / 2;
                     const headerText = headerRow[j];
-                    // カッコ内の数字を抽出 (例: "1本目(2周)" -> 2)
-                    const match = headerText.match(/\d+/);
+                    // カッコ内の数字だけを抽出。例：「1本目(2周)」→ 2
+                    const match = headerText.match(/\((\d+)/);
                     if(match) {
                         const inputEl = document.getElementById(`lap-${colIdx}`);
-                        if(inputEl) inputEl.value = match[0];
+                        if(inputEl) inputEl.value = match[1];
                     }
                 }
             }
