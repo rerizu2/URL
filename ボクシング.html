@@ -104,11 +104,17 @@
                         <div class="no-print" style="display:flex; gap:5px;">
                             <select id="displayScope" onchange="syncUI()"><option value="all">全員表示</option><option value="individual">個人表示</option></select>
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
+                            
                             <!-- 周数フィルタ -->
                             <select id="lapFilter" onchange="updateGraph()" style="background:#fff0f0; font-weight:bold; border:1px solid #e63946;">
-                                <option value="all">全ての周</option>
+                                <option value="all">全ての周を表示</option>
                             </select>
-                            <select id="graphRange" onchange="syncUI()"><option value="all">全期間</option><option value="today">本日のみ</option></select>
+
+                            <!-- 期間フィルタ -->
+                            <select id="graphRange" onchange="syncUI()">
+                                <option value="all">全期間を表示</option>
+                                <option value="today">本日のみ表示</option>
+                            </select>
                         </div>
                     </div>
                     <div class="chart-container"><canvas id="runChart"></canvas></div>
@@ -184,10 +190,10 @@
             if(val) laps.push(val); 
         }
         const uniqueLaps = [...new Set(laps)].sort((a,b) => a - b);
-        lapFilter.innerHTML = '<option value="all">全ての周</option>';
+        lapFilter.innerHTML = '<option value="all">全ての周を表示</option>';
         uniqueLaps.forEach(l => { 
             const opt = document.createElement('option');
-            opt.value = l; opt.innerText = l + '周のみ'; 
+            opt.value = l; opt.innerText = l + '周のみ表示'; 
             lapFilter.appendChild(opt); 
         });
         if ([...lapFilter.options].some(o => o.value === currentSelected)) lapFilter.value = currentSelected;
@@ -270,10 +276,19 @@
         const ctx = document.getElementById('runChart').getContext('2d');
         chart = new Chart(ctx, {
             type: 'line', data: { labels: [], datasets: [] },
-            options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => s2t(v) } } } }
+            options: { 
+                animation: false, responsive: true, maintainAspectRatio: false, 
+                scales: { 
+                    y: { reverse: true, ticks: { callback: v => s2t(v) } } 
+                },
+                plugins: {
+                    legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } }
+                }
+            }
         });
     }
 
+    // --- 周数のみ×全期間を可能にする主要ロジック ---
     function updateGraph() {
         if(!chart) return;
         const scope = document.getElementById('displayScope').value;
@@ -284,6 +299,7 @@
 
         let graphData = [];
 
+        // 1. データの収集
         if (range === 'today') {
             const rows = document.getElementById('pdfTableBody').rows;
             for(let r=0; r<rows.length; r++) {
@@ -299,9 +315,9 @@
                 }
             }
         } else {
-            // 全期間の場合：allSheetDataから抽出
+            // 全期間の場合
             graphData = (scope === 'all') ? [...allSheetData] : allSheetData.filter(d => d.name === targetName);
-            // 周数フィルタを適用 (例: lapsが "2" のものだけ)
+            // 周数フィルタを適用
             if(lapFilter !== 'all') {
                 graphData = graphData.filter(d => String(d.laps) === String(lapFilter));
             }
@@ -309,13 +325,13 @@
 
         if(graphData.length === 0) { chart.data.datasets = []; chart.update(); return; }
 
-        // 時系列ソート (日付 -> 本数)
+        // 2. 時系列ソート (日付順 -> 本数順)
         graphData.sort((a,b) => {
             if(a.date !== b.date) return a.date.localeCompare(b.date);
             return lapLabels.indexOf(a.count) - lapLabels.indexOf(b.count);
         });
 
-        // X軸ラベル生成 (全期間なら日付を入れる)
+        // 3. X軸ラベルの作成 (日付と本数をセットにして識別)
         const labels = [...new Set(graphData.map(d => range === 'today' ? d.count : `${d.date.substring(5)} ${d.count}`))];
         const names = (scope === 'all') ? [...new Set(graphData.map(d => d.name))] : [targetName];
 
@@ -329,7 +345,8 @@
                     return f ? t2s(f.time) : null;
                 }), 
                 borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, 
-                spanGaps: true, tension: 0.3, pointRadius: 4 
+                backgroundColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, 
+                spanGaps: true, tension: 0.2, pointRadius: 4 
             };
         });
         chart.update();
@@ -385,7 +402,7 @@
                 await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ date, name, count: lapLabels[c-1], laps, time, rank, memberList }) });
             }
         }
-        alert("クラウドと同期が完了しました"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
+        alert("同期完了しました"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
     }
 
     function getRankOnDate(date, count, time) {
