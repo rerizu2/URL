@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録 - 完全同期版</title>
+    <title>ボクシングタイム記録 - 周数完全同期版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -18,20 +18,36 @@
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
+        
+        /* テーブルスタイル */
         .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px 2px; text-align: center; overflow: hidden; white-space: nowrap; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
         .pdf-table input { width: 95%; border: none; text-align: center; font-size: 13px; background: transparent; }
+        
         .col-name { width: 130px; text-align: left !important; padding-left: 5px !important; font-weight: bold; background: #f9f9f9; }
         .col-time { width: 60px; }
         .col-rank { width: 30px; color: var(--primary); font-weight: bold; font-size: 10px; }
-        .lap-edit { width: 32px !important; border: 1px solid #ccc !important; background: #fff !important; font-weight: bold; border-radius: 4px; color: var(--primary); text-align: center; }
+        
+        /* 画像の入力枠（周数設定）のスタイル */
+        .lap-edit { 
+            width: 32px !important; 
+            border: 1px solid #ccc !important; 
+            background: #fff !important; 
+            font-weight: bold; 
+            border-radius: 4px; 
+            color: var(--primary); 
+            text-align: center;
+            margin: 0 2px;
+        }
+
         .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
         .rank-item { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid #eee; }
         .rank-name { flex: 1; font-weight: bold; margin-left: 10px; overflow: hidden; text-overflow: ellipsis; }
         .rank-time { font-family: monospace; color: var(--primary); font-weight: bold; }
         .my-rank-highlight { background: #fff0f0; border: 1px solid var(--primary); border-radius: 4px; margin-top: 5px; padding: 2px 5px; }
+
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
         .chart-container { height: 380px; position: relative; }
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
@@ -49,7 +65,6 @@
             .pdf-table { width: 100% !important; table-layout: fixed !important; font-size: 9px !important; }
             .pdf-table th, .pdf-table td { padding: 1px !important; border: 0.5px solid #000 !important; }
             .lap-edit { border: none !important; width: auto !important; appearance: none; color: #000 !important; }
-            .col-name { width: 15% !important; }
             .print-only-header { display: block !important; text-align: center; margin-bottom: 5px; border-bottom: 1px solid #000; }
         }
         .print-only-header { display: none; }
@@ -90,7 +105,7 @@
                 <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:15px;"><option value="">読込中...</option></select>
                 <hr>
                 <h2>選手名簿</h2>
-                <textarea id="memberList" style="width:100%; height:180px; font-size:12px;" placeholder="名簿を入力すると新規シート作成時に反映されます"></textarea>
+                <textarea id="memberList" style="width:100%; height:180px; font-size:12px;"></textarea>
                 <button onclick="applyMembers()" style="width:100%; padding:10px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">名簿を更新</button>
             </div>
 
@@ -163,7 +178,7 @@
         initChart(); applyMembers(); await fetchDateHistory(); await fetchAllData(); await loadDateData();
     }
 
-    function onLapHeaderChange() { updateLapFilterDropdown(); updateGraph(); }
+    function onLapHeaderChange() { updateLapFilterDropdown(); syncUI(); }
 
     function updateLapFilterDropdown() {
         const lapFilter = document.getElementById('lapFilter');
@@ -191,7 +206,6 @@
         renderTable(); renderRanking(); updateGraph(); 
     }
 
-    // GASから取得したデータをもとに記録表を作成
     function renderTable() {
         const scope = document.getElementById('displayScope').value;
         const targetName = document.getElementById('filterSelect').value;
@@ -201,7 +215,6 @@
 
         if (scope === 'all') {
             document.getElementById('table-first-col').innerText = '氏名';
-            // 名簿または取得データから氏名リストを作成
             let names = document.getElementById('memberList').value.split('\n').filter(n => n.trim() !== "");
             if(names.length === 0 && currentDayData.length > 1) {
                 names = currentDayData.slice(1).map(row => row[0]);
@@ -315,7 +328,7 @@
 
     async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); allSheetData = await res.json(); syncUI(); } catch (e) {} }
     
-    // スプレッドシートから特定日のデータを取得し、ヘッダーの周数を同期
+    // スプレッドシートの1行目(ヘッダー)から「(〇周)」の数字を読み取って入力枠に反映
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
         try { 
@@ -323,14 +336,15 @@
             const result = await res.json(); 
             currentDayData = result.found ? result.data : [];
             
-            // ヘッダー(data[0])から周数をパースしてHTMLのlap-editにセット
             if(result.found && currentDayData.length > 0) {
-                const headerRow = currentDayData[0];
+                const headerRow = currentDayData[0]; // スプレッドシートの1行目を取得
                 for (let j = 1; j < headerRow.length; j += 2) {
+                    // 「1本目(2周)」といった文字列から数字だけを抽出
                     const match = headerRow[j].match(/\d+/);
                     if(match) {
                         const colIdx = (j + 1) / 2;
-                        document.getElementById(`lap-${colIdx}`).value = match[0];
+                        const inputEl = document.getElementById(`lap-${colIdx}`);
+                        if(inputEl) inputEl.value = match[0];
                     }
                 }
             }
@@ -350,7 +364,6 @@
     function syncDateAndLoad() { const sel = document.getElementById('dateHistory').value; if(sel) { document.getElementById('recordDate').value = sel; loadDateData(); } }
     function onDateChange() { loadDateData(); }
 
-    // 保存処理（ヘッダー情報・名簿・タイムを一括送信）
     async function saveAllSheetData() {
         const btn = document.getElementById('saveBtn'); const date = document.getElementById('recordDate').value; const rows = document.getElementById('pdfTableBody').rows;
         btn.disabled = true; btn.innerText = "同期中...";
@@ -364,19 +377,13 @@
                 const rank = rows[r].cells[c*2].innerText;
                 const laps = document.getElementById(`lap-${c}`).value;
 
-                if (!time && r > 0) continue; // タイムがない行はスキップ（ただし1行目はヘッダー更新のため通す場合あり）
+                if (!time && r > 0) continue; 
 
                 await fetch(GAS_WEBAPP_URL, { 
                     method: 'POST', 
                     mode: 'no-cors', 
                     body: JSON.stringify({ 
-                        date, 
-                        name, 
-                        count: lapLabels[c-1], 
-                        laps: laps, 
-                        time: time, 
-                        rank: rank,
-                        memberList: memberList 
+                        date, name, count: lapLabels[c-1], laps, time, rank, memberList 
                     }) 
                 });
             }
