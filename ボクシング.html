@@ -3,81 +3,54 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録 - 周数設定連動版</title>
+    <title>ボクシングタイム記録 - 完全同期版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
-        /* --- 基本デザイン --- */
+        /* --- デザイン設定 --- */
         :root { --primary: #e63946; --secondary: #1d3557; --bg: #f0f2f5; --pdf-header: #b2ffff; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); margin: 0; padding: 15px; font-size: 12px; color: #333; }
-        
-        #login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #1d3557; display: flex; align-items: center; justify-content: center;
-            z-index: 9999; color: white; flex-direction: column;
-        }
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1d3557; display: flex; align-items: center; justify-content: center; z-index: 9999; color: white; flex-direction: column; }
         .login-box { background: white; padding: 30px; border-radius: 12px; text-align: center; color: #333; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
         .login-box input { width: 100%; padding: 10px; margin: 15px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;}
         .login-box button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
-
         #app-content { display: none; }
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
-        
-        /* テーブル設定 */
         .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px 2px; text-align: center; overflow: hidden; white-space: nowrap; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
         .pdf-table input { width: 95%; border: none; text-align: center; font-size: 13px; background: transparent; }
-        
         .col-name { width: 130px; text-align: left !important; padding-left: 5px !important; font-weight: bold; background: #f9f9f9; }
         .col-time { width: 60px; }
         .col-rank { width: 30px; color: var(--primary); font-weight: bold; font-size: 10px; }
-        
-        /* 画像の入力枠（周数設定）のスタイル */
-        .lap-edit { 
-            width: 32px !important; 
-            border: 1px solid #ccc !important; 
-            background: #fff !important; 
-            font-weight: bold; 
-            border-radius: 4px; 
-            color: var(--primary); 
-            text-align: center;
-            margin: 0 2px;
-        }
-
+        .lap-edit { width: 32px !important; border: 1px solid #ccc !important; background: #fff !important; font-weight: bold; border-radius: 4px; color: var(--primary); text-align: center; }
         .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
         .rank-item { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid #eee; }
         .rank-name { flex: 1; font-weight: bold; margin-left: 10px; overflow: hidden; text-overflow: ellipsis; }
         .rank-time { font-family: monospace; color: var(--primary); font-weight: bold; }
         .my-rank-highlight { background: #fff0f0; border: 1px solid var(--primary); border-radius: 4px; margin-top: 5px; padding: 2px 5px; }
-
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
         .chart-container { height: 380px; position: relative; }
-
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* 印刷設定 */
         @media print {
             @page { margin: 5mm; }
             body { background: white; padding: 0; margin: 0; }
             .no-print, .no-print-area, #saveBtn, button, select, hr { display: none !important; }
             .print-hidden { display: none !important; }
             .force-page-break { page-break-before: always !important; }
-            .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            .container { max-width: 100% !important; width: 100% !important; }
             .dashboard-grid { display: block !important; }
             .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin-bottom: 10px !important; }
             .pdf-table { width: 100% !important; table-layout: fixed !important; font-size: 9px !important; }
             .pdf-table th, .pdf-table td { padding: 1px !important; border: 0.5px solid #000 !important; }
-            .lap-edit { border: none !important; width: auto !important; appearance: none; }
+            .lap-edit { border: none !important; width: auto !important; appearance: none; color: #000 !important; }
             .col-name { width: 15% !important; }
-            .col-time { width: 10% !important; }
-            .col-rank { width: 4% !important; }
             .print-only-header { display: block !important; text-align: center; margin-bottom: 5px; border-bottom: 1px solid #000; }
-            .chart-container { height: 300px !important; }
         }
         .print-only-header { display: none; }
     </style>
@@ -117,7 +90,7 @@
                 <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:15px;"><option value="">読込中...</option></select>
                 <hr>
                 <h2>選手名簿</h2>
-                <textarea id="memberList" style="width:100%; height:180px; font-size:12px;"></textarea>
+                <textarea id="memberList" style="width:100%; height:180px; font-size:12px;" placeholder="名簿を入力すると新規シート作成時に反映されます"></textarea>
                 <button onclick="applyMembers()" style="width:100%; padding:10px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">名簿を更新</button>
             </div>
 
@@ -142,7 +115,6 @@
             </div>
         </div>
 
-        <!-- 記録表セクション -->
         <div class="card" id="section-table">
             <h2 class="print-only-header" style="border:none; font-size:12px; margin-top:10px;">トレーニングタイム記録表</h2>
             <div style="overflow-x: auto;">
@@ -150,7 +122,6 @@
                     <thead>
                         <tr>
                             <th class="col-name" id="table-first-col">氏名</th>
-                            <!-- 画像の通り、ヘッダーに周数設定枠を配置 -->
                             <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
                             <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
                             <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
@@ -187,13 +158,12 @@
 
     async function initApp() {
         document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
-        let savedMembers = localStorage.getItem('boxing_members') || "選手A\n選手B";
+        let savedMembers = localStorage.getItem('boxing_members') || "";
         document.getElementById('memberList').value = savedMembers;
-        initChart(); applyMembers(); fetchDateHistory(); await fetchAllData(); await loadDateData(); updateLapFilterDropdown();
+        initChart(); applyMembers(); await fetchDateHistory(); await fetchAllData(); await loadDateData();
     }
 
-    // 周数設定が変わった時の連動
-    function onLapHeaderChange() { updateLapFilterDropdown(); syncUI(); }
+    function onLapHeaderChange() { updateLapFilterDropdown(); updateGraph(); }
 
     function updateLapFilterDropdown() {
         const lapFilter = document.getElementById('lapFilter');
@@ -221,17 +191,23 @@
         renderTable(); renderRanking(); updateGraph(); 
     }
 
+    // GASから取得したデータをもとに記録表を作成
     function renderTable() {
         const scope = document.getElementById('displayScope').value;
         const targetName = document.getElementById('filterSelect').value;
         const tbody = document.getElementById('pdfTableBody');
         if(!tbody) return;
         tbody.innerHTML = '';
+
         if (scope === 'all') {
             document.getElementById('table-first-col').innerText = '氏名';
-            const names = document.getElementById('memberList').value.split('\n').filter(n => n.trim() !== "");
+            // 名簿または取得データから氏名リストを作成
+            let names = document.getElementById('memberList').value.split('\n').filter(n => n.trim() !== "");
+            if(names.length === 0 && currentDayData.length > 1) {
+                names = currentDayData.slice(1).map(row => row[0]);
+            }
             names.forEach(name => {
-                const rowData = currentDayData.find(d => d[0] === name.trim());
+                const rowData = currentDayData.find(d => d[0].toString().trim() === name.trim());
                 addRowToTable(name.trim(), rowData);
             });
             for(let i=1; i<=6; i++) calcRanks(i);
@@ -310,7 +286,7 @@
                 if (scope === 'individual' && nameInRow !== curDay) continue; 
                 for(let c=1; c<=6; c++) {
                     const val = rows[r].cells[c*2-1].querySelector('input').value;
-                    const headerLapSetting = document.getElementById(`lap-${c}`).value; // ヘッダーの周数
+                    const headerLapSetting = document.getElementById(`lap-${c}`).value;
                     if (lapFilter !== 'all' && headerLapSetting !== lapFilter) continue;
                     if(val) graphData.push({ name: (scope === 'individual') ? targetName : nameInRow, count: lapLabels[c-1], time: val, date: curDay, laps: headerLapSetting });
                 }
@@ -338,31 +314,76 @@
     function s2t(s) { if (!s) return ""; const m = Math.floor(s/60); return m + ":" + String(Math.floor(s%60)).padStart(2, '0'); }
 
     async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); allSheetData = await res.json(); syncUI(); } catch (e) {} }
+    
+    // スプレッドシートから特定日のデータを取得し、ヘッダーの周数を同期
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
-        try { const res = await fetch(`${GAS_WEBAPP_URL}?date=${date}`); const result = await res.json(); currentDayData = result.found ? result.data : []; updateLapFilterDropdown(); syncUI(); } catch (e) {}
+        try { 
+            const res = await fetch(`${GAS_WEBAPP_URL}?date=${date}`); 
+            const result = await res.json(); 
+            currentDayData = result.found ? result.data : [];
+            
+            // ヘッダー(data[0])から周数をパースしてHTMLのlap-editにセット
+            if(result.found && currentDayData.length > 0) {
+                const headerRow = currentDayData[0];
+                for (let j = 1; j < headerRow.length; j += 2) {
+                    const match = headerRow[j].match(/\d+/);
+                    if(match) {
+                        const colIdx = (j + 1) / 2;
+                        document.getElementById(`lap-${colIdx}`).value = match[0];
+                    }
+                }
+            }
+            updateLapFilterDropdown(); syncUI(); 
+        } catch (e) {}
     }
+
     async function fetchDateHistory() {
-        try { const res = await fetch(`${GAS_WEBAPP_URL}?mode=listDates`); const dates = await res.json();
-            const select = document.getElementById('dateHistory'); select.innerHTML = '<option value="">-- 履歴を選択 --</option>';
+        try { 
+            const res = await fetch(`${GAS_WEBAPP_URL}?mode=listDates`); 
+            const dates = await res.json();
+            const select = document.getElementById('dateHistory');
+            select.innerHTML = '<option value="">-- 履歴を選択 --</option>';
             if(Array.isArray(dates)) dates.forEach(d => select.add(new Option(d, d)));
         } catch (e) {}
     }
     function syncDateAndLoad() { const sel = document.getElementById('dateHistory').value; if(sel) { document.getElementById('recordDate').value = sel; loadDateData(); } }
     function onDateChange() { loadDateData(); }
 
+    // 保存処理（ヘッダー情報・名簿・タイムを一括送信）
     async function saveAllSheetData() {
         const btn = document.getElementById('saveBtn'); const date = document.getElementById('recordDate').value; const rows = document.getElementById('pdfTableBody').rows;
         btn.disabled = true; btn.innerText = "同期中...";
+        const memberList = document.getElementById('memberList').value;
+
         for (let r = 0; r < rows.length; r++) {
+            const name = rows[r].cells[0].innerText;
             for (let c = 1; c <= 6; c++) {
-                const input = rows[r].cells[c*2-1].querySelector('input'); if (!input || !input.value.trim()) continue;
-                // ヘッダーで設定されている周数を取得して保存
-                const currentLap = document.getElementById(`lap-${c}`).value;
-                await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ date, name: rows[r].cells[0].innerText, count: lapLabels[c-1], laps: currentLap, time: input.value.trim(), rank: rows[r].cells[c*2].innerText }) });
+                const input = rows[r].cells[c*2-1].querySelector('input'); 
+                const time = input.value.trim();
+                const rank = rows[r].cells[c*2].innerText;
+                const laps = document.getElementById(`lap-${c}`).value;
+
+                if (!time && r > 0) continue; // タイムがない行はスキップ（ただし1行目はヘッダー更新のため通す場合あり）
+
+                await fetch(GAS_WEBAPP_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ 
+                        date, 
+                        name, 
+                        count: lapLabels[c-1], 
+                        laps: laps, 
+                        time: time, 
+                        rank: rank,
+                        memberList: memberList 
+                    }) 
+                });
             }
         }
-        alert("同期保存が完了しました"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
+        alert("スプレッドシートへの保存が完了しました"); 
+        btn.disabled = false; btn.innerText = "クラウドと同期保存"; 
+        fetchAllData();
     }
 
     function renderRanking() {
