@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングトレーニング記録システム</title>
+    <title>ボクシングタイム記録 - 周数別グラフ版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -21,6 +21,7 @@
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
         
+        /* テーブルスタイル */
         .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px 2px; text-align: center; overflow: hidden; white-space: nowrap; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
@@ -31,13 +32,8 @@
         .col-rank { width: 30px; color: var(--primary); font-weight: bold; font-size: 10px; }
         
         .lap-edit { 
-            width: 32px !important; 
-            border: 1px solid #ccc !important; 
-            background: #fff !important; 
-            font-weight: bold; 
-            border-radius: 4px; 
-            color: var(--primary); 
-            text-align: center;
+            width: 32px !important; border: 1px solid #ccc !important; background: #fff !important; 
+            font-weight: bold; border-radius: 4px; color: var(--primary); text-align: center; margin: 0 2px;
         }
 
         .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
@@ -88,7 +84,7 @@
 
     <div class="container">
         <div class="no-print-area">
-            <strong>印刷項目:</strong>
+            <strong>印刷設定:</strong>
             <label><input type="checkbox" id="check-graph" checked> グラフ</label>
             <label><input type="checkbox" id="check-rank" checked> ランキング</label>
             <label><input type="checkbox" id="check-table" checked> 記録表</label>
@@ -104,7 +100,7 @@
                 <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:15px;"><option value="">読込中...</option></select>
                 <hr>
                 <h2>選手名簿</h2>
-                <textarea id="memberList" style="width:100%; height:180px; font-size:12px;" placeholder="名簿を入力すると保存時に反映されます"></textarea>
+                <textarea id="memberList" style="width:100%; height:180px; font-size:12px;"></textarea>
                 <button onclick="applyMembers()" style="width:100%; padding:10px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">名簿を更新</button>
             </div>
 
@@ -115,6 +111,7 @@
                         <div class="no-print" style="display:flex; gap:5px;">
                             <select id="displayScope" onchange="syncUI()"><option value="all">全員表示</option><option value="individual">個人表示</option></select>
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
+                            <!-- 周数選択プルダウン -->
                             <select id="lapFilter" onchange="updateGraph()"></select>
                             <select id="graphRange" onchange="syncUI()"><option value="all">全期間</option><option value="today">本日のみ</option></select>
                         </div>
@@ -177,17 +174,25 @@
         initChart(); applyMembers(); await fetchDateHistory(); await fetchAllData(); await loadDateData();
     }
 
-    function onLapHeaderChange() { updateLapFilterDropdown(); syncUI(); }
+    function onLapHeaderChange() { updateLapFilterDropdown(); updateGraph(); }
 
     function updateLapFilterDropdown() {
         const lapFilter = document.getElementById('lapFilter');
         const currentSelected = lapFilter.value;
         const laps = [];
-        for(let i=1; i<=6; i++) { const val = document.getElementById(`lap-${i}`).value; if(val) laps.push(val); }
+        for(let i=1; i<=6; i++) { 
+            const val = document.getElementById(`lap-${i}`).value; 
+            if(val) laps.push(val); 
+        }
         const uniqueLaps = [...new Set(laps)].sort();
         lapFilter.innerHTML = '<option value="all">全ての周</option>';
-        uniqueLaps.forEach(l => { const opt = document.createElement('option'); opt.value = l; opt.innerText = l + '周のみ'; lapFilter.appendChild(opt); });
+        uniqueLaps.forEach(l => { 
+            const opt = document.createElement('option'); 
+            opt.value = l; opt.innerText = l + '周のみ'; 
+            lapFilter.appendChild(opt); 
+        });
         if ([...lapFilter.options].some(o => o.value === currentSelected)) lapFilter.value = currentSelected;
+        else if (uniqueLaps.length > 0 && currentSelected === "") lapFilter.value = uniqueLaps[0];
     }
 
     function applyMembers() {
@@ -214,7 +219,9 @@
         if (scope === 'all') {
             document.getElementById('table-first-col').innerText = '氏名';
             let names = document.getElementById('memberList').value.split('\n').filter(n => n.trim() !== "");
-            if(names.length === 0 && currentDayData.length > 1) { names = currentDayData.slice(1).map(row => row[0]); }
+            if(names.length === 0 && currentDayData.length > 1) {
+                names = currentDayData.slice(1).map(row => row[0]);
+            }
             names.forEach(name => {
                 const rowData = currentDayData.find(d => d[0].toString().trim() === name.trim());
                 addRowToTable(name.trim(), rowData);
@@ -286,7 +293,6 @@
         const range = document.getElementById('graphRange').value;
         const lapFilter = document.getElementById('lapFilter').value;
         const curDay = document.getElementById('recordDate').value;
-        
         let graphData = [];
         if (range === 'today') {
             const rows = document.getElementById('pdfTableBody').rows;
@@ -304,32 +310,17 @@
             graphData = (scope === 'all') ? [...allSheetData] : allSheetData.filter(d => d.name === targetName);
             if(lapFilter !== 'all') graphData = graphData.filter(d => String(d.laps) === lapFilter);
         }
-        
         if(graphData.length === 0) { chart.data.datasets = []; chart.update(); return; }
-
         graphData.sort((a,b) => (a.date !== b.date) ? a.date.localeCompare(b.date) : lapLabels.indexOf(a.count) - lapLabels.indexOf(b.count));
         const labels = [...new Set(graphData.map(d => range === 'today' ? d.count : `${d.date} ${d.count}`))];
-        
-        // 氏名と周数の組み合わせでシリーズを分ける
-        const seriesMap = {};
-        graphData.forEach(d => {
-            const key = (lapFilter === 'all') ? `${d.name} (${d.laps}周)` : d.name;
-            if(!seriesMap[key]) seriesMap[key] = [];
-            seriesMap[key].push(d);
-        });
-
+        const names = (scope === 'all') ? [...new Set(graphData.map(d => d.name))] : [targetName];
         chart.data.labels = labels;
-        chart.data.datasets = Object.keys(seriesMap).map((key, i) => {
-            const pts = seriesMap[key];
-            return {
-                label: key,
-                data: labels.map(l => {
-                    const f = pts.find(p => (range === 'today' ? p.count : `${p.date} ${p.count}`) === l);
-                    return f ? t2s(f.time) : null;
-                }),
-                borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`,
-                spanGaps: true, tension: 0.3, pointRadius: 4
-            };
+        chart.data.datasets = names.map((name, i) => {
+            const pts = graphData.filter(d => d.name === name);
+            return { label: name, data: labels.map(l => {
+                const f = pts.find(p => (range === 'today' ? p.count : `${p.date} ${p.count}`) === l);
+                return f ? t2s(f.time) : null;
+            }), borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, spanGaps: true, tension: 0.3, pointRadius: 4, backgroundColor: `hsl(${(i * 137) % 360}, 70%, 50%)` };
         });
         chart.update();
     }
@@ -345,12 +336,17 @@
             const res = await fetch(`${GAS_WEBAPP_URL}?date=${date}`); 
             const result = await res.json(); 
             currentDayData = result.found ? result.data : [];
+            
             if(result.found && currentDayData.length > 0) {
                 const headerRow = currentDayData[0];
                 for (let j = 1; j <= 11; j += 2) {
                     const colIdx = (j + 1) / 2;
-                    const match = headerRow[j].match(/\((\d+)/);
-                    if(match) { document.getElementById(`lap-${colIdx}`).value = match[1]; }
+                    const headerText = headerRow[j];
+                    const match = headerText.match(/\((\d+)/);
+                    if(match) {
+                        const inputEl = document.getElementById(`lap-${colIdx}`);
+                        if(inputEl) inputEl.value = match[1];
+                    }
                 }
             }
             updateLapFilterDropdown(); syncUI(); 
@@ -373,6 +369,7 @@
         const btn = document.getElementById('saveBtn'); const date = document.getElementById('recordDate').value; const rows = document.getElementById('pdfTableBody').rows;
         btn.disabled = true; btn.innerText = "同期中...";
         const memberList = document.getElementById('memberList').value;
+
         for (let r = 0; r < rows.length; r++) {
             const name = rows[r].cells[0].innerText;
             for (let c = 1; c <= 6; c++) {
@@ -380,8 +377,16 @@
                 const time = input.value.trim();
                 const rank = rows[r].cells[c*2].innerText;
                 const laps = document.getElementById(`lap-${c}`).value;
+
                 if (!time && r > 0) continue; 
-                await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ date, name, count: lapLabels[c-1], laps, time, rank, memberList }) });
+
+                await fetch(GAS_WEBAPP_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ 
+                        date, name, count: lapLabels[c-1], laps, time, rank, memberList 
+                    }) 
+                });
             }
         }
         alert("保存完了"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
@@ -400,7 +405,8 @@
             let html = top5.map((x, i) => `<div class="rank-item" style="${scope === 'individual' && x[0] === target ? 'background:#fff0f0;' : ''}"><span>${i+1}</span><span class="rank-name">${x[0]}</span><span class="rank-time">${x[1].time}</span></div>`).join('');
             if(scope === 'individual') {
                 const myIdx = sorted.findIndex(x => x[0] === target);
-                if(myIdx !== -1 && myIdx >= 5) html += `<div class="rank-item my-rank-highlight"><span>${myIdx+1}</span><span class="rank-name">${sorted[myIdx][0]} (自己ベスト)</span><span class="rank-time">${sorted[myIdx][1].time}</span></div>`;
+                if(myIdx !== -1) { if(myIdx >= 5) html += `<div class="rank-item my-rank-highlight"><span>${myIdx+1}</span><span class="rank-name">${sorted[myIdx][0]} (自己ベスト)</span><span class="rank-time">${sorted[myIdx][1].time}</span></div>`;
+                } else { html += `<div class="rank-item" style="color:#999; font-size:10px; margin-top:5px;">${target}の記録はありません</div>`; }
             }
             el.innerHTML = html || 'なし';
         };
