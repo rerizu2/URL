@@ -21,7 +21,6 @@
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
         
-        /* テーブルスタイル */
         .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px 2px; text-align: center; overflow: hidden; white-space: nowrap; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
@@ -31,7 +30,6 @@
         .col-time { width: 60px; }
         .col-rank { width: 30px; color: var(--primary); font-weight: bold; font-size: 10px; }
         
-        /* 周数設定入力枠（画像のデザインに準拠） */
         .lap-edit { 
             width: 32px !important; 
             border: 1px solid #ccc !important; 
@@ -54,7 +52,6 @@
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* 印刷設定（A4 1枚に収める最適化） */
         @media print {
             @page { margin: 5mm; }
             body { background: white; padding: 0; margin: 0; }
@@ -74,7 +71,6 @@
 </head>
 <body>
 
-<!-- 認証画面 -->
 <div id="login-overlay">
     <div class="login-box">
         <h2>Boxing Training Auth</h2>
@@ -84,7 +80,6 @@
     </div>
 </div>
 
-<!-- メインコンテンツ -->
 <div id="app-content">
     <div class="print-only-header">
         <h2 id="print-title">トレーニング記録レポート</h2>
@@ -109,7 +104,7 @@
                 <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:15px;"><option value="">読込中...</option></select>
                 <hr>
                 <h2>選手名簿</h2>
-                <textarea id="memberList" style="width:100%; height:180px; font-size:12px;" placeholder="名簿を入力すると保存時にスプレッドシートへ反映されます"></textarea>
+                <textarea id="memberList" style="width:100%; height:180px; font-size:12px;" placeholder="名簿を入力すると保存時に反映されます"></textarea>
                 <button onclick="applyMembers()" style="width:100%; padding:10px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">名簿を更新</button>
             </div>
 
@@ -141,7 +136,6 @@
                     <thead>
                         <tr>
                             <th class="col-name" id="table-first-col">氏名</th>
-                            <!-- ヘッダー内のカッコに入る周数をスプレッドシートと完全同期 -->
                             <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
                             <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
                             <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
@@ -220,9 +214,7 @@
         if (scope === 'all') {
             document.getElementById('table-first-col').innerText = '氏名';
             let names = document.getElementById('memberList').value.split('\n').filter(n => n.trim() !== "");
-            if(names.length === 0 && currentDayData.length > 1) {
-                names = currentDayData.slice(1).map(row => row[0]);
-            }
+            if(names.length === 0 && currentDayData.length > 1) { names = currentDayData.slice(1).map(row => row[0]); }
             names.forEach(name => {
                 const rowData = currentDayData.find(d => d[0].toString().trim() === name.trim());
                 addRowToTable(name.trim(), rowData);
@@ -294,6 +286,7 @@
         const range = document.getElementById('graphRange').value;
         const lapFilter = document.getElementById('lapFilter').value;
         const curDay = document.getElementById('recordDate').value;
+        
         let graphData = [];
         if (range === 'today') {
             const rows = document.getElementById('pdfTableBody').rows;
@@ -311,17 +304,32 @@
             graphData = (scope === 'all') ? [...allSheetData] : allSheetData.filter(d => d.name === targetName);
             if(lapFilter !== 'all') graphData = graphData.filter(d => String(d.laps) === lapFilter);
         }
+        
         if(graphData.length === 0) { chart.data.datasets = []; chart.update(); return; }
+
         graphData.sort((a,b) => (a.date !== b.date) ? a.date.localeCompare(b.date) : lapLabels.indexOf(a.count) - lapLabels.indexOf(b.count));
         const labels = [...new Set(graphData.map(d => range === 'today' ? d.count : `${d.date} ${d.count}`))];
-        const names = (scope === 'all') ? [...new Set(graphData.map(d => d.name))] : [targetName];
+        
+        // 氏名と周数の組み合わせでシリーズを分ける
+        const seriesMap = {};
+        graphData.forEach(d => {
+            const key = (lapFilter === 'all') ? `${d.name} (${d.laps}周)` : d.name;
+            if(!seriesMap[key]) seriesMap[key] = [];
+            seriesMap[key].push(d);
+        });
+
         chart.data.labels = labels;
-        chart.data.datasets = names.map((name, i) => {
-            const pts = graphData.filter(d => d.name === name);
-            return { label: name, data: labels.map(l => {
-                const f = pts.find(p => (range === 'today' ? p.count : `${p.date} ${p.count}`) === l);
-                return f ? t2s(f.time) : null;
-            }), borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, spanGaps: true, tension: 0.3, pointRadius: 4 };
+        chart.data.datasets = Object.keys(seriesMap).map((key, i) => {
+            const pts = seriesMap[key];
+            return {
+                label: key,
+                data: labels.map(l => {
+                    const f = pts.find(p => (range === 'today' ? p.count : `${p.date} ${p.count}`) === l);
+                    return f ? t2s(f.time) : null;
+                }),
+                borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`,
+                spanGaps: true, tension: 0.3, pointRadius: 4
+            };
         });
         chart.update();
     }
@@ -331,25 +339,18 @@
 
     async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); allSheetData = await res.json(); syncUI(); } catch (e) {} }
     
-    // スプレッドシートの1行目(ヘッダー)からカッコ内の数字(周数)を確実に抽出
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
         try { 
             const res = await fetch(`${GAS_WEBAPP_URL}?date=${date}`); 
             const result = await res.json(); 
             currentDayData = result.found ? result.data : [];
-            
             if(result.found && currentDayData.length > 0) {
                 const headerRow = currentDayData[0];
                 for (let j = 1; j <= 11; j += 2) {
                     const colIdx = (j + 1) / 2;
-                    const headerText = headerRow[j];
-                    // カッコ内の数字だけを抽出。例：「1本目(2周)」→ 2
-                    const match = headerText.match(/\((\d+)/);
-                    if(match) {
-                        const inputEl = document.getElementById(`lap-${colIdx}`);
-                        if(inputEl) inputEl.value = match[1];
-                    }
+                    const match = headerRow[j].match(/\((\d+)/);
+                    if(match) { document.getElementById(`lap-${colIdx}`).value = match[1]; }
                 }
             }
             updateLapFilterDropdown(); syncUI(); 
@@ -372,7 +373,6 @@
         const btn = document.getElementById('saveBtn'); const date = document.getElementById('recordDate').value; const rows = document.getElementById('pdfTableBody').rows;
         btn.disabled = true; btn.innerText = "同期中...";
         const memberList = document.getElementById('memberList').value;
-
         for (let r = 0; r < rows.length; r++) {
             const name = rows[r].cells[0].innerText;
             for (let c = 1; c <= 6; c++) {
@@ -380,21 +380,11 @@
                 const time = input.value.trim();
                 const rank = rows[r].cells[c*2].innerText;
                 const laps = document.getElementById(`lap-${c}`).value;
-
                 if (!time && r > 0) continue; 
-
-                await fetch(GAS_WEBAPP_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    body: JSON.stringify({ 
-                        date, name, count: lapLabels[c-1], laps, time, rank, memberList 
-                    }) 
-                });
+                await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ date, name, count: lapLabels[c-1], laps, time, rank, memberList }) });
             }
         }
-        alert("クラウドと同期が完了しました"); 
-        btn.disabled = false; btn.innerText = "クラウドと同期保存"; 
-        fetchAllData();
+        alert("保存完了"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
     }
 
     function renderRanking() {
@@ -410,8 +400,7 @@
             let html = top5.map((x, i) => `<div class="rank-item" style="${scope === 'individual' && x[0] === target ? 'background:#fff0f0;' : ''}"><span>${i+1}</span><span class="rank-name">${x[0]}</span><span class="rank-time">${x[1].time}</span></div>`).join('');
             if(scope === 'individual') {
                 const myIdx = sorted.findIndex(x => x[0] === target);
-                if(myIdx !== -1) { if(myIdx >= 5) html += `<div class="rank-item my-rank-highlight"><span>${myIdx+1}</span><span class="rank-name">${sorted[myIdx][0]} (自己ベスト)</span><span class="rank-time">${sorted[myIdx][1].time}</span></div>`;
-                } else { html += `<div class="rank-item" style="color:#999; font-size:10px; margin-top:5px;">${target}の記録はありません</div>`; }
+                if(myIdx !== -1 && myIdx >= 5) html += `<div class="rank-item my-rank-highlight"><span>${myIdx+1}</span><span class="rank-name">${sorted[myIdx][0]} (自己ベスト)</span><span class="rank-time">${sorted[myIdx][1].time}</span></div>`;
             }
             el.innerHTML = html || 'なし';
         };
