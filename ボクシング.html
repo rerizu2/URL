@@ -93,7 +93,7 @@
                 <select id="dateHistory" onchange="syncDateAndLoad()" style="width:100%; padding:8px; margin-bottom:15px;"><option value="">読込中...</option></select>
                 <hr>
                 <h2>選手名簿</h2>
-                <textarea id="memberList" style="width:100%; height:180px; font-size:12px;" placeholder="名簿を入力"></textarea>
+                <textarea id="memberList" style="width:100%; height:180px; font-size:12px;" placeholder="名前を入力"></textarea>
                 <button onclick="applyMembers()" style="width:100%; padding:10px; background:#6c757d; color:#fff; border:none; border-radius:4px; cursor:pointer;">名簿を更新</button>
             </div>
 
@@ -106,14 +106,14 @@
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
                             
                             <!-- 周数フィルタ -->
-                            <select id="lapFilter" onchange="updateGraph()" style="background:#fff0f0; font-weight:bold; border:1px solid #e63946;">
+                            <select id="lapFilter" onchange="updateGraph()" style="background:#fff0f0; font-weight:bold; border:2px solid var(--primary);">
                                 <option value="all">全ての周を表示</option>
                             </select>
 
                             <!-- 期間フィルタ -->
                             <select id="graphRange" onchange="syncUI()">
-                                <option value="all">全期間を表示</option>
-                                <option value="today">本日のみ表示</option>
+                                <option value="all">全期間</option>
+                                <option value="today">本日のみ</option>
                             </select>
                         </div>
                     </div>
@@ -189,6 +189,9 @@
             const val = document.getElementById(`lap-${i}`).value; 
             if(val) laps.push(val); 
         }
+        // スプレッドシートにある過去の周数設定も選択肢に加える
+        allSheetData.forEach(d => { if(d.laps) laps.push(d.laps); });
+
         const uniqueLaps = [...new Set(laps)].sort((a,b) => a - b);
         lapFilter.innerHTML = '<option value="all">全ての周を表示</option>';
         uniqueLaps.forEach(l => { 
@@ -276,19 +279,11 @@
         const ctx = document.getElementById('runChart').getContext('2d');
         chart = new Chart(ctx, {
             type: 'line', data: { labels: [], datasets: [] },
-            options: { 
-                animation: false, responsive: true, maintainAspectRatio: false, 
-                scales: { 
-                    y: { reverse: true, ticks: { callback: v => s2t(v) } } 
-                },
-                plugins: {
-                    legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } }
-                }
-            }
+            options: { animation: false, responsive: true, maintainAspectRatio: false, scales: { y: { reverse: true, ticks: { callback: v => s2t(v) } } } }
         });
     }
 
-    // --- 周数のみ×全期間を可能にする主要ロジック ---
+    // --- グラフ更新ロジック (周数フィルタと全期間を確実に連動) ---
     function updateGraph() {
         if(!chart) return;
         const scope = document.getElementById('displayScope').value;
@@ -299,7 +294,6 @@
 
         let graphData = [];
 
-        // 1. データの収集
         if (range === 'today') {
             const rows = document.getElementById('pdfTableBody').rows;
             for(let r=0; r<rows.length; r++) {
@@ -309,29 +303,32 @@
                     const val = rows[r].cells[c*2-1].querySelector('input').value;
                     const headerLapSetting = document.getElementById(`lap-${c}`).value;
                     if(!val) continue;
-                    // 周数フィルタが選ばれている場合、一致しない列は除外
                     if (lapFilter !== 'all' && String(headerLapSetting) !== String(lapFilter)) continue;
                     graphData.push({ name: nameInRow, count: lapLabels[c-1], time: val, date: curDay, laps: headerLapSetting });
                 }
             }
         } else {
-            // 全期間の場合
+            // 全期間の場合: allSheetDataから抽出
             graphData = (scope === 'all') ? [...allSheetData] : allSheetData.filter(d => d.name === targetName);
-            // 周数フィルタを適用
+            // 周数でフィルタ (文字列として比較)
             if(lapFilter !== 'all') {
                 graphData = graphData.filter(d => String(d.laps) === String(lapFilter));
             }
         }
 
-        if(graphData.length === 0) { chart.data.datasets = []; chart.update(); return; }
+        // グラフ描画前に古いデータをクリア
+        chart.data.labels = [];
+        chart.data.datasets = [];
 
-        // 2. 時系列ソート (日付順 -> 本数順)
+        if(graphData.length === 0) { chart.update(); return; }
+
+        // 日付順 -> 本数順にソート
         graphData.sort((a,b) => {
             if(a.date !== b.date) return a.date.localeCompare(b.date);
             return lapLabels.indexOf(a.count) - lapLabels.indexOf(b.count);
         });
 
-        // 3. X軸ラベルの作成 (日付と本数をセットにして識別)
+        // X軸ラベル作成
         const labels = [...new Set(graphData.map(d => range === 'today' ? d.count : `${d.date.substring(5)} ${d.count}`))];
         const names = (scope === 'all') ? [...new Set(graphData.map(d => d.name))] : [targetName];
 
@@ -402,7 +399,7 @@
                 await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ date, name, count: lapLabels[c-1], laps, time, rank, memberList }) });
             }
         }
-        alert("同期完了しました"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
+        alert("同期が完了しました"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
     }
 
     function getRankOnDate(date, count, time) {
