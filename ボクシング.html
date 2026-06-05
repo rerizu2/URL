@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ボクシングタイム記録 - ランキング強化版</title>
+    <title>ボクシングタイム記録 - 周数設定連動版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style id="dynamic-print-style"></style>
     <style>
@@ -25,6 +25,7 @@
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         .dashboard-grid { display: grid; grid-template-columns: 320px 1fr; gap: 15px; }
         
+        /* テーブル設定 */
         .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px 2px; text-align: center; overflow: hidden; white-space: nowrap; }
         .pdf-table thead th { background: var(--pdf-header); font-weight: normal; }
@@ -33,7 +34,18 @@
         .col-name { width: 130px; text-align: left !important; padding-left: 5px !important; font-weight: bold; background: #f9f9f9; }
         .col-time { width: 60px; }
         .col-rank { width: 30px; color: var(--primary); font-weight: bold; font-size: 10px; }
-        .lap-edit { width: 35px !important; border: 1px solid #ccc !important; background: #fff !important; font-weight: bold; border-radius: 3px; color: var(--primary); text-align: center; }
+        
+        /* 画像の入力枠（周数設定）のスタイル */
+        .lap-edit { 
+            width: 32px !important; 
+            border: 1px solid #ccc !important; 
+            background: #fff !important; 
+            font-weight: bold; 
+            border-radius: 4px; 
+            color: var(--primary); 
+            text-align: center;
+            margin: 0 2px;
+        }
 
         .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
@@ -48,6 +60,7 @@
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
+        /* 印刷設定 */
         @media print {
             @page { margin: 5mm; }
             body { background: white; padding: 0; margin: 0; }
@@ -59,6 +72,7 @@
             .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin-bottom: 10px !important; }
             .pdf-table { width: 100% !important; table-layout: fixed !important; font-size: 9px !important; }
             .pdf-table th, .pdf-table td { padding: 1px !important; border: 0.5px solid #000 !important; }
+            .lap-edit { border: none !important; width: auto !important; appearance: none; }
             .col-name { width: 15% !important; }
             .col-time { width: 10% !important; }
             .col-rank { width: 4% !important; }
@@ -128,6 +142,7 @@
             </div>
         </div>
 
+        <!-- 記録表セクション -->
         <div class="card" id="section-table">
             <h2 class="print-only-header" style="border:none; font-size:12px; margin-top:10px;">トレーニングタイム記録表</h2>
             <div style="overflow-x: auto;">
@@ -135,6 +150,7 @@
                     <thead>
                         <tr>
                             <th class="col-name" id="table-first-col">氏名</th>
+                            <!-- 画像の通り、ヘッダーに周数設定枠を配置 -->
                             <th class="col-time">1本目(<input type="number" class="lap-edit" id="lap-1" value="2" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
                             <th class="col-time">2本目(<input type="number" class="lap-edit" id="lap-2" value="2" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
                             <th class="col-time">3本目(<input type="number" class="lap-edit" id="lap-3" value="1" oninput="onLapHeaderChange()">)</th><th class="col-rank">順</th>
@@ -176,6 +192,7 @@
         initChart(); applyMembers(); fetchDateHistory(); await fetchAllData(); await loadDateData(); updateLapFilterDropdown();
     }
 
+    // 周数設定が変わった時の連動
     function onLapHeaderChange() { updateLapFilterDropdown(); syncUI(); }
 
     function updateLapFilterDropdown() {
@@ -226,7 +243,6 @@
                 let row = [date];
                 for(let i=1; i<=6; i++) {
                     const rec = personData.find(d => d.date === date && d.count === lapLabels[i-1]);
-                    // 他の選手と比較した順位を取得
                     const rank = rec ? getRankOnDate(date, lapLabels[i-1], rec.time) : "-";
                     row.push(rec ? rec.time : "", rank);
                 }
@@ -294,9 +310,9 @@
                 if (scope === 'individual' && nameInRow !== curDay) continue; 
                 for(let c=1; c<=6; c++) {
                     const val = rows[r].cells[c*2-1].querySelector('input').value;
-                    const headerLap = document.getElementById(`lap-${c}`).value;
-                    if (lapFilter !== 'all' && headerLap !== lapFilter) continue;
-                    if(val) graphData.push({ name: (scope === 'individual') ? targetName : nameInRow, count: lapLabels[c-1], time: val, date: curDay, laps: headerLap });
+                    const headerLapSetting = document.getElementById(`lap-${c}`).value; // ヘッダーの周数
+                    if (lapFilter !== 'all' && headerLapSetting !== lapFilter) continue;
+                    if(val) graphData.push({ name: (scope === 'individual') ? targetName : nameInRow, count: lapLabels[c-1], time: val, date: curDay, laps: headerLapSetting });
                 }
             }
         } else {
@@ -328,8 +344,7 @@
     }
     async function fetchDateHistory() {
         try { const res = await fetch(`${GAS_WEBAPP_URL}?mode=listDates`); const dates = await res.json();
-            const select = document.getElementById('dateHistory');
-            select.innerHTML = '<option value="">-- 履歴を選択 --</option>';
+            const select = document.getElementById('dateHistory'); select.innerHTML = '<option value="">-- 履歴を選択 --</option>';
             if(Array.isArray(dates)) dates.forEach(d => select.add(new Option(d, d)));
         } catch (e) {}
     }
@@ -342,39 +357,29 @@
         for (let r = 0; r < rows.length; r++) {
             for (let c = 1; c <= 6; c++) {
                 const input = rows[r].cells[c*2-1].querySelector('input'); if (!input || !input.value.trim()) continue;
-                await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ date, name: rows[r].cells[0].innerText, count: lapLabels[c-1], laps: document.getElementById(`lap-${c}`).value, time: input.value.trim(), rank: rows[r].cells[c*2].innerText }) });
+                // ヘッダーで設定されている周数を取得して保存
+                const currentLap = document.getElementById(`lap-${c}`).value;
+                await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ date, name: rows[r].cells[0].innerText, count: lapLabels[c-1], laps: currentLap, time: input.value.trim(), rank: rows[r].cells[c*2].innerText }) });
             }
         }
-        alert("保存完了"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
+        alert("同期保存が完了しました"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
     }
 
     function renderRanking() {
         const rBox2 = document.getElementById('rankLaps2'); const rBox1 = document.getElementById('rankLaps1');
         const scope = document.getElementById('displayScope').value; const target = document.getElementById('filterSelect').value;
-        
         const drawRank = (el, laps) => {
-            // 全員のベストタイムを算出
             const bests = {};
             allSheetData.filter(d => String(d.laps) === String(laps)).forEach(d => {
-                const s = t2s(d.time);
-                if(s && (!bests[d.name] || s < bests[d.name].sec)) bests[d.name] = {sec: s, time: d.time};
+                const s = t2s(d.time); if(s && (!bests[d.name] || s < bests[d.name].sec)) bests[d.name] = {sec: s, time: d.time};
             });
             const sorted = Object.entries(bests).sort((a,b) => a[1].sec - b[1].sec);
             const top5 = sorted.slice(0,5);
-            
             let html = top5.map((x, i) => `<div class="rank-item" style="${scope === 'individual' && x[0] === target ? 'background:#fff0f0;' : ''}"><span>${i+1}</span><span class="rank-name">${x[0]}</span><span class="rank-time">${x[1].time}</span></div>`).join('');
-            
-            // 個人表示の場合、その人の順位を下に表示
             if(scope === 'individual') {
                 const myIdx = sorted.findIndex(x => x[0] === target);
-                if(myIdx !== -1) {
-                    const myData = sorted[myIdx];
-                    if(myIdx >= 5) { // トップ5に入っていない場合のみ追加表示
-                        html += `<div class="rank-item my-rank-highlight"><span>${myIdx+1}</span><span class="rank-name">${myData[0]} (自己ベスト)</span><span class="rank-time">${myData[1].time}</span></div>`;
-                    }
-                } else {
-                    html += `<div class="rank-item" style="color:#999; font-size:10px; margin-top:5px;">${target}の記録はありません</div>`;
-                }
+                if(myIdx !== -1) { if(myIdx >= 5) html += `<div class="rank-item my-rank-highlight"><span>${myIdx+1}</span><span class="rank-name">${sorted[myIdx][0]} (自己ベスト)</span><span class="rank-time">${sorted[myIdx][1].time}</span></div>`;
+                } else { html += `<div class="rank-item" style="color:#999; font-size:10px; margin-top:5px;">${target}の記録はありません</div>`; }
             }
             el.innerHTML = html || 'なし';
         };
