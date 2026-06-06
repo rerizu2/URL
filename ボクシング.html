@@ -43,17 +43,28 @@
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
+        /* --- 印刷用設定 --- */
         @media print {
             @page { margin: 5mm; }
-            body { background: white; padding: 0; margin: 0; }
-            .no-print, .no-print-area, #saveBtn, button, select, hr { display: none !important; }
+            body { background: white; padding: 0; margin: 0; color: #000; }
+            .no-print, .no-print-area, #saveBtn, button, select, hr, textarea { display: none !important; }
             .print-hidden { display: none !important; }
             .container { max-width: 100% !important; width: 100% !important; }
             .dashboard-grid { display: block !important; }
             .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin-bottom: 10px !important; }
-            .pdf-table { width: 100% !important; table-layout: fixed !important; font-size: 9px !important; }
-            .lap-edit { border: none !important; width: auto !important; appearance: none; color: #000 !important; font-weight: normal !important; }
-            .print-only-header { display: block !important; text-align: center; margin-bottom: 5px; border-bottom: 1px solid #000; }
+            
+            /* 記録表セクションの改ページ制御 */
+            .print-new-page { break-before: page; margin-top: 20px; }
+
+            /* 記録表を一枚に収めるための調整 */
+            .pdf-table { width: 100% !important; font-size: 10px !important; border: 1.5px solid #000 !important; }
+            .pdf-table th, .pdf-table td { border: 1px solid #000 !important; padding: 6px 1px !important; }
+            .pdf-table input { border: none !important; font-size: 11px !important; color: #000 !important; }
+            .lap-edit { width: auto !important; }
+            
+            .print-only-header { display: block !important; text-align: center; margin-bottom: 5px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+            #section-rank { page-break-inside: avoid; }
+            .chart-container { height: 300px !important; }
         }
         .print-only-header { display: none; }
     </style>
@@ -105,12 +116,10 @@
                             <select id="displayScope" onchange="syncUI()"><option value="all">全員表示</option><option value="individual">個人表示</option></select>
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
                             
-                            <!-- 周数フィルタ -->
                             <select id="lapFilter" onchange="onLapFilterChange()" style="background:#fff0f0; font-weight:bold; border:1px solid #e63946;">
                                 <option value="all">全ての周を表示</option>
                             </select>
 
-                            <!-- 期間フィルタ -->
                             <select id="graphRange" onchange="syncUI()">
                                 <option value="all">全期間（時系列）</option>
                                 <option value="today">本日のみ</option>
@@ -199,16 +208,9 @@
         if ([...lapFilter.options].some(o => o.value === currentSelected)) lapFilter.value = currentSelected;
     }
 
-    /**
-     * 周数フィルタが変更された時の処理
-     */
     function onLapFilterChange() {
-        const lapFilter = document.getElementById('lapFilter');
-        const graphRange = document.getElementById('graphRange');
-
-        // 「全ての周を表示」以外が選択されたら、自動的に「本日のみ」に変更する
-        if (lapFilter.value !== 'all') {
-            graphRange.value = 'today';
+        if (document.getElementById('lapFilter').value !== 'all') {
+            document.getElementById('graphRange').value = 'today';
         }
         updateGraph();
     }
@@ -305,9 +307,7 @@
         const range = document.getElementById('graphRange').value;
         const lapFilter = document.getElementById('lapFilter').value;
         const curDay = document.getElementById('recordDate').value;
-
         let graphData = [];
-
         if (range === 'today') {
             const rows = document.getElementById('pdfTableBody').rows;
             for(let r=0; r<rows.length; r++) {
@@ -323,21 +323,15 @@
             }
         } else {
             graphData = (scope === 'all') ? [...allSheetData] : allSheetData.filter(d => d.name === targetName);
-            if(lapFilter !== 'all') {
-                graphData = graphData.filter(d => String(d.laps) === String(lapFilter));
-            }
+            if(lapFilter !== 'all') graphData = graphData.filter(d => String(d.laps) === String(lapFilter));
         }
-
         if(graphData.length === 0) { chart.data.datasets = []; chart.update(); return; }
-
         graphData.sort((a,b) => {
             if(a.date !== b.date) return a.date.localeCompare(b.date);
             return lapLabels.indexOf(a.count) - lapLabels.indexOf(b.count);
         });
-
         const labels = [...new Set(graphData.map(d => range === 'today' ? d.count : `${d.date.substring(5)} ${d.count}`))];
         const names = (scope === 'all') ? [...new Set(graphData.map(d => d.name))] : [targetName];
-
         chart.data.labels = labels;
         chart.data.datasets = names.map((name, i) => {
             const pts = graphData.filter(d => d.name === name);
@@ -345,16 +339,7 @@
                 const f = pts.find(p => (range === 'today' ? p.count : `${p.date.substring(5)} ${p.count}`) === l);
                 return f ? t2s(f.time) : null;
             });
-
-            return { 
-                label: name, 
-                data: dataValues, 
-                borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, 
-                backgroundColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, 
-                spanGaps: true, 
-                tension: 0.2, 
-                pointRadius: 4 
-            };
+            return { label: name, data: dataValues, borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, backgroundColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, spanGaps: true, tension: 0.2, pointRadius: 4 };
         });
         chart.update();
     }
@@ -363,25 +348,15 @@
     function s2t(s) { if (!s) return ""; const m = Math.floor(s/60); return m + ":" + String(Math.floor(s%60)).padStart(2, '0'); }
 
     async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); allSheetData = await res.json(); updateLapFilterDropdown(); syncUI(); } catch (e) {} }
-    
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
         try { 
             const res = await fetch(`${GAS_WEBAPP_URL}?date=${date}`); 
             const result = await res.json(); 
             currentDayData = result.found ? result.data : [];
-            if(result.found && currentDayData.length > 0) {
-                const headerRow = currentDayData[0];
-                for (let j = 1; j <= 11; j += 2) {
-                    const colIdx = (j + 1) / 2;
-                    const match = headerRow[j].match(/\((\d+)/);
-                    if(match) document.getElementById(`lap-${colIdx}`).value = match[1];
-                }
-            }
             updateLapFilterDropdown(); syncUI(); 
         } catch (e) {}
     }
-
     async function fetchDateHistory() {
         try { 
             const res = await fetch(`${GAS_WEBAPP_URL}?mode=listDates`); 
@@ -391,14 +366,12 @@
             if(Array.isArray(dates)) dates.forEach(d => select.add(new Option(d, d)));
         } catch (e) {}
     }
-
     function syncDateAndLoad() { const sel = document.getElementById('dateHistory').value; if(sel) { document.getElementById('recordDate').value = sel; loadDateData(); } }
     function onDateChange() { loadDateData(); }
 
     async function saveAllSheetData() {
         const btn = document.getElementById('saveBtn'); const date = document.getElementById('recordDate').value; const rows = document.getElementById('pdfTableBody').rows;
         btn.disabled = true; btn.innerText = "同期中...";
-        const memberList = document.getElementById('memberList').value;
         for (let r = 0; r < rows.length; r++) {
             const name = rows[r].cells[0].innerText;
             for (let c = 1; c <= 6; c++) {
@@ -406,7 +379,7 @@
                 const rank = rows[r].cells[c*2].innerText;
                 const laps = document.getElementById(`lap-${c}`).value;
                 if (!time && r > 0) continue; 
-                await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ date, name, count: lapLabels[c-1], laps, time, rank, memberList }) });
+                await fetch(GAS_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ date, name, count: lapLabels[c-1], laps, time, rank, memberList: document.getElementById('memberList').value }) });
             }
         }
         alert("同期完了しました"); btn.disabled = false; btn.innerText = "クラウドと同期保存"; fetchAllData();
@@ -432,15 +405,35 @@
         drawRank(rBox2, 2); drawRank(rBox1, 1);
     }
 
+    // --- 印刷準備（今回の重要修正箇所） ---
     function preparePrint() {
         const orient = document.getElementById('print-orientation').value;
-        document.getElementById('section-graph').classList.toggle('print-hidden', !document.getElementById('check-graph').checked);
-        document.getElementById('section-rank').classList.toggle('print-hidden', !document.getElementById('check-rank').checked);
-        document.getElementById('section-table').classList.toggle('print-hidden', !document.getElementById('check-table').checked);
+        const showGraph = document.getElementById('check-graph').checked;
+        const showRank = document.getElementById('check-rank').checked;
+        const showTable = document.getElementById('check-table').checked;
+
+        // セクションの表示非表示を切り替え
+        document.getElementById('section-graph').classList.toggle('print-hidden', !showGraph);
+        document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
+        document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
+
+        const tableSection = document.getElementById('section-table');
+        
+        // 【条件判定】グラフまたはランキングが表示されている場合、かつ記録表も表示する場合
+        if ((showGraph || showRank) && showTable) {
+            // 記録表を次のページ（2枚目）にまとめる
+            tableSection.classList.add('print-new-page');
+        } else {
+            // 記録表のみの場合や、グラフ・ランキングがない場合は、改ページなし（1枚目から表示）
+            tableSection.classList.remove('print-new-page');
+        }
+
         document.getElementById('print-date-display').innerText = `実施日: ${document.getElementById('recordDate').value}`;
         document.getElementById('dynamic-print-style').innerHTML = `@media print { @page { size: A4 ${orient}; } }`;
+        
         setTimeout(() => { window.print(); }, 300);
     }
+
     window.onload = () => { if (sessionStorage.getItem('isBoxingAuth') === 'true') { document.getElementById('login-overlay').style.display = 'none'; document.getElementById('app-content').style.display = 'block'; initApp(); } };
 </script>
 </body>
