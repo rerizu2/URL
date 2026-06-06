@@ -61,10 +61,12 @@
             .lap-edit { border: none !important; appearance: none; color: #000 !important; width: auto !important; }
             .print-only-header { display: block !important; text-align: center; margin-bottom: 10px; border-bottom: 2px solid #000; }
             
-            /* 図表とランキングを1枚目に収める工夫 */
             #section-graph, #section-rank { page-break-inside: avoid; }
         }
         .print-only-header { display: none; }
+
+        /* 期間フィルタ無効時のスタイル（視認性向上） */
+        #graphRange:disabled { background-color: #e9ecef; cursor: not-allowed; color: #6c757d; }
     </style>
 </head>
 <body>
@@ -114,10 +116,12 @@
                             <select id="displayScope" onchange="syncUI()"><option value="all">全員表示</option><option value="individual">個人表示</option></select>
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
                             
+                            <!-- 周数フィルタ -->
                             <select id="lapFilter" onchange="onLapFilterChange()" style="background:#fff0f0; font-weight:bold; border:1px solid #e63946;">
                                 <option value="all">全ての周を表示</option>
                             </select>
 
+                            <!-- 期間フィルタ -->
                             <select id="graphRange" onchange="syncUI()">
                                 <option value="all">全期間（時系列）</option>
                                 <option value="today">本日のみ</option>
@@ -159,7 +163,7 @@
 
 <script>
     const CORRECT_PASSWORD = "ojithsboxing";
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby4wv9HDVi099vlKKXq_whz6uQ1X-tQ5E1D47-xbi7Un_KkNO00yp7obVCsp-3201lL9Q/exec"; 
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby4wv9HDVi099vlKKXq_whz6_whz6uQ1X-tQ5E1D47-xbi7Un_KkNO00yp7obVCsp-3201lL9Q/exec"; 
     
     let chart;
     let allSheetData = []; 
@@ -204,13 +208,31 @@
             lapFilter.appendChild(opt); 
         });
         if ([...lapFilter.options].some(o => o.value === currentSelected)) lapFilter.value = currentSelected;
+        
+        // dropdown更新後も現在のロック状態を維持
+        toggleGraphRangeLock();
     }
 
+    /**
+     * 周数フィルタ変更時のロック制御
+     */
     function onLapFilterChange() {
+        toggleGraphRangeLock();
+        updateGraph();
+    }
+
+    function toggleGraphRangeLock() {
         const lapFilter = document.getElementById('lapFilter');
         const graphRange = document.getElementById('graphRange');
-        if (lapFilter.value !== 'all') { graphRange.value = 'today'; }
-        updateGraph();
+
+        if (lapFilter.value !== 'all') {
+            // 「◯周のみ」なら「本日のみ」に強制固定
+            graphRange.value = 'today';
+            graphRange.disabled = true;
+        } else {
+            // 「全て」ならロック解除
+            graphRange.disabled = false;
+        }
     }
 
     function applyMembers() {
@@ -422,25 +444,20 @@
         drawRank(rBox2, 2); drawRank(rBox1, 1);
     }
 
-    /* --- 印刷準備（今回の主な修正点） --- */
     function preparePrint() {
         const orient = document.getElementById('print-orientation').value;
         const showGraph = document.getElementById('check-graph').checked;
         const showRank = document.getElementById('check-rank').checked;
         const showTable = document.getElementById('check-table').checked;
 
-        // 表示の切り替え
         document.getElementById('section-graph').classList.toggle('print-hidden', !showGraph);
         document.getElementById('section-rank').classList.toggle('print-hidden', !showRank);
         document.getElementById('section-table').classList.toggle('print-hidden', !showTable);
         
-        // 改ページ制御のロジック
         const tableSection = document.getElementById('section-table');
         if (showTable && (showGraph || showRank)) {
-            // 他の項目（グラフ or ランキング）がある場合は記録表の前に改ページを入れる
             tableSection.classList.add('print-page-break');
         } else {
-            // 記録表のみの場合は改ページなし
             tableSection.classList.remove('print-page-break');
         }
 
