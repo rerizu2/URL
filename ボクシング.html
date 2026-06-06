@@ -106,7 +106,7 @@
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
                             
                             <!-- 周数フィルタ -->
-                            <select id="lapFilter" onchange="updateGraph()" style="background:#fff0f0; font-weight:bold; border:1px solid #e63946;">
+                            <select id="lapFilter" onchange="onLapFilterChange()" style="background:#fff0f0; font-weight:bold; border:1px solid #e63946;">
                                 <option value="all">全ての周を表示</option>
                             </select>
 
@@ -199,6 +199,20 @@
         if ([...lapFilter.options].some(o => o.value === currentSelected)) lapFilter.value = currentSelected;
     }
 
+    /**
+     * 周数フィルタが変更された時の処理
+     */
+    function onLapFilterChange() {
+        const lapFilter = document.getElementById('lapFilter');
+        const graphRange = document.getElementById('graphRange');
+
+        // 「全ての周を表示」以外が選択されたら、自動的に「本日のみ」に変更する
+        if (lapFilter.value !== 'all') {
+            graphRange.value = 'today';
+        }
+        updateGraph();
+    }
+
     function applyMembers() {
         const list = document.getElementById('memberList').value.trim();
         localStorage.setItem('boxing_members', list);
@@ -284,7 +298,6 @@
         });
     }
 
-    // --- 【修正】日付をまたいで一本の線にするロジック ---
     function updateGraph() {
         if(!chart) return;
         const scope = document.getElementById('displayScope').value;
@@ -309,7 +322,6 @@
                 }
             }
         } else {
-            // 全期間の場合: allSheetData から抽出
             graphData = (scope === 'all') ? [...allSheetData] : allSheetData.filter(d => d.name === targetName);
             if(lapFilter !== 'all') {
                 graphData = graphData.filter(d => String(d.laps) === String(lapFilter));
@@ -318,20 +330,17 @@
 
         if(graphData.length === 0) { chart.data.datasets = []; chart.update(); return; }
 
-        // 時系列でソート（日付順 → その日の本数順）これで5/31と6/1が連続して並ぶ
         graphData.sort((a,b) => {
             if(a.date !== b.date) return a.date.localeCompare(b.date);
             return lapLabels.indexOf(a.count) - lapLabels.indexOf(b.count);
         });
 
-        // X軸のラベルを作成 (全期間なら "月-日 本数")
         const labels = [...new Set(graphData.map(d => range === 'today' ? d.count : `${d.date.substring(5)} ${d.count}`))];
         const names = (scope === 'all') ? [...new Set(graphData.map(d => d.name))] : [targetName];
 
         chart.data.labels = labels;
         chart.data.datasets = names.map((name, i) => {
             const pts = graphData.filter(d => d.name === name);
-            // データをラベルの順番通りに配列化
             const dataValues = labels.map(l => {
                 const f = pts.find(p => (range === 'today' ? p.count : `${p.date.substring(5)} ${p.count}`) === l);
                 return f ? t2s(f.time) : null;
@@ -342,7 +351,7 @@
                 data: dataValues, 
                 borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, 
                 backgroundColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, 
-                spanGaps: true, // データが欠けていても線を繋ぐ
+                spanGaps: true, 
                 tension: 0.2, 
                 pointRadius: 4 
             };
