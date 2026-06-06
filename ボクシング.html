@@ -32,11 +32,13 @@
         
         .lap-edit { width: 32px !important; border: 1px solid #ccc !important; background: #fff !important; font-weight: bold; border-radius: 4px; color: var(--primary); text-align: center; }
 
+        /* ランキンググリッドを2列2行に変更 */
         .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
-        .rank-item { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid #eee; }
+        .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; }
+        .rank-item { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 11px; }
         .rank-name { flex: 1; font-weight: bold; margin-left: 10px; overflow: hidden; text-overflow: ellipsis; }
         .rank-time { font-family: monospace; color: var(--primary); font-weight: bold; }
+        .rank-date { font-size: 9px; color: #666; margin-left: 5px; }
 
         .btn-send { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
         .chart-container { height: 380px; position: relative; }
@@ -122,9 +124,12 @@
                     <div class="chart-container"><canvas id="runChart"></canvas></div>
                 </div>
 
+                <!-- ランキングセクション：本日と歴代を両方表示 -->
                 <div class="ranking-grid" id="section-rank">
-                    <div class="rank-box"><h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 2周ランキング</h3><div id="rankLaps2"></div></div>
-                    <div class="rank-box"><h3 style="text-align:center; font-size:11px; margin-top:0;">🏆 1周ランキング</h3><div id="rankLaps1"></div></div>
+                    <div class="rank-box"><h3 style="text-align:center; font-size:11px; margin-top:0; color:var(--primary);">⏱ 本日: 2周</h3><div id="rankToday2"></div></div>
+                    <div class="rank-box"><h3 style="text-align:center; font-size:11px; margin-top:0; color:var(--primary);">⏱ 本日: 1周</h3><div id="rankToday1"></div></div>
+                    <div class="rank-box"><h3 style="text-align:center; font-size:11px; margin-top:0; color:var(--secondary);">🏆 総合: 2周</h3><div id="rankAll2"></div></div>
+                    <div class="rank-box"><h3 style="text-align:center; font-size:11px; margin-top:0; color:var(--secondary);">🏆 総合: 1周</h3><div id="rankAll1"></div></div>
                 </div>
             </div>
         </div>
@@ -154,7 +159,6 @@
 
 <script>
     const CORRECT_PASSWORD = "ojithsboxing";
-    // 正しいGAS URLに修正しました
     const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby4wv9HDVi099vlKKXq_whz6uQ1X-tQ5E1D47-xbi7Un_KkNO00yp7obVCsp-3201lL9Q/exec"; 
     
     let chart;
@@ -275,7 +279,7 @@
         tr.innerHTML = html; document.getElementById('pdfTableBody').appendChild(tr);
     }
 
-    function handleInput(el, colIdx) { el.setAttribute('value', el.value); calcRanks(colIdx); updateGraph(); }
+    function handleInput(el, colIdx) { el.setAttribute('value', el.value); calcRanks(colIdx); updateGraph(); renderRanking(); }
     function formatTimeInput(el, colIdx) {
         let val = el.value.trim();
         if (/^\d{3,4}$/.test(val)) { el.value = val.slice(0, -2) + ":" + val.slice(-2); el.setAttribute('value', el.value); calcRanks(colIdx); updateGraph(); }
@@ -361,8 +365,7 @@
     function t2s(v){ if(!v) return null; const p = v.toString().split(':'); return p.length > 1 ? (parseInt(p[0])*60 + parseInt(p[1])) : parseFloat(v); }
     function s2t(s) { if (!s) return ""; const m = Math.floor(s/60); return m + ":" + String(Math.floor(s%60)).padStart(2, '0'); }
 
-    async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); allSheetData = await res.json(); updateLapFilterDropdown(); syncUI(); } catch (e) { console.error(e); } }
-    
+    async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); allSheetData = await res.json(); updateLapFilterDropdown(); syncUI(); } catch (e) {} }
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
         try { 
@@ -378,26 +381,17 @@
                 }
             }
             updateLapFilterDropdown(); syncUI(); 
-        } catch (e) { console.error(e); }
+        } catch (e) {}
     }
-
     async function fetchDateHistory() {
-        const select = document.getElementById('dateHistory');
         try { 
             const res = await fetch(`${GAS_WEBAPP_URL}?mode=listDates`); 
             const dates = await res.json();
+            const select = document.getElementById('dateHistory');
             select.innerHTML = '<option value="">-- 履歴を選択 --</option>';
-            if(Array.isArray(dates) && dates.length > 0) {
-                dates.forEach(d => select.add(new Option(d, d)));
-            } else {
-                select.innerHTML = '<option value="">-- 履歴なし --</option>';
-            }
-        } catch (e) {
-            console.error("Fetch history error:", e);
-            select.innerHTML = '<option value="">-- 読み込み失敗 --</option>';
-        }
+            if(Array.isArray(dates)) dates.forEach(d => select.add(new Option(d, d)));
+        } catch (e) {}
     }
-
     function syncDateAndLoad() { const sel = document.getElementById('dateHistory').value; if(sel) { document.getElementById('recordDate').value = sel; loadDateData(); } }
     function onDateChange() { loadDateData(); }
 
@@ -425,17 +419,64 @@
         return times.indexOf(sec) + 1 || "-";
     }
 
+    /* --- ランキング描画機能の強化 --- */
     function renderRanking() {
-        const rBox2 = document.getElementById('rankLaps2'); const rBox1 = document.getElementById('rankLaps1');
-        const drawRank = (el, laps) => {
+        const curDate = document.getElementById('recordDate').value;
+        
+        // 描画用の補助関数
+        const drawRank = (elId, laps, isTodayOnly) => {
+            const el = document.getElementById(elId);
             const bests = {};
-            allSheetData.filter(d => String(d.laps) === String(laps)).forEach(d => {
-                const s = t2s(d.time); if(s && (!bests[d.name] || s < bests[d.name].sec)) bests[d.name] = {sec: s, time: d.time};
+            
+            // フィルタリング
+            let sourceData = allSheetData;
+            
+            // 「本日」の場合は現在の入力フォームのデータも考慮する（リアルタイム反映のため）
+            if (isTodayOnly) {
+                // クラウドデータから当日のものだけ抽出
+                sourceData = allSheetData.filter(d => d.date === curDate);
+                
+                // 現在のテーブル入力値もマージ（保存前のデータもランキングに出す）
+                const rows = document.getElementById('pdfTableBody').rows;
+                const memberScope = document.getElementById('displayScope').value;
+                if (memberScope === 'all') { // 全員表示モードの時のみテーブルから取得
+                    for(let r=0; r<rows.length; r++) {
+                        const name = rows[r].cells[0].innerText;
+                        for(let c=1; c<=6; c++) {
+                            const lapConfig = document.getElementById(`lap-${c}`).value;
+                            if (String(lapConfig) === String(laps)) {
+                                const val = rows[r].cells[c*2-1].querySelector('input').value;
+                                if(val) sourceData.push({ name: name, time: val, date: curDate, laps: laps });
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 自己ベスト（または本日のベスト）を抽出
+            sourceData.filter(d => String(d.laps) === String(laps)).forEach(d => {
+                const s = t2s(d.time);
+                if(s && (!bests[d.name] || s < bests[d.name].sec)) {
+                    bests[d.name] = { sec: s, time: d.time, date: d.date };
+                }
             });
+
             const sorted = Object.entries(bests).sort((a,b) => a[1].sec - b[1].sec).slice(0,5);
-            el.innerHTML = sorted.map((x, i) => `<div class="rank-item"><span>${i+1}</span><span class="rank-name">${x[0]}</span><span class="rank-time">${x[1].time}</span></div>`).join('') || 'なし';
+            el.innerHTML = sorted.map((x, i) => `
+                <div class="rank-item">
+                    <span>${i+1}</span>
+                    <span class="rank-name">${x[0]}</span>
+                    <span class="rank-time">${x[1].time}</span>
+                    ${!isTodayOnly ? `<span class="rank-date">${x[1].date.substring(5)}</span>` : ''}
+                </div>
+            `).join('') || '<div style="text-align:center; color:#ccc; font-size:10px; padding:10px;">データなし</div>';
         };
-        drawRank(rBox2, 2); drawRank(rBox1, 1);
+
+        // 各ボックスを描画
+        drawRank('rankToday2', 2, true);
+        drawRank('rankToday1', 1, true);
+        drawRank('rankAll2', 2, false);
+        drawRank('rankAll1', 1, false);
     }
 
     function preparePrint() {
