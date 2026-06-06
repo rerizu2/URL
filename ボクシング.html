@@ -43,7 +43,6 @@
         .no-print-area { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid var(--secondary); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .print-btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* --- 印刷用設定 --- */
         @media print {
             @page { margin: 10mm; }
             body { background: white; padding: 0; margin: 0; color: #000; }
@@ -52,20 +51,14 @@
             .container { max-width: 100% !important; width: 100% !important; margin: 0 !important; }
             .dashboard-grid { display: block !important; }
             .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin-bottom: 20px !important; }
-            
-            /* 改ページ制御用クラス */
             .print-page-break { break-before: page; margin-top: 30px !important; }
-            
             .pdf-table { width: 100% !important; font-size: 10px !important; }
             .pdf-table td, .pdf-table th { padding: 6px 2px !important; border: 1px solid #000 !important; }
             .lap-edit { border: none !important; appearance: none; color: #000 !important; width: auto !important; }
             .print-only-header { display: block !important; text-align: center; margin-bottom: 10px; border-bottom: 2px solid #000; }
-            
             #section-graph, #section-rank { page-break-inside: avoid; }
         }
         .print-only-header { display: none; }
-
-        /* 期間フィルタ無効時のスタイル（視認性向上） */
         #graphRange:disabled { background-color: #e9ecef; cursor: not-allowed; color: #6c757d; }
     </style>
 </head>
@@ -116,12 +109,10 @@
                             <select id="displayScope" onchange="syncUI()"><option value="all">全員表示</option><option value="individual">個人表示</option></select>
                             <select id="filterSelect" onchange="syncUI()" style="display:none;"></select>
                             
-                            <!-- 周数フィルタ -->
                             <select id="lapFilter" onchange="onLapFilterChange()" style="background:#fff0f0; font-weight:bold; border:1px solid #e63946;">
                                 <option value="all">全ての周を表示</option>
                             </select>
 
-                            <!-- 期間フィルタ -->
                             <select id="graphRange" onchange="syncUI()">
                                 <option value="all">全期間（時系列）</option>
                                 <option value="today">本日のみ</option>
@@ -163,7 +154,8 @@
 
 <script>
     const CORRECT_PASSWORD = "ojithsboxing";
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby4wv9HDVi099vlKKXq_whz6_whz6uQ1X-tQ5E1D47-xbi7Un_KkNO00yp7obVCsp-3201lL9Q/exec"; 
+    // 正しいGAS URLに修正しました
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby4wv9HDVi099vlKKXq_whz6uQ1X-tQ5E1D47-xbi7Un_KkNO00yp7obVCsp-3201lL9Q/exec"; 
     
     let chart;
     let allSheetData = []; 
@@ -208,14 +200,9 @@
             lapFilter.appendChild(opt); 
         });
         if ([...lapFilter.options].some(o => o.value === currentSelected)) lapFilter.value = currentSelected;
-        
-        // dropdown更新後も現在のロック状態を維持
         toggleGraphRangeLock();
     }
 
-    /**
-     * 周数フィルタ変更時のロック制御
-     */
     function onLapFilterChange() {
         toggleGraphRangeLock();
         updateGraph();
@@ -224,13 +211,10 @@
     function toggleGraphRangeLock() {
         const lapFilter = document.getElementById('lapFilter');
         const graphRange = document.getElementById('graphRange');
-
         if (lapFilter.value !== 'all') {
-            // 「◯周のみ」なら「本日のみ」に強制固定
             graphRange.value = 'today';
             graphRange.disabled = true;
         } else {
-            // 「全て」ならロック解除
             graphRange.disabled = false;
         }
     }
@@ -377,7 +361,8 @@
     function t2s(v){ if(!v) return null; const p = v.toString().split(':'); return p.length > 1 ? (parseInt(p[0])*60 + parseInt(p[1])) : parseFloat(v); }
     function s2t(s) { if (!s) return ""; const m = Math.floor(s/60); return m + ":" + String(Math.floor(s%60)).padStart(2, '0'); }
 
-    async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); allSheetData = await res.json(); updateLapFilterDropdown(); syncUI(); } catch (e) {} }
+    async function fetchAllData() { try { const res = await fetch(GAS_WEBAPP_URL); allSheetData = await res.json(); updateLapFilterDropdown(); syncUI(); } catch (e) { console.error(e); } }
+    
     async function loadDateData() {
         const date = document.getElementById('recordDate').value;
         try { 
@@ -393,17 +378,26 @@
                 }
             }
             updateLapFilterDropdown(); syncUI(); 
-        } catch (e) {}
+        } catch (e) { console.error(e); }
     }
+
     async function fetchDateHistory() {
+        const select = document.getElementById('dateHistory');
         try { 
             const res = await fetch(`${GAS_WEBAPP_URL}?mode=listDates`); 
             const dates = await res.json();
-            const select = document.getElementById('dateHistory');
             select.innerHTML = '<option value="">-- 履歴を選択 --</option>';
-            if(Array.isArray(dates)) dates.forEach(d => select.add(new Option(d, d)));
-        } catch (e) {}
+            if(Array.isArray(dates) && dates.length > 0) {
+                dates.forEach(d => select.add(new Option(d, d)));
+            } else {
+                select.innerHTML = '<option value="">-- 履歴なし --</option>';
+            }
+        } catch (e) {
+            console.error("Fetch history error:", e);
+            select.innerHTML = '<option value="">-- 読み込み失敗 --</option>';
+        }
     }
+
     function syncDateAndLoad() { const sel = document.getElementById('dateHistory').value; if(sel) { document.getElementById('recordDate').value = sel; loadDateData(); } }
     function onDateChange() { loadDateData(); }
 
