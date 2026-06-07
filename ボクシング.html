@@ -20,9 +20,11 @@
         .container { max-width: 1400px; margin: 0 auto; }
         .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); padding: 15px; margin-bottom: 15px; }
         
-        /* グラフとランキングを包むグリッド */
-        .analysis-wrapper { display: grid; grid-template-columns: 1fr 380px; gap: 15px; }
+        /* メインレイアウト：サイドバーとコンテンツ */
         .dashboard-main-grid { display: grid; grid-template-columns: 300px 1fr; gap: 15px; }
+
+        /* グラフとランキングを縦に並べるラッパー */
+        .analysis-wrapper { display: flex; flex-direction: column; gap: 15px; }
 
         .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; background: #fff; table-layout: fixed; }
         .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 4px 2px; text-align: center; overflow: hidden; white-space: nowrap; }
@@ -35,9 +37,10 @@
         
         .lap-edit { width: 32px !important; border: 1px solid #ccc !important; background: #fff !important; font-weight: bold; border-radius: 4px; color: var(--primary); text-align: center; }
 
-        .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px; }
-        .rank-item { display: flex; align-items: center; padding: 3px 0; border-bottom: 1px solid #eee; font-size: 10.5px; }
+        /* ランキングを横に4つ並べる設定 */
+        .ranking-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 5px; }
+        .rank-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; }
+        .rank-item { display: flex; align-items: center; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 11px; }
         .rank-name { flex: 1; font-weight: bold; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; }
         .rank-time { font-family: monospace; color: var(--primary); font-weight: bold; }
         .rank-date { font-size: 8px; color: #666; margin-left: 3px; }
@@ -53,21 +56,17 @@
             .no-print, .no-print-area, #saveBtn, button, select, hr { display: none !important; }
             .container { max-width: 100% !important; width: 100% !important; margin: 0 !important; }
             
-            /* 印刷時にグラフとランキングを1枚に収めるための横並び設定 */
-            .analysis-wrapper { display: flex !important; flex-direction: row !important; gap: 10px; align-items: flex-start; page-break-inside: avoid; }
-            #section-graph { flex: 1; }
-            #section-rank { width: 350px; }
-            .chart-container { height: 280px !important; } /* グラフの高さを少し抑える */
+            /* 印刷時にグラフとランキングが確実に1枚に収まるよう調整 */
+            .analysis-wrapper { gap: 10px; page-break-inside: avoid; }
+            .chart-container { height: 300px !important; } 
+            .ranking-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 5px; }
+            .rank-item { font-size: 9px; padding: 2px 0; }
             
             .dashboard-main-grid { display: block !important; }
-            .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin-bottom: 15px !important; }
+            .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin-bottom: 20px !important; }
             .print-page-break { break-before: page; margin-top: 20px !important; }
             .pdf-table { width: 100% !important; font-size: 10px !important; }
             .print-only-header { display: block !important; text-align: center; margin-bottom: 5px; border-bottom: 2px solid #000; }
-            
-            /* ランキングの文字サイズを調整 */
-            .rank-item { font-size: 9px; }
-            .rank-box h3 { font-size: 10px !important; margin: 2px 0 !important; }
         }
         .print-only-header { display: none; }
         #graphRange:disabled { background-color: #e9ecef; cursor: not-allowed; color: #6c757d; }
@@ -114,7 +113,7 @@
 
             <div class="card" id="card-analysis-combined">
                 <div class="analysis-wrapper">
-                    <!-- グラフセクション -->
+                    <!-- グラフセクション (上) -->
                     <div id="section-graph">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                             <h2 style="margin:0; font-size:16px;">分析グラフ</h2>
@@ -133,9 +132,8 @@
                         <div class="chart-container"><canvas id="runChart"></canvas></div>
                     </div>
 
-                    <!-- ランキングセクション -->
+                    <!-- ランキングセクション (下) -->
                     <div id="section-rank">
-                        <h2 style="margin:0 0 10px 0; font-size:16px; text-align:center;" class="no-print">ランキング</h2>
                         <div class="ranking-grid">
                             <div class="rank-box"><h3 style="text-align:center; font-size:11px; margin-top:0; color:var(--primary);">⏱ 本日: 2周</h3><div id="rankToday2"></div></div>
                             <div class="rank-box"><h3 style="text-align:center; font-size:11px; margin-top:0; color:var(--primary);">⏱ 本日: 1周</h3><div id="rankToday1"></div></div>
@@ -147,6 +145,7 @@
             </div>
         </div>
 
+        <!-- 記録表セクション -->
         <div class="card" id="section-table">
             <h2 class="print-only-header" style="border:none; font-size:12px; margin-top:10px;">トレーニングタイム記録表</h2>
             <div style="overflow-x: auto;">
@@ -220,10 +219,7 @@
         toggleGraphRangeLock();
     }
 
-    function onLapFilterChange() {
-        toggleGraphRangeLock();
-        updateGraph();
-    }
+    function onLapFilterChange() { toggleGraphRangeLock(); updateGraph(); }
 
     function toggleGraphRangeLock() {
         const lapFilter = document.getElementById('lapFilter');
@@ -316,7 +312,7 @@
             options: { 
                 animation: false, responsive: true, maintainAspectRatio: false, 
                 scales: { y: { reverse: true, ticks: { callback: v => s2t(v) } } },
-                plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 10 } } } }
+                plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } } }
             }
         });
     }
@@ -369,7 +365,7 @@
                 label: name, data: dataValues, 
                 borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, 
                 backgroundColor: `hsl(${(i * 137) % 360}, 70%, 50%)`, 
-                spanGaps: true, tension: 0.2, pointRadius: 4 
+                spanGaps: true, tension: 0.2, pointRadius: 3 
             };
         });
         chart.update();
