@@ -17,7 +17,7 @@
         .id-btn.selected { background: var(--accent); color: #000; }
         input { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: #fff; padding: 10px; width: 85%; text-align: center; font-size: 1.2rem; outline: none; margin: 20px 0; }
         .story-text { text-align: left; line-height: 1.8; font-size: 1rem; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 20px; }
-        #game-reader { width: 100% !important; border: 1px solid #444; border-radius: 8px; overflow: hidden; margin-top: 15px; }
+        #game-reader { width: 100% !important; border: 1px solid #444; border-radius: 8px; overflow: hidden; margin-top: 15px; min-height: 250px; }
         .map-btn { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; padding: 5px 10px; z-index: 10; }
         #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
         #map-img { max-width: 90%; max-height: 80%; border: 1px solid var(--accent); }
@@ -57,6 +57,7 @@
         <p id="ui-scan-msg" style="color:var(--accent); font-weight:bold;">STAGE 1 の紋章を探せ</p>
         <div id="game-reader"></div>
         <p id="scan-status" style="font-size:0.8rem; color:#888;">QRコードをスキャンしてください</p>
+        <button class="btn" style="font-size:0.7rem; opacity:0.5;" onclick="toggleMap(true)">MAP</button>
     </div>
 
     <!-- 5. 問題回答画面 -->
@@ -69,19 +70,15 @@
         <button class="btn" onclick="judge()">送信</button>
     </div>
 
-    <!-- 6. 停止画面 -->
-    <div id="screen-off" class="stage"><h1>LOCKED</h1><p>この端末は封印されています。</p><button class="btn" onclick="location.reload()">再起動</button></div>
-    
-    <!-- 7. クリア画面 -->
-    <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><p>全ての謎を解き明かした！</p><button class="btn" onclick="location.reload()">初期設定に戻る</button></div>
+    <!-- 停止・クリア -->
+    <div id="screen-off" class="stage"><h1>LOCKED</h1><button class="btn" onclick="location.reload()">再起動</button></div>
+    <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><p>全ての謎を解き明かした！</p><button class="btn" onclick="location.reload()">最初に戻る</button></div>
 </div>
 
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
 
 <script>
-    // ★ここにデプロイ後のURLを貼り付け
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxzBojekErnda7Rsjj4rYCybFCqcpTMYIq-jyHT-Iz6nmnpdplymYEZ5QyfYo9djBZkpw/exec";
-    
+    const GAS_URL = "ここにURLを貼り付け";
     let tid = null, riddles = [], step = 0, mainScanner = null;
     let configData = {};
 
@@ -115,10 +112,11 @@
 
     async function initScanGate() {
         show('screen-qr-gate');
-        // 合言葉を「端末ID-ステージ番号」に設定
-        const targetQR = `${tid}-${step + 1}`;
+        // 合言葉をスプレッドシートの「QRコード表」から取得した値に設定 ★変更
+        const targetQR = riddles[step].qr_key.toString().trim();
+        
         document.getElementById('ui-scan-msg').innerText = `STAGE ${step + 1} の紋章を探せ`;
-        document.getElementById('scan-status').innerText = `コード「${targetQR}」を読み取ってください`;
+        document.getElementById('scan-status').innerText = "QRコードをスキャンしてください";
 
         if (!mainScanner) mainScanner = new Html5Qrcode("game-reader");
         
@@ -129,7 +127,7 @@
                         showRiddle();
                     });
                 } else {
-                    document.getElementById('scan-status').innerText = "違うコードです！";
+                    document.getElementById('scan-status').innerText = "違う紋章（QR）のようです...";
                     document.getElementById('scan-status').style.color = "red";
                 }
             });
@@ -151,7 +149,7 @@
             if (step >= 5) {
                 show('screen-clear');
             } else {
-                initScanGate(); // 次のステージのQRスキャンへ
+                initScanGate(); 
             }
         } else {
             const b = document.getElementById('main-box');
