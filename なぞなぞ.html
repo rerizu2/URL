@@ -3,30 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2IA Riddle Final</title>
+    <title>2IA Riddle Adventure</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --accent: #c5a059; --bg: #0d0d0d; --text: #e0e0e0; }
-        body { background: var(--bg); color: var(--text); font-family: serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { width: 90%; max-width: 500px; padding: 30px; border: 2px solid var(--accent); background: #151515; text-align: center; }
-        .stage { display: none; }
+        body { background: var(--bg); color: var(--text); font-family: 'Yu Mincho', serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+        .container { width: 90%; max-width: 500px; padding: 40px 25px; border: 2px solid var(--accent); background: rgba(20,20,20,0.95); text-align: center; box-shadow: 0 0 30px rgba(0,0,0,1); position: relative; }
+        .stage { display: none; animation: fadeIn 0.8s forwards; }
         .active { display: block; }
-        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; }
+        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1rem; }
         .btn:hover { background: var(--accent); color: #000; }
-        .id-btn { width: 40px; height: 40px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; margin: 3px; }
+        .id-btn { width: 45px; height: 45px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; margin: 5px; font-size: 1.1rem; }
         .id-btn.selected { background: var(--accent); color: #000; }
-        input { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: #fff; padding: 10px; width: 80%; text-align: center; font-size: 1.2rem; outline: none; margin: 20px 0; }
-        .error-log { font-size: 0.7rem; color: #ff6666; background: #222; padding: 10px; text-align: left; margin-top: 10px; border-radius: 5px; white-space: pre-wrap; }
-        #test-reader { width: 100% !important; margin: 10px 0; }
+        input { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: #fff; padding: 10px; width: 85%; text-align: center; font-size: 1.2rem; outline: none; margin: 20px 0; }
+        
+        .story-text { text-align: left; line-height: 1.8; font-size: 1rem; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 5px; margin-bottom: 20px; white-space: pre-wrap; }
+        
+        #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; flex-direction: column; }
+        #map-img { max-width: 90%; max-height: 75%; border: 1px solid var(--accent); }
+        .map-btn-float { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; padding: 5px 10px; z-index: 10; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .shake { animation: shake 0.4s; }
+        @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
     </style>
 </head>
 <body>
 
-<div class="container" id="main">
+<div class="container" id="game-box">
     <!-- 1. 端末設定 -->
     <div id="screen-setup" class="stage active">
-        <h1>TERMINAL SETUP</h1>
-        <div id="id-btns">
+        <h1>SET TERMINAL ID</h1>
+        <div id="id-selector">
             <button class="id-btn" onclick="sel(1)">1</button>
             <button class="id-btn" onclick="sel(2)">2</button>
             <button class="id-btn" onclick="sel(3)">3</button>
@@ -34,57 +42,72 @@
             <button class="id-btn" onclick="sel(5)">5</button>
         </div>
         <button class="btn" id="con-btn" onclick="connect()" disabled>接続開始</button>
-        <p style="font-size:0.7rem; color:#666;">※接続できない場合は、GASのURLと権限を再確認してください</p>
     </div>
 
     <!-- 2. 通信中 -->
     <div id="screen-loading" class="stage">
-        <p id="load-status">通信中...</p>
-        <div id="diag-area" style="display:none;">
-            <div class="error-log" id="err-log"></div>
-            <button class="btn" onclick="location.reload()">やり直す</button>
-        </div>
+        <p>データを同期中...</p>
     </div>
 
-    <!-- 3. スタート（テストあり） -->
+    <!-- 3. スタート画面 -->
     <div id="screen-start" class="stage">
-        <h1 id="st-title">TERMINAL READY</h1>
-        <button class="btn" onclick="show('screen-game')">本編開始</button><br>
-        <button class="btn" style="font-size:0.8rem;" onclick="openCam()">カメラテスト</button>
+        <h1 id="ui-terminal-name">TERMINAL READY</h1>
+        <p>準備が整いました。</p>
+        <button class="btn" style="border-width:2px;" onclick="show('screen-story')">本編開始</button><br>
+        <button class="btn" style="font-size:0.8rem; opacity:0.6;" onclick="openTest()">カメラテスト</button>
     </div>
 
-    <!-- 4. カメラテスト -->
-    <div id="screen-cam" class="stage">
-        <div id="test-reader"></div>
-        <p id="cam-msg"></p>
-        <button class="btn" onclick="closeCam()">戻る</button>
+    <!-- 4. あらすじ画面 (Settingsシートから取得) -->
+    <div id="screen-story" class="stage">
+        <h1>PROLOGUE</h1>
+        <div class="story-text" id="ui-story">物語を読み込んでいます...</div>
+        <button class="btn" onclick="show('screen-game')">冒険を始める</button>
     </div>
 
-    <!-- 5. 停止 -->
-    <div id="screen-off" class="stage">
-        <h1>LOCKED</h1>
-        <p>停止中です</p>
-        <button class="btn" onclick="location.reload()">リセット</button>
-    </div>
-
-    <!-- 6. 本編 -->
+    <!-- 5. 本編 -->
     <div id="screen-game" class="stage">
-        <p id="prog">1/5</p>
-        <div id="ques" style="font-size:1.2rem; margin:20px 0;">問題</div>
-        <input type="text" id="ans" placeholder="答え..." autocomplete="off">
-        <button class="btn" onclick="check()">送信</button>
+        <button class="btn map-btn-float" onclick="toggleMap(true)">MAP</button>
+        <p id="ui-progress" style="color:#666; font-size:0.8rem;">1 / 5</p>
+        <div id="ui-question" style="font-size:1.2rem; margin:20px 0; min-height:100px; display:flex; align-items:center; justify-content:center; white-space:pre-wrap;">問題</div>
+        <input type="text" id="ans-input" placeholder="答えを入力..." autocomplete="off">
+        <br>
+        <button class="btn" onclick="judge()">送信</button>
     </div>
 
-    <!-- 7. クリア -->
+    <!-- 6. カメラテスト -->
+    <div id="screen-test" class="stage">
+        <div id="test-reader" style="width:100%;"></div>
+        <button class="btn" onclick="closeTest()">戻る</button>
+    </div>
+
+    <!-- 7. クリア画面 -->
     <div id="screen-clear" class="stage">
         <h1>COMPLETE!</h1>
-        <button class="btn" onclick="location.reload()">TOP</button>
+        <p>全ての謎を解き明かした。</p>
+        <button class="btn" onclick="location.reload()">最初に戻る</button>
+    </div>
+
+    <!-- 8. 停止画面 -->
+    <div id="screen-off" class="stage">
+        <h1>LOCKED</h1>
+        <p>この端末は停止されています。</p>
+        <button class="btn" onclick="location.reload()">再試行</button>
     </div>
 </div>
 
+<!-- マップ表示用 -->
+<div id="map-overlay" onclick="toggleMap(false)">
+    <p style="color:var(--accent);">MAP (タップで閉じる)</p>
+    <img id="map-img" src="" alt="MAP">
+    <button class="btn" style="margin-top:20px;">閉じる</button>
+</div>
+
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbw267LayPjUSigqkgw5gjRLgrpZj-d2AcxWRZskvJCQrlUQq8nSkll94gQHRvX-4mg8Fg/exec"; // /execで終わるURL
-    let tid = null, riddles = [], step = 0, scanner = null;
+    // ★ここにデプロイ後のGAS URLを貼り付け
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxxm7RKKyE4uvBKMk1Aup9qkODJCEtUqTimehg_4iKbPW7VeGCM8NuFPpvD5axJPFwmcg/exec";
+    
+    let tid = null, riddles = [], step = 0, testScanner = null;
+    let configData = {};
 
     function sel(n) {
         tid = n;
@@ -101,51 +124,54 @@
         show('screen-loading');
         try {
             const res = await fetch(`${GAS_URL}?id=${tid}`);
-            if (!res.ok) throw new Error("HTTPエラー: " + res.status);
-            const data = await res.json();
-            if (data.error) throw new Error("GASエラー: " + data.error);
-            if (!data.is_active) return show('screen-off');
+            configData = await res.json();
 
-            riddles = data.riddles;
-            document.getElementById('st-title').innerText = "TERMINAL " + tid;
+            if (!configData.is_active) return show('screen-off');
+
+            riddles = configData.riddles;
+            document.getElementById('ui-terminal-name').innerText = `TERMINAL ${tid}`;
+            document.getElementById('ui-story').innerText = configData.story || "（物語は設定されていません）";
+            document.getElementById('map-img').src = configData.map_url || "";
+            
             updateQ();
             show('screen-start');
         } catch (e) {
-            document.getElementById('load-status').innerText = "接続に失敗しました";
-            document.getElementById('diag-area').style.display = "block";
-            document.getElementById('err-log').innerText = 
-                "【エラー原因】\n" + e.message + 
-                "\n\n【確認事項】\n1.GASのURLが正しく /exec か\n2.アクセス権限が「全員」か\n3.GAS側で承認済みか";
+            alert("接続エラー：GASのURLや権限を確認してください");
+            show('screen-setup');
         }
     }
 
     function updateQ() {
-        document.getElementById('prog').innerText = `${step+1} / 5`;
-        document.getElementById('ques').innerText = riddles[step].question;
-        document.getElementById('ans').value = "";
+        document.getElementById('ui-progress').innerText = `${step + 1} / 5`;
+        document.getElementById('ui-question').innerText = riddles[step].question;
+        document.getElementById('ans-input').value = "";
     }
 
-    function check() {
-        const u = document.getElementById('ans').value.trim();
+    function judge() {
+        const u = document.getElementById('ans-input').value.trim();
         const a = riddles[step].answer.toString().trim();
         if (u === a && a !== "") {
             step++;
             if (step >= 5) show('screen-clear'); else updateQ();
         } else {
-            alert("違います");
+            const b = document.getElementById('game-box');
+            b.classList.add('shake');
+            setTimeout(() => b.classList.remove('shake'), 400);
         }
     }
 
-    async function openCam() {
-        show('screen-cam');
-        scanner = new Html5Qrcode("test-reader");
-        scanner.start({facingMode:"environment"}, {fps:10, qrbox:200}, t=>{
-            document.getElementById('cam-msg').innerText = "成功: " + t;
-        }).catch(e => document.getElementById('cam-msg').innerText = e);
+    function toggleMap(isVisible) {
+        document.getElementById('map-overlay').style.display = isVisible ? 'flex' : 'none';
     }
 
-    function closeCam() {
-        if(scanner) scanner.stop().finally(()=>show('screen-start')); else show('screen-start');
+    async function openTest() {
+        show('screen-test');
+        testScanner = new Html5Qrcode("test-reader");
+        testScanner.start({facingMode:"environment"}, {fps:10, qrbox:200}, t => alert("読込完了: "+t));
+    }
+
+    function closeTest() {
+        if(testScanner) testScanner.stop().finally(()=>show('screen-start')); else show('screen-start');
     }
 </script>
 </body>
