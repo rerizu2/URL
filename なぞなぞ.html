@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2IA Special - GAS System</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --accent-color: #d4af37;
+            --text-color: #f0f0f0;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'serif', 'Yu Mincho', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 500px;
+            padding: 40px 20px;
+            border: 2px solid var(--accent-color);
+            background: rgba(15, 15, 15, 0.95);
+            text-align: center;
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.2);
+        }
+        .stage { display: none; animation: fadeIn 0.8s forwards; }
+        .active { display: block; }
+        #reader { width: 100% !important; margin: 20px 0; border: 1px solid #444; }
+        .btn {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 15px 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            letter-spacing: 2px;
+        }
+        .btn:hover { background: var(--accent-color); color: #000; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- ロード中 -->
+        <div id="screen-loading" class="stage active">
+            <p>魔導書を同期中...</p>
+        </div>
+
+        <!-- スタート画面 -->
+        <div id="screen-start" class="stage">
+            <h1 id="ui-title">---</h1>
+            <p>紋章をかざして、扉を開け。</p>
+            <button class="btn" onclick="startScan()">スキャン開始</button>
+        </div>
+
+        <!-- スキャン画面 -->
+        <div id="screen-scan" class="stage">
+            <div id="reader"></div>
+            <p id="status" style="color: #888;">QRコードを読み取ってください</p>
+        </div>
+
+        <!-- 完了画面 -->
+        <div id="screen-result" class="stage">
+            <h1 id="ui-success-msg" style="color: #00ffcc; font-size: 1.5rem;">---</h1>
+            <p id="ui-target-info" style="color: var(--accent-color); margin: 20px 0;"></p>
+            <button class="btn" onclick="location.reload()">戻る</button>
+        </div>
+    </div>
+
+    <script>
+        // ★ここに GAS で発行された「ウェブアプリのURL」を貼り付けてください
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycby0YACRkIH600M7U97fMzyKnFHAlts3dAUzBr3MDvzT6nXL6xNRhtE8fIJx2fScq7rbjw/exec";
+
+        let config = {};
+        let html5QrCode;
+
+        // 1. GASからJSONデータを取得
+        async function loadConfig() {
+            try {
+                const response = await fetch(GAS_API_URL);
+                config = await response.json(); // JSONを直接解析
+                
+                // UIの書き換え
+                document.getElementById('ui-title').innerText = config.title || "THE GATE";
+                
+                showScreen('screen-start');
+            } catch (err) {
+                console.error("データの読み込みに失敗:", err);
+                alert("データの取得に失敗しました。URLを確認してください。");
+            }
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        async function startScan() {
+            showScreen('screen-scan');
+            html5QrCode = new Html5Qrcode("reader");
+            
+            try {
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: 250 },
+                    (decodedText) => {
+                        // GASから取得した正解テキストと比較
+                        if (decodedText === config.target_text) {
+                            onSuccess();
+                        } else {
+                            document.getElementById('status').innerText = "違うコードです。";
+                            document.getElementById('status').style.color = "red";
+                        }
+                    }
+                );
+            } catch (err) {
+                document.getElementById('status').innerText = "カメラエラー: " + err;
+            }
+        }
+
+        function onSuccess() {
+            html5QrCode.stop().then(() => {
+                document.getElementById('ui-success-msg').innerText = config.success_msg;
+                document.getElementById('ui-target-info').innerText = `「${config.target_text}」を承認しました。`;
+                showScreen('screen-result');
+            });
+        }
+
+        window.onload = loadConfig;
+    </script>
+</body>
+</html>
