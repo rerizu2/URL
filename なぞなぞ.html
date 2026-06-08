@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2IA Riddle Adventure</title>
+    <title>2IA Riddle Setup</title>
     <style>
         :root {
             --bg-color: #0d0d0d;
@@ -27,21 +27,36 @@
             border: 2px solid var(--accent-color);
             background: rgba(20, 20, 20, 0.95);
             text-align: center;
+            position: relative;
         }
-        .stage { display: none; animation: fadeIn 0.8s forwards; }
+        .stage { display: none; animation: fadeIn 0.6s forwards; }
         .active { display: block; }
-        h1 { color: var(--accent-color); letter-spacing: 3px; }
-        .q-text { font-size: 1.2rem; margin: 30px 0; min-height: 80px; display: flex; align-items: center; justify-content: center; }
+
+        h1 { color: var(--accent-color); letter-spacing: 3px; font-size: 1.4rem; }
+        .desc { font-size: 0.9rem; color: #888; margin-bottom: 20px; }
+
+        /* 端末選択のスタイル */
+        .id-selector { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
+        .id-btn {
+            width: 50px; height: 50px; border: 1px solid var(--accent-color);
+            background: transparent; color: var(--accent-color);
+            cursor: pointer; font-size: 1.2rem; transition: 0.3s;
+        }
+        .id-btn.selected { background: var(--accent-color); color: #000; }
+
+        /* 入力系 */
+        .q-text { font-size: 1.2rem; margin: 30px 0; min-height: 80px; white-space: pre-wrap; }
         input[type="text"] {
             background: transparent; border: none; border-bottom: 2px solid var(--accent-color);
             color: white; padding: 10px; width: 80%; text-align: center; font-size: 1.2rem; outline: none;
         }
         .btn {
             background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);
-            padding: 10px 30px; cursor: pointer; margin-top: 20px; transition: 0.3s;
+            padding: 12px 35px; cursor: pointer; margin-top: 20px; transition: 0.3s; font-size: 1rem;
         }
         .btn:hover { background: var(--accent-color); color: #000; }
-        .progress { color: #666; font-size: 0.8rem; margin-bottom: 10px; }
+        .progress { color: #666; font-size: 0.8rem; margin-bottom: 5px; }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .shake { animation: shake 0.4s; }
         @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
@@ -50,62 +65,86 @@
 <body>
 
 <div class="container" id="game-box">
-    <!-- ローディング -->
-    <div id="screen-loading" class="stage active">
-        <p>書を解読中...</p>
+    <!-- 1. 端末番号設定画面 -->
+    <div id="screen-setup" class="stage active">
+        <h1>TERMINAL SETUP</h1>
+        <p class="desc">この端末の番号（1〜5）を選択してください。</p>
+        <div class="id-selector">
+            <button class="id-btn" onclick="selectId(1)">1</button>
+            <button class="id-btn" onclick="selectId(2)">2</button>
+            <button class="id-btn" onclick="selectId(3)">3</button>
+            <button class="id-btn" onclick="selectId(4)">4</button>
+            <button class="id-btn" onclick="selectId(5)">5</button>
+        </div>
+        <button class="btn" id="start-btn" onclick="connectGAS()" disabled>接続開始</button>
     </div>
 
-    <!-- 停止画面 -->
+    <!-- 2. ローディング -->
+    <div id="screen-loading" class="stage">
+        <p>指定の端末データをロード中...</p>
+    </div>
+
+    <!-- 3. 停止画面 -->
     <div id="screen-off" class="stage">
-        <h1>STOPPED</h1>
-        <p>この端末は現在、使用できません。</p>
+        <h1>SYSTEM LOCKED</h1>
+        <p>この端末は現在、封印されています。</p>
+        <button class="btn" onclick="location.reload()">再試行</button>
     </div>
 
-    <!-- メイン画面 -->
+    <!-- 4. メイン画面 -->
     <div id="screen-game" class="stage">
-        <div class="progress" id="progress-text">STAGE 1 / 5</div>
-        <h1 id="terminal-name">TERMINAL</h1>
-        <div class="q-text" id="question-area">---</div>
+        <div class="progress" id="ui-progress">STAGE 1 / 5</div>
+        <h1 id="ui-terminal-name">TERMINAL</h1>
+        <div class="q-text" id="ui-question">---</div>
         <input type="text" id="ans-input" placeholder="答えを入力..." autocomplete="off">
         <br>
         <button class="btn" onclick="judge()">解錠</button>
     </div>
 
-    <!-- クリア画面 -->
+    <!-- 5. クリア画面 -->
     <div id="screen-clear" class="stage">
-        <h1>COMPLETE</h1>
-        <p>全ての謎を解き明かした！</p>
-        <button class="btn" onclick="location.reload()">もう一度</button>
+        <h1 style="font-size: 2rem;">QUEST COMPLETE</h1>
+        <p>おめでとう。すべての謎が解き明かされた。</p>
+        <button class="btn" onclick="location.reload()">初期状態に戻す</button>
     </div>
 </div>
 
 <script>
-    // ★ GASでデプロイしたURLをここに貼り付け
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxO9R5c-zKB9meLuvWrviGqy96UB9Sp9L_mrMsdj--UjDu5xgIZ0XYrMhL8LORz50_OGg/exec";
+    // ★ GASのウェブアプリURLをここに貼り付け
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzBrc0NGbhwmo4OlSps2tMZpPeVv_wfX7JBJYtve98jTVdydeSU4U9GOVRSyRDQbP4SgQ/exec";
 
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id') || "1";
-
+    let selectedTerminalId = null;
     let riddles = [];
     let step = 0;
 
-    async function init() {
+    // 端末番号を選択する処理
+    function selectId(id) {
+        selectedTerminalId = id;
+        document.querySelectorAll('.id-btn').forEach(btn => {
+            btn.classList.toggle('selected', btn.innerText == id);
+        });
+        document.getElementById('start-btn').disabled = false;
+    }
+
+    // GASからデータを取得
+    async function connectGAS() {
+        show('screen-loading');
         try {
-            const res = await fetch(`${GAS_URL}?id=${id}`);
+            const res = await fetch(`${GAS_URL}?id=${selectedTerminalId}`);
             const config = await res.json();
 
-            // 稼働チェック
             if (!config.is_active) {
                 show('screen-off');
                 return;
             }
 
             riddles = config.riddles;
-            document.getElementById('terminal-name').innerText = `TERMINAL ${id}`;
+            document.getElementById('ui-terminal-name').innerText = `TERMINAL ${selectedTerminalId}`;
             update();
             show('screen-game');
         } catch (e) {
-            document.getElementById('screen-loading').innerText = "エラー: 接続に失敗しました。";
+            alert("接続エラーが発生しました。URLやネット環境を確認してください。");
+            show('screen-setup');
         }
     }
 
@@ -115,8 +154,8 @@
     }
 
     function update() {
-        document.getElementById('progress-text').innerText = `STAGE ${step + 1} / 5`;
-        document.getElementById('question-area').innerText = riddles[step].question;
+        document.getElementById('ui-progress').innerText = `STAGE ${step + 1} / 5`;
+        document.getElementById('ui-question').innerText = riddles[step].question;
         document.getElementById('ans-input').value = "";
     }
 
@@ -126,7 +165,7 @@
 
         if (val === collect) {
             step++;
-            if (step >= 5) {
+            if (step >= riddles.length) {
                 show('screen-clear');
             } else {
                 update();
@@ -137,8 +176,6 @@
             setTimeout(() => b.classList.remove('shake'), 400);
         }
     }
-
-    window.onload = init;
 </script>
 </body>
 </html>
