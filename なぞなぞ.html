@@ -11,6 +11,7 @@
             --bg-color: #0d0d0d;
             --accent-color: #c5a059;
             --text-color: #e0e0e0;
+            --error-color: #ff4444;
         }
         body {
             background-color: var(--bg-color);
@@ -38,7 +39,7 @@
         h1 { color: var(--accent-color); letter-spacing: 3px; font-size: 1.4rem; margin-bottom: 20px; }
         .desc { font-size: 0.9rem; color: #888; margin-bottom: 20px; line-height: 1.6; }
 
-        /* 端末選択ボタン */
+        /* 端末選択 */
         .id-selector { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
         .id-btn {
             width: 45px; height: 45px; border: 1px solid var(--accent-color);
@@ -47,10 +48,10 @@
         }
         .id-btn.selected { background: var(--accent-color); color: #000; }
 
-        /* QRスキャナー枠 */
+        /* QRスキャナー */
         #test-reader { width: 100% !important; margin: 15px 0; border-radius: 8px; overflow: hidden; border: 1px solid #444; }
 
-        /* ボタン共通 */
+        /* ボタン */
         .btn {
             background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color);
             padding: 12px 30px; cursor: pointer; margin: 10px 5px; transition: 0.3s; font-size: 1rem;
@@ -59,7 +60,7 @@
         .btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
         /* 本編用 */
-        .q-text { font-size: 1.2rem; margin: 30px 0; min-height: 80px; white-space: pre-wrap; }
+        .q-text { font-size: 1.2rem; margin: 30px 0; min-height: 80px; white-space: pre-wrap; display: flex; align-items: center; justify-content: center; }
         input[type="text"] {
             background: transparent; border: none; border-bottom: 2px solid var(--accent-color);
             color: white; padding: 10px; width: 85%; text-align: center; font-size: 1.2rem; outline: none; margin-bottom: 20px;
@@ -69,6 +70,8 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .shake { animation: shake 0.4s; }
         @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
+        
+        .error-log { font-size: 0.7rem; color: var(--error-color); text-align: left; background: #222; padding: 10px; margin-top: 20px; border-radius: 4px; overflow-wrap: break-word; }
     </style>
 </head>
 <body>
@@ -77,7 +80,7 @@
     <!-- 1. 端末設定画面 -->
     <div id="screen-setup" class="stage active">
         <h1>SET TERMINAL ID</h1>
-        <p class="desc">使用する端末の番号を選択してください。</p>
+        <p class="desc">端末の番号を選択してください。</p>
         <div class="id-selector">
             <button class="id-btn" onclick="selectId(1)">1</button>
             <button class="id-btn" onclick="selectId(2)">2</button>
@@ -88,15 +91,19 @@
         <button class="btn" id="setup-connect-btn" onclick="connectGAS()" disabled>接続開始</button>
     </div>
 
-    <!-- 2. ローディング -->
+    <!-- 2. ローディング（エラー診断付き） -->
     <div id="screen-loading" class="stage">
-        <p>魔導ネットワークに接続中...</p>
+        <p id="loading-msg">通信中...</p>
+        <div id="error-diag" style="display:none;">
+            <div class="error-log" id="error-text"></div>
+            <button class="btn" onclick="location.reload()">再試行</button>
+        </div>
     </div>
 
     <!-- 3. スタート画面 -->
     <div id="screen-start" class="stage">
         <h1 id="ui-start-terminal">TERMINAL X</h1>
-        <p class="desc">データの取得に成功しました。<br>準備ができたら「本編開始」を押してください。</p>
+        <p class="desc">データの取得に成功しました。<br>「本編開始」で謎解きが始まります。</p>
         <button class="btn" style="border-width: 2px; font-weight: bold;" onclick="show('screen-game')">本編開始</button>
         <br>
         <button class="btn" style="font-size: 0.8rem; opacity: 0.7;" onclick="openTestScan()">カメラ動作テスト</button>
@@ -105,7 +112,7 @@
     <!-- 4. 試しスキャン画面 -->
     <div id="screen-test-scan" class="stage">
         <h1>CAMERA TEST</h1>
-        <p class="desc">QRコードが読み取れるかテストします。<br>（何でも良いのでQRを映してください）</p>
+        <p class="desc">QRコードが読み取れるかテストします。</p>
         <div id="test-reader"></div>
         <p id="test-result" style="color: var(--accent-color); font-size: 0.8rem; min-height: 1.2rem;"></p>
         <button class="btn" onclick="closeTestScan()">戻る</button>
@@ -132,20 +139,19 @@
     <div id="screen-clear" class="stage">
         <h1 style="font-size: 2rem;">QUEST COMPLETE</h1>
         <p>おめでとう。すべての謎が解き明かされた。</p>
-        <button class="btn" onclick="location.reload()">初期状態に戻す</button>
+        <button class="btn" onclick="location.reload()">初期設定に戻る</button>
     </div>
 </div>
 
 <script>
-    // ★ GASのウェブアプリURLをここに貼り付け
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzBrc0NGbhwmo4OlSps2tMZpPeVv_wfX7JBJYtve98jTVdydeSU4U9GOVRSyRDQbP4SgQ/exec";
+    // ★ GASのウェブアプリURL（末尾が /exec のもの）を貼り付け
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzNHJ5Igxqcw6qfxkICo4QvKDMVe1HzstnFoDgmG1IaMQFDHqtrpmDpDoJOOLTcI9JQLw/exec";
 
     let selectedTerminalId = null;
     let riddles = [];
     let step = 0;
     let testScanner = null;
 
-    // --- 1. セットアップ ---
     function selectId(id) {
         selectedTerminalId = id;
         document.querySelectorAll('.id-btn').forEach(btn => {
@@ -156,32 +162,55 @@
 
     async function connectGAS() {
         show('screen-loading');
+        const diag = document.getElementById('error-diag');
+        const errText = document.getElementById('error-text');
+        
         try {
-            const res = await fetch(`${GAS_URL}?id=${selectedTerminalId}`);
-            const config = await res.json();
+            const apiTarget = `${GAS_URL}?id=${selectedTerminalId}`;
+            console.log("Connecting to:", apiTarget);
+            
+            const response = await fetch(apiTarget);
+            
+            if (!response.ok) {
+                throw new Error(`HTTPエラー Status: ${response.status}`);
+            }
 
-            if (!config.is_active) {
+            const config = await response.json();
+
+            if (config.error) {
+                throw new Error(`GAS実行エラー: ${config.error}`);
+            }
+
+            if (config.is_active === false) {
                 show('screen-off');
                 return;
             }
 
             riddles = config.riddles;
-            document.getElementById('ui-start_terminal').innerText = `TERMINAL ${selectedTerminalId}`;
+            document.getElementById('ui-start-terminal').innerText = `TERMINAL ${selectedTerminalId}`;
             document.getElementById('ui-game-terminal').innerText = `TERMINAL ${selectedTerminalId}`;
             updateRiddleUI();
-            
-            // 接続完了後、即ゲームではなく「スタート画面」へ
             show('screen-start');
+
         } catch (e) {
-            alert("接続エラーが発生しました。");
-            show('screen-setup');
+            console.error(e);
+            document.getElementById('loading-msg').innerText = "接続に失敗しました。";
+            diag.style.display = "block";
+            errText.innerHTML = `
+                <b>【診断情報】</b><br>
+                ・URL: ${GAS_URL.substring(0, 30)}...<br>
+                ・内容: ${e.message}<br><br>
+                <b>【解決策】</b><br>
+                1. GASのURLが正しいか(末尾/exec)<br>
+                2. デプロイ設定が「全員」になっているか<br>
+                3. GAS側で一度「実行」して承認したか
+            `;
         }
     }
 
-    // --- 2. 試しスキャン ---
     async function openTestScan() {
         show('screen-test-scan');
-        document.getElementById('test-result').innerText = "スキャナー起動中...";
+        document.getElementById('test-result').innerText = "カメラ起動中...";
         testScanner = new Html5Qrcode("test-reader");
         try {
             await testScanner.start(
@@ -199,15 +228,12 @@
 
     function closeTestScan() {
         if (testScanner) {
-            testScanner.stop().then(() => {
-                show('screen-start');
-            });
+            testScanner.stop().then(() => { show('screen-start'); }).catch(() => { show('screen-start'); });
         } else {
             show('screen-start');
         }
     }
 
-    // --- 3. 本編ロジック ---
     function show(sid) {
         document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
         document.getElementById(sid).classList.add('active');
@@ -215,7 +241,7 @@
 
     function updateRiddleUI() {
         document.getElementById('ui-progress').innerText = `STAGE ${step + 1} / 5`;
-        document.getElementById('ui-question').innerText = riddles[step].question;
+        document.getElementById('ui-question').innerText = riddles[step].question || "（問題未設定）";
         document.getElementById('ans-input').value = "";
     }
 
@@ -223,7 +249,7 @@
         const val = document.getElementById('ans-input').value.trim();
         const collect = riddles[step].answer.toString().trim();
 
-        if (val === collect) {
+        if (val === collect && collect !== "") {
             step++;
             if (step >= riddles.length) {
                 show('screen-clear');
