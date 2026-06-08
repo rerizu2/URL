@@ -47,7 +47,7 @@
         <button id="retry-btn" class="btn" style="display:none;" onclick="location.reload()">再試行</button>
     </div>
 
-    <!-- 3. 物語 -->
+    <!-- 3. 物語 (あらすじシートから取得) -->
     <div id="screen-story" class="stage">
         <h1 id="ui-ready-title">READY</h1>
         <div class="story-text" id="ui-story">...</div>
@@ -75,8 +75,7 @@
 </div>
 
 <script>
-    // ★デプロイ後のURLをここに貼り付け
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyWT-E6xAvu8Y37fdGY3309Y4iegk21dX45CbMII0NKgksxKY8mo4xgYnrf6qSntcZg/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxE-nnxmP2vkgBDlk-k5UZ2TKNqEcDdIYp8C33R8d-I6DTClv1Z997tueVShdlw_rhMPQ/exec"; 
     
     let tid = null, riddles = [], step = 0, scanner = null;
 
@@ -107,7 +106,7 @@
             document.getElementById('loading-msg').innerText = "接続エラー";
             const diag = document.getElementById('error-diag');
             diag.style.display = "block";
-            diag.innerText = e.message + "\n\n※GASのURLが /exec か、全員に公開されているか確認してください。";
+            diag.innerText = e.message;
             document.getElementById('retry-btn').style.display = "inline-block";
         }
     }
@@ -115,7 +114,6 @@
     async function showScan() {
         show('screen-qr');
         const baseKey = riddles[step].qr_key.toString().trim();
-        // ここで「2IAの教室にぜひ来てください！」がついた状態でも、ついていない状態でも両方チェックするように設定
         const fullKey = "2IAの教室にぜひ来てください！" + baseKey;
 
         document.getElementById('ui-scan-msg').innerText = `STAGE ${step + 1} の紋章を探せ`;
@@ -125,11 +123,10 @@
         try {
             await scanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (text) => {
                 const scannedText = text.trim();
-                // 完全一致、または接頭辞付きで一致するか確認
                 if (scannedText === fullKey || scannedText === baseKey) {
                     scanner.stop().then(() => showRiddle());
                 } else {
-                    document.getElementById('scan-status').innerText = "違う紋章です。(" + scannedText.substring(0,10) + "...)";
+                    document.getElementById('scan-status').innerText = "違う紋章です。";
                     document.getElementById('scan-status').style.color = "red";
                 }
             });
