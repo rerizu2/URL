@@ -8,29 +8,22 @@
     <style>
         :root { --accent: #c5a059; --bg: #0d0d0d; --text: #e0e0e0; --danger: #8b0000; }
         body { background: var(--bg); color: var(--text); font-family: 'Yu Mincho', serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
-        .container { width: 90%; max-width: 500px; padding: 40px 25px; border: 2px solid var(--accent); background: rgba(20,20,20,0.95); text-align: center; box-shadow: 0 0 30px #000; position: relative; }
+        .container { width: 90%; max-width: 500px; padding: 35px 25px; border: 2px solid var(--accent); background: rgba(20,20,20,0.95); text-align: center; box-shadow: 0 0 30px #000; position: relative; }
         .stage { display: none; }
         .active { display: block; animation: fadeIn 0.5s; }
         .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1rem; }
         .btn:hover { background: var(--accent); color: #000; }
-        
-        /* 特別なボタン（リタイア・緊急） */
-        .special-btns { margin-top: 30px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #333; padding-top: 20px; }
-        .btn-sm { font-size: 0.7rem; padding: 5px 10px; opacity: 0.6; border-color: #666; color: #aaa; }
-        .btn-sm:hover { opacity: 1; border-color: var(--danger); color: white; background: var(--danger); }
-
-        .id-btn { width: 45px; height: 45px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; margin: 5px; }
+        .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; }
+        .btn-sm:hover { opacity: 1; background: var(--danger); color: white; border-color: var(--danger); }
+        .id-btn { width: 45px; height: 45px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; margin: 5px; font-size: 1.1rem; }
         .id-btn.selected { background: var(--accent); color: #000; }
-        input { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: #fff; padding: 10px; width: 85%; text-align: center; font-size: 1.2rem; outline: none; margin: 20px 0; }
+        input { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: #fff; padding: 10px; width: 85%; text-align: center; font-size: 1.3rem; outline: none; margin: 20px 0; }
         .story-text { text-align: left; line-height: 1.8; font-size: 1rem; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 20px; }
         #game-reader { width: 100% !important; border-radius: 8px; overflow: hidden; margin-top: 15px; min-height: 250px; background: #000; }
-        
-        /* マップ */
-        .map-btn { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; padding: 5px 10px; }
-        #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
-        #map-img { max-width: 90%; max-height: 80%; border: 1px solid var(--accent); }
-
+        .footer-btns { margin-top: 30px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #333; padding-top: 20px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .shake { animation: shake 0.4s; }
+        @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
     </style>
 </head>
 <body>
@@ -49,60 +42,52 @@
         <button class="btn" id="con-btn" onclick="connect()" disabled>接続開始</button>
     </div>
 
-    <!-- 2. 通信中 -->
-    <div id="screen-loading" class="stage"><p>Loading...</p></div>
+    <!-- 2. ローディング -->
+    <div id="screen-loading" class="stage">
+        <p id="loading-msg">魔導回路を同期中...</p>
+        <div id="error-diag" style="color:#ff5555; font-size:0.7rem; margin-top:10px; display:none; background:#222; padding:10px; text-align:left;"></div>
+    </div>
 
     <!-- 3. 物語画面 -->
     <div id="screen-story" class="stage">
-        <h1 id="ui-story-title">STAGE 1</h1>
+        <h1 id="ui-stage-title">STAGE 1</h1>
         <div class="story-text" id="ui-story-text">...</div>
         <button class="btn" onclick="showScan()">探索へ進む</button>
     </div>
 
     <!-- 4. QRスキャン待機 -->
     <div id="screen-qr" class="stage">
-        <button class="btn map-btn" onclick="toggleMap(true)">MAP</button>
-        <p id="ui-scan-msg" style="color:var(--accent); font-weight:bold;">紋章をスキャン</p>
+        <p id="ui-scan-msg" style="color:var(--accent); font-weight:bold;">紋章(QR)をスキャン</p>
         <div id="game-reader"></div>
         <p id="scan-status" style="font-size:0.8rem; color:#888;">QRコードを映してください</p>
-        
-        <div class="special-btns">
-            <button class="btn btn-sm" onclick="showEmergency()">緊急事態</button>
+        <div class="footer-btns">
+            <button class="btn btn-sm" onclick="alert('【緊急連絡】\n'+configData.emergency_msg)">緊急事態</button>
             <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
         </div>
     </div>
 
     <!-- 5. 問題回答 -->
     <div id="screen-riddle" class="stage">
-        <button class="btn map-btn" onclick="toggleMap(true)">MAP</button>
         <p id="ui-progress" style="font-size:0.8rem; color:#666;">1 / 5</p>
         <div id="ui-question" style="font-size:1.2rem; margin:20px 0; min-height:100px; display:flex; align-items:center; justify-content:center; white-space:pre-wrap;">---</div>
         <input type="text" id="ans-input" placeholder="答えを入力..." autocomplete="off">
         <br>
         <button class="btn" onclick="judge()">送信</button>
-
-        <div class="special-btns">
-            <button class="btn btn-sm" onclick="showEmergency()">緊急事態</button>
+        <div class="footer-btns">
+            <button class="btn btn-sm" onclick="alert('【緊急連絡】\n'+configData.emergency_msg)">緊急事態</button>
             <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
         </div>
     </div>
 
     <!-- 6. リタイア・停止・クリア -->
-    <div id="screen-retire" class="stage">
-        <h1>RETIRED</h1>
-        <div class="story-text" id="ui-retire-msg">...</div>
-        <button class="btn" onclick="location.reload()">初期画面に戻る</button>
-    </div>
-    <div id="screen-off" class="stage"><h1>LOCKED</h1><button class="btn" onclick="location.reload()">再起動</button></div>
-    <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><button class="btn" onclick="location.reload()">TOPへ</button></div>
+    <div id="screen-retire" class="stage"><h1 style="color:var(--danger);">GAME OVER</h1><div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div><button class="btn" onclick="location.reload()">TOPへ</button></div>
+    <div id="screen-off" class="stage"><h1>LOCKED</h1><p>現在、停止中です。</p><button class="btn" onclick="location.reload()">再試行</button></div>
+    <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><p>全ての謎を解き明かした！</p><button class="btn" onclick="location.reload()">最初に戻る</button></div>
 </div>
 
-<div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
-
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzGddEm0pV_SKeOQY7dw9CtEqZaX3_DP3ti5-_2_Z5G2At1_OUmuBKrNxydR56qPT9VjQ/exec"; 
-    let tid = null, riddles = [], step = 0, scanner = null;
-    let configData = {};
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzBzb81dv7XtnBmdV0GwHPHLJ60nrFUozzbNNwNLpGLgVgi8WjXj_AUSWWSkQsKrNo00w/exec"; 
+    let tid = null, riddles = [], step = 0, scanner = null, configData = {};
 
     function sel(n) {
         tid = n;
@@ -124,31 +109,35 @@
             if (!configData.is_active) return show('screen-off');
 
             riddles = configData.riddles;
-            document.getElementById('map-img').src = configData.map_url || "";
             document.getElementById('ui-retire-msg').innerText = configData.retire_msg;
             startStage();
-        } catch (e) { alert("接続エラー"); show('screen-setup'); }
+        } catch (e) {
+            document.getElementById('loading-msg').innerText = "接続エラー";
+            const diag = document.getElementById('error-diag');
+            diag.style.display = "block";
+            diag.innerText = e.message;
+        }
     }
 
     function startStage() {
         show('screen-story');
-        document.getElementById('ui-story-title').innerText = `STAGE ${step + 1}`;
+        document.getElementById('ui-stage-title').innerText = `STAGE ${step + 1}`;
         document.getElementById('ui-story-text').innerText = riddles[step].story;
     }
 
     async function showScan() {
         show('screen-qr');
-        const targetQR = riddles[step].qr_key.toString().trim();
-        const fullKey = "2IAの教室にぜひ来てください！" + targetQR;
-
+        const target = riddles[step].qr_key.toString().trim();
+        const full = "2IAの教室にぜひ来てください！" + target;
         if (!scanner) scanner = new Html5Qrcode("game-reader");
         try {
-            await scanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (text) => {
-                const t = text.trim();
-                if (t === fullKey || t === targetQR) {
+            await scanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
+                const scan = t.trim();
+                if (scan === full || scan === target) {
                     scanner.stop().then(() => showRiddle());
                 } else {
                     document.getElementById('scan-status').innerText = "違う紋章です";
+                    document.getElementById('scan-status').style.color = "red";
                 }
             });
         } catch (e) { alert("カメラ起動失敗"); }
@@ -162,26 +151,23 @@
     }
 
     function judge() {
-        if (document.getElementById('ans-input').value.trim() === riddles[step].answer.toString().trim()) {
+        const u = document.getElementById('ans-input').value.trim();
+        const a = riddles[step].answer.toString().trim();
+        if (u === a) {
             step++;
             if (step >= 5) show('screen-clear'); else startStage();
-        } else { alert("答えが違います"); }
-    }
-
-    // 緊急ボタン
-    function showEmergency() {
-        alert("【緊急連絡】\n" + configData.emergency_msg);
-    }
-
-    // リタイアボタン
-    function confirmRetire() {
-        if (confirm("本当にリタイアしますか？\n（これまでの進行状況は消去されます）")) {
-            if(scanner) scanner.stop().finally(() => show('screen-retire'));
-            else show('screen-retire');
+        } else {
+            document.getElementById('game-box').classList.add('shake');
+            setTimeout(() => document.getElementById('game-box').classList.remove('shake'), 400);
         }
     }
 
-    function toggleMap(v) { document.getElementById('map-overlay').style.display = v ? 'flex' : 'none'; }
+    function confirmRetire() {
+        if (confirm("本当にリタイアしますか？")) {
+            if(scanner && scanner.isScanning) scanner.stop().finally(() => show('screen-retire'));
+            else show('screen-retire');
+        }
+    }
 </script>
 </body>
 </html>
