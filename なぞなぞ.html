@@ -76,7 +76,7 @@
         </div>
     </div>
 
-    <!-- 6. リタイア・停止・クリア -->
+    <!-- 6. 終了画面 -->
     <div id="screen-retire" class="stage">
         <h1 style="color:var(--danger);">GAME OVER</h1>
         <div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div>
@@ -87,7 +87,9 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyDjz3EPCIcK4R3ViPAVZks8xf8Z360Vsjs8qUpc5070EhxuEGCDInE8O_T40QTPqX6/exec"; 
+    // ★デプロイ後の最新URLに書き換えてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzHl9DO5tFsPHMwGZiB_paCgkx-kTxDEpiy71PoMtNNT0FoMmJAIb0LwU4KkfCCYzNXRw/exec"; 
+    
     let tid = null, riddles = [], step = 0, scanner = null, configData = {};
 
     function sel(n) {
@@ -127,8 +129,7 @@
         if (!scanner) scanner = new Html5Qrcode("game-reader");
         try {
             await scanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
-                const scan = t.trim();
-                if (scan === full || scan === target) {
+                if (t.trim() === full || t.trim() === target) {
                     scanner.stop().then(() => showRiddle());
                 } else { document.getElementById('scan-status').innerText = "違う紋章です"; }
             });
@@ -156,7 +157,7 @@
 
     async function confirmRetire() {
         if (confirm("本当にリタイアしますか？")) {
-            // GASへリタイア情報を送信（画像にあるスプレッドシートへの書き込み）
+            // スプレッドシートの B13, D13... への書き込み実行
             fetch(`${GAS_URL}?action=retire&id=${tid}`, { mode: 'no-cors' });
             
             if(scanner && scanner.isScanning) scanner.stop().finally(() => show('screen-retire'));
