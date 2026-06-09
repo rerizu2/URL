@@ -11,29 +11,23 @@
         .container { width: 90%; max-width: 500px; padding: 35px 25px; border: 2px solid var(--accent); background: rgba(20,20,20,0.95); text-align: center; box-shadow: 0 0 30px #000; position: relative; }
         .stage { display: none; }
         .active { display: block; animation: fadeIn 0.5s; }
-        
         h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.6rem; margin-bottom: 20px; }
         .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1.1rem; min-width: 180px; }
         .btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
-
         .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; min-width: 80px; }
         .btn-sm:hover { opacity: 1; background: var(--danger); color: white; border-color: var(--danger); }
-
         .id-btn { width: 45px; height: 45px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; margin: 5px; font-size: 1.1rem; }
         .id-btn.selected { background: var(--accent); color: #000; }
-        
         input { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: #fff; padding: 10px; width: 85%; text-align: center; font-size: 1.4rem; outline: none; margin: 20px 0; }
         .story-text { text-align: left; line-height: 1.8; font-size: 1rem; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 20px; }
         #game-reader, #rule-reader { width: 100% !important; border-radius: 8px; overflow: hidden; margin-top: 15px; min-height: 250px; background: #000; border: 1px solid #444; }
-        
         .footer-btns { margin-top: 30px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #333; padding-top: 20px; }
         .map-btn-float { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; padding: 5px 10px; z-index: 10; }
-
+        #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
+        #map-img { max-width: 90%; max-height: 80%; border: 1px solid var(--accent); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .shake { animation: shake 0.4s; }
         @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
-        #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
-        #map-img { max-width: 90%; max-height: 80%; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
@@ -53,7 +47,7 @@
     </div>
 
     <!-- 2. ローディング -->
-    <div id="screen-loading" class="stage"><p>魔導回路を同期中...</p></div>
+    <div id="screen-loading" class="stage"><p>魔法回路を同期中...</p></div>
 
     <!-- 3. スタート画面 -->
     <div id="screen-main-start" class="stage">
@@ -68,41 +62,35 @@
         <p class="desc">「ルール説明」の紋章をスキャンしてください。</p>
         <div id="rule-reader"></div>
         <p id="rule-scan-status" style="font-size:0.8rem; color:#888; margin-top:10px;">QRコードを映してください</p>
-        <button class="btn btn-sm" onclick="stopScannerAndBack()">戻る</button>
     </div>
 
-    <!-- 5. ルール内容表示 -->
+    <!-- 5. ルール表示 -->
     <div id="screen-rules-content" class="stage">
         <h1>RULES</h1>
         <div class="story-text" style="font-size: 0.9rem;">
             【基本ルール】<br>
             ・指定されたQRコードを探してスキャンします。<br>
-            ・スキャン成功で「謎」が出現します。<br>
+            ・スキャン成功で謎が出現します。<br>
             ・答えを入力し、全5ステージを突破してください。<br>
             ・右上の「MAP」で現在地を確認できます。<br>
-            ・困った時は下の「緊急事態」ボタンを<br>
-            　押してください。<br>
-            ・どうしても無理な時は下の「リタイア」<br>
-            　ボタンを押してください<br>
-            ※<b>ダミーのQRコード</b>もマップ内にあります。<br>
-            あらすじを読み進めてください。
+            ・困った時は下の「緊急事態」ボタンを。
         </div>
         <button class="btn" onclick="startStage()">理解した（物語へ）</button>
     </div>
 
-    <!-- 6. 物語画面 -->
+    <!-- 6. 物語画面 (あらすじ1-6共通) -->
     <div id="screen-story" class="stage">
-        <h1 id="ui-stage-title">STAGE 1</h1>
+        <h1 id="ui-story-title">STAGE 1</h1>
         <div class="story-text" id="ui-story-text">...</div>
-        <button class="btn" onclick="showScan()">探索へ進む</button>
+        <button id="ui-story-btn" class="btn" onclick="showScan()">探索へ進む</button>
     </div>
 
-    <!-- 7. QRスキャン待機 -->
+    <!-- 7. QRスキャン -->
     <div id="screen-qr" class="stage">
         <button class="btn map-btn-float" onclick="toggleMap(true)">MAP</button>
         <p id="ui-scan-msg" style="color:var(--accent); font-weight:bold;">紋章(QR)をスキャン</p>
         <div id="game-reader"></div>
-        <p id="scan-status" style="font-size:0.8rem; color:#888;">指定のコードを映してください</p>
+        <p id="scan-status" style="font-size:0.8rem; color:#888;">QRコードを映してください</p>
         <div class="footer-btns">
             <button class="btn btn-sm" onclick="sendEmergency()">緊急事態</button>
             <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
@@ -123,18 +111,16 @@
         </div>
     </div>
 
-    <!-- 終了画面系 -->
+    <!-- その他画面 -->
     <div id="screen-retire" class="stage"><h1 style="color:var(--danger);">GAME OVER</h1><div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div><button class="btn" onclick="location.reload()">TOPへ</button></div>
-    <div id="screen-off" class="stage"><h1>LOCKED</h1><button class="btn" onclick="location.reload()">再試行</button></div>
-    <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><p>全ての謎を解き明かした！</p><button class="btn" onclick="location.reload()">最初に戻る</button></div>
+    <div id="screen-off" class="stage"><h1>LOCKED</h1><p>停止中です。</p><button class="btn" onclick="location.reload()">再試行</button></div>
+    <div id="screen-clear" class="stage"><h1>EPILOGUE CLEAR</h1><p>全ての試練を乗り越えました！</p><button class="btn" onclick="location.reload()">最初に戻る</button></div>
 </div>
 
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
 
 <script>
-    // ★最新のURLに書き換えてください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwgFO9NkD97FGade4h9D092RM2PBP-HMoq48M65-0vEXVYmvsBZ1qCswLYgLYT1wzRntg/exec"; 
-    
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby3ErXzVt3dxSm3pCWQ5h7AIGrsWkNfmaoNOtfQ_3Da0IYIjz1NGtOrNg_buZyVwaqyvA/exec"; 
     let tid = null, riddles = [], step = 0, currentScanner = null, configData = {};
 
     function sel(n) {
@@ -155,7 +141,6 @@
             configData = await res.json();
             if (configData.error) throw new Error(configData.error);
             if (!configData.is_active) return show('screen-off');
-
             riddles = configData.riddles;
             document.getElementById('ui-terminal-ready').innerText = `TERMINAL ${tid} READY`;
             document.getElementById('ui-retire-msg').innerText = configData.retire_msg;
@@ -164,42 +149,34 @@
         } catch (e) { alert("接続エラー"); show('screen-setup'); }
     }
 
-    // --- ルールスキャン：ご提示のQRに対応 ---
     async function startRuleScan() {
         show('screen-rule-scan');
         currentScanner = new Html5Qrcode("rule-reader");
         try {
             await currentScanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
-                // スキャンした文字が「ルール説明」と一致するか判定
                 if (t.trim() === "ルール説明") {
-                    currentScanner.stop().then(() => {
-                        currentScanner = null;
-                        show('screen-rules-content');
-                    });
-                } else {
-                    document.getElementById('rule-scan-status').innerText = "違うQRコードです（ルール説明用のQRを映してください）";
-                    document.getElementById('rule-scan-status').style.color = "red";
+                    currentScanner.stop().then(() => { currentScanner = null; show('screen-rules-content'); });
                 }
             });
         } catch (e) { alert("カメラ起動失敗"); }
     }
 
-    function stopScannerAndBack() {
-        if (currentScanner) {
-            currentScanner.stop().then(() => {
-                currentScanner = null;
-                show('screen-main-start');
-            });
-        } else {
-            show('screen-main-start');
-        }
-    }
-
-    // --- 本編の流れ ---
+    // 通常のあらすじ表示
     function startStage() {
         show('screen-story');
-        document.getElementById('ui-stage-title').innerText = `STAGE ${step + 1}`;
+        document.getElementById('ui-story-title').innerText = `STAGE ${step + 1}`;
         document.getElementById('ui-story-text').innerText = riddles[step].story;
+        document.getElementById('ui-story-btn').innerText = "探索へ進む";
+        document.getElementById('ui-story-btn').onclick = showScan;
+    }
+
+    // あらすじ6（エンディング）表示
+    function showEndingStory() {
+        show('screen-story');
+        document.getElementById('ui-story-title').innerText = "EPILOGUE";
+        document.getElementById('ui-story-text').innerText = configData.ending_story; // あらすじ6
+        document.getElementById('ui-story-btn').innerText = "完了";
+        document.getElementById('ui-story-btn').onclick = () => show('screen-clear');
     }
 
     async function showScan() {
@@ -210,15 +187,8 @@
         try {
             await currentScanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
                 const scan = t.trim();
-                // 本編のQR判定（長い文章付きでも、IDだけでもOKにする）
                 if (scan === full || scan === target) {
-                    currentScanner.stop().then(() => {
-                        currentScanner = null;
-                        showRiddle();
-                    });
-                } else {
-                    document.getElementById('scan-status').innerText = "違う紋章です";
-                    document.getElementById('scan-status').style.color = "red";
+                    currentScanner.stop().then(() => { currentScanner = null; showRiddle(); });
                 }
             });
         } catch (e) { alert("カメラ起動失敗"); }
@@ -234,7 +204,8 @@
     function judge() {
         if (document.getElementById('ans-input').value.trim() === riddles[step].answer.toString().trim()) {
             step++;
-            if (step >= 5) show('screen-clear'); else startStage();
+            if (step >= 5) showEndingStory(); // 第5問正解後にあらすじ6へ
+            else startStage();
         } else { 
             document.getElementById('game-box').classList.add('shake');
             setTimeout(() => document.getElementById('game-box').classList.remove('shake'), 400);
