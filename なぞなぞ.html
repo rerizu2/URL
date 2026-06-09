@@ -12,14 +12,15 @@
         .stage { display: none; }
         .active { display: block; animation: fadeIn 0.5s; }
         
-        /* タイマー表示 */
         #ui-timer { font-size: 1.2rem; color: var(--accent); font-weight: bold; margin-bottom: 15px; border: 1px solid var(--accent); display: none; padding: 5px 20px; border-radius: 20px; letter-spacing: 2px; }
         .time-warning { color: #ff4444 !important; animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.6rem; margin-bottom: 20px; }
-        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1.1rem; min-width: 180px; }
+        h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.5rem; margin-bottom: 20px; }
+        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1.1rem; min-width: 180px; outline: none; }
         .btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
         .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; min-width: 80px; }
         .btn-sm:hover { opacity: 1; background: var(--danger); color: white; border-color: var(--danger); }
 
@@ -43,7 +44,6 @@
 <body>
 
 <div class="container" id="game-box">
-    <!-- タイマー表示（常にコンテナ内上部に配置） -->
     <div id="ui-timer">60:00</div>
 
     <!-- 1. 端末設定 -->
@@ -59,19 +59,20 @@
         <button class="btn" id="con-btn" onclick="connect()" disabled>接続開始</button>
     </div>
 
-    <!-- 2. ローディング -->
+    <!-- 2. 通信中 -->
     <div id="screen-loading" class="stage"><p>魔法回路を同期中...</p></div>
 
     <!-- 3. スタート画面 -->
     <div id="screen-main-start" class="stage">
         <h1 id="ui-terminal-ready">TERMINAL READY</h1>
-        <p style="color: #888; margin-bottom: 30px;">同期完了。冒険の準備は良いか？</p>
+        <p style="color: #888; margin-bottom: 30px;">データの同期が完了しました。</p>
         <button class="btn" onclick="startRuleScan()">「ルール説明」をスキャン</button>
     </div>
 
     <!-- 4. ルールスキャン -->
     <div id="screen-rule-scan" class="stage">
         <h1>RULE SCAN</h1>
+        <p class="desc">纹章「ルール説明」をスキャンしてください。</p>
         <div id="rule-reader"></div>
         <p id="rule-scan-status" style="font-size:0.8rem; color:#888; margin-top:10px;">QRコードを映してください</p>
     </div>
@@ -84,19 +85,20 @@
             ・物語へ進んだ瞬間から時間が計測されます。<br>
             ・時間切れになると強制的にリタイアとなります。<br>
             ・答えは正確に入力してください。<br>
-            ・健闘を祈ります。
+            ・右上のMAPボタンで場所を確認できます。<br>
+            ・困った時は「緊急事態」ボタンを。
         </div>
         <button class="btn" onclick="initGameSession()">理解した（物語へ）</button>
     </div>
 
     <!-- 6. 物語画面 -->
     <div id="screen-story" class="stage">
-        <h1 id="ui-story-title">STAGE 1</h1>
+        <h1 id="ui-story-title">STAGE</h1>
         <div class="story-text" id="ui-story-text">...</div>
         <button id="ui-story-btn" class="btn" onclick="showScan()">探索へ進む</button>
     </div>
 
-    <!-- 7. QRスキャン -->
+    <!-- 7. QRスキャン待機 -->
     <div id="screen-qr" class="stage">
         <button class="btn map-btn-float" onclick="toggleMap(true)">MAP</button>
         <p id="ui-scan-msg" style="color:var(--accent); font-weight:bold;">紋章(QR)をスキャン</p>
@@ -113,6 +115,7 @@
         <p id="ui-progress" style="font-size:0.8rem; color:#666;">1 / 5</p>
         <div id="ui-question" style="font-size:1.2rem; margin:20px 0; min-height:100px; display:flex; align-items:center; justify-content:center; white-space:pre-wrap;">---</div>
         <input type="text" id="ans-input" placeholder="答えを入力..." autocomplete="off">
+        <br>
         <button class="btn" onclick="judge()">送信</button>
         <div class="footer-btns">
             <button class="btn btn-sm" onclick="sendEmergency()">緊急事態</button>
@@ -120,18 +123,20 @@
         </div>
     </div>
 
-    <!-- 終了系 -->
+    <!-- 状態画面 -->
     <div id="screen-retire" class="stage"><h1 style="color:var(--danger);">GAME OVER</h1><div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div><button class="btn" onclick="location.reload()">TOPへ</button></div>
-    <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><p>全ての謎を解き明かした！</p><button class="btn" onclick="location.reload()">TOPへ</button></div>
+    <div id="screen-off" class="stage"><h1>LOCKED</h1><p>停止中です。</p><button class="btn" onclick="location.reload()">再試行</button></div>
+    <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><p>全ての謎を解き明かした！</p><button class="btn" onclick="location.reload()">最初に戻る</button></div>
 </div>
 
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby3ErXzVt3dxSm3pCWQ5h7AIGrsWkNfmaoNOtfQ_3Da0IYIjz1NGtOrNg_buZyVwaqyvA/exec"; 
+    // ★ GASでデプロイした最新のURLをここに貼り付けてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw2MG0Sd2OTyxxnd3Ppv0zyQeZnEq9lyuysKY3VNYXkfusGiutGXktqy0AKzA38jh9Q_A/exec"; 
     
     let tid = null, riddles = [], step = 0, currentScanner = null, configData = {};
-    let timeLeft = 3600; // 1時間 (秒)
+    let timeLeft = 3600; 
     let timerInterval = null;
 
     function sel(n) {
@@ -150,12 +155,15 @@
         try {
             const res = await fetch(`${GAS_URL}?id=${tid}`);
             configData = await res.json();
+            if (configData.error) throw new Error(configData.error);
+            if (!configData.is_active) return show('screen-off');
+
             riddles = configData.riddles;
             document.getElementById('ui-terminal-ready').innerText = `TERMINAL ${tid} READY`;
             document.getElementById('ui-retire-msg').innerText = configData.retire_msg;
             document.getElementById('map-img').src = configData.map_url || "";
             show('screen-main-start');
-        } catch (e) { alert("接続エラー"); show('screen-setup'); }
+        } catch (e) { alert("接続エラー: GASのURLやデプロイ設定を確認してください"); show('screen-setup'); }
     }
 
     async function startRuleScan() {
@@ -170,10 +178,9 @@
         } catch (e) { alert("カメラ起動失敗"); }
     }
 
-    // 「理解した」ボタンで呼ばれる
     function initGameSession() {
-        startTimer(); // タイマー開始
-        startStage(); // 物語表示
+        startTimer();
+        startStage();
     }
 
     function startTimer() {
@@ -181,10 +188,9 @@
         timerInterval = setInterval(() => {
             timeLeft--;
             updateTimerDisplay();
-
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
-                autoRetireByTimeup(); // 時間切れ処理
+                autoRetireByTimeup();
             }
         }, 1000);
     }
@@ -194,14 +200,13 @@
         const s = timeLeft % 60;
         const timerEl = document.getElementById('ui-timer');
         timerEl.innerText = `${m}:${s.toString().padStart(2, '0')}`;
-        
-        if (timeLeft <= 300) timerEl.classList.add('time-warning'); // 残り5分で赤く点滅
+        if (timeLeft <= 300) timerEl.classList.add('time-warning');
     }
 
-    function autoRetireByTimeup() {
+    async function autoRetireByTimeup() {
         alert("制限時間終了です！");
         if(currentScanner) currentScanner.stop();
-        fetch(`${GAS_URL}?action=retire&id=${tid}`, {mode:'no-cors'});
+        await fetch(`${GAS_URL}?action=retire&id=${tid}`, {mode:'no-cors'});
         show('screen-retire');
     }
 
@@ -213,9 +218,8 @@
         document.getElementById('ui-story-btn').onclick = showScan;
     }
 
-    // エンディング
     function showEndingStory() {
-        clearInterval(timerInterval); // クリアしたらタイマー停止
+        clearInterval(timerInterval);
         document.getElementById('ui-timer').style.display = 'none';
         show('screen-story');
         document.getElementById('ui-story-title').innerText = "EPILOGUE";
@@ -231,7 +235,8 @@
         currentScanner = new Html5Qrcode("game-reader");
         try {
             await currentScanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
-                if (t.trim() === full || t.trim() === target) {
+                const scan = t.trim();
+                if (scan === full || scan === target) {
                     currentScanner.stop().then(() => { currentScanner = null; showRiddle(); });
                 }
             });
@@ -256,8 +261,20 @@
     }
 
     function toggleMap(v) { document.getElementById('map-overlay').style.display = v ? 'flex' : 'none'; }
-    function sendEmergency() { fetch(`${GAS_URL}?action=emergency&id=${tid}`, {mode:'no-cors'}); alert("【緊急連絡】\n" + configData.emergency_msg); }
-    function confirmRetire() { if (confirm("リタイアしますか？")) { clearInterval(timerInterval); fetch(`${GAS_URL}?action=retire&id=${tid}`, {mode:'no-cors'}); show('screen-retire'); } }
+
+    async function sendEmergency() {
+        fetch(`${GAS_URL}?action=emergency&id=${tid}`, {mode:'no-cors'});
+        alert("【緊急連絡】\n" + configData.emergency_msg);
+    }
+
+    async function confirmRetire() {
+        if (confirm("本当にリタイアしますか？")) {
+            clearInterval(timerInterval);
+            fetch(`${GAS_URL}?action=retire&id=${tid}`, {mode:'no-cors'});
+            if(currentScanner) currentScanner.stop().finally(() => show('screen-retire'));
+            else show('screen-retire');
+        }
+    }
 </script>
 </body>
 </html>
