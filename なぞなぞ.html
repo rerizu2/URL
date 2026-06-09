@@ -15,7 +15,6 @@
         h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.6rem; margin-bottom: 20px; }
         .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1.1rem; min-width: 180px; }
         .btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
-        .btn-rules { font-size: 0.9rem; border-color: #666; color: #888; margin-top: 5px; }
 
         .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; min-width: 80px; }
         .btn-sm:hover { opacity: 1; background: var(--danger); color: white; border-color: var(--danger); }
@@ -28,18 +27,13 @@
         #game-reader { width: 100% !important; border-radius: 8px; overflow: hidden; margin-top: 15px; min-height: 250px; background: #000; }
         
         .footer-btns { margin-top: 30px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #333; padding-top: 20px; }
-
-        /* ルール用オーバーレイ */
-        #rules-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,10,0.98); z-index: 50; padding: 30px; box-sizing: border-box; flex-direction: column; justify-content: center; overflow-y: auto; }
-        
-        /* マップ */
-        #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
-        #map-img { max-width: 90%; max-height: 80%; border: 1px solid var(--accent); }
         .map-btn-float { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; padding: 5px 10px; z-index: 10; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .shake { animation: shake 0.4s; }
         @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
+        #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
+        #map-img { max-width: 90%; max-height: 80%; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
@@ -61,22 +55,44 @@
     <!-- 2. 通信中 -->
     <div id="screen-loading" class="stage"><p>魔法回路を同期中...</p></div>
 
-    <!-- 3. メインスタート画面 -->
+    <!-- 3. スタート画面 -->
     <div id="screen-main-start" class="stage">
-        <h1 id="ui-terminal-name">TERMINAL READY</h1>
+        <h1 id="ui-terminal-ready">TERMINAL READY</h1>
         <p style="color: #888; margin-bottom: 30px;">データの読み込みに成功しました。</p>
-        <button class="btn" style="border-width: 2px;" onclick="startStage()">探索を開始する</button><br>
-        <button class="btn btn-rules" onclick="toggleRules(true)">ルール説明</button>
+        <button class="btn" style="border-width: 2px;" onclick="startRuleScan()">ルールをスキャンして開始</button>
     </div>
 
-    <!-- 4. 物語画面 -->
+    <!-- 4. ルールスキャン画面 -->
+    <div id="screen-rule-scan" class="stage">
+        <h1>RULE SCAN</h1>
+        <p class="desc">「ルール説明」の紋章をスキャンしてください。</p>
+        <div id="rule-reader" style="width:100%; border-radius:8px; overflow:hidden; border:1px solid #444;"></div>
+        <p id="rule-scan-status" style="font-size:0.8rem; color:#888; margin-top:10px;">QRコードを映してください</p>
+        <button class="btn btn-sm" onclick="show('screen-main-start')">戻る</button>
+    </div>
+
+    <!-- 5. ルール表示画面 -->
+    <div id="screen-rules-content" class="stage">
+        <h1>RULES</h1>
+        <div class="story-text" style="font-size: 0.9rem;">
+            【基本ルール】<br>
+            ・指定されたQRコードを探してスキャンします。<br>
+            ・スキャン成功で謎が出現します。<br>
+            ・答えを正確に入力し、全5ステージを突破してください。<br>
+            ・右上の「MAP」で現在地を確認できます。<br>
+            ・困った時は下の「緊急事態」ボタンを。
+        </div>
+        <button class="btn" onclick="startStage()">理解した（物語へ）</button>
+    </div>
+
+    <!-- 6. 物語画面 -->
     <div id="screen-story" class="stage">
         <h1 id="ui-stage-title">STAGE 1</h1>
         <div class="story-text" id="ui-story-text">...</div>
         <button class="btn" onclick="showScan()">探索へ進む</button>
     </div>
 
-    <!-- 5. QRスキャン待機 -->
+    <!-- 7. QRスキャン待機 -->
     <div id="screen-qr" class="stage">
         <button class="btn map-btn-float" onclick="toggleMap(true)">MAP</button>
         <p id="ui-scan-msg" style="color:var(--accent); font-weight:bold;">紋章(QR)をスキャン</p>
@@ -88,7 +104,7 @@
         </div>
     </div>
 
-    <!-- 6. 問題回答 -->
+    <!-- 8. 問題回答 -->
     <div id="screen-riddle" class="stage">
         <button class="btn map-btn-float" onclick="toggleMap(true)">MAP</button>
         <p id="ui-progress" style="font-size:0.8rem; color:#666;">1 / 5</p>
@@ -102,23 +118,10 @@
         </div>
     </div>
 
-    <!-- 7. リタイア・クリア・停止 -->
+    <!-- 終了画面系 -->
     <div id="screen-retire" class="stage"><h1 style="color:var(--danger);">GAME OVER</h1><div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div><button class="btn" onclick="location.reload()">TOPへ</button></div>
     <div id="screen-off" class="stage"><h1>LOCKED</h1><p>停止中です。</p><button class="btn" onclick="location.reload()">再試行</button></div>
     <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><p>全ての謎を解き明かした！</p><button class="btn" onclick="location.reload()">最初に戻る</button></div>
-
-    <!-- ルール説明オーバーレイ -->
-    <div id="rules-overlay">
-        <h1>RULES</h1>
-        <div class="story-text" style="font-size: 0.9rem;">
-            1. 指定されたQRコード（紋章）を探してスキャンしてください。<br>
-            2. スキャンに成功すると謎が表示されます。<br>
-            3. 答えをひらがな、またはカタカナで入力してください。<br>
-            4. 困った時は「MAP」で場所を確認しましょう。<br>
-            5. どうしても動かない時は「緊急事態」ボタンを押してください。
-        </div>
-        <button class="btn" onclick="toggleRules(false)">閉じる</button>
-    </div>
 </div>
 
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
@@ -148,12 +151,30 @@
             if (!configData.is_active) return show('screen-off');
 
             riddles = configData.riddles;
-            document.getElementById('ui-terminal-name').innerText = `TERMINAL ${tid} READY`;
+            document.getElementById('ui-terminal-ready').innerText = `TERMINAL ${tid} READY`;
             document.getElementById('ui-retire-msg').innerText = configData.retire_msg;
             document.getElementById('map-img').src = configData.map_url || "";
-            
-            show('screen-main-start'); // 接続完了したらスタート画面へ
+            show('screen-main-start');
         } catch (e) { alert("接続エラー"); show('screen-setup'); }
+    }
+
+    // --- ルールスキャン開始 ---
+    async function startRuleScan() {
+        show('screen-rule-scan');
+        const ruleScanner = new Html5Qrcode("rule-reader");
+        const targetRuleKey = `${tid}-RULE`; // 例: 1-RULE
+        const targetRuleKeyFull = "2IAの教室にぜひ来てください！" + targetRuleKey;
+
+        try {
+            await ruleScanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
+                const scan = t.trim();
+                if (scan === targetRuleKey || scan === targetRuleKeyFull) {
+                    ruleScanner.stop().then(() => show('screen-rules-content'));
+                } else {
+                    document.getElementById('rule-scan-status').innerText = "違うQRコードです";
+                }
+            });
+        } catch (e) { alert("カメラ起動失敗"); }
     }
 
     function startStage() {
@@ -169,7 +190,8 @@
         if (!scanner) scanner = new Html5Qrcode("game-reader");
         try {
             await scanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
-                if (t.trim() === full || t.trim() === target) {
+                const scan = t.trim();
+                if (scan === full || scan === target) {
                     scanner.stop().then(() => showRiddle());
                 } else { document.getElementById('scan-status').innerText = "違う紋章です"; }
             });
@@ -193,7 +215,6 @@
         }
     }
 
-    function toggleRules(v) { document.getElementById('rules-overlay').style.display = v ? 'flex' : 'none'; }
     function toggleMap(v) { document.getElementById('map-overlay').style.display = v ? 'flex' : 'none'; }
     function sendEmergency() { fetch(`${GAS_URL}?action=emergency&id=${tid}`, {mode:'no-cors'}); alert("【緊急連絡】\n" + configData.emergency_msg); }
     function confirmRetire() { if (confirm("リタイアしますか？")) { fetch(`${GAS_URL}?action=retire&id=${tid}`, {mode:'no-cors'}); show('screen-retire'); } }
