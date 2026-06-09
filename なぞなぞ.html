@@ -29,7 +29,6 @@
 <body>
 
 <div class="container" id="game-box">
-    <!-- 1. 端末設定 -->
     <div id="screen-setup" class="stage active">
         <h1>TERMINAL SETUP</h1>
         <div id="id-selector">
@@ -42,28 +41,24 @@
         <button class="btn" id="con-btn" onclick="connect()" disabled>接続開始</button>
     </div>
 
-    <!-- 2. ローディング -->
     <div id="screen-loading" class="stage"><p id="loading-msg">魔導回路を同期中...</p></div>
 
-    <!-- 3. 物語画面 -->
     <div id="screen-story" class="stage">
         <h1 id="ui-stage-title">STAGE 1</h1>
         <div class="story-text" id="ui-story-text">...</div>
         <button class="btn" onclick="showScan()">探索へ進む</button>
     </div>
 
-    <!-- 4. QRスキャン -->
     <div id="screen-qr" class="stage">
         <p id="ui-scan-msg" style="color:var(--accent); font-weight:bold;">紋章(QR)をスキャン</p>
         <div id="game-reader"></div>
         <p id="scan-status" style="font-size:0.8rem; color:#888;">QRコードを映してください</p>
         <div class="footer-btns">
-            <button class="btn btn-sm" onclick="alert('【緊急連絡】\n'+configData.emergency_msg)">緊急事態</button>
+            <button class="btn btn-sm" onclick="sendEmergency()">緊急事態</button>
             <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
         </div>
     </div>
 
-    <!-- 5. 問題回答 -->
     <div id="screen-riddle" class="stage">
         <p id="ui-progress" style="font-size:0.8rem; color:#666;">1 / 5</p>
         <div id="ui-question" style="font-size:1.2rem; margin:20px 0; min-height:100px; display:flex; align-items:center; justify-content:center; white-space:pre-wrap;">---</div>
@@ -71,24 +66,18 @@
         <br>
         <button class="btn" onclick="judge()">送信</button>
         <div class="footer-btns">
-            <button class="btn btn-sm" onclick="alert('【緊急連絡】\n'+configData.emergency_msg)">緊急事態</button>
+            <button class="btn btn-sm" onclick="sendEmergency()">緊急事態</button>
             <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
         </div>
     </div>
 
-    <!-- 6. 終了画面 -->
-    <div id="screen-retire" class="stage">
-        <h1 style="color:var(--danger);">GAME OVER</h1>
-        <div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div>
-        <button class="btn" onclick="location.reload()">TOPへ</button>
-    </div>
+    <div id="screen-retire" class="stage"><h1 style="color:var(--danger);">GAME OVER</h1><div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div><button class="btn" onclick="location.reload()">TOPへ</button></div>
     <div id="screen-off" class="stage"><h1>LOCKED</h1><button class="btn" onclick="location.reload()">再試行</button></div>
     <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><p>全ての謎を解き明かした！</p><button class="btn" onclick="location.reload()">最初に戻る</button></div>
 </div>
 
 <script>
-    // ★デプロイ後の最新URLに書き換えてください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzHl9DO5tFsPHMwGZiB_paCgkx-kTxDEpiy71PoMtNNT0FoMmJAIb0LwU4KkfCCYzNXRw/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwoFsqImbThbIefXQPOWNzIWukHMILuRl_qjQSjgsNDMhLT-ZkzMlekaAG4d_ZOStv1Tg/exec"; 
     
     let tid = null, riddles = [], step = 0, scanner = null, configData = {};
 
@@ -155,11 +144,17 @@
         }
     }
 
+    // 緊急事態処理
+    async function sendEmergency() {
+        // スプレッドシートの12行目 (B, D, F, H, J列) に書き込み
+        fetch(`${GAS_URL}?action=emergency&id=${tid}`, { mode: 'no-cors' });
+        // プレイヤーには用意された緊急メッセージをポップアップ表示
+        alert("【緊急連絡】\n" + configData.emergency_msg);
+    }
+
     async function confirmRetire() {
         if (confirm("本当にリタイアしますか？")) {
-            // スプレッドシートの B13, D13... への書き込み実行
             fetch(`${GAS_URL}?action=retire&id=${tid}`, { mode: 'no-cors' });
-            
             if(scanner && scanner.isScanning) scanner.stop().finally(() => show('screen-retire'));
             else show('screen-retire');
         }
