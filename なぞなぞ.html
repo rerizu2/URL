@@ -11,37 +11,23 @@
         .container { width: 90%; max-width: 500px; padding: 35px 25px; border: 2px solid var(--accent); background: rgba(20,20,20,0.95); text-align: center; box-shadow: 0 0 30px #000; position: relative; }
         .stage { display: none; }
         .active { display: block; animation: fadeIn 0.5s; }
-        
-        /* ヘッダー情報（タイマーとチーム名） */
         .game-header { display: none; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #444; }
         #ui-timer { font-size: 1.1rem; color: var(--accent); font-weight: bold; letter-spacing: 2px; }
-        #ui-team-display { font-size: 0.9rem; color: #fff; background: rgba(197, 160, 89, 0.2); padding: 2px 10px; border-radius: 4px; border: 1px solid var(--accent); }
+        #ui-team-display { font-size: 0.8rem; color: #fff; background: rgba(197, 160, 89, 0.2); padding: 2px 10px; border-radius: 4px; border: 1px solid var(--accent); max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .time-warning { color: #ff4444 !important; animation: blink 1s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-        h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.6rem; margin-bottom: 20px; }
-        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1.1rem; min-width: 180px; outline: none; }
+        h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.5rem; margin-bottom: 20px; }
+        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1rem; min-width: 160px; outline: none; }
         .btn:hover:not(:disabled) { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
-        .btn:disabled { opacity: 0.2; cursor: not-allowed; }
-
-        .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; min-width: 80px; }
+        .btn:disabled { opacity: 0.2; }
+        .btn-sm { font-size: 0.7rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; min-width: 70px; }
         .btn-sm:hover { opacity: 1; background: var(--danger); color: white; border-color: var(--danger); }
-
-        /* 入力エリア */
-        .setup-input-group { margin: 20px 0; text-align: left; }
-        .setup-label { font-size: 0.8rem; color: var(--accent); margin-bottom: 5px; display: block; }
         .text-input { background: rgba(255,255,255,0.05); border: 1px solid #444; border-bottom: 2px solid var(--accent); color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-size: 1.1rem; outline: none; text-align: center; }
-        
-        .id-selector { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
-        .id-btn { width: 45px; height: 45px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; font-size: 1.1rem; }
+        .id-selector { display: flex; justify-content: center; gap: 8px; margin: 15px 0; }
+        .id-btn { width: 42px; height: 42px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; font-size: 1.1rem; }
         .id-btn.selected { background: var(--accent); color: #000; }
-        
-        .story-text { text-align: left; line-height: 1.8; font-size: 1.1rem; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 20px; }
+        .story-text { text-align: left; line-height: 1.8; font-size: 1.0rem; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 20px; }
         #game-reader, #rule-reader { width: 100% !important; border-radius: 8px; overflow: hidden; margin-top: 15px; min-height: 250px; background: #000; border: 1px solid #444; }
-        
         .footer-btns { margin-top: 30px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #333; padding-top: 20px; }
-        .map-btn-float { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; padding: 5px 10px; z-index: 10; }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .shake { animation: shake 0.4s; }
         @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
@@ -52,23 +38,20 @@
 <body>
 
 <div class="container" id="game-box">
-    <!-- ゲームヘッダー（チーム名とタイマー） -->
     <div class="game-header" id="ui-header">
         <div id="ui-team-display">TEAM: ---</div>
         <div id="ui-timer">60:00</div>
     </div>
 
-    <!-- 1. セットアップ画面 -->
+    <!-- 1. セットアップ -->
     <div id="screen-setup" class="stage active">
         <h1>GAME SETUP</h1>
-        
-        <div class="setup-input-group">
-            <label class="setup-label">チーム名を入力してください</label>
-            <input type="text" id="team-name-input" class="text-input" placeholder="例：チーム2IA" oninput="validateSetup()">
+        <div style="text-align:left; margin-bottom:20px;">
+            <label style="font-size:0.8rem; color:var(--accent);">チーム名</label>
+            <input type="text" id="team-name-input" class="text-input" placeholder="チーム名を入力" oninput="validateSetup()">
         </div>
-
-        <div class="setup-input-group">
-            <label class="setup-label">端末番号を選択してください</label>
+        <div style="text-align:left; margin-bottom:20px;">
+            <label style="font-size:0.8rem; color:var(--accent);">端末番号</label>
             <div class="id-selector">
                 <button class="id-btn" onclick="sel(1)">1</button>
                 <button class="id-btn" onclick="sel(2)">2</button>
@@ -77,17 +60,15 @@
                 <button class="id-btn" onclick="sel(5)">5</button>
             </div>
         </div>
-
         <button class="btn" id="con-btn" onclick="connect()" disabled>接続開始</button>
     </div>
 
     <!-- 2. ローディング -->
-    <div id="screen-loading" class="stage"><p>同期中...</p></div>
+    <div id="screen-loading" class="stage"><p>魔法回路を同期中...</p></div>
 
     <!-- 3. スタート画面 -->
     <div id="screen-main-start" class="stage">
         <h1 id="ui-welcome-msg">WELCOME</h1>
-        <p style="color: #888; margin-bottom: 30px;">データの同期が完了しました。</p>
         <button class="btn" onclick="startRuleScan()">「ルール説明」をスキャン</button>
     </div>
 
@@ -103,10 +84,8 @@
         <h1>RULES</h1>
         <div class="story-text" style="font-size: 0.9rem;">
             【制限時間：60分】<br>
-            ・「理解した」を押すとタイマーが始動します。<br>
-            ・時間切れは即リタイアとなります。<br>
-            ・右上のMAPボタンで場所を確認できます。<br>
-            ・トラブル時は下の「緊急事態」ボタンを。
+            ・「理解した」でタイマーが動きます。<br>
+            ・QRスキャンと謎解きを繰り返し、全5ステージを突破してください。
         </div>
         <button class="btn" onclick="initGameSession()">理解した（物語へ）</button>
     </div>
@@ -118,9 +97,9 @@
         <button id="ui-story-btn" class="btn" onclick="showScan()">探索へ進む</button>
     </div>
 
-    <!-- 7. QRスキャン -->
+    <!-- 7. QRスキャン待機 -->
     <div id="screen-qr" class="stage">
-        <button class="btn map-btn-float" onclick="toggleMap(true)">MAP</button>
+        <button class="btn" style="position:absolute; top:10px; right:10px; font-size:0.6rem; min-width:auto;" onclick="toggleMap(true)">MAP</button>
         <p id="ui-scan-msg" style="color:var(--accent); font-weight:bold;">紋章(QR)をスキャン</p>
         <div id="game-reader"></div>
         <div class="footer-btns">
@@ -131,11 +110,10 @@
 
     <!-- 8. 問題回答 -->
     <div id="screen-riddle" class="stage">
-        <button class="btn map-btn-float" onclick="toggleMap(true)">MAP</button>
+        <button class="btn" style="position:absolute; top:10px; right:10px; font-size:0.6rem; min-width:auto;" onclick="toggleMap(true)">MAP</button>
         <p id="ui-progress" style="font-size:0.8rem; color:#666;">1 / 5</p>
-        <div id="ui-question" style="font-size:1.2rem; margin:20px 0; min-height:100px; display:flex; align-items:center; justify-content:center; white-space:pre-wrap;">---</div>
+        <div id="ui-question" style="font-size:1.2rem; margin:20px 0; min-height:80px; display:flex; align-items:center; justify-content:center; white-space:pre-wrap;">---</div>
         <input type="text" id="ans-input" placeholder="答えを入力..." autocomplete="off">
-        <br>
         <button class="btn" onclick="judge()">送信</button>
         <div class="footer-btns">
             <button class="btn btn-sm" onclick="sendEmergency()">緊急事態</button>
@@ -145,41 +123,41 @@
 
     <!-- 状態画面 -->
     <div id="screen-retire" class="stage"><h1 style="color:var(--danger);">GAME OVER</h1><div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div><button class="btn" onclick="location.reload()">TOPへ</button></div>
-    <div id="screen-off" class="stage"><h1>LOCKED</h1><p>停止中です。</p><button class="btn" onclick="location.reload()">再試行</button></div>
+    <div id="screen-off" class="stage"><h1>LOCKED</h1><button class="btn" onclick="location.reload()">再試行</button></div>
     <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><p>全ての謎を解き明かした！</p><button class="btn" onclick="location.reload()">最初に戻る</button></div>
 </div>
 
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
 
 <script>
-    // ★ GASのURL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwj5c6-qI7brpJV6-nXZlmqWCqCKjgO9ZYse6OUjT7f5Bx8kZgGqCQiNlQMvKsOay7GJg/exec"; 
+    // ★ GASのURLを貼り付け
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwf4TMDXOBJZL2rYVm0evsluBYE2PvIf6Cj1mjfh5fr1Imq8qazfdZpzFEHg8m-dSZVmg/exec"; 
     
     let tid = null, riddles = [], step = 0, currentScanner = null, configData = {};
-    let teamName = "";
-    let timeLeft = 3600; 
-    let timerInterval = null;
+    let teamName = "", timeLeft = 3600, timerInterval = null;
 
-    // セットアップのバリデーション
     function validateSetup() {
-        const nameInput = document.getElementById('team-name-input').value.trim();
-        const conBtn = document.getElementById('con-btn');
-        if (nameInput !== "" && tid !== null) {
-            conBtn.disabled = false;
-        } else {
-            conBtn.disabled = true;
-        }
+        const name = document.getElementById('team-name-input').value.trim();
+        document.getElementById('con-btn').disabled = !(name && tid);
     }
-
     function sel(n) {
         tid = n;
         document.querySelectorAll('.id-btn').forEach(b => b.classList.toggle('selected', b.innerText == n));
         validateSetup();
     }
-
     function show(id) {
         document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
+    }
+
+    // --- 履歴送信関数 ---
+    function sendLog(historyText) {
+        const elapsed = 3600 - timeLeft;
+        const m = Math.floor(elapsed / 60);
+        const s = elapsed % 60;
+        const timeStr = `${m}:${s.toString().padStart(2, '0')}`;
+        // バックグラウンドで送信
+        fetch(`${GAS_URL}?action=log&id=${tid}&team=${encodeURIComponent(teamName)}&history=${encodeURIComponent(historyText)}&time=${timeStr}`, {mode:'no-cors'});
     }
 
     async function connect() {
@@ -188,14 +166,12 @@
         try {
             const res = await fetch(`${GAS_URL}?id=${tid}`);
             configData = await res.json();
+            if (!configData.is_active) return show('screen-off');
             riddles = configData.riddles;
-            
-            // チーム名の表示をセット
             document.getElementById('ui-team-display').innerText = "TEAM: " + teamName;
             document.getElementById('ui-welcome-msg').innerText = "HELLO, " + teamName;
             document.getElementById('ui-retire-msg').innerText = configData.retire_msg;
             document.getElementById('map-img').src = configData.map_url || "";
-            
             show('screen-main-start');
         } catch (e) { alert("接続エラー"); show('screen-setup'); }
     }
@@ -213,7 +189,8 @@
     }
 
     function initGameSession() {
-        document.getElementById('ui-header').style.display = 'flex'; // ヘッダー（チーム名・タイマー）を表示
+        document.getElementById('ui-header').style.display = 'flex';
+        sendLog("ゲーム開始");
         startTimer();
         startStage();
     }
@@ -221,23 +198,17 @@
     function startTimer() {
         timerInterval = setInterval(() => {
             timeLeft--;
-            updateTimerDisplay();
-            if (timeLeft <= 0) { clearInterval(timerInterval); autoRetireByTimeup(); }
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            document.getElementById('ui-timer').innerText = `${m}:${s.toString().padStart(2, '0')}`;
+            if (timeLeft <= 300) document.getElementById('ui-timer').classList.add('time-warning');
+            if (timeLeft <= 0) { clearInterval(timerInterval); autoTimeup(); }
         }, 1000);
     }
 
-    function updateTimerDisplay() {
-        const m = Math.floor(timeLeft / 60);
-        const s = timeLeft % 60;
-        const timerEl = document.getElementById('ui-timer');
-        timerEl.innerText = `${m}:${s.toString().padStart(2, '0')}`;
-        if (timeLeft <= 300) timerEl.classList.add('time-warning');
-    }
-
-    async function autoRetireByTimeup() {
-        alert("制限時間終了です！");
-        if(currentScanner) currentScanner.stop();
-        await fetch(`${GAS_URL}?action=retire&id=${tid}`, {mode:'no-cors'});
+    async function autoTimeup() {
+        sendLog("時間切れ終了");
+        fetch(`${GAS_URL}?action=retire&id=${tid}`, {mode:'no-cors'});
         show('screen-retire');
     }
 
@@ -249,17 +220,9 @@
         document.getElementById('ui-story-btn').onclick = showScan;
     }
 
-    function showEndingStory() {
-        clearInterval(timerInterval);
-        show('screen-story');
-        document.getElementById('ui-story-title').innerText = "EPILOGUE";
-        document.getElementById('ui-story-text').innerText = configData.ending_story;
-        document.getElementById('ui-story-btn').innerText = "完了";
-        document.getElementById('ui-story-btn').onclick = () => show('screen-clear');
-    }
-
     async function showScan() {
         show('screen-qr');
+        document.getElementById('ui-scan-msg').innerText = `STAGE ${step + 1} の紋章を探せ`;
         const target = riddles[step].qr_key.toString().trim();
         const full = "2IAの教室にぜひ来てください！" + target;
         currentScanner = new Html5Qrcode("game-reader");
@@ -267,6 +230,7 @@
             await currentScanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
                 const scan = t.trim();
                 if (scan === full || scan === target) {
+                    sendLog(`ステージ${step+1} QRスキャン成功`);
                     currentScanner.stop().then(() => { currentScanner = null; showRiddle(); });
                 }
             });
@@ -282,30 +246,43 @@
 
     function judge() {
         if (document.getElementById('ans-input').value.trim() === riddles[step].answer.toString().trim()) {
+            sendLog(`ステージ${step+1} 正解`);
             step++;
-            if (step >= 5) showEndingStory(); else startStage();
-        } else { 
+            if (step >= 5) {
+                clearInterval(timerInterval);
+                sendLog("全ステージクリア");
+                showEnding();
+            } else { startStage(); }
+        } else {
             document.getElementById('game-box').classList.add('shake');
             setTimeout(() => document.getElementById('game-box').classList.remove('shake'), 400);
         }
     }
 
+    function showEnding() {
+        show('screen-story');
+        document.getElementById('ui-story-title').innerText = "EPILOGUE";
+        document.getElementById('ui-story-text').innerText = configData.ending_story;
+        document.getElementById('ui-story-btn').innerText = "完了";
+        document.getElementById('ui-story-btn').onclick = () => show('screen-clear');
+    }
+
     function toggleMap(v) { document.getElementById('map-overlay').style.display = v ? 'flex' : 'none'; }
 
-    async function sendEmergency() {
+    function sendEmergency() {
         const userInput = prompt("緊急内容を入力してください");
-        if (userInput === null || userInput.trim() === "") return;
-        // チーム名も一緒にGASへ送る（任意）
+        if (!userInput) return;
+        sendLog("緊急事態報告: " + userInput);
         fetch(`${GAS_URL}?action=emergency&id=${tid}&msg=${encodeURIComponent('【' + teamName + '】' + userInput)}`, {mode:'no-cors'});
         alert("管理者に送信しました。指示： " + configData.emergency_msg);
     }
 
-    async function confirmRetire() {
+    function confirmRetire() {
         if (confirm("リタイアしますか？")) {
+            sendLog("プレイヤーによるリタイア");
             clearInterval(timerInterval);
             fetch(`${GAS_URL}?action=retire&id=${tid}`, {mode:'no-cors'});
-            if(currentScanner) currentScanner.stop().finally(() => show('screen-retire'));
-            else show('screen-retire');
+            show('screen-retire');
         }
     }
 </script>
