@@ -16,7 +16,7 @@
         .time-warning { color: #ff4444 !important; animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.5rem; margin-bottom: 20px; }
+        h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.6rem; margin-bottom: 20px; }
         .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1.1rem; min-width: 180px; outline: none; }
         .btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
         .btn:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -28,7 +28,7 @@
         .id-btn.selected { background: var(--accent); color: #000; }
         
         input { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: #fff; padding: 10px; width: 85%; text-align: center; font-size: 1.4rem; outline: none; margin: 20px 0; }
-        .story-text { text-align: left; line-height: 1.8; font-size: 1rem; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 20px; }
+        .story-text { text-align: left; line-height: 1.8; font-size: 1.1rem; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 20px; }
         #game-reader, #rule-reader { width: 100% !important; border-radius: 8px; overflow: hidden; margin-top: 15px; min-height: 250px; background: #000; border: 1px solid #444; }
         
         .footer-btns { margin-top: 30px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #333; padding-top: 20px; }
@@ -59,20 +59,18 @@
         <button class="btn" id="con-btn" onclick="connect()" disabled>接続開始</button>
     </div>
 
-    <!-- 2. 通信中 -->
-    <div id="screen-loading" class="stage"><p>魔法回路を同期中...</p></div>
+    <!-- 2. ローディング -->
+    <div id="screen-loading" class="stage"><p>同期中...</p></div>
 
     <!-- 3. スタート画面 -->
     <div id="screen-main-start" class="stage">
         <h1 id="ui-terminal-ready">TERMINAL READY</h1>
-        <p style="color: #888; margin-bottom: 30px;">データの同期が完了しました。</p>
         <button class="btn" onclick="startRuleScan()">「ルール説明」をスキャン</button>
     </div>
 
     <!-- 4. ルールスキャン -->
     <div id="screen-rule-scan" class="stage">
         <h1>RULE SCAN</h1>
-        <p class="desc">纹章「ルール説明」をスキャンしてください。</p>
         <div id="rule-reader"></div>
         <p id="rule-scan-status" style="font-size:0.8rem; color:#888; margin-top:10px;">QRコードを映してください</p>
     </div>
@@ -82,11 +80,10 @@
         <h1>RULES</h1>
         <div class="story-text" style="font-size: 0.9rem;">
             【制限時間：60分】<br>
-            ・物語へ進んだ瞬間から時間が計測されます。<br>
-            ・時間切れになると強制的にリタイアとなります。<br>
-            ・答えは正確に入力してください。<br>
-            ・右上のMAPボタンで場所を確認できます。<br>
-            ・困った時は「緊急事態」ボタンを。
+            ・物語へ進むとタイマーが始動します。<br>
+            ・時間切れは即リタイアとなります。<br>
+            ・右上のMAPボタンを活用してください。<br>
+            ・トラブル時は下の「緊急事態」ボタンを。
         </div>
         <button class="btn" onclick="initGameSession()">理解した（物語へ）</button>
     </div>
@@ -125,15 +122,15 @@
 
     <!-- 状態画面 -->
     <div id="screen-retire" class="stage"><h1 style="color:var(--danger);">GAME OVER</h1><div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div><button class="btn" onclick="location.reload()">TOPへ</button></div>
-    <div id="screen-off" class="stage"><h1>LOCKED</h1><p>停止中です。</p><button class="btn" onclick="location.reload()">再試行</button></div>
+    <div id="screen-off" class="stage"><h1>LOCKED</h1><button class="btn" onclick="location.reload()">再試行</button></div>
     <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><p>全ての謎を解き明かした！</p><button class="btn" onclick="location.reload()">最初に戻る</button></div>
 </div>
 
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
 
 <script>
-    // ★ GASでデプロイした最新のURLをここに貼り付けてください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbw2MG0Sd2OTyxxnd3Ppv0zyQeZnEq9lyuysKY3VNYXkfusGiutGXktqy0AKzA38jh9Q_A/exec"; 
+    // ★ GASのURLを貼り付けてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwj5c6-qI7brpJV6-nXZlmqWCqCKjgO9ZYse6OUjT7f5Bx8kZgGqCQiNlQMvKsOay7GJg/exec"; 
     
     let tid = null, riddles = [], step = 0, currentScanner = null, configData = {};
     let timeLeft = 3600; 
@@ -155,15 +152,12 @@
         try {
             const res = await fetch(`${GAS_URL}?id=${tid}`);
             configData = await res.json();
-            if (configData.error) throw new Error(configData.error);
-            if (!configData.is_active) return show('screen-off');
-
             riddles = configData.riddles;
             document.getElementById('ui-terminal-ready').innerText = `TERMINAL ${tid} READY`;
             document.getElementById('ui-retire-msg').innerText = configData.retire_msg;
             document.getElementById('map-img').src = configData.map_url || "";
             show('screen-main-start');
-        } catch (e) { alert("接続エラー: GASのURLやデプロイ設定を確認してください"); show('screen-setup'); }
+        } catch (e) { alert("接続エラー"); show('screen-setup'); }
     }
 
     async function startRuleScan() {
@@ -188,19 +182,15 @@
         timerInterval = setInterval(() => {
             timeLeft--;
             updateTimerDisplay();
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                autoRetireByTimeup();
-            }
+            if (timeLeft <= 0) { clearInterval(timerInterval); autoRetireByTimeup(); }
         }, 1000);
     }
 
     function updateTimerDisplay() {
         const m = Math.floor(timeLeft / 60);
         const s = timeLeft % 60;
-        const timerEl = document.getElementById('ui-timer');
-        timerEl.innerText = `${m}:${s.toString().padStart(2, '0')}`;
-        if (timeLeft <= 300) timerEl.classList.add('time-warning');
+        document.getElementById('ui-timer').innerText = `${m}:${s.toString().padStart(2, '0')}`;
+        if (timeLeft <= 300) document.getElementById('ui-timer').classList.add('time-warning');
     }
 
     async function autoRetireByTimeup() {
@@ -262,9 +252,13 @@
 
     function toggleMap(v) { document.getElementById('map-overlay').style.display = v ? 'flex' : 'none'; }
 
+    // 緊急事態：内容を入力させて送信
     async function sendEmergency() {
-        fetch(`${GAS_URL}?action=emergency&id=${tid}`, {mode:'no-cors'});
-        alert("【緊急連絡】\n" + configData.emergency_msg);
+        const userInput = prompt("緊急内容を入力してください（例：カメラが動かない、ヒントが欲しい 等）");
+        if (userInput === null || userInput.trim() === "") return; // キャンセル時
+
+        fetch(`${GAS_URL}?action=emergency&id=${tid}&msg=${encodeURIComponent(userInput)}`, {mode:'no-cors'});
+        alert("管理者へメッセージを送信しました。\n指示： " + configData.emergency_msg);
     }
 
     async function confirmRetire() {
