@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>なぞとき大冒険</title>
+    <title>2IA Riddle Adventure</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --accent: #c5a059; --bg: #0d0d0d; --text: #e0e0e0; --danger: #8b0000; --gold: #ffd700; }
@@ -21,9 +21,6 @@
         .btn:hover:not(:disabled) { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
         .btn:disabled { opacity: 0.2; }
 
-        .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; }
-        .btn-sm:hover { opacity: 1; background: var(--danger); color: white; }
-
         .text-input { background: rgba(255,255,255,0.05); border: 1px solid #444; border-bottom: 2px solid var(--accent); color: #fff; padding: 10px; width: 100%; box-sizing: border-box; font-size: 1.1rem; outline: none; text-align: center; }
         .id-btn { width: 40px; height: 42px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; margin: 3px; border-radius: 4px; }
         .id-btn.selected { background: var(--accent); color: #000; }
@@ -31,7 +28,6 @@
         .story-text { text-align: left; line-height: 1.6; font-size: 1rem; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 15px; }
         #game-reader, #rule-reader { width: 100% !important; border-radius: 8px; overflow: hidden; min-height: 250px; background: #000; border: 1px solid #444; }
         
-        /* ランキング用 */
         .rank-card { background: linear-gradient(135deg, #c5a059 0%, #8a6d2f 100%); color: #000; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-around; }
         .rank-card div { text-align: center; }
         .rank-card small { font-size: 0.7rem; display: block; font-weight: bold; }
@@ -45,10 +41,8 @@
         .ranking-table th { color: var(--accent); border-bottom: 1px solid var(--accent); padding: 8px; }
         .ranking-table td { padding: 8px; border-bottom: 1px solid #333; }
         
-        /* 1位の行の特別装飾 */
         .rank-row-1 { color: var(--gold); font-weight: bold; }
-        .rank-row-1 td:first-child::before { content: "👑 "; }
-        .is-me { background: rgba(197, 160, 89, 0.3); border: 1px solid var(--accent); }
+        .is-me { background: rgba(197, 160, 89, 0.3); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
@@ -63,7 +57,7 @@
         <div id="ui-timer">0:60:00</div>
     </div>
 
-    <!-- セットアップ -->
+    <!-- 1. セットアップ -->
     <div id="screen-setup" class="stage active">
         <h1>SET TERMINAL</h1>
         <input type="text" id="team-name-input" class="text-input" placeholder="チーム名を入力" oninput="validateSetup()">
@@ -73,11 +67,11 @@
         <button class="btn" id="con-btn" onclick="connect()" disabled>接続開始</button>
     </div>
 
-    <div id="screen-loading" class="stage"><p>魔法回路を同期中...</p></div>
+    <div id="screen-loading" class="stage"><p id="loading-msg">通信中...</p></div>
 
     <div id="screen-main-start" class="stage"><h1>WELCOME</h1><button class="btn" onclick="startRuleScan()">「ルール説明」をスキャン</button></div>
     <div id="screen-rule-scan" class="stage"><h1>RULE SCAN</h1><div id="rule-reader"></div></div>
-    <div id="screen-rules-content" class="stage"><h1>RULES</h1><div class="story-text">制限時間：1時間<br>最速の座を勝ち取ってください。</div><button class="btn" onclick="initGameSession()">物語へ進む</button></div>
+    <div id="screen-rules-content" class="stage"><h1>RULES</h1><div class="story-text">制限時間：1時間<br>最速で全ての謎を解き明かしてください。</div><button class="btn" onclick="initGameSession()">物語へ進む</button></div>
 
     <div id="screen-story" class="stage">
         <h1 id="ui-story-title">STAGE</h1>
@@ -105,12 +99,12 @@
         </div>
     </div>
 
-    <!-- クリア画面（新：総合1位・端末1位対応） -->
+    <!-- 9. クリア＆ランキング（ここが修正ポイント） -->
     <div id="screen-clear" class="stage">
         <h1>QUEST CLEAR</h1>
         <div class="rank-card">
-            <div><small>ALL RANK</small><span id="ui-my-overall-rank">--</span>位</div>
-            <div><small>TID RANK</small><span id="ui-my-terminal-rank">--</span>位</div>
+            <div><small>ALL RANK</small><span id="ui-my-overall-rank">1</span>位</div>
+            <div><small>TID RANK</small><span id="ui-my-terminal-rank">1</span>位</div>
         </div>
         <div class="tab-container">
             <button id="tab-overall" class="tab-btn active" onclick="switchRanking('overall')">総合</button>
@@ -127,7 +121,7 @@
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwGuNjVbf1IsbXm710bmNGFOlwJFQvQRhkoV-W996MHK3XgcxxZOK9Y0i75ZeJM4cKO/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzJOC4fuDMIhzsXmclJl_DQKtQVZFFwhLyGZPv3u3kHFSesZrQkM47FU6xbSUbOvAg_eA/exec"; 
     let tid = null, riddles = [], step = 0, currentScanner = null, configData = {};
     let teamName = "", timeLeft = 3600, timerInterval = null, startTime = null, rankingData = null;
 
@@ -183,7 +177,6 @@
     }
 
     function autoRetireByTimeup() {
-        if(currentScanner) currentScanner.stop();
         fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}&time=0:00:00`, {mode:'no-cors'});
         show('screen-retire');
     }
@@ -230,7 +223,10 @@
         show('screen-loading');
         const duration = Math.floor((new Date() - startTime) / 1000);
         const finalTimeStr = formatTime(duration);
-        await fetch(`${GAS_URL}?action=clear_log&id=${tid}&team=${encodeURIComponent(teamName)}&time=${finalTimeStr}&duration=${duration}`, {mode:'no-cors'});
+        
+        // 記録を送信
+        await fetch(`${GAS_URL}?action=clear_log&id=${tid}&team=${encodeURIComponent(teamName)}&time=${finalTimeStr}&duration=${duration}`);
+        
         show('screen-story');
         document.getElementById('ui-story-title').innerText = "EPILOGUE";
         document.getElementById('ui-story-text').innerText = configData.ending_story;
@@ -243,8 +239,10 @@
         try {
             const res = await fetch(`${GAS_URL}?action=get_ranking&team=${encodeURIComponent(teamName)}&id=${tid}`);
             rankingData = await res.json();
-            document.getElementById('ui-my-overall-rank').innerText = rankingData.myOverallRank || "--";
-            document.getElementById('ui-my-terminal-rank').innerText = rankingData.myTerminalRank || "--";
+            
+            document.getElementById('ui-my-overall-rank').innerText = rankingData.myOverallRank || "1";
+            document.getElementById('ui-my-terminal-rank').innerText = rankingData.myTerminalRank || "1";
+
             switchRanking('overall');
             show('screen-clear');
         } catch (e) { alert("取得失敗"); show('screen-clear'); }
@@ -253,13 +251,19 @@
     function switchRanking(type) {
         document.getElementById('tab-overall').classList.toggle('active', type === 'overall');
         document.getElementById('tab-terminal').classList.toggle('active', type === 'terminal');
+        
         const list = (type === 'overall') ? rankingData.overallTop10 : rankingData.terminalTop10;
+        
         let html = '<table class="ranking-table"><tr><th>位</th><th>チーム</th><th>タイム</th></tr>';
-        list.forEach((row, i) => {
-            const isMe = (row.team === teamName) ? 'class="is-me"' : '';
-            const isFirst = (i === 0) ? 'class="rank-row-1"' : '';
-            html += `<tr ${isMe || isFirst}><td>${i+1}</td><td>${row.team}</td><td>${row.time}</td></tr>`;
-        });
+        if (list && list.length > 0) {
+            list.forEach((row, i) => {
+                const isMe = (row.team === teamName) ? 'is-me' : '';
+                const isFirst = (i === 0) ? 'rank-row-1' : '';
+                html += `<tr class="${isMe} ${isFirst}"><td>${i+1}</td><td>${row.team}</td><td>${row.time}</td></tr>`;
+            });
+        } else {
+            html += '<tr><td colspan="3">記録がありません</td></tr>';
+        }
         html += '</table>';
         document.getElementById('ranking-container').innerHTML = html;
     }
