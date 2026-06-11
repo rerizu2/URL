@@ -16,28 +16,34 @@
         .game-header { display: none; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #444; }
         #ui-timer { font-size: 1.1rem; color: var(--accent); font-weight: bold; font-family: monospace; }
         #ui-team-display { font-size: 0.8rem; color: #fff; background: rgba(197, 160, 89, 0.2); padding: 2px 10px; border-radius: 4px; border: 1px solid var(--accent); }
+        .time-warning { color: #ff4444 !important; animation: blink 1s infinite; }
 
         h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.4rem; margin-bottom: 15px; }
         .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 10px 20px; cursor: pointer; margin: 8px; transition: 0.3s; font-size: 1rem; min-width: 150px; outline: none; }
         .btn:hover:not(:disabled) { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
         .btn:disabled { opacity: 0.2; }
 
+        .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; min-width: 80px; }
+        .btn-sm:hover { opacity: 1; background: var(--danger); color: white; border-color: var(--danger); }
+
         .text-input { background: rgba(255,255,255,0.05); border: 1px solid #444; border-bottom: 2px solid var(--accent); color: #fff; padding: 10px; width: 100%; box-sizing: border-box; font-size: 1.1rem; outline: none; text-align: center; }
-        .id-btn { width: 40px; height: 40px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; margin: 3px; border-radius: 4px; }
+        .id-btn { width: 40px; height: 42px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; margin: 3px; border-radius: 4px; }
         .id-btn.selected { background: var(--accent); color: #000; }
         
         .story-text { text-align: left; line-height: 1.6; font-size: 1rem; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 15px; }
         #game-reader, #rule-reader { width: 100% !important; border-radius: 8px; overflow: hidden; min-height: 250px; background: #000; border: 1px solid #444; }
         
+        .footer-btns { margin-top: 20px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #333; padding-top: 15px; }
+
         /* ランキング用 */
         .rank-card { background: linear-gradient(135deg, #c5a059 0%, #8a6d2f 100%); color: #000; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-around; align-items: center; }
         .rank-card div { text-align: center; }
         .rank-card small { font-size: 0.7rem; display: block; text-transform: uppercase; }
-        .rank-card span { font-size: 1.6rem; font-weight: bold; }
+        .rank-card span { font-size: 1.5rem; font-weight: bold; }
 
         .tab-container { display: flex; justify-content: center; gap: 5px; margin-bottom: 10px; }
-        .tab-btn { background: #222; border: 1px solid #444; color: #888; padding: 5px 12px; cursor: pointer; font-size: 0.8rem; flex: 1; transition: 0.3s; }
-        .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+        .tab-btn { background: #222; border: 1px solid #444; color: #888; padding: 5px 12px; cursor: pointer; font-size: 0.8rem; flex: 1; }
+        .tab-btn.active { background: var(--accent); color: #000; }
 
         .ranking-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
         .ranking-table th { color: var(--accent); border-bottom: 1px solid var(--accent); padding: 6px; }
@@ -45,6 +51,9 @@
         .is-me { background: rgba(197, 160, 89, 0.3); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .shake { animation: shake 0.4s; }
+        @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
         #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
         #map-img { max-width: 90%; max-height: 80%; border: 1px solid var(--accent); }
     </style>
@@ -67,7 +76,7 @@
         <button class="btn" id="con-btn" onclick="connect()" disabled>接続開始</button>
     </div>
 
-    <div id="screen-loading" class="stage"><p id="loading-msg">通信中...</p></div>
+    <div id="screen-loading" class="stage"><p id="loading-msg">同期中...</p></div>
 
     <div id="screen-main-start" class="stage">
         <h1>WELCOME</h1>
@@ -77,11 +86,12 @@
     <div id="screen-rule-scan" class="stage">
         <h1>RULE SCAN</h1>
         <div id="rule-reader"></div>
+        <p style="font-size:0.8rem; margin-top:10px; color:#888;">「ルール説明」のQRを映してください</p>
     </div>
 
     <div id="screen-rules-content" class="stage">
         <h1>RULES</h1>
-        <div class="story-text">制限時間：1時間<br>全5問を最速で突破してください。</div>
+        <div class="story-text">制限時間 1時間。<br>クリアタイムを競い、全ての謎を解き明かしてください。</div>
         <button class="btn" onclick="initGameSession()">物語へ進む</button>
     </div>
 
@@ -92,31 +102,37 @@
     </div>
 
     <div id="screen-qr" class="stage">
-        <button class="btn" style="position:absolute; top:5px; right:5px; font-size:0.6rem; min-width:auto;" onclick="toggleMap(true)">MAP</button>
+        <button class="btn" style="position:absolute; top:5px; right:5px; font-size:0.6rem; min-width:auto; padding:5px 10px;" onclick="toggleMap(true)">MAP</button>
         <div id="game-reader"></div>
-        <button class="btn btn-sm" style="margin-top:10px; opacity:0.6;" onclick="sendEmergency()">緊急</button>
+        <p id="scan-status" style="font-size:0.8rem; margin:10px 0;">紋章をスキャンしてください</p>
+        <div class="footer-btns">
+            <button class="btn btn-sm" onclick="sendEmergency()">緊急事態</button>
+            <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
+        </div>
     </div>
 
     <div id="screen-riddle" class="stage">
+        <button class="btn" style="position:absolute; top:5px; right:5px; font-size:0.6rem; min-width:auto; padding:5px 10px;" onclick="toggleMap(true)">MAP</button>
         <p id="ui-progress" style="font-size:0.7rem; color:#666;">1 / 5</p>
         <div id="ui-question" style="font-size:1.1rem; margin:10px 0; min-height:80px; display:flex; align-items:center; justify-content:center; white-space:pre-wrap;">---</div>
         <input type="text" id="ans-input" placeholder="答えを入力" autocomplete="off">
         <button class="btn" onclick="judge()">送信</button>
+        <div class="footer-btns">
+            <button class="btn btn-sm" onclick="sendEmergency()">緊急事態</button>
+            <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
+        </div>
     </div>
 
-    <!-- 9. クリア＆新ランキング -->
     <div id="screen-clear" class="stage">
         <h1>QUEST CLEAR</h1>
         <div class="rank-card">
             <div><small>Overall</small><span id="ui-my-overall-rank">--</span>位</div>
             <div><small>Terminal</small><span id="ui-my-terminal-rank">--</span>位</div>
         </div>
-
         <div class="tab-container">
             <button id="tab-overall" class="tab-btn active" onclick="switchRanking('overall')">総合ランキング</button>
             <button id="tab-terminal" class="tab-btn" onclick="switchRanking('terminal')">この端末(No.<span id="ui-current-tid"></span>)</button>
         </div>
-        
         <div id="ranking-container"></div>
         <button class="btn" style="margin-top:15px;" onclick="location.reload()">最初に戻る</button>
     </div>
@@ -128,7 +144,7 @@
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyQsVu4YcfTsxYG3QJAGuOGBusdm4dsjzVCDS2DqzZQ6tQwCiNCqHc6YzKVxRRKVGfOJQ/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxW67GsjNHMVcE_IcQbLpYP0U0f8-k_tSZj4tmiY2McSPki8sFfF_-R0xTc_z1bo1zdNQ/exec"; 
     let tid = null, riddles = [], step = 0, currentScanner = null, configData = {};
     let teamName = "", timeLeft = 3600, timerInterval = null, startTime = null, rankingData = null;
 
@@ -185,9 +201,9 @@
         }, 1000);
     }
 
-    function autoRetireByTimeup() {
+    async function autoRetireByTimeup() {
         if(currentScanner) currentScanner.stop();
-        fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}`, {mode:'no-cors'});
+        fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}&time=0:00:00`, {mode:'no-cors'});
         show('screen-retire');
     }
 
@@ -244,10 +260,8 @@
         try {
             const res = await fetch(`${GAS_URL}?action=get_ranking&team=${encodeURIComponent(teamName)}&id=${tid}`);
             rankingData = await res.json();
-            
             document.getElementById('ui-my-overall-rank').innerText = rankingData.myOverallRank || "--";
             document.getElementById('ui-my-terminal-rank').innerText = rankingData.myTerminalRank || "--";
-
             switchRanking('overall');
             show('screen-clear');
         } catch (e) { alert("取得失敗"); show('screen-clear'); }
@@ -256,7 +270,6 @@
     function switchRanking(type) {
         document.getElementById('tab-overall').classList.toggle('active', type === 'overall');
         document.getElementById('tab-terminal').classList.toggle('active', type === 'terminal');
-
         const list = (type === 'overall') ? rankingData.overallTop10 : rankingData.terminalTop10;
         let html = '<table class="ranking-table"><tr><th>位</th><th>チーム</th><th>タイム</th></tr>';
         list.forEach((row, i) => {
@@ -268,9 +281,24 @@
     }
 
     function toggleMap(v) { document.getElementById('map-overlay').style.display = v ? 'flex' : 'none'; }
+    
     function sendEmergency() {
-        const input = prompt("内容を入力");
-        if(input) fetch(`${GAS_URL}?action=emergency&id=${tid}&team=${encodeURIComponent(teamName)}&msg=${encodeURIComponent(input)}`, {mode:'no-cors'});
+        const input = prompt("トラブルの内容を入力してください");
+        if(input) {
+            const curT = formatTime(Math.floor((new Date() - startTime)/1000));
+            fetch(`${GAS_URL}?action=emergency&id=${tid}&team=${encodeURIComponent(teamName)}&msg=${encodeURIComponent(input)}&time=${curT}`, {mode:'no-cors'});
+            alert("送信しました。指示：" + configData.emergency_msg);
+        }
+    }
+    
+    function confirmRetire() {
+        if (confirm("リタイアしますか？進行データは消去されます。")) {
+            clearInterval(timerInterval);
+            const curT = formatTime(Math.floor((new Date() - startTime)/1000));
+            fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}&time=${curT}`, {mode:'no-cors'});
+            if(currentScanner) currentScanner.stop();
+            show('screen-retire');
+        }
     }
 </script>
 </body>
