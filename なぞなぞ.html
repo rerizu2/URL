@@ -8,42 +8,41 @@
     <style>
         :root { --accent: #c5a059; --bg: #0d0d0d; --text: #e0e0e0; --danger: #8b0000; }
         body { background: var(--bg); color: var(--text); font-family: 'Yu Mincho', serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
-        .container { width: 90%; max-width: 500px; padding: 35px 25px; border: 2px solid var(--accent); background: rgba(20,20,20,0.95); text-align: center; box-shadow: 0 0 30px #000; position: relative; }
+        .container { width: 90%; max-width: 500px; padding: 30px 20px; border: 2px solid var(--accent); background: rgba(20,20,20,0.95); text-align: center; box-shadow: 0 0 30px #000; position: relative; max-height: 95vh; overflow-y: auto; }
         .stage { display: none; }
         .active { display: block; animation: fadeIn 0.5s; }
         
         .game-header { display: none; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #444; }
-        #ui-timer { font-size: 1.1rem; color: var(--accent); font-weight: bold; letter-spacing: 2px; }
+        #ui-timer { font-size: 1.1rem; color: var(--accent); font-weight: bold; }
         #ui-team-display { font-size: 0.9rem; color: #fff; background: rgba(197, 160, 89, 0.2); padding: 2px 10px; border-radius: 4px; border: 1px solid var(--accent); }
-        .time-warning { color: #ff4444 !important; animation: blink 1s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.6rem; margin-bottom: 20px; }
-        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1.1rem; min-width: 180px; outline: none; }
+        h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.5rem; margin-bottom: 15px; }
+        .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 12px 24px; cursor: pointer; margin: 10px; transition: 0.3s; font-size: 1rem; min-width: 160px; }
         .btn:hover:not(:disabled) { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
         .btn:disabled { opacity: 0.2; }
 
-        .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; min-width: 80px; }
+        .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; }
         .btn-sm:hover { opacity: 1; background: var(--danger); color: white; border-color: var(--danger); }
 
-        .setup-input-group { margin: 20px 0; text-align: left; }
-        .setup-label { font-size: 0.8rem; color: var(--accent); margin-bottom: 5px; display: block; }
         .text-input { background: rgba(255,255,255,0.05); border: 1px solid #444; border-bottom: 2px solid var(--accent); color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-size: 1.1rem; outline: none; text-align: center; }
-        
-        .id-selector { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
-        .id-btn { width: 45px; height: 45px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; font-size: 1.1rem; }
+        .id-selector { display: flex; justify-content: center; gap: 8px; margin: 15px 0; }
+        .id-btn { width: 40px; height: 40px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; }
         .id-btn.selected { background: var(--accent); color: #000; }
         
-        .story-text { text-align: left; line-height: 1.8; font-size: 1.1rem; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 20px; }
-        #game-reader, #rule-reader { width: 100% !important; border-radius: 8px; overflow: hidden; margin-top: 15px; min-height: 250px; background: #000; border: 1px solid #444; }
+        .story-text { text-align: left; line-height: 1.6; font-size: 1rem; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 15px; }
+        #game-reader, #rule-reader { width: 100% !important; border-radius: 8px; overflow: hidden; margin-top: 10px; min-height: 250px; background: #000; border: 1px solid #444; }
         
-        .footer-btns { margin-top: 30px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #333; padding-top: 20px; }
-        .map-btn-float { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; padding: 5px 10px; z-index: 10; }
-        #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
-        #map-img { max-width: 90%; max-height: 80%; border: 1px solid var(--accent); }
+        /* ランキングテーブル */
+        .ranking-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+        .ranking-table th { color: var(--accent); border-bottom: 1px solid var(--accent); padding: 8px; }
+        .ranking-table td { padding: 8px; border-bottom: 1px solid #333; }
+        .rank-1 { color: gold; font-weight: bold; }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .shake { animation: shake 0.4s; }
         @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
+        #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
+        #map-img { max-width: 90%; max-height: 80%; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
@@ -56,28 +55,18 @@
 
     <!-- 1. セットアップ -->
     <div id="screen-setup" class="stage active">
-        <h1>GAME SETUP</h1>
-        <div class="setup-input-group">
-            <label class="setup-label">チーム名を入力</label>
-            <input type="text" id="team-name-input" class="text-input" placeholder="例：チームA" oninput="validateSetup()">
-        </div>
-        <div class="setup-input-group">
-            <label class="setup-label">端末番号を選択</label>
-            <div class="id-selector">
-                <button class="id-btn" onclick="sel(1)">1</button>
-                <button class="id-btn" onclick="sel(2)">2</button>
-                <button class="id-btn" onclick="sel(3)">3</button>
-                <button class="id-btn" onclick="sel(4)">4</button>
-                <button class="id-btn" onclick="sel(5)">5</button>
-            </div>
+        <h1>SET TERMINAL</h1>
+        <input type="text" id="team-name-input" class="text-input" placeholder="チーム名を入力" oninput="validateSetup()">
+        <div class="id-selector">
+            <button class="id-btn" onclick="sel(1)">1</button><button class="id-btn" onclick="sel(2)">2</button><button class="id-btn" onclick="sel(3)">3</button><button class="id-btn" onclick="sel(4)">4</button><button class="id-btn" onclick="sel(5)">5</button>
         </div>
         <button class="btn" id="con-btn" onclick="connect()" disabled>接続開始</button>
     </div>
 
-    <!-- 2. ローディング -->
-    <div id="screen-loading" class="stage"><p>同期中...</p></div>
+    <!-- 2. 通信中 -->
+    <div id="screen-loading" class="stage"><p id="loading-msg">同期中...</p></div>
 
-    <!-- 3. スタート画面 -->
+    <!-- 3. スタート -->
     <div id="screen-main-start" class="stage">
         <h1 id="ui-welcome-msg">WELCOME</h1>
         <button class="btn" onclick="startRuleScan()">「ルール説明」をスキャン</button>
@@ -87,18 +76,14 @@
     <div id="screen-rule-scan" class="stage">
         <h1>RULE SCAN</h1>
         <div id="rule-reader"></div>
-        <p id="rule-scan-status" style="font-size:0.8rem; color:#888; margin-top:10px;">QRコードを映してください</p>
+        <p id="rule-scan-status" style="font-size:0.8rem; color:#888;">QRコードを映してください</p>
     </div>
 
-    <!-- 5. ルール表示 -->
+    <!-- 5. ルール内容 -->
     <div id="screen-rules-content" class="stage">
         <h1>RULES</h1>
-        <div class="story-text" style="font-size: 0.9rem;">
-            ・制限時間：60分<br>
-            ・「理解した」で計測開始<br>
-            ・QRスキャン ⇔ 謎解き を繰り返します。
-        </div>
-        <button class="btn" onclick="initGameSession()">理解した（物語へ）</button>
+        <div class="story-text">【制限：60分】<br>クリア後にランキングが表示されます。</div>
+        <button class="btn" onclick="initGameSession()">物語へ</button>
     </div>
 
     <!-- 6. 物語 -->
@@ -110,37 +95,39 @@
 
     <!-- 7. QRスキャン -->
     <div id="screen-qr" class="stage">
-        <button class="btn map-btn-float" onclick="toggleMap(true)">MAP</button>
-        <p id="ui-scan-msg" style="color:var(--accent); font-weight:bold;">紋章(QR)をスキャン</p>
+        <button class="btn" style="position:absolute; top:10px; right:10px; font-size:0.7rem; min-width:auto;" onclick="toggleMap(true)">MAP</button>
         <div id="game-reader"></div>
-        <div class="footer-btns">
-            <button class="btn btn-sm" onclick="sendEmergency()">緊急</button>
-            <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
-        </div>
+        <p id="scan-status" style="font-size:0.8rem; margin:10px 0;">紋章をスキャンしてください</p>
+        <button class="btn btn-sm" onclick="sendEmergency()">緊急</button>
+        <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
     </div>
 
-    <!-- 8. 回答 -->
+    <!-- 8. 問題 -->
     <div id="screen-riddle" class="stage">
-        <button class="btn map-btn-float" onclick="toggleMap(true)">MAP</button>
         <p id="ui-progress" style="font-size:0.8rem; color:#666;">1 / 5</p>
-        <div id="ui-question" style="font-size:1.2rem; margin:20px 0; min-height:100px; display:flex; align-items:center; justify-content:center; white-space:pre-wrap;">---</div>
-        <input type="text" id="ans-input" placeholder="答えを入力..." autocomplete="off">
+        <div id="ui-question" style="font-size:1.2rem; margin:20px 0; min-height:80px; display:flex; align-items:center; justify-content:center; white-space:pre-wrap;">---</div>
+        <input type="text" id="ans-input" placeholder="答えを入力" autocomplete="off">
         <button class="btn" onclick="judge()">送信</button>
-        <div class="footer-btns">
-            <button class="btn btn-sm" onclick="sendEmergency()">緊急</button>
-            <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
-        </div>
+        <br>
+        <button class="btn btn-sm" onclick="sendEmergency()">緊急</button>
+        <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
     </div>
 
-    <div id="screen-retire" class="stage"><h1 style="color:var(--danger);">GAME OVER</h1><div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div><button class="btn" onclick="location.reload()">TOPへ</button></div>
-    <div id="screen-off" class="stage"><h1>LOCKED</h1><button class="btn" onclick="location.reload()">再試行</button></div>
-    <div id="screen-clear" class="stage"><h1>COMPLETE!</h1><button class="btn" onclick="location.reload()">最初に戻る</button></div>
+    <!-- 9. クリア＆ランキング -->
+    <div id="screen-clear" class="stage">
+        <h1>COMPLETE!</h1>
+        <p style="color:var(--accent);">現在のランキング(TOP10)</p>
+        <div id="ranking-container">ランキングを取得中...</div>
+        <button class="btn" style="margin-top:20px;" onclick="location.reload()">最初に戻る</button>
+    </div>
+
+    <div id="screen-retire" class="stage"><h1>GAME OVER</h1><div class="story-text" id="ui-retire-msg" style="text-align:center; font-size:2rem; color:var(--danger);"></div><button class="btn" onclick="location.reload()">戻る</button></div>
 </div>
 
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwWHNA15dIc6mbaZLJrNQgAczVcAcN7mgsFDPyXHATgkQIfTYNztDS43fo9ZgQggtDMuQ/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw4dFKMzU4UgQLc1iZ78qudbCJc93LaDwvXBNkHJmQm5nMa12lPzftFxNhF6aoj1AkP9g/exec"; 
     
     let tid = null, riddles = [], step = 0, currentScanner = null, configData = {};
     let teamName = "", timeLeft = 3600, timerInterval = null, startTime = null;
@@ -150,9 +137,7 @@
         const conBtn = document.getElementById('con-btn');
         conBtn.disabled = !(nameInput !== "" && tid !== null);
     }
-
     function sel(n) { tid = n; document.querySelectorAll('.id-btn').forEach(b => b.classList.toggle('selected', b.innerText == n)); validateSetup(); }
-
     function show(id) { document.querySelectorAll('.stage').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 
     async function connect() {
@@ -162,45 +147,28 @@
             const res = await fetch(`${GAS_URL}?id=${tid}`);
             configData = await res.json();
             riddles = configData.riddles;
-            document.getElementById('ui-team-display').innerText = "TEAM: " + teamName;
-            document.getElementById('ui-welcome-msg').innerText = "HELLO, " + teamName;
+            document.getElementById('ui-team-display').innerText = teamName;
             document.getElementById('ui-retire-msg').innerText = configData.retire_msg;
             document.getElementById('map-img').src = configData.map_url || "";
             show('screen-main-start');
         } catch (e) { alert("接続エラー"); show('screen-setup'); }
     }
 
-    // --- 履歴送信関数 ---
-    function sendLog(operation) {
-        let elapsedStr = "--:--";
-        if (startTime) {
-            const elapsedTotalSec = Math.floor((new Date() - startTime) / 1000);
-            const m = Math.floor(elapsedTotalSec / 60);
-            const s = elapsedTotalSec % 60;
-            elapsedStr = `${m}:${s.toString().padStart(2, '0')}`;
-        }
-        const url = `${GAS_URL}?action=log&id=${tid}&team=${encodeURIComponent(teamName)}&op=${encodeURIComponent(operation)}&time=${elapsedStr}`;
-        fetch(url, { mode: 'no-cors' });
-    }
-
     async function startRuleScan() {
         show('screen-rule-scan');
         currentScanner = new Html5Qrcode("rule-reader");
-        try {
-            await currentScanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
-                if (t.trim() === "ルール説明") {
-                    currentScanner.stop().then(() => { currentScanner = null; show('screen-rules-content'); });
-                }
-            });
-        } catch (e) { alert("カメラ起動失敗"); }
+        await currentScanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
+            if (t.trim() === "ルール説明") {
+                currentScanner.stop().then(() => { currentScanner = null; show('screen-rules-content'); });
+            }
+        });
     }
 
     function initGameSession() {
         document.getElementById('ui-header').style.display = 'flex';
         startTime = new Date();
         startTimer();
-        sendLog("冒険開始（タイマースタート）");
-        startStage();
+        showStage();
     }
 
     function startTimer() {
@@ -209,20 +177,16 @@
             const m = Math.floor(timeLeft / 60);
             const s = timeLeft % 60;
             document.getElementById('ui-timer').innerText = `${m}:${s.toString().padStart(2, '0')}`;
-            if (timeLeft <= 300) document.getElementById('ui-timer').classList.add('time-warning');
             if (timeLeft <= 0) { clearInterval(timerInterval); autoRetireByTimeup(); }
         }, 1000);
     }
 
-    function autoRetireByTimeup() {
-        alert("制限時間終了です！");
-        if(currentScanner) currentScanner.stop();
-        sendLog("【時間切れ強制終了】");
-        fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}&time=60:00`, {mode:'no-cors'});
+    async function autoRetireByTimeup() {
+        fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}`, {mode:'no-cors'});
         show('screen-retire');
     }
 
-    function startStage() {
+    function showStage() {
         show('screen-story');
         document.getElementById('ui-story-title').innerText = `STAGE ${step + 1}`;
         document.getElementById('ui-story-text').innerText = riddles[step].story;
@@ -234,18 +198,12 @@
         show('screen-qr');
         const target = riddles[step].qr_key.toString().trim();
         currentScanner = new Html5Qrcode("game-reader");
-        try {
-            await currentScanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
-                const scan = t.trim();
-                if (scan === "2IAの教室にぜひ来てください！" + target || scan === target) {
-                    currentScanner.stop().then(() => { 
-                        currentScanner = null; 
-                        sendLog(`STAGE ${step+1} QRスキャン成功`);
-                        showRiddle(); 
-                    });
-                }
-            });
-        } catch (e) { alert("カメラ失敗"); }
+        await currentScanner.start({facingMode:"environment"}, {fps:10, qrbox:220}, (t) => {
+            const scan = t.trim();
+            if (scan === "2IAの教室にぜひ来てください！" + target || scan === target) {
+                currentScanner.stop().then(() => { currentScanner = null; showRiddle(); });
+            }
+        });
     }
 
     function showRiddle() {
@@ -255,43 +213,66 @@
         document.getElementById('ans-input').value = "";
     }
 
-    function judge() {
+    async function judge() {
         if (document.getElementById('ans-input').value.trim() === riddles[step].answer.toString().trim()) {
-            sendLog(`STAGE ${step+1} 正解突破`);
             step++;
             if (step >= 5) {
                 clearInterval(timerInterval);
-                sendLog("★全クリア達成");
-                showEndingStory();
-            } else startStage();
-        } else { 
+                await finalizeGame();
+            } else showStage();
+        } else {
             document.getElementById('game-box').classList.add('shake');
             setTimeout(() => document.getElementById('game-box').classList.remove('shake'), 400);
         }
     }
 
-    function showEndingStory() {
-        document.getElementById('ui-header').style.display = 'none';
+    async function finalizeGame() {
+        show('screen-loading');
+        const totalDuration = Math.floor((new Date() - startTime) / 1000);
+        const m = Math.floor(totalDuration / 60);
+        const s = totalDuration % 60;
+        const timeStr = `${m}:${s.toString().padStart(2, '0')}`;
+
+        // 記録を送信
+        await fetch(`${GAS_URL}?action=clear_log&id=${tid}&team=${encodeURIComponent(teamName)}&time=${timeStr}&duration=${totalDuration}`, {mode:'no-cors'});
+        
+        // エンディング物語表示
         show('screen-story');
         document.getElementById('ui-story-title').innerText = "EPILOGUE";
         document.getElementById('ui-story-text').innerText = configData.ending_story;
-        document.getElementById('ui-story-btn').innerText = "完了";
-        document.getElementById('ui-story-btn').onclick = () => show('screen-clear');
+        document.getElementById('ui-story-btn').innerText = "ランキングを見る";
+        document.getElementById('ui-story-btn').onclick = loadRanking;
+    }
+
+    async function loadRanking() {
+        show('screen-loading');
+        document.getElementById('loading-msg').innerText = "ランキングを取得中...";
+        try {
+            const res = await fetch(`${GAS_URL}?action=get_ranking`);
+            const data = await res.json();
+            
+            let html = '<table class="ranking-table"><tr><th>位</th><th>チーム</th><th>タイム</th></tr>';
+            data.forEach((row, i) => {
+                html += `<tr class="${i===0?'rank-1':''}"><td>${i+1}</td><td>${row[1]}</td><td>${row[3]}</td></tr>`;
+            });
+            html += '</table>';
+            
+            document.getElementById('ranking-container').innerHTML = data.length > 0 ? html : "ランキングはまだありません。";
+            show('screen-clear');
+        } catch (e) {
+            document.getElementById('ranking-container').innerText = "取得エラー";
+            show('screen-clear');
+        }
     }
 
     function toggleMap(v) { document.getElementById('map-overlay').style.display = v ? 'flex' : 'none'; }
-
-    async function sendEmergency() {
-        const userInput = prompt("緊急内容を入力してください");
-        if (!userInput) return;
-        fetch(`${GAS_URL}?action=emergency&id=${tid}&team=${encodeURIComponent(teamName)}&msg=${encodeURIComponent(userInput)}`, {mode:'no-cors'});
-        alert("管理者に送信しました。");
+    function sendEmergency() {
+        const input = prompt("緊急内容を入力してください");
+        if(input) fetch(`${GAS_URL}?action=emergency&id=${tid}&team=${encodeURIComponent(teamName)}&msg=${encodeURIComponent(input)}`, {mode:'no-cors'});
     }
-
-    async function confirmRetire() {
+    function confirmRetire() {
         if (confirm("リタイアしますか？")) {
             clearInterval(timerInterval);
-            sendLog("リタイア選択");
             fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}`, {mode:'no-cors'});
             if(currentScanner) currentScanner.stop();
             show('screen-retire');
