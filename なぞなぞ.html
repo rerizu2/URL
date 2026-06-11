@@ -12,7 +12,6 @@
         .stage { display: none; }
         .active { display: block; animation: fadeIn 0.5s; }
         
-        /* ヘッダー */
         .game-header { display: none; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #444; }
         #ui-timer { font-size: 1.1rem; color: var(--accent); font-weight: bold; font-family: monospace; }
         #ui-team-display { font-size: 0.8rem; color: #fff; background: rgba(197, 160, 89, 0.2); padding: 2px 10px; border-radius: 4px; border: 1px solid var(--accent); }
@@ -35,7 +34,6 @@
         
         .footer-btns { margin-top: 20px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #333; padding-top: 15px; }
 
-        /* ランキング用 */
         .rank-card { background: linear-gradient(135deg, #c5a059 0%, #8a6d2f 100%); color: #000; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-around; align-items: center; }
         .rank-card div { text-align: center; }
         .rank-card small { font-size: 0.7rem; display: block; text-transform: uppercase; }
@@ -144,7 +142,9 @@
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxW67GsjNHMVcE_IcQbLpYP0U0f8-k_tSZj4tmiY2McSPki8sFfF_-R0xTc_z1bo1zdNQ/exec"; 
+    // ★ GASのURLを貼り付けてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycby1KOdiCMwOHPoLKintoQa51iHu5--rkYOC8pMzlD5fcfT18SqWbOs4wQsM4suJXJigxA/exec"; 
+    
     let tid = null, riddles = [], step = 0, currentScanner = null, configData = {};
     let teamName = "", timeLeft = 3600, timerInterval = null, startTime = null, rankingData = null;
 
@@ -201,7 +201,7 @@
         }, 1000);
     }
 
-    async function autoRetireByTimeup() {
+    function autoRetireByTimeup() {
         if(currentScanner) currentScanner.stop();
         fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}&time=0:00:00`, {mode:'no-cors'});
         show('screen-retire');
@@ -233,8 +233,14 @@
         document.getElementById('ans-input').value = "";
     }
 
+    // --- 回答判定（複数回答対応版） ---
     async function judge() {
-        if (document.getElementById('ans-input').value.trim() === riddles[step].answer.toString().trim()) {
+        const userInput = document.getElementById('ans-input').value.trim();
+        const rawAnswers = riddles[step].answer.toString();
+        // 半角カンマまたは全角カンマで区切る
+        const allowedAnswers = rawAnswers.split(/[,，]/).map(s => s.trim());
+
+        if (allowedAnswers.includes(userInput)) {
             step++;
             if (step >= 5) { clearInterval(timerInterval); await finalizeGame(); } else showStage();
         } else {
@@ -283,7 +289,7 @@
     function toggleMap(v) { document.getElementById('map-overlay').style.display = v ? 'flex' : 'none'; }
     
     function sendEmergency() {
-        const input = prompt("トラブルの内容を入力してください");
+        const input = prompt("内容を入力");
         if(input) {
             const curT = formatTime(Math.floor((new Date() - startTime)/1000));
             fetch(`${GAS_URL}?action=emergency&id=${tid}&team=${encodeURIComponent(teamName)}&msg=${encodeURIComponent(input)}&time=${curT}`, {mode:'no-cors'});
@@ -292,7 +298,7 @@
     }
     
     function confirmRetire() {
-        if (confirm("リタイアしますか？進行データは消去されます。")) {
+        if (confirm("リタイアしますか？")) {
             clearInterval(timerInterval);
             const curT = formatTime(Math.floor((new Date() - startTime)/1000));
             fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}&time=${curT}`, {mode:'no-cors'});
