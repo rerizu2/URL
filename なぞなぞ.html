@@ -6,7 +6,7 @@
     <title>2IA Riddle Adventure</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --accent: #c5a059; --bg: #0d0d0d; --text: #e0e0e0; --danger: #8b0000; }
+        :root { --accent: #c5a059; --bg: #0d0d0d; --text: #e0e0e0; --danger: #8b0000; --gold: #ffd700; }
         body { background: var(--bg); color: var(--text); font-family: 'Yu Mincho', serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
         .container { width: 90%; max-width: 500px; padding: 25px 20px; border: 2px solid var(--accent); background: rgba(20,20,20,0.95); text-align: center; box-shadow: 0 0 30px #000; position: relative; max-height: 98vh; overflow-y: auto; }
         .stage { display: none; }
@@ -15,15 +15,14 @@
         .game-header { display: none; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #444; }
         #ui-timer { font-size: 1.1rem; color: var(--accent); font-weight: bold; font-family: monospace; }
         #ui-team-display { font-size: 0.8rem; color: #fff; background: rgba(197, 160, 89, 0.2); padding: 2px 10px; border-radius: 4px; border: 1px solid var(--accent); }
-        .time-warning { color: #ff4444 !important; animation: blink 1s infinite; }
 
         h1 { color: var(--accent); letter-spacing: 3px; font-size: 1.4rem; margin-bottom: 15px; }
         .btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 10px 20px; cursor: pointer; margin: 8px; transition: 0.3s; font-size: 1rem; min-width: 150px; outline: none; }
         .btn:hover:not(:disabled) { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
         .btn:disabled { opacity: 0.2; }
 
-        .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; min-width: 80px; }
-        .btn-sm:hover { opacity: 1; background: var(--danger); color: white; border-color: var(--danger); }
+        .btn-sm { font-size: 0.75rem; padding: 6px 12px; opacity: 0.6; border-color: #666; color: #aaa; }
+        .btn-sm:hover { opacity: 1; background: var(--danger); color: white; }
 
         .text-input { background: rgba(255,255,255,0.05); border: 1px solid #444; border-bottom: 2px solid var(--accent); color: #fff; padding: 10px; width: 100%; box-sizing: border-box; font-size: 1.1rem; outline: none; text-align: center; }
         .id-btn { width: 40px; height: 42px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; margin: 3px; border-radius: 4px; }
@@ -32,26 +31,26 @@
         .story-text { text-align: left; line-height: 1.6; font-size: 1rem; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 5px; white-space: pre-wrap; margin-bottom: 15px; }
         #game-reader, #rule-reader { width: 100% !important; border-radius: 8px; overflow: hidden; min-height: 250px; background: #000; border: 1px solid #444; }
         
-        .footer-btns { margin-top: 20px; display: flex; justify-content: center; gap: 10px; border-top: 1px solid #333; padding-top: 15px; }
-
-        .rank-card { background: linear-gradient(135deg, #c5a059 0%, #8a6d2f 100%); color: #000; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-around; align-items: center; }
+        /* ランキング用 */
+        .rank-card { background: linear-gradient(135deg, #c5a059 0%, #8a6d2f 100%); color: #000; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-around; }
         .rank-card div { text-align: center; }
-        .rank-card small { font-size: 0.7rem; display: block; text-transform: uppercase; }
+        .rank-card small { font-size: 0.7rem; display: block; font-weight: bold; }
         .rank-card span { font-size: 1.5rem; font-weight: bold; }
 
         .tab-container { display: flex; justify-content: center; gap: 5px; margin-bottom: 10px; }
         .tab-btn { background: #222; border: 1px solid #444; color: #888; padding: 5px 12px; cursor: pointer; font-size: 0.8rem; flex: 1; }
         .tab-btn.active { background: var(--accent); color: #000; }
 
-        .ranking-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        .ranking-table th { color: var(--accent); border-bottom: 1px solid var(--accent); padding: 6px; }
-        .ranking-table td { padding: 6px; border-bottom: 1px solid #333; }
-        .is-me { background: rgba(197, 160, 89, 0.3); }
+        .ranking-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .ranking-table th { color: var(--accent); border-bottom: 1px solid var(--accent); padding: 8px; }
+        .ranking-table td { padding: 8px; border-bottom: 1px solid #333; }
+        
+        /* 1位の行の特別装飾 */
+        .rank-row-1 { color: var(--gold); font-weight: bold; }
+        .rank-row-1 td:first-child::before { content: "👑 "; }
+        .is-me { background: rgba(197, 160, 89, 0.3); border: 1px solid var(--accent); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .shake { animation: shake 0.4s; }
-        @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
         #map-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
         #map-img { max-width: 90%; max-height: 80%; border: 1px solid var(--accent); }
     </style>
@@ -64,7 +63,7 @@
         <div id="ui-timer">0:60:00</div>
     </div>
 
-    <!-- 1. セットアップ -->
+    <!-- セットアップ -->
     <div id="screen-setup" class="stage active">
         <h1>SET TERMINAL</h1>
         <input type="text" id="team-name-input" class="text-input" placeholder="チーム名を入力" oninput="validateSetup()">
@@ -74,24 +73,11 @@
         <button class="btn" id="con-btn" onclick="connect()" disabled>接続開始</button>
     </div>
 
-    <div id="screen-loading" class="stage"><p id="loading-msg">同期中...</p></div>
+    <div id="screen-loading" class="stage"><p>魔法回路を同期中...</p></div>
 
-    <div id="screen-main-start" class="stage">
-        <h1>WELCOME</h1>
-        <button class="btn" onclick="startRuleScan()">「ルール説明」をスキャン</button>
-    </div>
-
-    <div id="screen-rule-scan" class="stage">
-        <h1>RULE SCAN</h1>
-        <div id="rule-reader"></div>
-        <p style="font-size:0.8rem; margin-top:10px; color:#888;">「ルール説明」のQRを映してください</p>
-    </div>
-
-    <div id="screen-rules-content" class="stage">
-        <h1>RULES</h1>
-        <div class="story-text">制限時間 1時間。<br>クリアタイムを競い、全ての謎を解き明かしてください。</div>
-        <button class="btn" onclick="initGameSession()">物語へ進む</button>
-    </div>
+    <div id="screen-main-start" class="stage"><h1>WELCOME</h1><button class="btn" onclick="startRuleScan()">「ルール説明」をスキャン</button></div>
+    <div id="screen-rule-scan" class="stage"><h1>RULE SCAN</h1><div id="rule-reader"></div></div>
+    <div id="screen-rules-content" class="stage"><h1>RULES</h1><div class="story-text">制限時間：1時間<br>最速の座を勝ち取ってください。</div><button class="btn" onclick="initGameSession()">物語へ進む</button></div>
 
     <div id="screen-story" class="stage">
         <h1 id="ui-story-title">STAGE</h1>
@@ -102,34 +88,33 @@
     <div id="screen-qr" class="stage">
         <button class="btn" style="position:absolute; top:5px; right:5px; font-size:0.6rem; min-width:auto; padding:5px 10px;" onclick="toggleMap(true)">MAP</button>
         <div id="game-reader"></div>
-        <p id="scan-status" style="font-size:0.8rem; margin:10px 0;">紋章をスキャンしてください</p>
-        <div class="footer-btns">
-            <button class="btn btn-sm" onclick="sendEmergency()">緊急事態</button>
+        <div style="margin-top:10px;">
+            <button class="btn btn-sm" onclick="sendEmergency()">緊急</button>
             <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
         </div>
     </div>
 
     <div id="screen-riddle" class="stage">
-        <button class="btn" style="position:absolute; top:5px; right:5px; font-size:0.6rem; min-width:auto; padding:5px 10px;" onclick="toggleMap(true)">MAP</button>
         <p id="ui-progress" style="font-size:0.7rem; color:#666;">1 / 5</p>
         <div id="ui-question" style="font-size:1.1rem; margin:10px 0; min-height:80px; display:flex; align-items:center; justify-content:center; white-space:pre-wrap;">---</div>
         <input type="text" id="ans-input" placeholder="答えを入力" autocomplete="off">
         <button class="btn" onclick="judge()">送信</button>
-        <div class="footer-btns">
-            <button class="btn btn-sm" onclick="sendEmergency()">緊急事態</button>
+        <div style="margin-top:10px;">
+            <button class="btn btn-sm" onclick="sendEmergency()">緊急</button>
             <button class="btn btn-sm" onclick="confirmRetire()">リタイア</button>
         </div>
     </div>
 
+    <!-- クリア画面（新：総合1位・端末1位対応） -->
     <div id="screen-clear" class="stage">
         <h1>QUEST CLEAR</h1>
         <div class="rank-card">
-            <div><small>Overall</small><span id="ui-my-overall-rank">--</span>位</div>
-            <div><small>Terminal</small><span id="ui-my-terminal-rank">--</span>位</div>
+            <div><small>ALL RANK</small><span id="ui-my-overall-rank">--</span>位</div>
+            <div><small>TID RANK</small><span id="ui-my-terminal-rank">--</span>位</div>
         </div>
         <div class="tab-container">
-            <button id="tab-overall" class="tab-btn active" onclick="switchRanking('overall')">総合ランキング</button>
-            <button id="tab-terminal" class="tab-btn" onclick="switchRanking('terminal')">この端末(No.<span id="ui-current-tid"></span>)</button>
+            <button id="tab-overall" class="tab-btn active" onclick="switchRanking('overall')">総合</button>
+            <button id="tab-terminal" class="tab-btn" onclick="switchRanking('terminal')">この端末</button>
         </div>
         <div id="ranking-container"></div>
         <button class="btn" style="margin-top:15px;" onclick="location.reload()">最初に戻る</button>
@@ -142,9 +127,7 @@
 <div id="map-overlay" onclick="toggleMap(false)"><img id="map-img" src=""></div>
 
 <script>
-    // ★ GASのURLを貼り付けてください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycby1KOdiCMwOHPoLKintoQa51iHu5--rkYOC8pMzlD5fcfT18SqWbOs4wQsM4suJXJigxA/exec"; 
-    
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwGuNjVbf1IsbXm710bmNGFOlwJFQvQRhkoV-W996MHK3XgcxxZOK9Y0i75ZeJM4cKO/exec"; 
     let tid = null, riddles = [], step = 0, currentScanner = null, configData = {};
     let teamName = "", timeLeft = 3600, timerInterval = null, startTime = null, rankingData = null;
 
@@ -171,7 +154,6 @@
             if(!configData.is_active) return show('screen-off');
             riddles = configData.riddles;
             document.getElementById('ui-team-display').innerText = teamName;
-            document.getElementById('ui-current-tid').innerText = tid;
             document.getElementById('map-img').src = configData.map_url || "";
             show('screen-main-start');
         } catch (e) { alert("接続エラー"); show('screen-setup'); }
@@ -196,7 +178,6 @@
         timerInterval = setInterval(() => {
             timeLeft--;
             document.getElementById('ui-timer').innerText = formatTime(timeLeft);
-            if (timeLeft <= 300) document.getElementById('ui-timer').classList.add('time-warning');
             if (timeLeft <= 0) { clearInterval(timerInterval); autoRetireByTimeup(); }
         }, 1000);
     }
@@ -233,13 +214,9 @@
         document.getElementById('ans-input').value = "";
     }
 
-    // --- 回答判定（複数回答対応版） ---
     async function judge() {
         const userInput = document.getElementById('ans-input').value.trim();
-        const rawAnswers = riddles[step].answer.toString();
-        // 半角カンマまたは全角カンマで区切る
-        const allowedAnswers = rawAnswers.split(/[,，]/).map(s => s.trim());
-
+        const allowedAnswers = riddles[step].answer.toString().split(/[,，]/).map(s => s.trim());
         if (allowedAnswers.includes(userInput)) {
             step++;
             if (step >= 5) { clearInterval(timerInterval); await finalizeGame(); } else showStage();
@@ -280,28 +257,22 @@
         let html = '<table class="ranking-table"><tr><th>位</th><th>チーム</th><th>タイム</th></tr>';
         list.forEach((row, i) => {
             const isMe = (row.team === teamName) ? 'class="is-me"' : '';
-            html += `<tr ${isMe}><td>${i+1}</td><td>${row.team}</td><td>${row.time}</td></tr>`;
+            const isFirst = (i === 0) ? 'class="rank-row-1"' : '';
+            html += `<tr ${isMe || isFirst}><td>${i+1}</td><td>${row.team}</td><td>${row.time}</td></tr>`;
         });
         html += '</table>';
         document.getElementById('ranking-container').innerHTML = html;
     }
 
     function toggleMap(v) { document.getElementById('map-overlay').style.display = v ? 'flex' : 'none'; }
-    
     function sendEmergency() {
         const input = prompt("内容を入力");
-        if(input) {
-            const curT = formatTime(Math.floor((new Date() - startTime)/1000));
-            fetch(`${GAS_URL}?action=emergency&id=${tid}&team=${encodeURIComponent(teamName)}&msg=${encodeURIComponent(input)}&time=${curT}`, {mode:'no-cors'});
-            alert("送信しました。指示：" + configData.emergency_msg);
-        }
+        if(input) fetch(`${GAS_URL}?action=emergency&id=${tid}&team=${encodeURIComponent(teamName)}&msg=${encodeURIComponent(input)}`, {mode:'no-cors'});
     }
-    
     function confirmRetire() {
         if (confirm("リタイアしますか？")) {
             clearInterval(timerInterval);
-            const curT = formatTime(Math.floor((new Date() - startTime)/1000));
-            fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}&time=${curT}`, {mode:'no-cors'});
+            fetch(`${GAS_URL}?action=retire&id=${tid}&team=${encodeURIComponent(teamName)}`, {mode:'no-cors'});
             if(currentScanner) currentScanner.stop();
             show('screen-retire');
         }
