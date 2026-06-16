@@ -3,33 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>バス座席予約システム（スプレッドシート連携）</title>
+    <title>バス座席予約システム（パスワード保護）</title>
     <style>
-        /* CSSは前回と同様のため省略可、以下に最小限だけ記述 */
-        :root { --seat-bg: #fff; --seat-border: #333; --seat-selected: #e1f5fe; --seat-occupied: #ccc; --accent-color: #007bff; }
+        :root { --seat-bg: #fff; --seat-border: #333; --seat-occupied: #ccc; --accent-color: #007bff; }
         body { font-family: sans-serif; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .container { background: white; padding: 20px; border-radius: 10px; max-width: 500px; width: 100%; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h1 { text-align: center; border: 2px solid #333; padding: 5px; margin-bottom: 20px; }
+        
+        .admin-panel { 
+            margin-bottom: 15px; font-size: 14px; background: #fff3cd; padding: 10px; 
+            border-radius: 5px; border: 1px solid #ffeeba; display: flex; justify-content: space-between; align-items: center;
+        }
+
         .bus-frame { border: 2px solid #333; border-radius: 30px 30px 5px 5px; padding: 15px; background: #fff; }
         .row { display: grid; grid-template-columns: 30px 1fr 1fr 30px 1fr 1fr; gap: 5px; margin-bottom: 8px; align-items: center; }
         .last-row { grid-template-columns: 30px 1fr 1fr 1fr 1fr 1fr; }
-        .seat { border: 1px solid #333; height: 35px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; background: #fff; }
-        .seat.occupied { background: #ccc; cursor: not-allowed; }
+        
+        .seat { border: 1px solid #333; height: 35px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; transition: 0.2s; }
+        .seat.occupied { background: var(--seat-occupied); cursor: not-allowed; }
         .seat.auxiliary { border-style: dashed; }
-        .admin-controls { margin-bottom: 15px; font-size: 14px; background: #eee; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; }
-        .loading { color: red; font-weight: bold; text-align: center; margin-bottom: 10px; }
+        .seat.admin-view { font-weight: bold; font-size: 10px; color: #d9534f; }
+
+        .loading-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); 
+            display: none; justify-content: center; align-items: center; color: white; z-index: 1000;
+        }
     </style>
 </head>
 <body>
 
+<div id="loading" class="loading-overlay">通信中...</div>
+
 <div class="container">
     <h1>バス座席予約</h1>
 
-    <div id="loading" class="loading">データ読み込み中...</div>
-
-    <div class="admin-controls">
-        <label><input type="checkbox" id="adminToggle"> 管理者モード</label>
-        <button onclick="fetchSeatData()">最新に更新</button>
+    <div class="admin-panel">
+        <div>
+            <input type="checkbox" id="adminToggle"> 
+            <label for="adminToggle" style="cursor:pointer"><b>管理者モード</b> (実名表示)</label>
+        </div>
+        <button onclick="fetchSeatData()">更新</button>
     </div>
 
     <div class="bus-frame">
@@ -38,29 +51,34 @@
 </div>
 
 <script>
-    // 【重要】ここにGASで発行されたURLを貼り付けてください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzVDachY3WUbOLEMgnAYuI_uoVMMuxznHSld3MGpIReyT3M1x2vHGqNb0Fw2viI-00j/exec";
+    // ================= CONFIG =================
+    const GAS_URL = "ここにデプロイしたURLを貼り付ける";
+    const ADMIN_PASSWORD = "1234"; // ← 管理者パスワードをここに変更
+    // ==========================================
 
     const ROWS = 11;
     let seatData = {};
+    let isAdminAuthenticated = false;
 
-    // スプレッドシートから現在のデータを取得
+    // 初期化：スプレッドシートからデータを取得
     async function fetchSeatData() {
-        document.getElementById('loading').style.display = 'block';
+        toggleLoading(true);
         try {
             const response = await fetch(GAS_URL);
             seatData = await response.json();
             renderSeats();
         } catch (e) {
-            alert("データの取得に失敗しました。URLが正しいか確認してください。");
+            alert("データの取得に失敗しました。URLを確認してください。");
         }
-        document.getElementById('loading').style.display = 'none';
+        toggleLoading(false);
     }
 
     function renderSeats() {
         const container = document.getElementById('seatsContainer');
         container.innerHTML = '';
-        const isAdmin = document.getElementById('adminToggle').checked;
+        
+        // 管理者チェックが入っていて、認証済みの場合のみ実名を表示
+        const showNames = document.getElementById('adminToggle').checked && isAdminAuthenticated;
 
         for (let i = 1; i <= ROWS; i++) {
             const rowDiv = document.createElement('div');
@@ -78,39 +96,49 @@
                 
                 if (seatData[id]) {
                     seat.classList.add('occupied');
-                    seat.textContent = isAdmin ? seatData[id] : "済";
+                    if (showNames) {
+                        seat.textContent = seatData[id];
+                        seat.classList.add('admin-view');
+                    } else {
+                        seat.textContent = "済";
+                    }
                 } else {
-                    seat.textContent = "空";
+                    seat.textContent = "様";
                 }
 
-                seat.onclick = () => reserveSeat(id, seatData[id]);
+                seat.onclick = () => handleSeatClick(id, seatData[id]);
                 rowDiv.appendChild(seat);
             });
             container.appendChild(rowDiv);
         }
     }
 
-    async function reserveSeat(id, isOccupied) {
-        if (isOccupied) {
-            if (document.getElementById('adminToggle').checked) {
-                alert(`予約者: ${isOccupied}`);
-            }
+    async function handleSeatClick(id, currentOwner) {
+        // 管理者モードでの詳細確認
+        if (document.getElementById('adminToggle').checked && isAdminAuthenticated && currentOwner) {
+            alert(`座席 ${id}\n予約者: ${currentOwner} 様`);
             return;
         }
 
-        const name = prompt(`${id} 番の席を予約します。お名前を入力してください。`);
-        if (!name) return;
+        // 既に予約されている場合
+        if (currentOwner) {
+            alert("この席は既に予約されています。");
+            return;
+        }
 
-        document.getElementById('loading').style.display = 'block';
-        
+        // 新規予約
+        const name = prompt(`${id} 番の席を予約します。お名前を入力してください。`);
+        if (!name || name.trim() === "") return;
+
+        toggleLoading(true);
         try {
             const response = await fetch(GAS_URL, {
                 method: "POST",
-                body: JSON.stringify({ seatId: id, name: name })
+                body: JSON.stringify({ seatId: id, name: name.trim() })
             });
             const resJson = await response.json();
             if (resJson.result === "success") {
-                alert("予約完了！スプレッドシートに保存されました。");
+                alert("予約が完了し、スプレッドシートに保存されました。");
                 fetchSeatData();
             } else {
                 alert("エラー: " + resJson.message);
@@ -118,11 +146,33 @@
         } catch (e) {
             alert("送信に失敗しました。");
         }
-        document.getElementById('loading').style.display = 'none';
+        toggleLoading(false);
     }
 
-    document.getElementById('adminToggle').onchange = renderSeats;
-    fetchSeatData(); // 初回読み込み
+    // 管理者モードの切り替え
+    document.getElementById('adminToggle').addEventListener('change', function(e) {
+        if (e.target.checked) {
+            const pw = prompt("管理者パスワードを入力してください。");
+            if (pw === ADMIN_PASSWORD) {
+                isAdminAuthenticated = true;
+                renderSeats();
+            } else {
+                alert("パスワードが違います。");
+                e.target.checked = false;
+                isAdminAuthenticated = false;
+            }
+        } else {
+            isAdminAuthenticated = false;
+            renderSeats();
+        }
+    });
+
+    function toggleLoading(show) {
+        document.getElementById('loading').style.display = show ? 'flex' : 'none';
+    }
+
+    // 初回実行
+    fetchSeatData();
 </script>
 
 </body>
