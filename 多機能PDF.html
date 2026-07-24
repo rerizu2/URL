@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 分割・結合ツール</title>
+    <title>PDF 分割・結合・回転ツール</title>
     <!-- ライブラリの読み込み -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -13,31 +13,71 @@
             --secondary: #f39c12;
             --danger: #e74c3c;
             --success: #2ecc71;
+            --info: #9b59b6;
             --bg: #f4f7f6;
         }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #333; }
         .upload-area { border: 2px dashed var(--primary); padding: 40px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 20px; transition: 0.3s; }
         .upload-area:hover { background: #eef6ff; }
         .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; color: white; }
+        button { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; color: white; display: inline-flex; align-items: center; justify-content: center; }
         .btn-merge { background-color: var(--success); }
         .btn-zip { background-color: var(--secondary); }
         .btn-clear { background-color: var(--danger); }
+        .btn-preview { background-color: var(--info); }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border-bottom: 1px solid #ddd; padding: 12px; text-align: left; }
         th { background: #f8f9fa; }
-        .preview-name { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .status-badge { font-size: 0.8em; padding: 2px 8px; border-radius: 10px; background: #eee; }
+        .preview-name { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .actions { display: flex; gap: 5px; flex-wrap: wrap; }
+        .actions button { font-size: 11px; padding: 5px 10px; }
+
+        /* プレビューモーダルのスタイル */
+        #previewModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            width: 90%;
+            height: 90%;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+        #previewFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .close-modal {
+            background: var(--danger);
+            font-size: 20px;
+            padding: 5px 15px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>PDF 分割・結合ツール</h1>
+    <h1>PDF 管理ツール</h1>
 
     <div class="upload-area" id="dropZone">
         PDFファイルをドラッグ＆ドロップするか、クリックして選択してください
@@ -45,8 +85,9 @@
     </div>
 
     <div class="controls">
-        <button id="btnMerge" class="btn-merge" disabled>チェックした項目を結合</button>
-        <button id="btnZip" class="btn-zip" disabled>全てをZIPで保存(フォルダ化)</button>
+        <button id="btnMerge" class="btn-merge" disabled>チェック項目を結合保存</button>
+        <button id="btnMergePreview" class="btn-preview" disabled>結合プレビュー</button>
+        <button id="btnZip" class="btn-zip" disabled>全てをZIPで保存</button>
         <button id="btnClear" class="btn-clear">リストをクリア</button>
     </div>
 
@@ -55,7 +96,6 @@
             <tr>
                 <th><input type="checkbox" id="selectAll"></th>
                 <th>ファイル/ページ名</th>
-                <th>サイズ</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -63,22 +103,36 @@
     </table>
 </div>
 
+<!-- プレビュー用モーダル -->
+<div id="previewModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">プレビュー</h3>
+            <button class="close-modal" id="closeModal">×</button>
+        </div>
+        <iframe id="previewFrame"></iframe>
+    </div>
+</div>
+
 <script>
-    const { PDFDocument } = PDFLib;
-    let fileItems = []; // 処理中のファイルを管理
+    const { PDFDocument, degrees } = PDFLib;
+    let fileItems = [];
 
     const fileInput = document.getElementById('fileInput');
     const dropZone = document.getElementById('dropZone');
     const fileList = document.getElementById('fileList');
     const btnMerge = document.getElementById('btnMerge');
+    const btnMergePreview = document.getElementById('btnMergePreview');
     const btnZip = document.getElementById('btnZip');
     const btnClear = document.getElementById('btnClear');
     const selectAll = document.getElementById('selectAll');
+    
+    const previewModal = document.getElementById('previewModal');
+    const previewFrame = document.getElementById('previewFrame');
+    const closeModal = document.getElementById('closeModal');
+    const modalTitle = document.getElementById('modalTitle');
 
-    // クリックでファイル選択
     dropZone.onclick = () => fileInput.click();
-
-    // ドラッグ＆ドロップ処理
     dropZone.ondragover = (e) => { e.preventDefault(); dropZone.style.background = "#eef6ff"; };
     dropZone.ondragleave = () => { dropZone.style.background = "transparent"; };
     dropZone.ondrop = (e) => {
@@ -88,7 +142,6 @@
 
     fileInput.onchange = (e) => handleFiles(e.target.files);
 
-    // ファイル読み込み処理
     async function handleFiles(files) {
         for (let file of files) {
             if (file.type !== 'application/pdf') continue;
@@ -102,7 +155,6 @@
         render();
     }
 
-    // UIの更新
     function render() {
         fileList.innerHTML = '';
         fileItems.forEach((item, index) => {
@@ -110,19 +162,60 @@
             tr.innerHTML = `
                 <td><input type="checkbox" class="file-check" data-index="${index}"></td>
                 <td class="preview-name">${item.name}</td>
-                <td>${(item.data.byteLength / 1024).toFixed(1)} KB</td>
-                <td>
-                    <button onclick="splitPdf(${index})" style="background:var(--primary); font-size:12px;">ページ分割</button>
-                    <button onclick="downloadSingle(${index})" style="background:#555; font-size:12px;">保存</button>
+                <td class="actions">
+                    <button onclick="previewItem(${index})" style="background:var(--info)">プレビュー</button>
+                    <button onclick="rotatePdf(${index})" style="background:var(--secondary)">右90°回転</button>
+                    <button onclick="splitPdf(${index})" style="background:var(--primary)">ページ分割</button>
+                    <button onclick="downloadSingle(${index})" style="background:#555">保存</button>
+                    <button onclick="removeItem(${index})" style="background:var(--danger)">削除</button>
                 </td>
             `;
             fileList.appendChild(tr);
         });
-        btnMerge.disabled = fileItems.length < 1;
-        btnZip.disabled = fileItems.length < 1;
+        const hasItems = fileItems.length > 0;
+        btnMerge.disabled = fileItems.length < 2;
+        btnMergePreview.disabled = fileItems.length < 2;
+        btnZip.disabled = !hasItems;
     }
 
-    // PDFの分割機能
+    // 回転機能
+    async function rotatePdf(index) {
+        const item = fileItems[index];
+        const pdfDoc = await PDFDocument.load(item.data);
+        const pages = pdfDoc.getPages();
+        
+        pages.forEach(page => {
+            const currentRotation = page.getRotation().angle;
+            page.setRotation(degrees((currentRotation + 90) % 360));
+        });
+
+        item.data = await pdfDoc.save();
+        render();
+        // もしプレビュー中なら更新
+        if (previewModal.style.display === 'flex') previewItem(index);
+    }
+
+    // プレビュー機能
+    function previewItem(index) {
+        const item = fileItems[index];
+        openPreview(item.data, item.name);
+    }
+
+    async function openPreview(data, title) {
+        const blob = new Blob([data], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        previewFrame.src = url;
+        modalTitle.innerText = title;
+        previewModal.style.display = 'flex';
+    }
+
+    closeModal.onclick = () => {
+        previewModal.style.display = 'none';
+        URL.revokeObjectURL(previewFrame.src);
+        previewFrame.src = "";
+    };
+
+    // 分割機能
     async function splitPdf(index) {
         const item = fileItems[index];
         const srcDoc = await PDFDocument.load(item.data);
@@ -141,25 +234,23 @@
             const pdfBytes = await newDoc.save();
             
             newItems.push({
-                name: `${item.name.replace('.pdf', '')}_page_${i + 1}.pdf`,
+                name: `${item.name.replace('.pdf', '')}_p${i + 1}.pdf`,
                 data: pdfBytes,
                 id: Date.now() + Math.random()
             });
         }
-
-        // 元のファイルを消して分割したものを挿入
         fileItems.splice(index, 1, ...newItems);
         render();
     }
 
-    // PDFの結合機能
-    btnMerge.onclick = async () => {
+    // 結合処理の共通化
+    async function generateMergedPdf() {
         const selectedIndexes = Array.from(document.querySelectorAll('.file-check:checked'))
                                      .map(el => parseInt(el.dataset.index));
         
         if (selectedIndexes.length < 2) {
-            alert("結合するには2つ以上の項目を選択してください。");
-            return;
+            alert("2つ以上の項目を選択してください。");
+            return null;
         }
 
         const mergedPdf = await PDFDocument.create();
@@ -168,30 +259,36 @@
             const copiedPages = await mergedPdf.copyPages(srcDoc, srcDoc.getPageIndices());
             copiedPages.forEach(page => mergedPdf.addPage(page));
         }
+        return await mergedPdf.save();
+    }
 
-        const mergedBytes = await mergedPdf.save();
-        const blob = new Blob([mergedBytes], { type: 'application/pdf' });
-        saveAs(blob, "merged_document.pdf");
+    btnMerge.onclick = async () => {
+        const bytes = await generateMergedPdf();
+        if (bytes) saveAs(new Blob([bytes], { type: 'application/pdf' }), "merged.pdf");
     };
 
-    // ZIPにまとめてダウンロード (フォルダ化)
+    btnMergePreview.onclick = async () => {
+        const bytes = await generateMergedPdf();
+        if (bytes) openPreview(bytes, "結合プレビュー");
+    };
+
     btnZip.onclick = async () => {
         const zip = new JSZip();
-        fileItems.forEach(item => {
-            zip.file(item.name, item.data);
-        });
+        fileItems.forEach(item => zip.file(item.name, item.data));
         const content = await zip.generateAsync({ type: "blob" });
         saveAs(content, "pdf_collection.zip");
     };
 
-    // 単一ダウンロード
     function downloadSingle(index) {
         const item = fileItems[index];
-        const blob = new Blob([item.data], { type: 'application/pdf' });
-        saveAs(blob, item.name);
+        saveAs(new Blob([item.data], { type: 'application/pdf' }), item.name);
     }
 
-    // ヘルパー：保存
+    function removeItem(index) {
+        fileItems.splice(index, 1);
+        render();
+    }
+
     function saveAs(blob, filename) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -201,15 +298,15 @@
         URL.revokeObjectURL(url);
     }
 
-    // 全選択
     selectAll.onchange = (e) => {
         document.querySelectorAll('.file-check').forEach(cb => cb.checked = e.target.checked);
     };
 
-    // クリア
     btnClear.onclick = () => {
-        fileItems = [];
-        render();
+        if(confirm("リストをクリアしますか？")) {
+            fileItems = [];
+            render();
+        }
     };
 </script>
 
