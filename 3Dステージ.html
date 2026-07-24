@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Cyber Edo Matsuri - Stone Pavement Edition</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #0b0005; }
+        #ui {
+            position: absolute; bottom: 20px; width: 100%; text-align: center;
+            color: #ffffff; font-family: serif; font-size: 26px;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff4400;
+            pointer-events: none; letter-spacing: 0.6em; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">極彩色・八百万大祭</div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+    // --- シーン設定 ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0005);
+    scene.fog = new THREE.FogExp2(0x1a0508, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 7, 25);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 4, 0);
+
+    // --- ブルーム設定 ---
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+    bloomPass.strength = 1.8; 
+    composer.addPass(bloomPass);
+
+    // --- 地面 (石畳テクスチャの動的生成) ---
+    function createStoneTexture() {
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // 目地（隙間）の色
+        ctx.fillStyle = '#050201';
+        ctx.fillRect(0, 0, size, size);
+
+        const rows = 8;
+        const cols = 8;
+        const w = size / cols;
+        const h = size / rows;
+
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                // 石の色をランダムに変化（暗い灰色〜茶色）
+                const shade = 15 + Math.random() * 20;
+                ctx.fillStyle = `rgb(${shade + 5}, ${shade}, ${shade - 2})`;
+                // 角を少し丸めた石を描画
+                ctx.fillRect(j * w + 2, i * h + 2, w - 4, h - 4);
+                
+                // 石の表面にわずかな質感を加える
+                ctx.fillStyle = `rgba(255,255,255,0.03)`;
+                ctx.fillRect(j * w + 5, i * h + 5, w/2, h/2);
+            }
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(15, 15); // 模様を繰り返す
+        return tex;
+    }
+
+    const stoneTex = createStoneTexture();
+    const groundGeo = new THREE.PlaneGeometry(300, 300);
+    const groundMat = new THREE.MeshStandardMaterial({ 
+        map: stoneTex,
+        bumpMap: stoneTex, // 石の模様を凹凸として使用
+        bumpScale: 0.15,
+        roughness: 0.08, 
+        metalness: 0.4 
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    // --- 要素1: 彩色された江戸建築群 (朱塗り＋金窓) ---
+    function createDetailedBuilding(x, z, levels) {
+        const group = new THREE.Group();
+        const floorH = 3.2;
+        const width = 5;
+
+        for (let i = 0; i < levels; i++) {
+            const w = width - (i * 0.4);
+            // 朱色の柱
+            const frame = new THREE.Mesh(
+                new THREE.BoxGeometry(w + 0.1, floorH, w + 0.1),
+                new THREE.MeshStandardMaterial({ color: 0xaa0000 })
+            );
+            frame.position.y = i * floorH + floorH/2;
+            group.add(frame);
+
+            // 輝く金色の障子窓
+            const winMat = new THREE.MeshBasicMaterial({ color: 0xffcc33 });
+            for(let side=0; side<4; side++) {
+                const win = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.7, floorH * 0.4), winMat);
+                const angle = (side * Math.PI) / 2;
+                win.position.set(Math.cos(angle)*(w/2+0.07), i*floorH+floorH/2, Math.sin(angle)*(w/2+0.07));
+                win.rotation.y = -angle + Math.PI/2;
+                group.add(win);
+            }
+
+            // 屋根
+            const roof = new THREE.Mesh(
+                new THREE.CylinderGeometry(w*0.1, w*1.3, 0.7, 4),
+                new THREE.MeshStandardMaterial({ color: 0x0a0a0a })
+            );
+            roof.position.y = (i + 1) * floorH;
+            roof.rotation.y = Math.PI/4;
+            group.add(roof);
+        }
+        group.position.set(x, 0, z);
+        scene.add(group);
+    }
+
+    // 街の生成
+    for (let z = -60; z < 40; z += 12) {
+        for (let x = -40; x <= 40; x += 15) {
+            if (Math.abs(x) < 8) continue;
+            createDetailedBuilding(x + (Math.random()-0.5)*4, z, Math.floor(Math.random()*3)+1);
+        }
+    }
+
+    // --- 要素2: 桜の木 ---
+    function createSakura(x, z) {
+        const tree = new THREE.Group();
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.3, 4), new THREE.MeshStandardMaterial({color:0x220a05}));
+        tree.add(trunk);
+        const leaves = new THREE.Mesh(
+            new THREE.SphereGeometry(2, 8, 8),
+            new THREE.MeshStandardMaterial({ color: 0xff66aa, emissive: 0xff0066, emissiveIntensity: 1 })
+        );
+        leaves.position.y = 4;
+        tree.add(leaves);
+        tree.position.set(x, 1, z);
+        scene.add(tree);
+    }
+    for(let i=0; i<12; i++) createSakura((Math.random()-0.5)*40, (Math.random()-0.5)*80);
+
+    // --- 要素3: 多色ネオン提灯 ---
+    const lanternColors = [0xff4400, 0x00ffff, 0xff00ff, 0xffff00, 0x00ff88];
+    function createColoredLanterns() {
+        for(let i=0; i<250; i++) {
+            const color = lanternColors[Math.floor(Math.random()*lanternColors.length)];
+            const lanMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 2 });
+            const lan = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), lanMat);
+            const side = Math.random() > 0.5 ? 1 : -1;
+            lan.position.set((8 + Math.random()*15)*side, 5 + Math.random()*10, (Math.random()-0.5)*100);
+            scene.add(lan);
+        }
+    }
+    createColoredLanterns();
+
+    // --- 要素4: 彩り豊かな垂れ幕 ---
+    const streamerColors = [0xff1144, 0xffaa00, 0x00ffcc, 0xaa00ff, 0x0088ff];
+    function createVibrantBanners() {
+        for(let i=0; i<25; i++) {
+            const z = (Math.random() - 0.5) * 100;
+            const curve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-25, 12 + Math.random()*3, z),
+                new THREE.Vector3(0, 8 + Math.random()*3, z + (Math.random()-0.5)*15),
+                new THREE.Vector3(25, 12 + Math.random()*3, z)
+            ]);
+            const tubeMat = new THREE.MeshStandardMaterial({ 
+                color: streamerColors[i % streamerColors.length], 
+                emissive: streamerColors[i % streamerColors.length],
+                emissiveIntensity: 0.6
+            });
+            scene.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 32, 0.12, 8), tubeMat));
+        }
+    }
+    createVibrantBanners();
+
+    // --- 要素5: 回遊する光の魚 ---
+    const neonFish = [];
+    for(let i=0; i<60; i++) {
+        const color = streamerColors[Math.floor(Math.random()*streamerColors.length)];
+        const mesh = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.6, 3), new THREE.MeshBasicMaterial({color: color}));
+        scene.add(mesh);
+        neonFish.push({
+            mesh: mesh, angle: Math.random()*Math.PI*2,
+            radius: 12 + Math.random()*15, y: 8 + Math.random()*12,
+            speed: 0.005 + Math.random()*0.01
+        });
+    }
+
+    // --- ライト設定 ---
+    scene.add(new THREE.AmbientLight(0xff44aa, 0.4));
+    const mainLight = new THREE.DirectionalLight(0xffaa44, 1.2);
+    mainLight.position.set(0, 30, 10);
+    scene.add(mainLight);
+
+    // --- アニメーション ---
+    function animate() {
+        requestAnimationFrame(animate);
+        const time = Date.now() * 0.001;
+
+        neonFish.forEach(f => {
+            f.angle += f.speed;
+            f.mesh.position.set(Math.cos(f.angle)*f.radius, f.y + Math.sin(time + f.angle), Math.sin(f.angle)*f.radius);
+            f.mesh.lookAt(0, 10, 0);
+        });
+
+        controls.update();
+        composer.render();
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>
