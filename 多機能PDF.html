@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 分割・結合・回転ツール</title>
+    <title>PDF 管理ツール (順序変更対応)</title>
     <!-- ライブラリの読み込み -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -14,64 +14,53 @@
             --danger: #e74c3c;
             --success: #2ecc71;
             --info: #9b59b6;
+            --dark: #34495e;
             --bg: #f4f7f6;
         }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #333; }
+        
         .upload-area { border: 2px dashed var(--primary); padding: 40px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 20px; transition: 0.3s; }
         .upload-area:hover { background: #eef6ff; }
-        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        button { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; color: white; display: inline-flex; align-items: center; justify-content: center; }
+        
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; background: #eee; padding: 15px; border-radius: 8px; }
+        
+        button { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+        
         .btn-merge { background-color: var(--success); }
         .btn-zip { background-color: var(--secondary); }
         .btn-clear { background-color: var(--danger); }
-        .btn-preview { background-color: var(--info); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-preview-main { background-color: var(--info); }
         
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border-bottom: 1px solid #ddd; padding: 12px; text-align: left; }
+        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background: #f8f9fa; }
-        .preview-name { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .actions { display: flex; gap: 5px; flex-wrap: wrap; }
-        .actions button { font-size: 11px; padding: 5px 10px; }
+        
+        .preview-name { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+        
+        /* 操作ボタン群 */
+        .actions { display: flex; gap: 4px; flex-wrap: wrap; }
+        .btn-move { background-color: var(--dark); padding: 5px 8px; }
+        .btn-rotate { background-color: var(--secondary); }
+        .btn-split { background-color: var(--primary); }
+        .btn-del { background-color: var(--danger); }
+        .btn-save { background-color: #555; }
+        .btn-view { background-color: var(--info); }
 
-        /* プレビューモーダルのスタイル */
+        /* プレビューモーダル */
         #previewModal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8);
             z-index: 1000;
-            justify-content: center;
-            align-items: center;
+            justify-content: center; align-items: center;
         }
-        .modal-content {
-            background: white;
-            width: 90%;
-            height: 90%;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .modal-header {
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #ddd;
-        }
-        #previewFrame {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        .close-modal {
-            background: var(--danger);
-            font-size: 20px;
-            padding: 5px 15px;
-        }
+        .modal-content { background: white; width: 90%; height: 90%; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
+        #previewFrame { width: 100%; height: 100%; border: none; }
     </style>
 </head>
 <body>
@@ -85,9 +74,10 @@
     </div>
 
     <div class="controls">
+        <div style="font-weight:bold; width:100%; margin-bottom:5px;">一括操作:</div>
         <button id="btnMerge" class="btn-merge" disabled>チェック項目を結合保存</button>
-        <button id="btnMergePreview" class="btn-preview" disabled>結合プレビュー</button>
-        <button id="btnZip" class="btn-zip" disabled>全てをZIPで保存</button>
+        <button id="btnMergePreview" class="btn-preview-main" disabled>結合プレビュー</button>
+        <button id="btnZip" class="btn-zip" disabled>全てをZIP保存</button>
         <button id="btnClear" class="btn-clear">リストをクリア</button>
     </div>
 
@@ -95,6 +85,7 @@
         <thead>
             <tr>
                 <th><input type="checkbox" id="selectAll"></th>
+                <th>順序</th>
                 <th>ファイル/ページ名</th>
                 <th>操作</th>
             </tr>
@@ -103,12 +94,11 @@
     </table>
 </div>
 
-<!-- プレビュー用モーダル -->
 <div id="previewModal">
     <div class="modal-content">
         <div class="modal-header">
             <h3 id="modalTitle">プレビュー</h3>
-            <button class="close-modal" id="closeModal">×</button>
+            <button onclick="closePreview()" style="background:var(--danger); font-size:20px;">×</button>
         </div>
         <iframe id="previewFrame"></iframe>
     </div>
@@ -124,22 +114,17 @@
     const btnMerge = document.getElementById('btnMerge');
     const btnMergePreview = document.getElementById('btnMergePreview');
     const btnZip = document.getElementById('btnZip');
-    const btnClear = document.getElementById('btnClear');
     const selectAll = document.getElementById('selectAll');
     
     const previewModal = document.getElementById('previewModal');
     const previewFrame = document.getElementById('previewFrame');
-    const closeModal = document.getElementById('closeModal');
     const modalTitle = document.getElementById('modalTitle');
 
+    // 1. ファイル読み込み関連
     dropZone.onclick = () => fileInput.click();
     dropZone.ondragover = (e) => { e.preventDefault(); dropZone.style.background = "#eef6ff"; };
     dropZone.ondragleave = () => { dropZone.style.background = "transparent"; };
-    dropZone.ondrop = (e) => {
-        e.preventDefault();
-        handleFiles(e.dataTransfer.files);
-    };
-
+    dropZone.ondrop = (e) => { e.preventDefault(); handleFiles(e.dataTransfer.files); };
     fileInput.onchange = (e) => handleFiles(e.target.files);
 
     async function handleFiles(files) {
@@ -149,59 +134,70 @@
             fileItems.push({
                 name: file.name,
                 data: arrayBuffer,
-                id: Date.now() + Math.random()
             });
         }
         render();
     }
 
+    // 2. 描画機能 (順序変更ボタン追加)
     function render() {
         fileList.innerHTML = '';
         fileItems.forEach((item, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><input type="checkbox" class="file-check" data-index="${index}"></td>
-                <td class="preview-name">${item.name}</td>
+                <td>
+                    <button class="btn-move" onclick="moveItem(${index}, -1)" ${index === 0 ? 'disabled' : ''}>↑</button>
+                    <button class="btn-move" onclick="moveItem(${index}, 1)" ${index === fileItems.length - 1 ? 'disabled' : ''}>↓</button>
+                </td>
+                <td class="preview-name" title="${item.name}">${item.name}</td>
                 <td class="actions">
-                    <button onclick="previewItem(${index})" style="background:var(--info)">プレビュー</button>
-                    <button onclick="rotatePdf(${index})" style="background:var(--secondary)">右90°回転</button>
-                    <button onclick="splitPdf(${index})" style="background:var(--primary)">ページ分割</button>
-                    <button onclick="downloadSingle(${index})" style="background:#555">保存</button>
-                    <button onclick="removeItem(${index})" style="background:var(--danger)">削除</button>
+                    <button class="btn-view" onclick="previewItem(${index})">表示</button>
+                    <button class="btn-rotate" onclick="rotatePdf(${index})">右90°回転</button>
+                    <button class="btn-split" onclick="splitPdf(${index})">ページ分割</button>
+                    <button class="btn-save" onclick="downloadSingle(${index})">保存</button>
+                    <button class="btn-del" onclick="removeItem(${index})">削除</button>
                 </td>
             `;
             fileList.appendChild(tr);
         });
-        const hasItems = fileItems.length > 0;
+        
         btnMerge.disabled = fileItems.length < 2;
         btnMergePreview.disabled = fileItems.length < 2;
-        btnZip.disabled = !hasItems;
+        btnZip.disabled = fileItems.length === 0;
     }
 
-    // 回転機能
+    // 3. 順序変更ロジック
+    function moveItem(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= fileItems.length) return;
+        
+        // 配列の要素を入れ替え
+        const temp = fileItems[index];
+        fileItems[index] = fileItems[newIndex];
+        fileItems[newIndex] = temp;
+        
+        render();
+    }
+
+    // 4. 回転・プレビュー・分割・保存の各機能
     async function rotatePdf(index) {
         const item = fileItems[index];
         const pdfDoc = await PDFDocument.load(item.data);
         const pages = pdfDoc.getPages();
-        
         pages.forEach(page => {
             const currentRotation = page.getRotation().angle;
             page.setRotation(degrees((currentRotation + 90) % 360));
         });
-
         item.data = await pdfDoc.save();
         render();
-        // もしプレビュー中なら更新
-        if (previewModal.style.display === 'flex') previewItem(index);
     }
 
-    // プレビュー機能
     function previewItem(index) {
-        const item = fileItems[index];
-        openPreview(item.data, item.name);
+        openPreview(fileItems[index].data, fileItems[index].name);
     }
 
-    async function openPreview(data, title) {
+    function openPreview(data, title) {
         const blob = new Blob([data], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         previewFrame.src = url;
@@ -209,49 +205,38 @@
         previewModal.style.display = 'flex';
     }
 
-    closeModal.onclick = () => {
+    function closePreview() {
         previewModal.style.display = 'none';
         URL.revokeObjectURL(previewFrame.src);
         previewFrame.src = "";
-    };
+    }
 
-    // 分割機能
     async function splitPdf(index) {
         const item = fileItems[index];
         const srcDoc = await PDFDocument.load(item.data);
         const pageCount = srcDoc.getPageCount();
-
-        if (pageCount <= 1) {
-            alert("このPDFは既に1ページのみです。");
-            return;
-        }
+        if (pageCount <= 1) return alert("1ページのみのPDFです");
 
         const newItems = [];
         for (let i = 0; i < pageCount; i++) {
             const newDoc = await PDFDocument.create();
             const [copiedPage] = await newDoc.copyPages(srcDoc, [i]);
             newDoc.addPage(copiedPage);
-            const pdfBytes = await newDoc.save();
-            
             newItems.push({
                 name: `${item.name.replace('.pdf', '')}_p${i + 1}.pdf`,
-                data: pdfBytes,
-                id: Date.now() + Math.random()
+                data: await newDoc.save()
             });
         }
         fileItems.splice(index, 1, ...newItems);
         render();
     }
 
-    // 結合処理の共通化
     async function generateMergedPdf() {
         const selectedIndexes = Array.from(document.querySelectorAll('.file-check:checked'))
-                                     .map(el => parseInt(el.dataset.index));
+                                     .map(el => parseInt(el.dataset.index))
+                                     .sort((a, b) => a - b); // 配列の順番通りに結合
         
-        if (selectedIndexes.length < 2) {
-            alert("2つ以上の項目を選択してください。");
-            return null;
-        }
+        if (selectedIndexes.length < 2) return alert("2つ以上選択してください");
 
         const mergedPdf = await PDFDocument.create();
         for (let idx of selectedIndexes) {
@@ -274,14 +259,12 @@
 
     btnZip.onclick = async () => {
         const zip = new JSZip();
-        fileItems.forEach(item => zip.file(item.name, item.data));
-        const content = await zip.generateAsync({ type: "blob" });
-        saveAs(content, "pdf_collection.zip");
+        fileItems.forEach((item, i) => zip.file(`${i+1}_${item.name}`, item.data));
+        saveAs(await zip.generateAsync({ type: "blob" }), "pdfs.zip");
     };
 
     function downloadSingle(index) {
-        const item = fileItems[index];
-        saveAs(new Blob([item.data], { type: 'application/pdf' }), item.name);
+        saveAs(new Blob([fileItems[index].data], { type: 'application/pdf' }), fileItems[index].name);
     }
 
     function removeItem(index) {
@@ -302,11 +285,8 @@
         document.querySelectorAll('.file-check').forEach(cb => cb.checked = e.target.checked);
     };
 
-    btnClear.onclick = () => {
-        if(confirm("リストをクリアしますか？")) {
-            fileItems = [];
-            render();
-        }
+    document.getElementById('btnClear').onclick = () => {
+        if(confirm("クリアしますか？")) { fileItems = []; render(); }
     };
 </script>
 
