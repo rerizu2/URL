@@ -3,44 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube 同期プレイヤー</title>
+    <title>ID指定型 YouTube同期プレイヤー</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { max-width: 800px; width: 100%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
-        #player { width: 100%; aspect-ratio: 16 / 9; background: #000; margin-top: 15px; }
-        .controls { margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-        input[type="text"] { width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        button { padding: 10px 20px; cursor: pointer; background: #ff0000; color: white; border: none; border-radius: 5px; font-weight: bold; }
-        button:hover { background: #cc0000; }
-        .status { margin-top: 10px; font-size: 0.9em; color: #666; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { max-width: 800px; width: 100%; background: #2d2d2d; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+        
+        .room-setup { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #444; }
+        .player-area { display: none; } /* ID入力前は非表示 */
+
+        input[type="text"] { padding: 12px; border: none; border-radius: 5px; width: 60%; margin-bottom: 10px; }
+        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; transition: 0.3s; margin: 5px; }
+        
+        .btn-join { background: #28a745; color: white; }
+        .btn-load { background: #ff0000; color: white; }
+        .btn-control { background: #444; color: white; }
+        button:hover { opacity: 0.8; }
+
+        #player { width: 100%; aspect-ratio: 16 / 9; background: #000; margin: 15px 0; border-radius: 8px; }
+        .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; background: #444; font-size: 0.8em; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>YouTube 同期プレイヤー</h2>
-    
-    <div class="input-area">
-        <input type="text" id="youtubeUrl" placeholder="YouTubeのURLを入力 (例: https://www.youtube.com/watch?v=xxxxxx)">
-        <button onclick="loadNewVideo()">動画を読み込む</button>
+    <h2>YouTube Sync Room</h2>
+
+    <!-- 1. ルーム設定エリア -->
+    <div id="roomSetup" class="room-setup">
+        <input type="text" id="roomIdInput" placeholder="ルームIDを入力 (例: party777)">
+        <button class="btn-join" onclick="joinRoom()">ルームに入る / 作成</button>
+        <p style="font-size: 0.8em; color: #aaa;">※同じIDを入れた端末同士が同期されます</p>
     </div>
 
-    <div id="player"></div>
+    <!-- 2. プレイヤーエリア (最初は隠す) -->
+    <div id="playerArea" class="player-area">
+        <div class="status-badge" id="currentRoomDisplay">Room: ---</div>
+        
+        <div class="input-group">
+            <input type="text" id="youtubeUrl" placeholder="YouTubeのURLを入力">
+            <button class="btn-load" onclick="loadNewVideo()">動画を変更</button>
+        </div>
 
-    <div class="controls">
-        <button onclick="sendControl('play')">再生</button>
-        <button onclick="sendControl('pause')">一時停止</button>
-        <button onclick="sendControl('sync')" style="background: #555;">位置を強制同期</button>
+        <div id="player"></div>
+
+        <div class="controls">
+            <button class="btn-control" onclick="sendControl('play')">▶ 再生</button>
+            <button class="btn-control" onclick="sendControl('pause')">❚❚ 一時停止</button>
+            <button class="btn-control" onclick="sendControl('sync')">🔄 強制同期</button>
+        </div>
+        <div id="status" style="margin-top:10px; color:#888;">待機中...</div>
     </div>
-    <div id="status" class="status">準備中...</div>
 </div>
 
-<!-- YouTube API -->
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  import { getDatabase, ref, set, onValue, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
   // --- Firebase設定 (自分のものに書き換えてください) ---
   const firebaseConfig = {
@@ -55,40 +74,56 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
-  const syncRef = ref(db, 'youtubeSync');
-
+  
   let player;
-  let isReceiving = false; // ループ防止フラグ
+  let currentRoomId = null;
+  let syncRef = null;
+  let isReceiving = false;
 
-  // 1. YouTube Playerの初期化
+  // YouTubeプレイヤーの初期準備
   window.onYouTubeIframeAPIReady = () => {
     player = new YT.Player('player', {
       height: '360',
       width: '640',
-      videoId: 'dQw4w9WgXcQ', // 初期動画
+      videoId: 'dQw4w9WgXcQ', 
       playerVars: { 'playsinline': 1 },
-      events: {
-        'onReady': onPlayerReady,
-      }
+      events: { 'onReady': () => console.log("Player Ready") }
     });
   };
 
-  function onPlayerReady() {
-    document.getElementById('status').innerText = "同期システム稼働中";
-    
-    // Firebaseのデータ変更を監視
+  // ルームに参加する関数
+  window.joinRoom = () => {
+    const idInput = document.getElementById('roomIdInput').value.trim();
+    if (!idInput) return alert("IDを入力してください");
+
+    // 以前のリスナーがあれば解除
+    if (syncRef) off(syncRef);
+
+    currentRoomId = idInput;
+    syncRef = ref(db, 'rooms/' + currentRoomId);
+
+    // 表示切り替え
+    document.getElementById('roomSetup').style.display = 'none';
+    document.getElementById('playerArea').style.display = 'block';
+    document.getElementById('currentRoomDisplay').innerText = "Room ID: " + currentRoomId;
+
+    // そのルームのデータ監視開始
+    listenToRoom();
+  };
+
+  function listenToRoom() {
     onValue(syncRef, (snapshot) => {
       const data = snapshot.val();
-      if (!data) return;
+      if (!data || !player) return;
 
-      isReceiving = true; // 外部からの更新中
+      isReceiving = true;
       
-      // 動画IDが違えば読み込み
+      // 動画IDの同期
       if (player.getVideoData().video_id !== data.videoId) {
         player.loadVideoById(data.videoId, data.currentTime);
       }
 
-      // 再生位置の補正（ラグ考慮）
+      // 時間と再生状態の同期
       const delay = (Date.now() - data.timestamp) / 1000;
       const targetTime = data.currentTime + (data.command === 'play' ? delay : 0);
       
@@ -106,9 +141,9 @@
     });
   }
 
-  // 2. 他の端末へ命令を送信
+  // 操作の送信
   window.sendControl = (command) => {
-    if (!player) return;
+    if (!currentRoomId || !player) return;
     set(syncRef, {
       command: command,
       videoId: player.getVideoData().video_id,
@@ -117,7 +152,7 @@
     });
   };
 
-  // 3. 新しい動画URLを解析して送信
+  // 新しい動画の読み込み
   window.loadNewVideo = () => {
     const url = document.getElementById('youtubeUrl').value;
     const videoId = extractVideoId(url);
@@ -128,8 +163,6 @@
         currentTime: 0,
         timestamp: Date.now()
       });
-    } else {
-      alert("有効なYouTube URLを入力してください");
     }
   };
 
@@ -139,6 +172,5 @@
     return (match && match[2].length === 11) ? match[2] : null;
   }
 </script>
-
 </body>
 </html>
