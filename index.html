@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube 同期プレイヤー</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { max-width: 800px; width: 100%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        #player { width: 100%; aspect-ratio: 16 / 9; background: #000; margin-top: 15px; }
+        .controls { margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        input[type="text"] { width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 20px; cursor: pointer; background: #ff0000; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        button:hover { background: #cc0000; }
+        .status { margin-top: 10px; font-size: 0.9em; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>YouTube 同期プレイヤー</h2>
+    
+    <div class="input-area">
+        <input type="text" id="youtubeUrl" placeholder="YouTubeのURLを入力 (例: https://www.youtube.com/watch?v=xxxxxx)">
+        <button onclick="loadNewVideo()">動画を読み込む</button>
+    </div>
+
+    <div id="player"></div>
+
+    <div class="controls">
+        <button onclick="sendControl('play')">再生</button>
+        <button onclick="sendControl('pause')">一時停止</button>
+        <button onclick="sendControl('sync')" style="background: #555;">位置を強制同期</button>
+    </div>
+    <div id="status" class="status">準備中...</div>
+</div>
+
+<!-- YouTube API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  // --- Firebase設定 (自分のものに書き換えてください) ---
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const syncRef = ref(db, 'youtubeSync');
+
+  let player;
+  let isReceiving = false; // ループ防止フラグ
+
+  // 1. YouTube Playerの初期化
+  window.onYouTubeIframeAPIReady = () => {
+    player = new YT.Player('player', {
+      height: '360',
+      width: '640',
+      videoId: 'dQw4w9WgXcQ', // 初期動画
+      playerVars: { 'playsinline': 1 },
+      events: {
+        'onReady': onPlayerReady,
+      }
+    });
+  };
+
+  function onPlayerReady() {
+    document.getElementById('status').innerText = "同期システム稼働中";
+    
+    // Firebaseのデータ変更を監視
+    onValue(syncRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+
+      isReceiving = true; // 外部からの更新中
+      
+      // 動画IDが違えば読み込み
+      if (player.getVideoData().video_id !== data.videoId) {
+        player.loadVideoById(data.videoId, data.currentTime);
+      }
+
+      // 再生位置の補正（ラグ考慮）
+      const delay = (Date.now() - data.timestamp) / 1000;
+      const targetTime = data.currentTime + (data.command === 'play' ? delay : 0);
+      
+      if (Math.abs(player.getCurrentTime() - targetTime) > 2) {
+        player.seekTo(targetTime, true);
+      }
+
+      if (data.command === 'play') {
+        player.playVideo();
+      } else if (data.command === 'pause') {
+        player.pauseVideo();
+      }
+
+      setTimeout(() => { isReceiving = false; }, 1000);
+    });
+  }
+
+  // 2. 他の端末へ命令を送信
+  window.sendControl = (command) => {
+    if (!player) return;
+    set(syncRef, {
+      command: command,
+      videoId: player.getVideoData().video_id,
+      currentTime: player.getCurrentTime(),
+      timestamp: Date.now()
+    });
+  };
+
+  // 3. 新しい動画URLを解析して送信
+  window.loadNewVideo = () => {
+    const url = document.getElementById('youtubeUrl').value;
+    const videoId = extractVideoId(url);
+    if (videoId) {
+      set(syncRef, {
+        command: 'play',
+        videoId: videoId,
+        currentTime: 0,
+        timestamp: Date.now()
+      });
+    } else {
+      alert("有効なYouTube URLを入力してください");
+    }
+  };
+
+  function extractVideoId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  }
+</script>
+
+</body>
+</html>
