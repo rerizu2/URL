@@ -3,174 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ID指定型 YouTube同期プレイヤー</title>
+    <title>ID指定 画面レコーダー</title>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #1a1a1a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { max-width: 800px; width: 100%; background: #2d2d2d; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { max-width: 800px; width: 100%; background: #1e1e1e; padding: 30px; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); text-align: center; }
         
-        .room-setup { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #444; }
-        .player-area { display: none; } /* ID入力前は非表示 */
-
-        input[type="text"] { padding: 12px; border: none; border-radius: 5px; width: 60%; margin-bottom: 10px; }
-        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; transition: 0.3s; margin: 5px; }
+        .setup-area { margin-bottom: 20px; }
+        input[type="text"] { padding: 12px; border: none; border-radius: 5px; width: 50%; background: #333; color: white; margin-bottom: 10px; }
         
-        .btn-join { background: #28a745; color: white; }
-        .btn-load { background: #ff0000; color: white; }
-        .btn-control { background: #444; color: white; }
-        button:hover { opacity: 0.8; }
+        .recorder-visual { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; margin: 20px 0; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid #333; }
+        video { width: 100%; height: 100%; object-fit: contain; }
 
-        #player { width: 100%; aspect-ratio: 16 / 9; background: #000; margin: 15px 0; border-radius: 8px; }
-        .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; background: #444; font-size: 0.8em; margin-bottom: 10px; }
+        .controls { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        button { padding: 12px 25px; cursor: pointer; border: none; border-radius: 50px; font-weight: bold; transition: 0.3s; }
+        
+        .btn-start { background: #e91e63; color: white; }
+        .btn-stop { background: #555; color: white; }
+        .btn-download { background: #00bcd4; color: white; display: none; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        
+        .status { margin-top: 15px; font-size: 0.9em; color: #aaa; }
+        .recording-dot { width: 12px; height: 12px; background: red; border-radius: 50%; display: inline-block; margin-right: 8px; animation: blink 1s infinite; display: none; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>YouTube Sync Room</h2>
+    <h2>Screen Recorder <small id="displayId" style="color: #e91e63;"></small></h2>
 
-    <!-- 1. ルーム設定エリア -->
-    <div id="roomSetup" class="room-setup">
-        <input type="text" id="roomIdInput" placeholder="ルームIDを入力 (例: party777)">
-        <button class="btn-join" onclick="joinRoom()">ルームに入る / 作成</button>
-        <p style="font-size: 0.8em; color: #aaa;">※同じIDを入れた端末同士が同期されます</p>
+    <div class="setup-area" id="setupArea">
+        <input type="text" id="roomIdInput" placeholder="セッションIDを入力 (例: meeting-01)">
+        <p style="font-size: 0.8em; color: #888;">IDはファイル名に使用されます</p>
     </div>
 
-    <!-- 2. プレイヤーエリア (最初は隠す) -->
-    <div id="playerArea" class="player-area">
-        <div class="status-badge" id="currentRoomDisplay">Room: ---</div>
-        
-        <div class="input-group">
-            <input type="text" id="youtubeUrl" placeholder="YouTubeのURLを入力">
-            <button class="btn-load" onclick="loadNewVideo()">動画を変更</button>
-        </div>
-
-        <div id="player"></div>
-
-        <div class="controls">
-            <button class="btn-control" onclick="sendControl('play')">▶ 再生</button>
-            <button class="btn-control" onclick="sendControl('pause')">❚❚ 一時停止</button>
-            <button class="btn-control" onclick="sendControl('sync')">🔄 強制同期</button>
-        </div>
-        <div id="status" style="margin-top:10px; color:#888;">待機中...</div>
+    <div class="recorder-visual">
+        <div id="recordingDot" class="recording-dot"></div>
+        <video id="preview" autoplay muted></video>
     </div>
+
+    <div class="controls">
+        <button id="startBtn" class="btn-start" onclick="startRecording()">録画開始</button>
+        <button id="stopBtn" class="btn-stop" onclick="stopRecording()" disabled>停止</button>
+        <a id="downloadBtn" class="btn-download"><button class="btn-download" style="display:inline;">保存する</button></a>
+    </div>
+
+    <div id="status" class="status">IDを入力して録画を開始してください</div>
 </div>
 
-<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+    let mediaRecorder;
+    let recordedChunks = [];
+    let stream;
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, set, onValue, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    async function startRecording() {
+        const roomId = document.getElementById('roomIdInput').value.trim();
+        if (!roomId) {
+            alert("IDを入力してください");
+            return;
+        }
 
-  // --- Firebase設定 (自分のものに書き換えてください) ---
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_ID",
-    appId: "YOUR_APP_ID"
-  };
+        try {
+            // 画面キャプチャの開始（音声も含む設定）
+            stream = await navigator.mediaDevices.getDisplayMedia({
+                video: { cursor: "always" },
+                audio: true
+            });
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  
-  let player;
-  let currentRoomId = null;
-  let syncRef = null;
-  let isReceiving = false;
+            // プレビューに表示
+            const videoPreview = document.getElementById('preview');
+            videoPreview.srcObject = stream;
 
-  // YouTubeプレイヤーの初期準備
-  window.onYouTubeIframeAPIReady = () => {
-    player = new YT.Player('player', {
-      height: '360',
-      width: '640',
-      videoId: 'dQw4w9WgXcQ', 
-      playerVars: { 'playsinline': 1 },
-      events: { 'onReady': () => console.log("Player Ready") }
-    });
-  };
+            // MediaRecorderの設定
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm; codecs=vp9'
+            });
 
-  // ルームに参加する関数
-  window.joinRoom = () => {
-    const idInput = document.getElementById('roomIdInput').value.trim();
-    if (!idInput) return alert("IDを入力してください");
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
 
-    // 以前のリスナーがあれば解除
-    if (syncRef) off(syncRef);
+            mediaRecorder.onstop = () => {
+                exportVideo(roomId);
+            };
 
-    currentRoomId = idInput;
-    syncRef = ref(db, 'rooms/' + currentRoomId);
+            // 録画開始
+            recordedChunks = [];
+            mediaRecorder.start();
 
-    // 表示切り替え
-    document.getElementById('roomSetup').style.display = 'none';
-    document.getElementById('playerArea').style.display = 'block';
-    document.getElementById('currentRoomDisplay').innerText = "Room ID: " + currentRoomId;
+            // UIの更新
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('roomIdInput').disabled = true;
+            document.getElementById('recordingDot').style.display = 'inline-block';
+            document.getElementById('status').innerText = "録画中...";
+            document.getElementById('displayId').innerText = `[ID: ${roomId}]`;
 
-    // そのルームのデータ監視開始
-    listenToRoom();
-  };
-
-  function listenToRoom() {
-    onValue(syncRef, (snapshot) => {
-      const data = snapshot.val();
-      if (!data || !player) return;
-
-      isReceiving = true;
-      
-      // 動画IDの同期
-      if (player.getVideoData().video_id !== data.videoId) {
-        player.loadVideoById(data.videoId, data.currentTime);
-      }
-
-      // 時間と再生状態の同期
-      const delay = (Date.now() - data.timestamp) / 1000;
-      const targetTime = data.currentTime + (data.command === 'play' ? delay : 0);
-      
-      if (Math.abs(player.getCurrentTime() - targetTime) > 2) {
-        player.seekTo(targetTime, true);
-      }
-
-      if (data.command === 'play') {
-        player.playVideo();
-      } else if (data.command === 'pause') {
-        player.pauseVideo();
-      }
-
-      setTimeout(() => { isReceiving = false; }, 1000);
-    });
-  }
-
-  // 操作の送信
-  window.sendControl = (command) => {
-    if (!currentRoomId || !player) return;
-    set(syncRef, {
-      command: command,
-      videoId: player.getVideoData().video_id,
-      currentTime: player.getCurrentTime(),
-      timestamp: Date.now()
-    });
-  };
-
-  // 新しい動画の読み込み
-  window.loadNewVideo = () => {
-    const url = document.getElementById('youtubeUrl').value;
-    const videoId = extractVideoId(url);
-    if (videoId) {
-      set(syncRef, {
-        command: 'play',
-        videoId: videoId,
-        currentTime: 0,
-        timestamp: Date.now()
-      });
+        } catch (err) {
+            console.error("Error: " + err);
+            alert("画面キャプチャがキャンセルされたか、失敗しました。");
+        }
     }
-  };
 
-  function extractVideoId(url) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-  }
+    function stopRecording() {
+        mediaRecorder.stop();
+        stream.getTracks().forEach(track => track.stop()); // キャプチャ停止
+
+        // UIの更新
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+        document.getElementById('roomIdInput').disabled = false;
+        document.getElementById('recordingDot').style.display = 'none';
+        document.getElementById('status').innerText = "録画完了。保存してください。";
+    }
+
+    function exportVideo(roomId) {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        
+        const downloadBtn = document.getElementById('downloadBtn');
+        downloadBtn.href = url;
+        downloadBtn.download = `recording_${roomId}_${new Date().getTime()}.webm`;
+        downloadBtn.style.display = 'inline-block';
+
+        // プレビュー動画を録画した動画に切り替える
+        const videoPreview = document.getElementById('preview');
+        videoPreview.srcObject = null;
+        videoPreview.src = url;
+        videoPreview.controls = true;
+        videoPreview.play();
+    }
 </script>
+
 </body>
 </html>
