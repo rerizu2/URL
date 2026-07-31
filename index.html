@@ -3,135 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画面共有システム</title>
+    <title>Echo Audio Streamer</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .container { background: #1e1e1e; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 90%; max-width: 600px; }
-        h1 { color: #00d4ff; }
-        .menu-btns { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
-        button { padding: 12px 24px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .host-btn { background: #e91e63; color: white; }
-        .join-btn { background: #00d4ff; color: #121212; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        #idDisplay { font-size: 2rem; font-weight: bold; color: #ffeb3b; margin: 15px 0; display: none; }
-        #joinForm { display: none; margin: 20px 0; }
-        input { padding: 10px; font-size: 18px; border-radius: 5px; border: none; width: 100px; text-align: center; }
-        
-        .video-container { width: 100%; margin-top: 20px; background: black; border-radius: 10px; overflow: hidden; display: none; }
-        video { width: 100%; height: auto; }
-        .status { margin-top: 10px; font-size: 0.9em; color: #aaa; }
+        :root {
+            --primary: #007bff;
+            --primary-hover: #0056b3;
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --text: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .description {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 2rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        button {
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #startBtn {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        #startBtn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        #stopBtn {
+            background-color: #444;
+            color: #ccc;
+        }
+
+        #stopBtn:not(:disabled):hover {
+            background-color: #ff4444;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .params {
+            text-align: left;
+            background: #2a2a2a;
+            padding: 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .param-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .value-badge {
+            background: var(--primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .status-area {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #333;
+        }
+
+        #status {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .active #status {
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0,255,136,0.3);
+        }
+
+        .warning {
+            font-size: 0.8rem;
+            color: #ffa500;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Screen Sync</h1>
-    
-    <div id="initialMenu" class="menu-btns">
-        <button class="host-btn" onclick="setupHost()">ホストとして配信</button>
-        <button class="join-btn" onclick="showJoinInput()">参加する</button>
+<div class="container" id="app">
+    <h1>Echo Streamer</h1>
+    <p class="description">画面共有のシステム音にディレイ効果を追加します。</p>
+
+    <div class="controls">
+        <button id="startBtn">画面共有を開始してエコーをかける</button>
+        <button id="stopBtn" disabled>停止</button>
     </div>
 
-    <!-- ホスト用ID表示 -->
-    <div id="idDisplay">ID: <span id="myIdText">----</span></div>
+    <div class="params">
+        <div class="param-group">
+            <div class="label-row">
+                <span>遅延時間 (Delay Time)</span>
+                <span class="value-badge" id="delayVal">0.4s</span>
+            </div>
+            <input type="range" id="delayTime" min="0.05" max="2" step="0.05" value="0.4">
+        </div>
 
-    <!-- 参加用入力フォーム -->
-    <div id="joinForm">
-        <input type="text" id="targetId" placeholder="4桁ID" maxlength="4">
-        <button class="join-btn" onclick="setupJoin()">接続</button>
+        <div class="param-group">
+            <div class="label-row">
+                <span>エコーの強さ (Feedback)</span>
+                <span class="value-badge" id="feedbackVal">0.4</span>
+            </div>
+            <input type="range" id="feedback" min="0" max="0.9" step="0.05" value="0.4">
+        </div>
     </div>
 
-    <!-- ビデオ表示エリア -->
-    <div id="videoContainer" class="video-container">
-        <video id="remoteVideo" autoplay playsinline></video>
+    <div class="status-area">
+        <div id="status">OFFLINE</div>
+        <p class="warning">※ ハウリングを防ぐためイヤホンを推奨します</p>
     </div>
-    
-    <div id="status" class="status">役割を選択してください</div>
 </div>
 
-<!-- PeerJS ライブラリの読み込み -->
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
 <script>
-    let peer;
-    let localStream;
+    let audioCtx;
+    let source;
+    let delayNode;
+    let feedbackGain;
+    let stream;
 
-    // --- ホスト側の処理 ---
-    async function setupHost() {
-        // 4桁のランダムなIDを生成
-        const randomId = Math.floor(1000 + Math.random() * 9000).toString();
-        
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const delayInput = document.getElementById('delayTime');
+    const feedbackInput = document.getElementById('feedback');
+    const delayValText = document.getElementById('delayVal');
+    const feedbackValText = document.getElementById('feedbackVal');
+    const statusText = document.getElementById('status');
+    const appContainer = document.getElementById('app');
+
+    // エコー開始処理
+    startBtn.addEventListener('click', async () => {
         try {
-            // 画面キャプチャの取得（ブラウザが画面選択ダイアログを出す）
-            localStream = await navigator.mediaDevices.getDisplayMedia({
+            // 1. 画面共有ストリームの取得
+            // 注: ブラウザのセキュリティ制限により、ユーザー操作（クリック）が必須
+            stream = await navigator.mediaDevices.getDisplayMedia({
                 video: true,
-                audio: true
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false
+                }
             });
 
-            // IDを指定してPeerを作成
-            peer = new Peer('sync-' + randomId);
+            // 音声トラックがあるかチェック
+            if (stream.getAudioTracks().length === 0) {
+                alert("音声が見つかりません。共有時に「システムオーディオを共有」にチェックを入れてください。");
+                stopStream();
+                return;
+            }
 
-            peer.on('open', (id) => {
-                document.getElementById('initialMenu').style.display = 'none';
-                document.getElementById('idDisplay').style.display = 'block';
-                document.getElementById('myIdText').innerText = randomId;
-                document.getElementById('status').innerText = "配信中... 参加者を待っています。";
-                
-                // ビデオプレビュー表示
-                const videoEl = document.getElementById('remoteVideo');
-                videoEl.srcObject = localStream;
-                document.getElementById('videoContainer').style.display = 'block';
-            });
+            // 2. AudioContextの初期化
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            source = audioCtx.createMediaStreamSource(stream);
 
-            // 参加者から接続（コール）が来た時の処理
-            peer.on('call', (call) => {
-                call.answer(localStream); // 自分の画面を送る
-                document.getElementById('status').innerText = "参加者が接続しました！";
-            });
+            // 3. ノードの作成
+            delayNode = audioCtx.createDelay(2.0); // 最大2秒のバッファ
+            delayNode.delayTime.value = parseFloat(delayInput.value);
 
-            peer.on('error', (err) => {
-                alert("エラー: IDが既に使用されている可能性があります。もう一度試してください。");
-                location.reload();
-            });
+            feedbackGain = audioCtx.createGain();
+            feedbackGain.gain.value = parseFloat(feedbackInput.value);
+
+            // 4. 接続（ルーティング）
+            // [Source] ──┬─> [Destination (スピーカー/出力)]
+            //            └─> [Delay Node] ──┬─> [Destination]
+            //                    ^          │
+            //                    └─ [Gain] <┘ (フィードバックループ)
+            
+            source.connect(audioCtx.destination); // 直接音
+            source.connect(delayNode);            // 遅延回路へ
+            delayNode.connect(feedbackGain);      // 遅延音をフィードバック
+            feedbackGain.connect(delayNode);      // フィードバックを遅延へ戻す
+            delayNode.connect(audioCtx.destination); // 遅延音を出力
+
+            // UIの更新
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            statusText.innerText = "エコー稼働中";
+            appContainer.classList.add('active');
+
+            // 画面共有が手動で停止された場合の処理
+            stream.getVideoTracks()[0].onended = () => {
+                stopStream();
+            };
 
         } catch (err) {
-            console.error(err);
-            alert("画面共有の許可が必要です。");
+            console.error("Error:", err);
+            if (err.name !== 'NotAllowedError') {
+                alert("エラーが発生しました: " + err.message);
+            }
         }
-    }
+    });
 
-    // --- 参加者側の処理 ---
-    function showJoinInput() {
-        document.getElementById('initialMenu').style.display = 'none';
-        document.getElementById('joinForm').style.display = 'block';
-        document.getElementById('status').innerText = "ホストの4桁IDを入力してください。";
-    }
+    // パラメータ変更の監視
+    delayInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        delayValText.innerText = val + "s";
+        if (delayNode) {
+            // 急激な変化によるノイズを防ぐため0.1秒かけて変化させる
+            delayNode.delayTime.exponentialRampToValueAtTime(parseFloat(val), audioCtx.currentTime + 0.1);
+        }
+    });
 
-    function setupJoin() {
-        const targetId = document.getElementById('targetId').value;
-        if (targetId.length !== 4) return alert("4桁のIDを入力してください");
+    feedbackInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        feedbackValText.innerText = val;
+        if (feedbackGain) {
+            feedbackGain.gain.setValueAtTime(parseFloat(val), audioCtx.currentTime);
+        }
+    });
 
-        peer = new Peer(); // 参加者はランダムIDでOK
+    // 停止処理
+    stopBtn.addEventListener('click', stopStream);
 
-        peer.on('open', (id) => {
-            document.getElementById('status').innerText = "ホストに接続中...";
-            
-            // ホストに電話をかける（空のストリームを送り、相手のストリームをもらう）
-            const call = peer.call('sync-' + targetId, new MediaStream());
-
-            call.on('stream', (remoteStream) => {
-                const videoEl = document.getElementById('remoteVideo');
-                videoEl.srcObject = remoteStream;
-                document.getElementById('videoContainer').style.display = 'block';
-                document.getElementById('joinForm').style.display = 'none';
-                document.getElementById('status').innerText = "受信中：ホストの画面を表示しています。";
-            });
-
-            call.on('error', (err) => {
-                alert("接続に失敗しました。IDが正しいか確認してください。");
-            });
-        });
+    function stopStream() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        if (audioCtx) {
+            audioCtx.close();
+        }
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        statusText.innerText = "OFFLINE";
+        appContainer.classList.remove('active');
     }
 </script>
 
