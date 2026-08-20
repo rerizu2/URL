@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ボイスレコーダー</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    font-family:
+        "Noto Sans JP",
+        "Yu Gothic",
+        "Meiryo",
+        sans-serif;
+
+    background:
+        radial-gradient(circle at top left, #163b4a, transparent 35%),
+        radial-gradient(circle at bottom right, #24164a, transparent 35%),
+        #080b12;
+
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 25px;
+}
+
+.container {
+    width: min(950px, 100%);
+}
+
+/* =========================
+   ヘッダー
+========================= */
+
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    font-size: clamp(30px, 5vw, 52px);
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.header p {
+    margin-top: 8px;
+    color: #aeb9c8;
+    font-size: 14px;
+}
+
+/* =========================
+   メインカード
+========================= */
+
+.recorder-card {
+    background: rgba(17, 23, 34, 0.9);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 28px;
+    padding: 35px;
+    box-shadow:
+        0 25px 80px rgba(0,0,0,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+
+    backdrop-filter: blur(15px);
+}
+
+/* =========================
+   録音表示
+========================= */
+
+.record-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+}
+
+.mic-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    font-size: 50px;
+
+    background: linear-gradient(
+        145deg,
+        #00eaff,
+        #0066ff
+    );
+
+    box-shadow:
+        0 0 30px rgba(0,234,255,0.35);
+
+    margin-bottom: 25px;
+
+    transition: 0.3s;
+}
+
+.recording .mic-circle {
+    animation: recordingPulse 1.2s infinite;
+    background: linear-gradient(
+        145deg,
+        #ff315b,
+        #ff0040
+    );
+
+    box-shadow:
+        0 0 20px rgba(255,0,70,0.5),
+        0 0 70px rgba(255,0,70,0.25);
+}
+
+@keyframes recordingPulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.status {
+    font-size: 18px;
+    color: #aeb9c8;
+    margin-bottom: 10px;
+}
+
+.recording .status {
+    color: #ff4b70;
+}
+
+.timer {
+    font-family: "Courier New", monospace;
+    font-size: clamp(38px, 8vw, 65px);
+    font-weight: bold;
+    letter-spacing: 4px;
+}
+
+/* =========================
+   ボタン
+========================= */
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 25px;
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    color: white;
+
+    font-size: 16px;
+    font-weight: bold;
+
+    padding: 15px 28px;
+    border-radius: 14px;
+
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s,
+        opacity 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+    transform: none;
+}
+
+.start-button {
+    background: linear-gradient(
+        135deg,
+        #00d4ff,
+        #0066ff
+    );
+
+    box-shadow:
+        0 8px 25px rgba(0,110,255,0.3);
+}
+
+.stop-button {
+    background: linear-gradient(
+        135deg,
+        #ff315b,
+        #d90038
+    );
+
+    box-shadow:
+        0 8px 25px rgba(255,0,60,0.25);
+}
+
+/* =========================
+   音声一覧
+========================= */
+
+.list-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-top: 40px;
+    margin-bottom: 15px;
+}
+
+.list-title h2 {
+    font-size: 21px;
+}
+
+.clear-button {
+    background: #242b38;
+    padding: 9px 15px;
+    font-size: 13px;
+}
+
+/* =========================
+   録音アイテム
+========================= */
+
+.record-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.empty {
+    padding: 30px;
+    text-align: center;
+
+    color: #7f8b9c;
+
+    border: 1px dashed #303947;
+    border-radius: 15px;
+}
+
+.record-item {
+    background: #121925;
+    border: 1px solid #273142;
+    border-radius: 17px;
+
+    padding: 17px;
+
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 15px;
+
+    align-items: center;
+}
+
+.record-number {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 12px;
+
+    background: #202a3a;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #00eaff;
+    font-weight: bold;
+}
+
+.record-info {
+    min-width: 0;
+}
+
+.record-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.record-date {
+    font-size: 12px;
+    color: #8290a3;
+}
+
+audio {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.record-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.download-button {
+    background: #087f5b;
+    padding: 10px 14px;
+    font-size: 13px;
+}
+
+.delete-button {
+    background: #3a2028;
+    color: #ff6b85;
+    padding: 10px 14px;
+    font-size: 13px;
+}
+
+/* =========================
+   波形風表示
+========================= */
+
+.wave {
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 15px;
+}
+
+.wave span {
+    width: 4px;
+    height: 12px;
+    background: #00eaff;
+    border-radius: 10px;
+    opacity: 0.5;
+}
+
+.recording .wave span {
+    animation: wave 0.7s infinite alternate;
+    opacity: 1;
+}
+
+.wave span:nth-child(1) { animation-delay: 0s; }
+.wave span:nth-child(2) { animation-delay: .1s; }
+.wave span:nth-child(3) { animation-delay: .2s; }
+.wave span:nth-child(4) { animation-delay: .3s; }
+.wave span:nth-child(5) { animation-delay: .4s; }
+.wave span:nth-child(6) { animation-delay: .5s; }
+.wave span:nth-child(7) { animation-delay: .6s; }
+.wave span:nth-child(8) { animation-delay: .7s; }
+.wave span:nth-child(9) { animation-delay: .8s; }
+
+@keyframes wave {
+    from {
+        height: 8px;
+    }
+
+    to {
+        height: 40px;
+    }
+}
+
+/* =========================
+   メッセージ
+========================= */
+
+.message {
+    text-align: center;
+    margin-top: 18px;
+
+    min-height: 22px;
+
+    font-size: 14px;
+    color: #8d9aac;
+}
+
+.message.error {
+    color: #ff5d79;
+}
+
+.message.success {
+    color: #36e6a1;
+}
+
+/* =========================
+   レスポンシブ
+========================= */
+
+@media (max-width: 650px) {
+
+    body {
+        padding: 12px;
+    }
+
+    .recorder-card {
+        padding: 20px;
+        border-radius: 20px;
+    }
+
+    .record-item {
+        grid-template-columns: auto 1fr;
+    }
+
+    .record-actions {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .record-actions button {
+        flex: 1;
+    }
+
+    .timer {
+        letter-spacing: 2px;
+    }
+
+    button {
+        padding: 13px 20px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🎙 ボイスレコーダー</h1>
+        <p>ブラウザで簡単に音声を録音できます</p>
+    </div>
+
+    <div class="recorder-card">
+
+        <div
+            id="recordDisplay"
+            class="record-display"
+        >
+
+            <div class="mic-circle">
+                🎙
+            </div>
+
+            <div id="status" class="status">
+                録音待機中
+            </div>
+
+            <div id="timer" class="timer">
+                00:00:00
+            </div>
+
+            <div class="wave">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+        </div>
+
+
+        <div class="buttons">
+
+            <button
+                id="startButton"
+                class="start-button"
+            >
+                🔴 録音開始
+            </button>
+
+            <button
+                id="stopButton"
+                class="stop-button"
+                disabled
+            >
+                ⏹ 録音停止
+            </button>
+
+        </div>
+
+
+        <div
+            id="message"
+            class="message"
+        ></div>
+
+
+        <div class="list-title">
+
+            <h2>🎧 録音一覧</h2>
+
+            <button
+                id="clearButton"
+                class="clear-button"
+            >
+                🗑 すべて削除
+            </button>
+
+        </div>
+
+
+        <div
+            id="recordList"
+            class="record-list"
+        >
+
+            <div class="empty">
+                まだ録音されていません
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* ==========================================
+   録音システム
+========================================== */
+
+let mediaRecorder = null;
+let audioChunks = [];
+
+let startTime = null;
+let timerInterval = null;
+
+let recordings = [];
+
+
+/* ==========================================
+   HTML要素
+========================================== */
+
+const startButton =
+    document.getElementById("startButton");
+
+const stopButton =
+    document.getElementById("stopButton");
+
+const timer =
+    document.getElementById("timer");
+
+const status =
+    document.getElementById("status");
+
+const message =
+    document.getElementById("message");
+
+const recordDisplay =
+    document.getElementById("recordDisplay");
+
+const recordList =
+    document.getElementById("recordList");
+
+const clearButton =
+    document.getElementById("clearButton");
+
+
+/* ==========================================
+   時間表示
+========================================== */
+
+function updateTimer() {
+
+    if (!startTime) return;
+
+    const elapsed =
+        Date.now() - startTime;
+
+    const totalSeconds =
+        Math.floor(elapsed / 1000);
+
+    const hours =
+        Math.floor(totalSeconds / 3600);
+
+    const minutes =
+        Math.floor(
+            (totalSeconds % 3600) / 60
+        );
+
+    const seconds =
+        totalSeconds % 60;
+
+    timer.textContent =
+        String(hours).padStart(2, "0")
+        + ":"
+        +
+        String(minutes).padStart(2, "0")
+        + ":"
+        +
+        String(seconds).padStart(2, "0");
+}
+
+
+/* ==========================================
+   メッセージ
+========================================== */
+
+function showMessage(text, type = "") {
+
+    message.textContent = text;
+
+    message.className =
+        "message " + type;
+
+}
+
+
+/* ==========================================
+   録音開始
+========================================== */
+
+startButton.addEventListener(
+    "click",
+    async () => {
+
+        try {
+
+            showMessage(
+                "マイクへのアクセスを確認しています..."
+            );
+
+            const stream =
+                await navigator.mediaDevices
+                    .getUserMedia({
+                        audio: true
+                    });
+
+
+            audioChunks = [];
+
+
+            /*
+             * ブラウザが対応している形式を確認
+             */
+
+            let mimeType = "";
+
+            if (
+                MediaRecorder.isTypeSupported(
+                    "audio/webm;codecs=opus"
+                )
+            ) {
+
+                mimeType =
+                    "audio/webm;codecs=opus";
+
+            } else if (
+                MediaRecorder.isTypeSupported(
+                    "audio/webm"
+                )
+            ) {
+
+                mimeType =
+                    "audio/webm";
+
+            } else if (
+                MediaRecorder.isTypeSupported(
+                    "audio/ogg"
+                )
+            ) {
+
+                mimeType =
+                    "audio/ogg";
+            }
+
+
+            if (mimeType) {
+
+                mediaRecorder =
+                    new MediaRecorder(
+                        stream,
+                        {
+                            mimeType
+                        }
+                    );
+
+            } else {
+
+                mediaRecorder =
+                    new MediaRecorder(
+                        stream
+                    );
+
+            }
+
+
+            /*
+             * データ受信
+             */
+
+            mediaRecorder.ondataavailable =
+                event => {
+
+                    if (
+                        event.data &&
+                        event.data.size > 0
+                    ) {
+
+                        audioChunks.push(
+                            event.data
+                        );
+
+                    }
+
+                };
+
+
+            /*
+             * 録音停止
+             */
+
+            mediaRecorder.onstop =
+                () => {
+
+                    const actualMime =
+                        mediaRecorder.mimeType ||
+                        "audio/webm";
+
+                    const audioBlob =
+                        new Blob(
+                            audioChunks,
+                            {
+                                type:
+                                    actualMime
+                            }
+                        );
+
+                    createRecording(
+                        audioBlob
+                    );
+
+
+                    /*
+                     * マイクを停止
+                     */
+
+                    stream
+                        .getTracks()
+                        .forEach(
+                            track =>
+                                track.stop()
+                        );
+
+                };
+
+
+            /*
+             * 録音開始
+             */
+
+            mediaRecorder.start();
+
+            startTime =
+                Date.now();
+
+            timerInterval =
+                setInterval(
+                    updateTimer,
+                    1000
+                );
+
+
+            recordDisplay
+                .classList
+                .add("recording");
+
+
+            status.textContent =
+                "🔴 録音中";
+
+            startButton.disabled =
+                true;
+
+            stopButton.disabled =
+                false;
+
+            showMessage(
+                "録音しています...",
+                "success"
+            );
+
+        }
+        catch (error) {
+
+            console.error(error);
+
+            showMessage(
+                "マイクを使用できませんでした。ブラウザのマイク許可を確認してください。",
+                "error"
+            );
+
+        }
+
+    }
+);
+
+
+/* ==========================================
+   録音停止
+========================================== */
+
+stopButton.addEventListener(
+    "click",
+    () => {
+
+        if (
+            !mediaRecorder ||
+            mediaRecorder.state === "inactive"
+        ) {
+
+            return;
+
+        }
+
+
+        mediaRecorder.stop();
+
+
+        clearInterval(
+            timerInterval
+        );
+
+        timerInterval =
+            null;
+
+        startTime =
+            null;
+
+
+        recordDisplay
+            .classList
+            .remove("recording");
+
+
+        status.textContent =
+            "録音処理中...";
+
+
+        startButton.disabled =
+            false;
+
+        stopButton.disabled =
+            true;
+
+    }
+);
+
+
+/* ==========================================
+   録音データ作成
+========================================== */
+
+function createRecording(blob) {
+
+    const url =
+        URL.createObjectURL(blob);
+
+
+    const now =
+        new Date();
+
+
+    const recording = {
+
+        id:
+            Date.now(),
+
+        url:
+            url,
+
+        blob:
+            blob,
+
+        date:
+            now,
+
+        duration:
+            timer.textContent,
+
+        name:
+            "録音 " +
+            (recordings.length + 1)
+
+    };
+
+
+    recordings.push(
+        recording
+    );
+
+
+    status.textContent =
+        "録音完了";
+
+
+    timer.textContent =
+        "00:00:00";
+
+
+    showMessage(
+        "録音が完了しました。",
+        "success"
+    );
+
+
+    renderRecordings();
+
+}
+
+
+/* ==========================================
+   録音一覧表示
+========================================== */
+
+function renderRecordings() {
+
+    recordList.innerHTML = "";
+
+
+    if (
+        recordings.length === 0
+    ) {
+
+        recordList.innerHTML = `
+            <div class="empty">
+                まだ録音されていません
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    /*
+     * 新しい録音を上に表示
+     */
+
+    const reversed =
+        [...recordings].reverse();
+
+
+    reversed.forEach(
+        (record, index) => {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+            item.className =
+                "record-item";
+
+
+            const number =
+                document.createElement(
+                    "div"
+                );
+
+            number.className =
+                "record-number";
+
+            number.textContent =
+                recordings.length -
+                index;
+
+
+            const info =
+                document.createElement(
+                    "div"
+                );
+
+            info.className =
+                "record-info";
+
+
+            const name =
+                document.createElement(
+                    "div"
+                );
+
+            name.className =
+                "record-name";
+
+            name.textContent =
+                record.name;
+
+
+            const date =
+                document.createElement(
+                    "div"
+                );
+
+            date.className =
+                "record-date";
+
+            date.textContent =
+                formatDate(
+                    record.date
+                );
+
+
+            const audio =
+                document.createElement(
+                    "audio"
+                );
+
+            audio.controls =
+                true;
+
+            audio.src =
+                record.url;
+
+
+            info.appendChild(
+                name
+            );
+
+            info.appendChild(
+                date
+            );
+
+            info.appendChild(
+                audio
+            );
+
+
+            /*
+             * ボタン
+             */
+
+            const actions =
+                document.createElement(
+                    "div"
+                );
+
+            actions.className =
+                "record-actions";
+
+
+            const download =
+                document.createElement(
+                    "button"
+                );
+
+            download.className =
+                "download-button";
+
+            download.textContent =
+                "💾 保存";
+
+
+            download.addEventListener(
+                "click",
+                () => {
+
+                    downloadRecording(
+                        record
+                    );
+
+                }
+            );
+
+
+            const deleteButton =
+                document.createElement(
+                    "button"
+                );
+
+            deleteButton.className =
+                "delete-button";
+
+            deleteButton.textContent =
+                "🗑 削除";
+
+
+            deleteButton.addEventListener(
+                "click",
+                () => {
+
+                    deleteRecording(
+                        record.id
+                    );
+
+                }
+            );
+
+
+            actions.appendChild(
+                download
+            );
+
+            actions.appendChild(
+                deleteButton
+            );
+
+
+            item.appendChild(
+                number
+            );
+
+            item.appendChild(
+                info
+            );
+
+            item.appendChild(
+                actions
+            );
+
+
+            recordList.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+/* ==========================================
+   日付フォーマット
+========================================== */
+
+function formatDate(date) {
+
+    const y =
+        date.getFullYear();
+
+    const m =
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
+
+    const d =
+        String(
+            date.getDate()
+        ).padStart(2, "0");
+
+    const h =
+        String(
+            date.getHours()
+        ).padStart(2, "0");
+
+    const min =
+        String(
+            date.getMinutes()
+        ).padStart(2, "0");
+
+    const s =
+        String(
+            date.getSeconds()
+        ).padStart(2, "0");
+
+
+    return `${y}/${m}/${d} ${h}:${min}:${s}`;
+
+}
+
+
+/* ==========================================
+   音声保存
+========================================== */
+
+function downloadRecording(record) {
+
+    const extension =
+        record.blob.type.includes("ogg")
+            ? "ogg"
+            : "webm";
+
+
+    const filename =
+        "録音_" +
+        formatFilenameDate(
+            record.date
+        ) +
+        "." +
+        extension;
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+    link.href =
+        record.url;
+
+    link.download =
+        filename;
+
+    document.body.appendChild(
+        link
+    );
+
+    link.click();
+
+    link.remove();
+
+
+    showMessage(
+        "音声ファイルを保存しました。",
+        "success"
+    );
+
+}
+
+
+/* ==========================================
+   ファイル名用日時
+========================================== */
+
+function formatFilenameDate(date) {
+
+    const y =
+        date.getFullYear();
+
+    const m =
+        String(
+            date.getMonth() + 1
+        ).padStart(2, "0");
+
+    const d =
+        String(
+            date.getDate()
+        ).padStart(2, "0");
+
+    const h =
+        String(
+            date.getHours()
+        ).padStart(2, "0");
+
+    const min =
+        String(
+            date.getMinutes()
+        ).padStart(2, "0");
+
+    const s =
+        String(
+            date.getSeconds()
+        ).padStart(2, "0");
+
+
+    return (
+        y +
+        m +
+        d +
+        "_" +
+        h +
+        min +
+        s
+    );
+
+}
+
+
+/* ==========================================
+   録音削除
+========================================== */
+
+function deleteRecording(id) {
+
+    const index =
+        recordings.findIndex(
+            record =>
+                record.id === id
+        );
+
+
+    if (index === -1) {
+        return;
+    }
+
+
+    const record =
+        recordings[index];
+
+
+    URL.revokeObjectURL(
+        record.url
+    );
+
+
+    recordings.splice(
+        index,
+        1
+    );
+
+
+    /*
+     * 録音番号を振り直す
+     */
+
+    recordings.forEach(
+        (record, i) => {
+
+            record.name =
+                "録音 " +
+                (i + 1);
+
+        }
+    );
+
+
+    renderRecordings();
+
+
+    showMessage(
+        "録音を削除しました。"
+    );
+
+}
+
+
+/* ==========================================
+   全削除
+========================================== */
+
+clearButton.addEventListener(
+    "click",
+    () => {
+
+        if (
+            recordings.length === 0
+        ) {
+
+            return;
+
+        }
+
+
+        const result =
+            confirm(
+                "すべての録音を削除しますか？"
+            );
+
+
+        if (!result) {
+            return;
+        }
+
+
+        recordings.forEach(
+            record => {
+
+                URL.revokeObjectURL(
+                    record.url
+                );
+
+            }
+        );
+
+
+        recordings = [];
+
+
+        renderRecordings();
+
+
+        status.textContent =
+            "録音待機中";
+
+
+        showMessage(
+            "すべての録音を削除しました。"
+        );
+
+    }
+);
+
+
+/* ==========================================
+   ページを閉じるとき
+========================================== */
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        recordings.forEach(
+            record => {
+
+                URL.revokeObjectURL(
+                    record.url
+                );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
