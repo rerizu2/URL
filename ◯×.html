@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>〇×ボタン</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family:
+        "Noto Sans JP",
+        "Yu Gothic",
+        sans-serif;
+
+    background:
+        linear-gradient(135deg, #eef2ff, #f8fafc);
+
+    color: #1e293b;
+    min-height: 100vh;
+}
+
+.container {
+    width: min(900px, 94%);
+    margin: 0 auto;
+    padding: 40px 0;
+}
+
+.title {
+    text-align: center;
+    font-size: 38px;
+    font-weight: 900;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #64748b;
+    margin-bottom: 30px;
+}
+
+/* 名前入力 */
+.input-card {
+    background: white;
+    border-radius: 24px;
+    padding: 25px;
+    box-shadow: 0 10px 35px rgba(0,0,0,.08);
+    margin-bottom: 25px;
+}
+
+.input-card label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+#nameInput {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    outline: none;
+    transition: .2s;
+}
+
+#nameInput:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99,102,241,.12);
+}
+
+/* ボタン */
+.button-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.answer-button {
+    border: none;
+    border-radius: 30px;
+    min-height: 220px;
+    font-size: 100px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 12px 30px rgba(0,0,0,.12);
+}
+
+.answer-button:hover {
+    transform: translateY(-6px);
+}
+
+.answer-button:active {
+    transform: scale(.95);
+}
+
+.maru {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: white;
+}
+
+.batsu {
+    background: linear-gradient(135deg, #2563eb, #06b6d4);
+    color: white;
+}
+
+/* 結果 */
+.result-card {
+    background: white;
+    border-radius: 24px;
+    padding: 25px;
+    box-shadow: 0 10px 35px rgba(0,0,0,.08);
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.result-header h2 {
+    margin: 0;
+}
+
+.clear-button {
+    border: none;
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.count-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.count {
+    padding: 20px;
+    border-radius: 18px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.count.maru-count {
+    background: #fff1f2;
+    color: #e11d48;
+}
+
+.count.batsu-count {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.count-number {
+    display: block;
+    font-size: 40px;
+    margin-top: 5px;
+}
+
+/* 履歴 */
+.history {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 18px;
+    background: #f8fafc;
+    border-radius: 14px;
+    border-left: 5px solid #94a3b8;
+}
+
+.history-item.maru-item {
+    border-left-color: #ef4444;
+}
+
+.history-item.batsu-item {
+    border-left-color: #2563eb;
+}
+
+.person {
+    font-weight: 800;
+}
+
+.answer {
+    font-size: 28px;
+    font-weight: 900;
+}
+
+.time {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.empty {
+    text-align: center;
+    padding: 30px;
+    color: #94a3b8;
+}
+
+/* スマホ */
+@media (max-width: 600px) {
+
+    .container {
+        padding: 25px 0;
+    }
+
+    .title {
+        font-size: 30px;
+    }
+
+    .button-area {
+        gap: 12px;
+    }
+
+    .answer-button {
+        min-height: 160px;
+        font-size: 70px;
+        border-radius: 22px;
+    }
+
+    .result-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .history-item {
+        flex-wrap: wrap;
+    }
+
+    .time {
+        width: 100%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="title">
+        〇 × ボタン
+    </div>
+
+    <div class="subtitle">
+        名前を入力して、答えを選択してください
+    </div>
+
+    <!-- 名前入力 -->
+    <div class="input-card">
+
+        <label for="nameInput">
+            👤 名前
+        </label>
+
+        <input
+            type="text"
+            id="nameInput"
+            placeholder="例：山田太郎"
+            maxlength="30"
+            autocomplete="off"
+        >
+
+    </div>
+
+    <!-- 〇×ボタン -->
+    <div class="button-area">
+
+        <button
+            class="answer-button maru"
+            onclick="submitAnswer('〇')">
+            〇
+        </button>
+
+        <button
+            class="answer-button batsu"
+            onclick="submitAnswer('×')">
+            ×
+        </button>
+
+    </div>
+
+    <!-- 結果 -->
+    <div class="result-card">
+
+        <div class="result-header">
+
+            <h2>
+                📋 回答結果
+            </h2>
+
+            <button
+                class="clear-button"
+                onclick="clearHistory()">
+                履歴を削除
+            </button>
+
+        </div>
+
+        <div class="count-area">
+
+            <div class="count maru-count">
+                〇
+                <span
+                    class="count-number"
+                    id="maruCount">
+                    0
+                </span>
+            </div>
+
+            <div class="count batsu-count">
+                ×
+                <span
+                    class="count-number"
+                    id="batsuCount">
+                    0
+                </span>
+            </div>
+
+        </div>
+
+        <div
+            id="history"
+            class="history">
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const STORAGE_KEY = "maru_batsu_history";
+
+/* --------------------------------
+   履歴取得
+-------------------------------- */
+
+function getHistory() {
+
+    const data = localStorage.getItem(STORAGE_KEY);
+
+    if (!data) {
+        return [];
+    }
+
+    try {
+        return JSON.parse(data);
+    } catch {
+        return [];
+    }
+}
+
+
+/* --------------------------------
+   回答送信
+-------------------------------- */
+
+function submitAnswer(answer) {
+
+    const nameInput =
+        document.getElementById("nameInput");
+
+    const name =
+        nameInput.value.trim();
+
+    if (!name) {
+
+        alert("名前を入力してください。");
+
+        nameInput.focus();
+
+        return;
+    }
+
+
+    const history = getHistory();
+
+
+    const now = new Date();
+
+
+    const record = {
+
+        id: Date.now(),
+
+        name: name,
+
+        answer: answer,
+
+        timestamp: now.toISOString()
+
+    };
+
+
+    history.push(record);
+
+
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(history)
+    );
+
+
+    renderHistory();
+
+
+    // 入力欄をクリア
+    nameInput.value = "";
+
+
+    // 押したことを通知
+    alert(
+        `${name}さんの「${answer}」を記録しました！`
+    );
+
+}
+
+
+/* --------------------------------
+   履歴表示
+-------------------------------- */
+
+function renderHistory() {
+
+    const history = getHistory();
+
+    const historyElement =
+        document.getElementById("history");
+
+    const maruCount =
+        document.getElementById("maruCount");
+
+    const batsuCount =
+        document.getElementById("batsuCount");
+
+
+    // 件数
+    const maru =
+        history.filter(
+            item => item.answer === "〇"
+        ).length;
+
+    const batsu =
+        history.filter(
+            item => item.answer === "×"
+        ).length;
+
+
+    maruCount.textContent = maru;
+
+    batsuCount.textContent = batsu;
+
+
+    // 履歴がない場合
+    if (history.length === 0) {
+
+        historyElement.innerHTML = `
+            <div class="empty">
+                まだ回答がありません
+            </div>
+        `;
+
+        return;
+    }
+
+
+    // 新しい順
+    const reversed =
+        [...history].reverse();
+
+
+    historyElement.innerHTML =
+        reversed.map(item => {
+
+            const date =
+                new Date(item.timestamp);
+
+
+            const formatted =
+                date.toLocaleString(
+                    "ja-JP",
+                    {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit"
+                    }
+                );
+
+
+            const className =
+                item.answer === "〇"
+                    ? "maru-item"
+                    : "batsu-item";
+
+
+            return `
+                <div
+                    class="history-item ${className}"
+                >
+
+                    <div>
+                        <div class="person">
+                            👤 ${escapeHTML(item.name)}
+                        </div>
+
+                        <div class="time">
+                            ${formatted}
+                        </div>
+                    </div>
+
+                    <div class="answer">
+                        ${item.answer}
+                    </div>
+
+                </div>
+            `;
+
+        }).join("");
+
+}
+
+
+/* --------------------------------
+   HTMLエスケープ
+-------------------------------- */
+
+function escapeHTML(text) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+
+}
+
+
+/* --------------------------------
+   履歴削除
+-------------------------------- */
+
+function clearHistory() {
+
+    const history = getHistory();
+
+
+    if (history.length === 0) {
+
+        alert("削除する履歴がありません。");
+
+        return;
+    }
+
+
+    const result =
+        confirm(
+            "すべての回答履歴を削除しますか？"
+        );
+
+
+    if (!result) {
+        return;
+    }
+
+
+    localStorage.removeItem(STORAGE_KEY);
+
+
+    renderHistory();
+
+}
+
+
+/* --------------------------------
+   Enterキーでも入力
+-------------------------------- */
+
+document
+    .getElementById("nameInput")
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (event.key === "Enter") {
+
+                // Enterだけでは回答を決めない
+                alert(
+                    "「〇」または「×」を押してください。"
+                );
+
+            }
+
+        }
+    );
+
+
+/* --------------------------------
+   初期表示
+-------------------------------- */
+
+renderHistory();
+
+</script>
+
+</body>
+</html>
