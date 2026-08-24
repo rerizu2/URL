@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Locked Name Team Calendar</title>
+  <title>Deletable Team Calendar</title>
   <style>
-    :root { --primary: #1a73e8; --border: #dadce0; --bg: #f8f9fa; --sun: #d93025; --sat: #1967d2; }
+    :root { --primary: #1a73e8; --border: #dadce0; --bg: #f8f9fa; --sun: #d93025; --sat: #1967d2; --danger: #d93025; }
     body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; }
     .container { width: 100%; max-width: 1000px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -13,28 +13,34 @@
     
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     th { border: 1px solid var(--border); padding: 8px; font-size: 12px; background: #f8f9fa; }
-    td { border: 1px solid var(--border); height: 110px; vertical-align: top; padding: 2px; cursor: pointer; transition: background 0.2s; }
+    td { border: 1px solid var(--border); height: 110px; vertical-align: top; padding: 2px; cursor: pointer; }
     td:hover { background: #f1f3f4; }
-    
     .date-num { font-weight: bold; font-size: 13px; margin: 2px; }
     .is-today { background: #fef7e0; }
 
-    /* カレンダー内の予定ラベル */
     .event-tag {
       background: #e8f0fe; color: #1967d2; font-size: 10px; padding: 2px 4px; 
       margin: 1px; border-radius: 3px; border-left: 3px solid var(--primary);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
-    /* モーダル */
+    /* モーダル関連 */
     .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
     .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 8px; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
     .close-btn { font-size: 24px; cursor: pointer; color: #666; }
-    .detail-item { padding: 10px; border-bottom: 1px solid #f1f3f4; }
+    
+    .detail-item { padding: 12px; border-bottom: 1px solid #f1f3f4; position: relative; }
     .detail-who { font-weight: bold; color: var(--primary); font-size: 12px; }
     .detail-time { color: #666; font-size: 12px; margin-left: 10px; }
     .detail-title { display: block; margin-top: 5px; font-size: 15px; }
+
+    /* 削除ボタン */
+    .del-btn {
+      position: absolute; right: 10px; top: 15px; background: none; border: 1px solid #ffcccc; 
+      color: var(--danger); cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 12px;
+    }
+    .del-btn:hover { background: #fff0f0; border-color: var(--danger); }
 
     /* フォーム */
     .form-box { margin-top: 20px; padding: 15px; border-top: 2px solid #eee; }
@@ -42,11 +48,7 @@
     .field { display: flex; flex-direction: column; flex: 1; min-width: 120px; }
     label { font-size: 11px; margin-bottom: 2px; color: #666; }
     input { padding: 8px; border: 1px solid var(--border); border-radius: 4px; }
-    
-    /* 名前固定用のスタイル */
-    input:disabled { background-color: #e9ecef; color: #495057; cursor: not-allowed; border-color: #ced4da; }
-    .name-locked-msg { font-size: 10px; color: #28a745; margin-top: 2px; display: none; }
-
+    input:disabled { background-color: #e9ecef; color: #495057; cursor: not-allowed; }
     .save-btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
     #status { font-size: 12px; text-align: center; margin-top: 8px; color: var(--primary); }
   </style>
@@ -68,14 +70,10 @@
   </table>
 
   <div class="form-box">
-    <h3>新しい予定を登録</h3>
+    <h3>予定を登録</h3>
     <div class="input-row">
       <div class="field"><label>日付</label><input type="date" id="formDate"></div>
-      <div class="field">
-        <label>お名前（初回保存後に固定されます）</label>
-        <input type="text" id="formName" placeholder="名前を入力">
-        <span id="lockMsg" class="name-locked-msg">✔ 名前は固定されています</span>
-      </div>
+      <div class="field"><label>お名前</label><input type="text" id="formName" placeholder="名前"></div>
       <div class="field"><label>開始</label><input type="time" id="formStart" value="09:00"></div>
       <div class="field"><label>終了</label><input type="time" id="formEnd" value="10:00"></div>
     </div>
@@ -85,7 +83,6 @@
   </div>
 </div>
 
-<!-- 詳細モーダル -->
 <div id="detailModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
@@ -97,52 +94,38 @@
 </div>
 
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbySpD6CXdAaxRbXs9sudremSZSJNbR7bZsLYMhm8UiaKYLgFs_8UExIpNHrKGdnQp-v/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxkOqBMuTyb7XYO9WyfxtMTMTIxM3j7Tm0EK0xMOG9pID4zdhWtmY-VZ2KBE4dStehR/exec";
   let currentView = new Date();
   let events = [];
 
   window.onload = () => {
     document.getElementById('formDate').value = new Date().toISOString().split('T')[0];
-    
-    // ★ローカルストレージから名前を読み込む
     const savedName = localStorage.getItem('user_calendar_name');
     if (savedName) {
-      lockNameField(savedName);
+      document.getElementById('formName').value = savedName;
+      document.getElementById('formName').disabled = true;
     }
-    
     refresh();
   };
 
-  // 名前入力をロックする関数
-  function lockNameField(name) {
-    const nameInput = document.getElementById('formName');
-    nameInput.value = name;
-    nameInput.disabled = true;
-    document.getElementById('lockMsg').style.display = 'block';
-  }
-
   async function refresh() {
-    document.getElementById('status').innerText = "読み込み中...";
+    document.getElementById('status').innerText = "更新中...";
     try {
       const res = await fetch(`${GAS_URL}?action=get`);
       events = await res.json();
       render();
       document.getElementById('status').innerText = "同期完了";
-    } catch (e) {
-      document.getElementById('status').innerText = "エラーが発生しました";
-    }
+    } catch (e) { document.getElementById('status').innerText = "通信エラー"; }
   }
 
   function render() {
     const year = currentView.getFullYear();
     const month = currentView.getMonth();
     document.getElementById('monthTitle').innerText = `${year}年 ${month + 1}月`;
-
     const firstDay = new Date(year, month, 1).getDay();
     const lastDate = new Date(year, month + 1, 0).getDate();
     const tbody = document.getElementById('calendarBody');
     tbody.innerHTML = "";
-
     const todayStr = new Date().toISOString().split('T')[0];
 
     let dateNum = 1;
@@ -151,19 +134,15 @@
       let created = false;
       for (let j = 0; j < 7; j++) {
         let td = document.createElement('td');
-        if ((i === 0 && j < firstDay) || dateNum > lastDate) {
-        } else {
+        if (!((i === 0 && j < firstDay) || dateNum > lastDate)) {
           created = true;
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dateNum).padStart(2, '0')}`;
           if(dateStr === todayStr) td.className = "is-today";
           td.innerHTML = `<div class="date-num">${dateNum}</div>`;
           td.onclick = () => showDetails(dateStr);
-
-          events.filter(e => e.date === dateStr)
-                .sort((a,b) => a.start.localeCompare(b.start))
-                .forEach(e => {
-                  td.innerHTML += `<div class="event-tag">${e.start} ${e.title}</div>`;
-                });
+          events.filter(e => e.date === dateStr).sort((a,b) => a.start.localeCompare(b.start)).forEach(e => {
+            td.innerHTML += `<div class="event-tag">${e.start} ${e.title}</div>`;
+          });
           dateNum++;
         }
         tr.appendChild(td);
@@ -172,42 +151,54 @@
     }
   }
 
+  function showDetails(dateStr) {
+    const dayEvents = events.filter(e => e.date === dateStr).sort((a,b) => a.start.localeCompare(b.start));
+    const modalBody = document.getElementById('modalBody');
+    const myName = localStorage.getItem('user_calendar_name');
+    document.getElementById('modalDateTitle').innerText = dateStr;
+    
+    modalBody.innerHTML = dayEvents.length === 0 ? "<p>予定なし</p>" : 
+      dayEvents.map((e, idx) => {
+        // ★自分の名前と一致する場合のみ削除ボタンを表示
+        const isMine = (e.name === myName);
+        const delHtml = isMine ? `<button class="del-btn" onclick='deleteData(${JSON.stringify(e)})'>🗑️ 削除</button>` : "";
+        return `
+          <div class="detail-item">
+            <span class="detail-who">👤 ${e.name}</span>
+            <span class="detail-time">🕒 ${e.start}-${e.end}</span>
+            <strong class="detail-title">${e.title}</strong>
+            ${delHtml}
+          </div>`;
+      }).join("");
+    document.getElementById('detailModal').style.display = "block";
+  }
+
+  async function deleteData(e) {
+    if(!confirm("この予定を削除しますか？")) return;
+    document.getElementById('status').innerText = "削除中...";
+    closeModal();
+    const q = `action=delete&date=${e.date}&name=${encodeURIComponent(e.name)}&start=${e.start}&end=${e.end}&title=${encodeURIComponent(e.title)}`;
+    await fetch(`${GAS_URL}?${q}`, { mode: 'no-cors' });
+    setTimeout(refresh, 1500);
+  }
+
   async function saveData() {
+    const name = document.getElementById('formName').value;
     const date = document.getElementById('formDate').value;
-    const nameInput = document.getElementById('formName');
-    const name = nameInput.value;
+    const title = document.getElementById('formTitle').value;
     const start = document.getElementById('formStart').value;
     const end = document.getElementById('formEnd').value;
-    const title = document.getElementById('formTitle').value;
+    if(!name || !date || !title) return alert("入力不足です");
 
-    if(!date || !name || !title) return alert("お名前と内容は必須です");
-
-    // ★名前をローカルストレージに保存し、入力をロックする
     localStorage.setItem('user_calendar_name', name);
-    lockNameField(name);
-
+    document.getElementById('formName').disabled = true;
+    
     const btn = document.getElementById('saveBtn');
     btn.disabled = true;
     document.getElementById('status').innerText = "保存中...";
-
     const q = `action=add&date=${date}&name=${encodeURIComponent(name)}&start=${start}&end=${end}&title=${encodeURIComponent(title)}`;
     await fetch(`${GAS_URL}?${q}`, { mode: 'no-cors' });
-
-    setTimeout(() => {
-      document.getElementById('formTitle').value = "";
-      btn.disabled = false;
-      refresh();
-    }, 1500);
-  }
-
-  function showDetails(dateStr) {
-    const dayEvents = events.filter(e => e.date === dateStr).sort((a,b) => a.start.localeCompare(b.start));
-    const modal = document.getElementById('detailModal');
-    const modalBody = document.getElementById('modalBody');
-    document.getElementById('modalDateTitle').innerText = dateStr;
-    modalBody.innerHTML = dayEvents.length === 0 ? "<p>予定なし</p>" : 
-      dayEvents.map(e => `<div class="detail-item"><span class="detail-who">👤 ${e.name}</span><span class="detail-time">🕒 ${e.start}-${e.end}</span><strong class="detail-title">${e.title}</strong></div>`).join("");
-    modal.style.display = "block";
+    setTimeout(() => { document.getElementById('formTitle').value = ""; btn.disabled = false; refresh(); }, 1500);
   }
 
   function closeModal() { document.getElementById('detailModal').style.display = "none"; }
