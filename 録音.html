@@ -1,297 +1,170 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>高機能ボイスレコーダー</title>
 
 <style>
-
-/* =====================================================
-   RESET
-===================================================== */
-
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-
-/* =====================================================
-   BODY
-===================================================== */
-
 body {
-
     min-height: 100vh;
-
     font-family:
         "Noto Sans JP",
         "Yu Gothic",
-        "Meiryo",
+        Meiryo,
         sans-serif;
 
-    color: #ffffff;
+    color: #fff;
 
     background:
-
         radial-gradient(
             circle at 10% 10%,
-            rgba(0, 234, 255, 0.12),
-            transparent 32%
+            rgba(0,234,255,.12),
+            transparent 30%
         ),
-
         radial-gradient(
             circle at 90% 90%,
-            rgba(105, 60, 255, 0.15),
+            rgba(100,50,255,.15),
             transparent 35%
         ),
-
         #070b12;
 
     padding: 20px;
-
 }
-
-
-/* =====================================================
-   CONTAINER
-===================================================== */
 
 .container {
-
-    width: min(1050px, 100%);
-
-    margin: 0 auto;
-
+    width: min(1100px, 100%);
+    margin: auto;
 }
 
-
-/* =====================================================
-   HEADER
-===================================================== */
-
 .header {
-
     text-align: center;
-
-    margin:
-        20px 0 25px;
-
+    margin: 20px 0 25px;
 }
 
 .header h1 {
-
-    font-size:
-        clamp(
-            30px,
-            6vw,
-            52px
-        );
-
-    font-weight: 800;
-
+    font-size: clamp(30px, 6vw, 52px);
     letter-spacing: 2px;
-
 }
 
 .header p {
-
-    margin-top: 10px;
-
-    color: #9ba9ba;
-
+    color: #91a0b3;
+    margin-top: 8px;
 }
-
-
-/* =====================================================
-   CARD
-===================================================== */
 
 .card {
-
-    background:
-        rgba(
-            15,
-            22,
-            34,
-            0.96
-        );
-
-    border:
-        1px solid
-        rgba(
-            255,
-            255,
-            255,
-            0.08
-        );
-
-    border-radius: 28px;
-
+    background: rgba(14,22,34,.96);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 26px;
     padding: 30px;
-
-    box-shadow:
-        0 30px 80px
-        rgba(
-            0,
-            0,
-            0,
-            0.45
-        );
-
+    box-shadow: 0 30px 80px rgba(0,0,0,.45);
 }
 
-
-/* =====================================================
-   MICROPHONE
-===================================================== */
+/* マイク */
 
 .microphone-section {
-
     background: #0c1420;
-
-    border:
-        1px solid
-        #253447;
-
+    border: 1px solid #26384d;
     border-radius: 18px;
-
     padding: 20px;
-
     margin-bottom: 30px;
-
 }
 
 .microphone-title {
-
     font-size: 18px;
-
     font-weight: bold;
-
     margin-bottom: 12px;
-
 }
 
 .microphone-title span {
-
     color: #00eaff;
-
 }
 
 .microphone-row {
-
     display: flex;
-
     gap: 10px;
-
 }
 
 .microphone-select {
-
     flex: 1;
-
-    min-width: 0;
-
     padding: 14px;
-
     border-radius: 12px;
-
-    border:
-        1px solid
-        #344356;
-
+    border: 1px solid #344356;
     background: #111b29;
-
     color: white;
-
     font-size: 15px;
-
     outline: none;
-
 }
 
 .microphone-select:focus {
-
     border-color: #00eaff;
+}
 
+button {
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 14px 24px;
+    border-radius: 13px;
+    font-size: 15px;
+    font-weight: bold;
+    transition: .2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+button:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .refresh-button {
-
-    white-space: nowrap;
-
-    background: #1d2b3d;
-
-}
-
-.refresh-button:hover {
-
-    background: #2a3c54;
-
+    background: #243348;
 }
 
 .selected-mic {
-
     margin-top: 12px;
-
-    color: #8190a2;
-
+    color: #7f8da0;
     font-size: 13px;
-
 }
 
 .selected-mic strong {
-
     color: #00eaff;
-
 }
 
-
-/* =====================================================
-   RECORDER
-===================================================== */
+/* 録音 */
 
 .recorder {
-
     text-align: center;
-
 }
 
-
-/* =====================================================
-   MICROPHONE ICON
-===================================================== */
-
 .mic {
-
     width: 145px;
-
     height: 145px;
-
-    margin:
-        10px auto 25px;
-
+    margin: 10px auto 25px;
     border-radius: 50%;
 
     display: flex;
-
+    align-items: center;
     justify-content: center;
 
-    align-items: center;
-
-    font-size: 62px;
+    font-size: 60px;
 
     background:
-
         linear-gradient(
             145deg,
             #00eaff,
@@ -299,716 +172,336 @@ body {
         );
 
     box-shadow:
-
         0 0 40px
-        rgba(
-            0,
-            220,
-            255,
-            0.35
-        );
+        rgba(0,220,255,.35);
 
-    transition: 0.3s;
-
+    transition: .3s;
 }
 
 .recording .mic {
-
     background:
-
         linear-gradient(
             145deg,
             #ff315b,
-            #d6003d
+            #d5003e
         );
 
-    box-shadow:
-
-        0 0 40px
-        rgba(
-            255,
-            0,
-            70,
-            0.65
-        );
-
-    animation:
-        pulse 1s infinite;
-
+    animation: pulse 1s infinite;
 }
 
 @keyframes pulse {
-
-    0% {
-        transform: scale(1);
-    }
-
     50% {
         transform: scale(1.08);
     }
-
-    100% {
-        transform: scale(1);
-    }
-
 }
 
-
-/* =====================================================
-   STATUS
-===================================================== */
-
 .status {
-
-    color: #a8b4c4;
-
+    color: #a6b2c1;
     font-size: 18px;
-
-    margin-bottom: 8px;
-
 }
 
 .recording .status {
-
-    color: #ff5072;
-
+    color: #ff5575;
 }
-
-
-/* =====================================================
-   TIMER
-===================================================== */
 
 .timer {
-
-    font-family:
-        "Courier New",
-        monospace;
-
-    font-size:
-        clamp(
-            42px,
-            9vw,
-            72px
-        );
-
+    font-family: monospace;
+    font-size: clamp(42px, 9vw, 72px);
     font-weight: bold;
-
     letter-spacing: 4px;
-
 }
 
-
-/* =====================================================
-   WAVE ANIMATION
-===================================================== */
-
 .wave {
-
     height: 50px;
-
-    margin-top: 20px;
-
     display: flex;
-
     justify-content: center;
-
     align-items: center;
-
     gap: 5px;
-
 }
 
 .wave span {
-
     width: 4px;
-
     height: 8px;
-
-    border-radius: 5px;
-
     background: #00eaff;
-
-    opacity: 0.35;
-
+    border-radius: 5px;
 }
 
 .recording .wave span {
-
-    opacity: 1;
-
-    animation:
-        wave 0.6s
-        infinite
-        alternate;
-
+    animation: wave .6s infinite alternate;
 }
 
-.wave span:nth-child(1) {
-    animation-delay: 0s;
-}
-
-.wave span:nth-child(2) {
-    animation-delay: .1s;
-}
-
-.wave span:nth-child(3) {
-    animation-delay: .2s;
-}
-
-.wave span:nth-child(4) {
-    animation-delay: .3s;
-}
-
-.wave span:nth-child(5) {
-    animation-delay: .4s;
-}
-
-.wave span:nth-child(6) {
-    animation-delay: .5s;
-}
-
-.wave span:nth-child(7) {
-    animation-delay: .6s;
-}
-
-.wave span:nth-child(8) {
-    animation-delay: .7s;
-}
-
-.wave span:nth-child(9) {
-    animation-delay: .8s;
-}
+.wave span:nth-child(2) { animation-delay: .1s; }
+.wave span:nth-child(3) { animation-delay: .2s; }
+.wave span:nth-child(4) { animation-delay: .3s; }
+.wave span:nth-child(5) { animation-delay: .4s; }
+.wave span:nth-child(6) { animation-delay: .5s; }
+.wave span:nth-child(7) { animation-delay: .6s; }
+.wave span:nth-child(8) { animation-delay: .7s; }
+.wave span:nth-child(9) { animation-delay: .8s; }
 
 @keyframes wave {
-
-    from {
-        height: 8px;
-    }
-
-    to {
-        height: 42px;
-    }
-
+    from { height: 8px; }
+    to { height: 42px; }
 }
 
-
-/* =====================================================
-   BUTTON
-===================================================== */
+/* ボタン */
 
 .buttons {
-
     display: flex;
-
     justify-content: center;
-
-    gap: 15px;
-
     flex-wrap: wrap;
-
+    gap: 12px;
     margin-top: 30px;
-
-}
-
-button {
-
-    border: none;
-
-    color: white;
-
-    cursor: pointer;
-
-    padding:
-        15px 28px;
-
-    border-radius: 14px;
-
-    font-size: 16px;
-
-    font-weight: bold;
-
-    transition: 0.2s;
-
-}
-
-button:hover {
-
-    transform:
-        translateY(-2px);
-
-}
-
-button:active {
-
-    transform:
-        translateY(1px);
-
-}
-
-button:disabled {
-
-    opacity: 0.35;
-
-    cursor: not-allowed;
-
-    transform: none;
-
 }
 
 .start-button {
-
-    background:
-
-        linear-gradient(
-            135deg,
-            #00d4ff,
-            #0066ff
-        );
-
+    background: linear-gradient(135deg,#00d4ff,#0066ff);
 }
 
 .stop-button {
-
-    background:
-
-        linear-gradient(
-            135deg,
-            #ff315b,
-            #d9003d
-        );
-
+    background: linear-gradient(135deg,#ff315b,#d9003d);
 }
 
 .reset-button {
-
     background: #283547;
-
 }
 
-
-/* =====================================================
-   MESSAGE
-===================================================== */
-
 .message {
-
-    text-align: center;
-
     min-height: 25px;
-
+    text-align: center;
     margin-top: 20px;
-
-    color: #8f9cae;
-
+    color: #8f9cac;
 }
 
 .message.success {
-
-    color: #38e5a1;
-
+    color: #35e6a0;
 }
 
 .message.error {
-
-    color: #ff5c79;
-
+    color: #ff5878;
 }
 
-
-/* =====================================================
-   RESULT
-===================================================== */
+/* 結果 */
 
 .result {
-
     display: none;
-
     margin-top: 30px;
-
     padding: 22px;
-
-    background: #0c1520;
-
-    border:
-        1px solid
-        #26384d;
-
+    background: #0b141f;
+    border: 1px solid #26384d;
     border-radius: 18px;
-
 }
 
 .result.show {
-
     display: block;
-
 }
 
 .result-title {
-
     color: #00eaff;
-
-    font-size: 20px;
-
+    font-size: 21px;
     font-weight: bold;
-
     margin-bottom: 15px;
-
 }
-
-
-/* =====================================================
-   AUDIO
-===================================================== */
 
 audio {
-
     width: 100%;
-
-    margin:
-        10px 0 20px;
-
+    margin: 10px 0 20px;
 }
 
-
-/* =====================================================
-   WAVEFORM
-===================================================== */
+/* エディタ */
 
 .editor {
-
-    margin-top: 25px;
-
+    margin-top: 20px;
     padding: 20px;
-
-    background: #0a111b;
-
-    border:
-        1px solid
-        #243448;
-
+    background: #09111b;
+    border: 1px solid #26384d;
     border-radius: 18px;
-
 }
 
 .editor-title {
-
     color: #00eaff;
-
-    font-size: 18px;
-
+    font-size: 19px;
     font-weight: bold;
-
     margin-bottom: 15px;
-
 }
 
-
-/* =====================================================
-   CANVAS
-===================================================== */
-
 .waveform-container {
-
     position: relative;
-
     width: 100%;
-
-    height: 150px;
-
-    background: #070d15;
-
+    height: 180px;
+    background: #050b12;
     border-radius: 12px;
-
     overflow: hidden;
-
-    border:
-        1px solid
-        #26364a;
-
+    border: 1px solid #26384d;
 }
 
 #waveform {
-
     width: 100%;
-
     height: 100%;
-
     display: block;
-
 }
-
-
-/* =====================================================
-   SELECTION
-===================================================== */
 
 .selection {
-
     position: absolute;
-
     top: 0;
-
     bottom: 0;
-
-    background:
-        rgba(
-            0,
-            234,
-            255,
-            0.12
-        );
-
-    border-left:
-        2px solid
-        #00eaff;
-
-    border-right:
-        2px solid
-        #00eaff;
-
+    background: rgba(0,234,255,.12);
+    border-left: 2px solid #00eaff;
+    border-right: 2px solid #00eaff;
     pointer-events: none;
-
-}
-
-
-/* =====================================================
-   RANGE
-===================================================== */
-
-.range-wrapper {
-
-    margin-top: 20px;
-
 }
 
 .range-row {
-
     display: grid;
-
-    grid-template-columns:
-        100px 1fr 80px;
-
+    grid-template-columns: 100px 1fr 80px;
     align-items: center;
-
     gap: 10px;
-
-    margin: 12px 0;
-
+    margin-top: 14px;
 }
 
 .range-label {
-
-    color: #9caabd;
-
-    font-size: 14px;
-
+    color: #9aa8ba;
 }
 
 .range-value {
-
     color: #00eaff;
-
-    font-family:
-        "Courier New",
-        monospace;
-
+    font-family: monospace;
     text-align: right;
-
 }
 
 input[type="range"] {
-
     width: 100%;
-
     accent-color: #00eaff;
-
-    cursor: pointer;
-
 }
 
+/* 編集 */
 
-/* =====================================================
-   EDIT BUTTON
-===================================================== */
+.edit-panel {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #26384d;
+}
+
+.edit-panel h3 {
+    color: #00eaff;
+    margin-bottom: 15px;
+}
+
+.volume-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 80px;
+    gap: 10px;
+    align-items: center;
+}
+
+.volume-value {
+    color: #00eaff;
+    font-family: monospace;
+    text-align: right;
+}
+
+.volume-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.volume-presets button {
+    background: #202f42;
+    padding: 10px 15px;
+}
+
+.volume-presets button:hover {
+    background: #30445c;
+}
 
 .edit-buttons {
-
     display: flex;
-
-    gap: 10px;
-
     flex-wrap: wrap;
-
+    gap: 10px;
     margin-top: 20px;
-
-}
-
-.cut-button {
-
-    background:
-
-        linear-gradient(
-            135deg,
-            #00d4ff,
-            #0077ff
-        );
-
 }
 
 .preview-button {
-
     background: #27384d;
-
 }
 
-.save-button {
-
-    background:
-
-        linear-gradient(
-            135deg,
-            #00c98d,
-            #008b63
-        );
-
+.cut-button {
+    background: linear-gradient(135deg,#00d4ff,#0077ff);
 }
 
+.volume-button {
+    background: linear-gradient(135deg,#a855f7,#6d28d9);
+}
 
-/* =====================================================
-   INFO
-===================================================== */
+.mute-button {
+    background: linear-gradient(135deg,#ff8a00,#e64a00);
+}
+
+/* 情報 */
 
 .file-info {
-
     display: grid;
-
-    grid-template-columns:
-        repeat(3, 1fr);
-
+    grid-template-columns: repeat(3,1fr);
     gap: 10px;
-
     margin-top: 20px;
-
 }
 
 .info-box {
-
-    padding: 14px;
-
     background: #111c2a;
-
     border-radius: 12px;
-
+    padding: 14px;
     text-align: center;
-
 }
 
 .info-label {
-
     color: #718095;
-
     font-size: 12px;
-
-    margin-bottom: 5px;
-
 }
 
 .info-value {
-
     color: #dce5ef;
-
     font-weight: bold;
-
+    margin-top: 5px;
     word-break: break-word;
-
 }
 
-
-/* =====================================================
-   SAVE AREA
-===================================================== */
-
 .save-area {
-
     margin-top: 20px;
-
     padding-top: 20px;
-
-    border-top:
-        1px solid
-        #253447;
-
+    border-top: 1px solid #26384d;
 }
 
 .download-button {
-
     display: inline-block;
-
     text-decoration: none;
-
-    background:
-
-        linear-gradient(
-            135deg,
-            #00c98d,
-            #008b63
-        );
-
+    background: linear-gradient(135deg,#00c98d,#008b63);
     color: white;
-
-    padding:
-        14px 22px;
-
+    padding: 14px 22px;
     border-radius: 12px;
-
     font-weight: bold;
-
 }
-
-
-/* =====================================================
-   PRIVACY
-===================================================== */
 
 .privacy {
-
     margin-top: 25px;
-
     padding: 15px;
-
-    border-radius: 13px;
-
     background: #101923;
-
-    border:
-        1px solid
-        #263344;
-
+    border: 1px solid #263344;
+    border-radius: 13px;
     color: #8795a7;
-
     font-size: 13px;
-
     line-height: 1.8;
-
 }
 
-
-/* =====================================================
-   MOBILE
-===================================================== */
-
-@media (
-    max-width: 650px
-) {
+@media(max-width:650px) {
 
     body {
         padding: 10px;
     }
 
     .card {
-        padding: 20px;
-        border-radius: 20px;
+        padding: 18px;
     }
 
     .microphone-row {
@@ -1019,29 +512,26 @@ input[type="range"] {
         width: 100%;
     }
 
-    .buttons {
-        flex-direction: column;
-    }
-
-    button {
-        width: 100%;
-    }
-
-    .range-row {
-        grid-template-columns:
-            75px 1fr 70px;
-    }
-
-    .file-info {
-        grid-template-columns: 1fr;
-    }
-
+    .buttons,
     .edit-buttons {
         flex-direction: column;
     }
 
+    .buttons button,
     .edit-buttons button {
         width: 100%;
+    }
+
+    .range-row {
+        grid-template-columns: 75px 1fr 70px;
+    }
+
+    .volume-row {
+        grid-template-columns: 75px 1fr 70px;
+    }
+
+    .file-info {
+        grid-template-columns: 1fr;
     }
 
     .mic {
@@ -1049,120 +539,66 @@ input[type="range"] {
         height: 115px;
         font-size: 48px;
     }
-
 }
-
 </style>
-
 </head>
-
 
 <body>
 
-
 <div class="container">
 
-
 <header class="header">
-
-    <h1>
-        🎙 ボイスレコーダー
-    </h1>
-
-    <p>
-        録音・再生・カット・保存
-    </p>
-
+    <h1>🎙 ボイスレコーダー</h1>
+    <p>録音・カット・部分音量変更・ミュート</p>
 </header>
-
-
 
 <main class="card">
 
-
-<!-- =================================================
-     マイク選択
-================================================= -->
+<!-- マイク -->
 
 <section class="microphone-section">
 
     <div class="microphone-title">
-
-        🎧
-        <span>使用するマイク</span>
-
+        🎧 <span>使用するマイク</span>
     </div>
-
 
     <div class="microphone-row">
 
         <select
             id="microphoneSelect"
-            class="microphone-select"
-        >
-
-            <option value="">
-                マイクを確認しています...
-            </option>
-
+            class="microphone-select">
+            <option value="">マイクを確認しています...</option>
         </select>
-
 
         <button
             id="refreshButton"
-            class="refresh-button"
-            type="button"
-        >
+            class="refresh-button">
             🔄 マイク更新
         </button>
 
     </div>
 
-
-    <div
-        id="selectedMic"
-        class="selected-mic"
-    >
-        選択中：
-        <strong>確認中...</strong>
+    <div id="selectedMic" class="selected-mic">
+        選択中：<strong>確認中...</strong>
     </div>
 
 </section>
 
+<!-- 録音 -->
 
+<section id="recorder" class="recorder">
 
-<!-- =================================================
-     RECORDER
-================================================= -->
+    <div class="mic">🎙</div>
 
-<section
-    id="recorder"
-    class="recorder"
->
-
-    <div class="mic">
-        🎙
-    </div>
-
-
-    <div
-        id="status"
-        class="status"
-    >
+    <div id="status" class="status">
         録音待機中
     </div>
 
-
-    <div
-        id="timer"
-        class="timer"
-    >
+    <div id="timer" class="timer">
         00:00:00
     </div>
 
-
     <div class="wave">
-
         <span></span>
         <span></span>
         <span></span>
@@ -1172,219 +608,222 @@ input[type="range"] {
         <span></span>
         <span></span>
         <span></span>
-
     </div>
 
 </section>
-
-
-
-<!-- =================================================
-     BUTTONS
-================================================= -->
 
 <div class="buttons">
 
     <button
         id="startButton"
-        class="start-button"
-    >
+        class="start-button">
         🔴 録音開始
     </button>
-
 
     <button
         id="stopButton"
         class="stop-button"
-        disabled
-    >
+        disabled>
         ⏹ 録音停止
     </button>
-
 
     <button
         id="resetButton"
         class="reset-button"
-        disabled
-    >
+        disabled>
         🗑 削除
     </button>
 
 </div>
 
+<div id="message" class="message"></div>
 
+<!-- 結果 -->
 
-<!-- =================================================
-     MESSAGE
-================================================= -->
-
-<div
-    id="message"
-    class="message"
-></div>
-
-
-
-<!-- =================================================
-     RESULT
-================================================= -->
-
-<section
-    id="result"
-    class="result"
->
-
+<section id="result" class="result">
 
     <div class="result-title">
-
         🎵 録音データ
-
     </div>
 
+    <audio id="audioPlayer" controls></audio>
 
-    <!-- ORIGINAL PLAYER -->
-
-    <audio
-        id="audioPlayer"
-        controls
-    ></audio>
-
-
-
-    <!-- =================================================
-         AUDIO EDITOR
-    ================================================= -->
+    <!-- 波形 -->
 
     <div class="editor">
 
-
         <div class="editor-title">
-
-            ✂️ 音声カット
-
+            ✂️🔊 音声編集
         </div>
-
 
         <div class="waveform-container">
 
-
-            <canvas
-                id="waveform"
-            ></canvas>
-
+            <canvas id="waveform"></canvas>
 
             <div
                 id="selection"
-                class="selection"
-            ></div>
-
+                class="selection">
+            </div>
 
         </div>
 
+        <!-- 開始 -->
 
+        <div class="range-row">
 
-        <!-- START -->
+            <div class="range-label">
+                開始位置
+            </div>
 
-        <div class="range-wrapper">
+            <input
+                id="startRange"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0">
 
+            <div
+                id="startValue"
+                class="range-value">
+                00:00
+            </div>
 
-            <div class="range-row">
+        </div>
+
+        <!-- 終了 -->
+
+        <div class="range-row">
+
+            <div class="range-label">
+                終了位置
+            </div>
+
+            <input
+                id="endRange"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value="1">
+
+            <div
+                id="endValue"
+                class="range-value">
+                00:00
+            </div>
+
+        </div>
+
+        <!-- 音量 -->
+
+        <div class="edit-panel">
+
+            <h3>
+                🔊 選択範囲の音量
+            </h3>
+
+            <div class="volume-row">
 
                 <div class="range-label">
-                    開始位置
+                    音量
                 </div>
 
-
                 <input
+                    id="volumeRange"
                     type="range"
-                    id="startRange"
                     min="0"
-                    max="100"
-                    step="0.01"
-                    value="0"
-                >
-
+                    max="300"
+                    step="1"
+                    value="100">
 
                 <div
-                    id="startValue"
-                    class="range-value"
-                >
-                    00:00
+                    id="volumeValue"
+                    class="volume-value">
+                    100%
                 </div>
 
             </div>
 
+            <div class="volume-presets">
 
+                <button
+                    data-volume="0">
+                    🔇 0%
+                </button>
 
-            <!-- END -->
+                <button
+                    data-volume="25">
+                    25%
+                </button>
 
-            <div class="range-row">
+                <button
+                    data-volume="50">
+                    50%
+                </button>
 
-                <div class="range-label">
-                    終了位置
-                </div>
+                <button
+                    data-volume="75">
+                    75%
+                </button>
 
+                <button
+                    data-volume="100">
+                    100%
+                </button>
 
-                <input
-                    type="range"
-                    id="endRange"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value="100"
-                >
+                <button
+                    data-volume="150">
+                    150%
+                </button>
 
+                <button
+                    data-volume="200">
+                    200%
+                </button>
 
-                <div
-                    id="endValue"
-                    class="range-value"
-                >
-                    00:00
-                </div>
+                <button
+                    data-volume="300">
+                    300%
+                </button>
 
             </div>
 
+            <div class="edit-buttons">
+
+                <button
+                    id="previewButton"
+                    class="preview-button">
+                    ▶️ 選択範囲を再生
+                </button>
+
+                <button
+                    id="cutButton"
+                    class="cut-button">
+                    ✂️ 選択範囲だけ残す
+                </button>
+
+                <button
+                    id="volumeButton"
+                    class="volume-button">
+                    🔊 選択範囲の音量を変更
+                </button>
+
+                <button
+                    id="muteButton"
+                    class="mute-button">
+                    🔇 選択範囲を無音にする
+                </button>
+
+            </div>
 
         </div>
-
-
-
-        <!-- EDIT BUTTONS -->
-
-        <div class="edit-buttons">
-
-
-            <button
-                id="previewButton"
-                class="preview-button"
-                type="button"
-            >
-                ▶️ 選択範囲を再生
-            </button>
-
-
-            <button
-                id="cutButton"
-                class="cut-button"
-                type="button"
-            >
-                ✂️ この範囲をカット
-            </button>
-
-
-        </div>
-
 
     </div>
 
-
-
-    <!-- =================================================
-         FILE INFO
-    ================================================= -->
+    <!-- 情報 -->
 
     <div class="file-info">
-
 
         <div class="info-box">
 
@@ -1394,29 +833,25 @@ input[type="range"] {
 
             <div
                 id="fileName"
-                class="info-value"
-            >
+                class="info-value">
                 -
             </div>
 
         </div>
-
 
         <div class="info-box">
 
             <div class="info-label">
-                録音時間
+                音声時間
             </div>
 
             <div
                 id="recordDuration"
-                class="info-value"
-            >
+                class="info-value">
                 -
             </div>
 
         </div>
-
 
         <div class="info-box">
 
@@ -1426,428 +861,259 @@ input[type="range"] {
 
             <div
                 id="fileSize"
-                class="info-value"
-            >
+                class="info-value">
                 -
             </div>
 
         </div>
 
-
     </div>
 
-
-
-    <!-- =================================================
-         SAVE
-    ================================================= -->
+    <!-- 保存 -->
 
     <div class="save-area">
-
 
         <a
             id="downloadButton"
             class="download-button"
             href="#"
-            download
-        >
-            💾 録音ファイルを保存
+            download>
+            💾 編集後の音声を保存
         </a>
-
 
     </div>
 
-
 </section>
-
-
-
-<!-- =================================================
-     PRIVACY
-================================================= -->
 
 <div class="privacy">
 
-    🔒
-    <strong>完全ローカル処理</strong><br>
+    🔒 <strong>完全ローカル処理</strong><br>
 
-    Google Drive・GAS・サーバーなどの
-    外部サービスは使用していません。<br>
+    Google Drive・GAS・サーバーなどの外部サービスは使用していません。<br>
 
-    録音データはこのブラウザ上で処理されます。<br>
+    録音データと編集データは、このブラウザ上で処理されます。<br>
 
-    「保存」を押すと、加工した音声ファイルを
-    端末へ保存できます。
+    保存すると、編集した音声を端末へWAV形式で保存できます。
 
 </div>
-
 
 </main>
-
 </div>
-
-
 
 <script>
 
 /* =====================================================
-   VARIABLES
+   基本変数
 ===================================================== */
 
 let mediaRecorder = null;
-
 let currentStream = null;
-
 let audioChunks = [];
 
 let recordingStartTime = null;
-
 let timerInterval = null;
 
 let recordedBlob = null;
-
 let audioURL = null;
 
 let audioContext = null;
-
 let audioBuffer = null;
 
-let originalFileName = "";
-
 let cutBlob = null;
-
 let cutURL = null;
 
 
-
 /* =====================================================
-   ELEMENTS
+   要素
 ===================================================== */
 
 const microphoneSelect =
-    document.getElementById(
-        "microphoneSelect"
-    );
+    document.getElementById("microphoneSelect");
 
 const refreshButton =
-    document.getElementById(
-        "refreshButton"
-    );
+    document.getElementById("refreshButton");
 
 const selectedMic =
-    document.getElementById(
-        "selectedMic"
-    );
-
-const startButton =
-    document.getElementById(
-        "startButton"
-    );
-
-const stopButton =
-    document.getElementById(
-        "stopButton"
-    );
-
-const resetButton =
-    document.getElementById(
-        "resetButton"
-    );
+    document.getElementById("selectedMic");
 
 const recorder =
-    document.getElementById(
-        "recorder"
-    );
+    document.getElementById("recorder");
+
+const startButton =
+    document.getElementById("startButton");
+
+const stopButton =
+    document.getElementById("stopButton");
+
+const resetButton =
+    document.getElementById("resetButton");
 
 const status =
-    document.getElementById(
-        "status"
-    );
+    document.getElementById("status");
 
 const timer =
-    document.getElementById(
-        "timer"
-    );
+    document.getElementById("timer");
 
 const message =
-    document.getElementById(
-        "message"
-    );
+    document.getElementById("message");
 
 const result =
-    document.getElementById(
-        "result"
-    );
+    document.getElementById("result");
 
 const audioPlayer =
-    document.getElementById(
-        "audioPlayer"
-    );
+    document.getElementById("audioPlayer");
 
 const waveform =
-    document.getElementById(
-        "waveform"
-    );
+    document.getElementById("waveform");
 
 const selection =
-    document.getElementById(
-        "selection"
-    );
+    document.getElementById("selection");
 
 const startRange =
-    document.getElementById(
-        "startRange"
-    );
+    document.getElementById("startRange");
 
 const endRange =
-    document.getElementById(
-        "endRange"
-    );
+    document.getElementById("endRange");
 
 const startValue =
-    document.getElementById(
-        "startValue"
-    );
+    document.getElementById("startValue");
 
 const endValue =
-    document.getElementById(
-        "endValue"
-    );
+    document.getElementById("endValue");
+
+const volumeRange =
+    document.getElementById("volumeRange");
+
+const volumeValue =
+    document.getElementById("volumeValue");
 
 const previewButton =
-    document.getElementById(
-        "previewButton"
-    );
+    document.getElementById("previewButton");
 
 const cutButton =
-    document.getElementById(
-        "cutButton"
-    );
+    document.getElementById("cutButton");
+
+const volumeButton =
+    document.getElementById("volumeButton");
+
+const muteButton =
+    document.getElementById("muteButton");
 
 const downloadButton =
-    document.getElementById(
-        "downloadButton"
-    );
+    document.getElementById("downloadButton");
 
 const fileName =
-    document.getElementById(
-        "fileName"
-    );
+    document.getElementById("fileName");
 
 const recordDuration =
-    document.getElementById(
-        "recordDuration"
-    );
+    document.getElementById("recordDuration");
 
 const fileSize =
-    document.getElementById(
-        "fileSize"
-    );
-
+    document.getElementById("fileSize");
 
 
 /* =====================================================
-   MESSAGE
+   メッセージ
 ===================================================== */
 
-function showMessage(
-    text,
-    type = ""
-) {
+function showMessage(text, type = "") {
 
-    message.textContent =
-        text;
-
-    message.className =
-        "message " + type;
+    message.textContent = text;
+    message.className = "message " + type;
 
 }
 
 
-
 /* =====================================================
-   FORMAT TIME
+   時間
 ===================================================== */
 
-function formatTime(
-    seconds
-) {
+function formatTime(seconds) {
 
-    seconds =
-        Math.max(
-            0,
-            seconds
-        );
+    seconds = Math.max(0, seconds);
 
     const minutes =
-        Math.floor(
-            seconds / 60
-        );
+        Math.floor(seconds / 60);
 
     const secs =
-        Math.floor(
-            seconds % 60
-        );
+        Math.floor(seconds % 60);
 
     return (
-
-        String(minutes)
-            .padStart(
-                2,
-                "0"
-            )
-
+        String(minutes).padStart(2, "0")
         +
-
         ":"
-
         +
-
-        String(secs)
-            .padStart(
-                2,
-                "0"
-            )
-
+        String(secs).padStart(2, "0")
     );
 
 }
 
 
-/* =====================================================
-   FORMAT LONG TIME
-===================================================== */
-
-function formatLongTime(
-    seconds
-) {
+function formatLongTime(seconds) {
 
     const hours =
-        Math.floor(
-            seconds / 3600
-        );
+        Math.floor(seconds / 3600);
 
     const minutes =
-        Math.floor(
-            (seconds % 3600) / 60
-        );
+        Math.floor((seconds % 3600) / 60);
 
     const secs =
-        Math.floor(
-            seconds % 60
-        );
+        Math.floor(seconds % 60);
 
     return (
-
-        String(hours)
-            .padStart(
-                2,
-                "0"
-            )
-
-        + ":"
-
+        String(hours).padStart(2, "0")
         +
-
-        String(minutes)
-            .padStart(
-                2,
-                "0"
-            )
-
-        + ":"
-
+        ":"
         +
-
-        String(secs)
-            .padStart(
-                2,
-                "0"
-            )
-
+        String(minutes).padStart(2, "0")
+        +
+        ":"
+        +
+        String(secs).padStart(2, "0")
     );
 
 }
 
 
 /* =====================================================
-   FILE SIZE
+   ファイルサイズ
 ===================================================== */
 
-function formatFileSize(
-    bytes
-) {
+function formatFileSize(bytes) {
 
-    if (
-        bytes < 1024
-    ) {
-
-        return (
-            bytes +
-            " B"
-        );
-
+    if (bytes < 1024) {
+        return bytes + " B";
     }
 
-    if (
-        bytes < 1024 * 1024
-    ) {
-
-        return (
-            (bytes / 1024)
-                .toFixed(1)
-            +
-            " KB"
-        );
-
+    if (bytes < 1024 * 1024) {
+        return (bytes / 1024).toFixed(1) + " KB";
     }
 
-    return (
-        (bytes / 1024 / 1024)
-            .toFixed(2)
-        +
-        " MB"
-    );
+    return (bytes / 1024 / 1024).toFixed(2) + " MB";
 
 }
 
 
 /* =====================================================
-   MIME TYPE
+   MIME
 ===================================================== */
 
 function getSupportedMimeType() {
 
     const types = [
-
         "audio/webm;codecs=opus",
-
         "audio/webm",
-
         "audio/ogg;codecs=opus",
-
         "audio/mp4"
-
     ];
 
+    for (const type of types) {
 
-    for (
-        const type of types
-    ) {
-
-        if (
-            MediaRecorder
-                .isTypeSupported(
-                    type
-                )
-        ) {
-
+        if (MediaRecorder.isTypeSupported(type)) {
             return type;
-
         }
 
     }
-
 
     return "";
 
@@ -1855,156 +1121,7 @@ function getSupportedMimeType() {
 
 
 /* =====================================================
-   EXTENSION
-===================================================== */
-
-function getExtension(
-    mimeType
-) {
-
-    if (
-        mimeType.includes(
-            "ogg"
-        )
-    ) {
-
-        return "ogg";
-
-    }
-
-    if (
-        mimeType.includes(
-            "mp4"
-        )
-    ) {
-
-        return "mp4";
-
-    }
-
-    return "webm";
-
-}
-
-
-/* =====================================================
-   FILE NAME
-===================================================== */
-
-function createFileName(
-    suffix = ""
-) {
-
-    const now =
-        new Date();
-
-    const year =
-        now.getFullYear();
-
-    const month =
-        String(
-            now.getMonth() + 1
-        )
-        .padStart(
-            2,
-            "0"
-        );
-
-    const day =
-        String(
-            now.getDate()
-        )
-        .padStart(
-            2,
-            "0"
-        );
-
-    const hour =
-        String(
-            now.getHours()
-        )
-        .padStart(
-            2,
-            "0"
-        );
-
-    const minute =
-        String(
-            now.getMinutes()
-        )
-        .padStart(
-            2,
-            "0"
-        );
-
-    const second =
-        String(
-            now.getSeconds()
-        )
-        .padStart(
-            2,
-            "0"
-        );
-
-    const extension =
-        recordedBlob
-            ? getExtension(
-                recordedBlob.type
-            )
-            : "webm";
-
-
-    return (
-
-        "録音_"
-
-        +
-
-        year
-
-        +
-
-        month
-
-        +
-
-        day
-
-        +
-
-        "_"
-
-        +
-
-        hour
-
-        +
-
-        minute
-
-        +
-
-        second
-
-        +
-
-        suffix
-
-        +
-
-        "."
-
-        +
-
-        extension
-
-    );
-
-}
-
-
-/* =====================================================
-   MICROPHONES
+   マイク一覧
 ===================================================== */
 
 async function loadMicrophones() {
@@ -2012,84 +1129,46 @@ async function loadMicrophones() {
     try {
 
         const devices =
-            await navigator
-                .mediaDevices
-                .enumerateDevices();
-
+            await navigator.mediaDevices.enumerateDevices();
 
         const microphones =
             devices.filter(
-                device =>
-                    device.kind ===
-                    "audioinput"
+                d => d.kind === "audioinput"
             );
 
+        microphoneSelect.innerHTML = "";
 
-        microphoneSelect.innerHTML =
-            "";
+        if (!microphones.length) {
 
-
-        if (
-            microphones.length === 0
-        ) {
-
-            microphoneSelect.innerHTML = `
-
-                <option value="">
-                    マイクが見つかりません
-                </option>
-
-            `;
-
-            selectedMic.innerHTML =
-                "選択中：<strong>なし</strong>";
+            microphoneSelect.innerHTML =
+                `<option value="">マイクがありません</option>`;
 
             return;
 
         }
 
+        microphones.forEach((device, index) => {
 
-        microphones.forEach(
-            (device, index) => {
+            const option =
+                document.createElement("option");
 
-                const option =
-                    document.createElement(
-                        "option"
-                    );
+            option.value =
+                device.deviceId;
 
+            option.textContent =
+                device.label ||
+                `マイク ${index + 1}`;
 
-                option.value =
-                    device.deviceId;
+            microphoneSelect.appendChild(option);
 
-
-                option.textContent =
-                    device.label ||
-                    `マイク ${index + 1}`;
-
-
-                microphoneSelect
-                    .appendChild(
-                        option
-                    );
-
-            }
-        );
-
+        });
 
         updateSelectedMicrophone();
-
-
-        showMessage(
-            `${microphones.length}個のマイクを検出しました。`,
-            "success"
-        );
 
     }
     catch (error) {
 
-        console.error(
-            error
-        );
+        console.error(error);
 
         showMessage(
             "マイク一覧を取得できませんでした。",
@@ -2102,7 +1181,7 @@ async function loadMicrophones() {
 
 
 /* =====================================================
-   MICROPHONE PERMISSION
+   マイク権限
 ===================================================== */
 
 async function requestMicrophonePermission() {
@@ -2110,38 +1189,20 @@ async function requestMicrophonePermission() {
     try {
 
         const stream =
-            await navigator
-                .mediaDevices
-                .getUserMedia({
-                    audio: true
-                });
+            await navigator.mediaDevices.getUserMedia({
+                audio: true
+            });
 
-
-        stream
-            .getTracks()
-            .forEach(
-                track =>
-                    track.stop()
-            );
-
+        stream.getTracks().forEach(
+            track => track.stop()
+        );
 
         await loadMicrophones();
 
     }
     catch (error) {
 
-        console.error(
-            error
-        );
-
-        microphoneSelect.innerHTML = `
-
-            <option value="">
-                マイクの使用を許可してください
-            </option>
-
-        `;
-
+        console.error(error);
 
         showMessage(
             "マイクの使用を許可してください。",
@@ -2154,30 +1215,19 @@ async function requestMicrophonePermission() {
 
 
 /* =====================================================
-   SELECTED MICROPHONE
+   マイク表示
 ===================================================== */
 
 function updateSelectedMicrophone() {
 
     const option =
-        microphoneSelect
-            .options[
-                microphoneSelect
-                    .selectedIndex
-            ];
+        microphoneSelect.options[
+            microphoneSelect.selectedIndex
+        ];
 
-
-    if (
-        !option
-    ) {
-
-        selectedMic.innerHTML =
-            "選択中：<strong>なし</strong>";
-
+    if (!option) {
         return;
-
     }
-
 
     selectedMic.innerHTML =
         "選択中：<strong>"
@@ -2194,64 +1244,42 @@ microphoneSelect.addEventListener(
     updateSelectedMicrophone
 );
 
-
 refreshButton.addEventListener(
     "click",
     loadMicrophones
 );
 
 
-
 /* =====================================================
-   TIMER
+   タイマー
 ===================================================== */
 
 function updateTimer() {
 
-    if (
-        !recordingStartTime
-    ) {
-
+    if (!recordingStartTime) {
         return;
-
     }
 
-
     const seconds =
-        (
-            Date.now()
-            -
-            recordingStartTime
-        )
-        /
-        1000;
-
+        (Date.now() - recordingStartTime) / 1000;
 
     timer.textContent =
-        formatLongTime(
-            seconds
-        );
+        formatLongTime(seconds);
 
 }
 
 
 /* =====================================================
-   START RECORDING
+   録音開始
 ===================================================== */
 
 startButton.addEventListener(
     "click",
-    async function() {
+    async () => {
 
         try {
 
-            const deviceId =
-                microphoneSelect.value;
-
-
-            if (
-                !deviceId
-            ) {
+            if (!microphoneSelect.value) {
 
                 showMessage(
                     "マイクを選択してください。",
@@ -2262,67 +1290,41 @@ startButton.addEventListener(
 
             }
 
-
             currentStream =
-                await navigator
-                    .mediaDevices
-                    .getUserMedia({
+                await navigator.mediaDevices.getUserMedia({
 
-                        audio: {
+                    audio: {
+                        deviceId: {
+                            exact:
+                                microphoneSelect.value
+                        },
 
-                            deviceId: {
-                                exact:
-                                    deviceId
-                            },
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
 
-                            echoCancellation:
-                                true,
-
-                            noiseSuppression:
-                                true,
-
-                            autoGainControl:
-                                true
-
-                        }
-
-                    });
-
+                });
 
             audioChunks = [];
-
 
             const mimeType =
                 getSupportedMimeType();
 
-
-            if (
+            mediaRecorder =
                 mimeType
-            ) {
+                ?
+                new MediaRecorder(
+                    currentStream,
+                    { mimeType }
+                )
+                :
+                new MediaRecorder(
+                    currentStream
+                );
 
-                mediaRecorder =
-                    new MediaRecorder(
-                        currentStream,
-                        {
-                            mimeType:
-                                mimeType
-                        }
-                    );
-
-            }
-            else {
-
-                mediaRecorder =
-                    new MediaRecorder(
-                        currentStream
-                    );
-
-            }
-
-
-            mediaRecorder.addEventListener(
-                "dataavailable",
-                function(event) {
+            mediaRecorder.ondataavailable =
+                event => {
 
                     if (
                         event.data &&
@@ -2335,24 +1337,15 @@ startButton.addEventListener(
 
                     }
 
-                }
-            );
+                };
 
+            mediaRecorder.onstop =
+                finishRecording;
 
-            mediaRecorder.addEventListener(
-                "stop",
-                finishRecording
-            );
-
-
-            mediaRecorder.start(
-                1000
-            );
-
+            mediaRecorder.start(1000);
 
             recordingStartTime =
                 Date.now();
-
 
             timerInterval =
                 setInterval(
@@ -2360,40 +1353,19 @@ startButton.addEventListener(
                     250
                 );
 
-
-            recorder
-                .classList
-                .add(
-                    "recording"
-                );
-
+            recorder.classList.add(
+                "recording"
+            );
 
             status.textContent =
                 "🔴 録音中";
 
+            startButton.disabled = true;
+            stopButton.disabled = false;
+            resetButton.disabled = true;
 
-            startButton.disabled =
-                true;
-
-            stopButton.disabled =
-                false;
-
-            resetButton.disabled =
-                true;
-
-            microphoneSelect.disabled =
-                true;
-
-            refreshButton.disabled =
-                true;
-
-
-            result
-                .classList
-                .remove(
-                    "show"
-                );
-
+            microphoneSelect.disabled = true;
+            refreshButton.disabled = true;
 
             showMessage(
                 "録音中です。",
@@ -2403,10 +1375,7 @@ startButton.addEventListener(
         }
         catch (error) {
 
-            console.error(
-                error
-            );
-
+            console.error(error);
 
             showMessage(
                 "マイクを使用できませんでした。",
@@ -2419,19 +1388,17 @@ startButton.addEventListener(
 );
 
 
-
 /* =====================================================
-   STOP RECORDING
+   録音停止
 ===================================================== */
 
 stopButton.addEventListener(
     "click",
-    function() {
+    () => {
 
         if (
             mediaRecorder &&
-            mediaRecorder.state ===
-            "recording"
+            mediaRecorder.state === "recording"
         ) {
 
             mediaRecorder.stop();
@@ -2442,184 +1409,102 @@ stopButton.addEventListener(
 );
 
 
-
 /* =====================================================
-   FINISH RECORDING
+   録音終了
 ===================================================== */
 
 function finishRecording() {
 
-    clearInterval(
-        timerInterval
-    );
-
-
-    timerInterval =
-        null;
-
+    clearInterval(timerInterval);
 
     const elapsed =
-        (
-            Date.now()
-            -
-            recordingStartTime
-        )
-        /
-        1000;
+        (Date.now() - recordingStartTime) / 1000;
 
-
-    recordingStartTime =
-        null;
-
-
-    const mimeType =
-        mediaRecorder.mimeType ||
-        "audio/webm";
-
+    recordingStartTime = null;
 
     recordedBlob =
         new Blob(
             audioChunks,
             {
                 type:
-                    mimeType
+                    mediaRecorder.mimeType ||
+                    "audio/webm"
             }
         );
 
-
-    if (
-        audioURL
-    ) {
-
-        URL.revokeObjectURL(
-            audioURL
-        );
-
+    if (audioURL) {
+        URL.revokeObjectURL(audioURL);
     }
-
 
     audioURL =
         URL.createObjectURL(
             recordedBlob
         );
 
-
     audioPlayer.src =
         audioURL;
 
-
     audioPlayer.load();
 
-
-    const extension =
-        getExtension(
-            mimeType
-        );
-
-
-    originalFileName =
-        createFileName();
-
-
     fileName.textContent =
-        originalFileName;
-
+        "録音データ";
 
     recordDuration.textContent =
-        formatLongTime(
-            elapsed
-        );
-
+        formatLongTime(elapsed);
 
     fileSize.textContent =
         formatFileSize(
             recordedBlob.size
         );
 
-
-    /*
-     * AudioBuffer解析
-     */
-
-    loadAudioBuffer();
-
-
-    recorder
-        .classList
-        .remove(
-            "recording"
-        );
-
+    recorder.classList.remove(
+        "recording"
+    );
 
     status.textContent =
         "✅ 録音完了";
 
-
     timer.textContent =
-        formatLongTime(
-            elapsed
-        );
+        formatLongTime(elapsed);
 
+    startButton.disabled = false;
+    stopButton.disabled = true;
+    resetButton.disabled = false;
 
-    startButton.disabled =
-        false;
+    microphoneSelect.disabled = false;
+    refreshButton.disabled = false;
 
-    stopButton.disabled =
-        true;
-
-    resetButton.disabled =
-        false;
-
-    microphoneSelect.disabled =
-        false;
-
-    refreshButton.disabled =
-        false;
-
-
-    result
-        .classList
-        .add(
-            "show"
-        );
-
+    result.classList.add("show");
 
     showMessage(
         "録音が完了しました。",
         "success"
     );
 
+    if (currentStream) {
 
-    if (
-        currentStream
-    ) {
+        currentStream.getTracks().forEach(
+            track => track.stop()
+        );
 
-        currentStream
-            .getTracks()
-            .forEach(
-                track =>
-                    track.stop()
-            );
-
-        currentStream =
-            null;
+        currentStream = null;
 
     }
+
+    loadAudioBuffer();
 
 }
 
 
 /* =====================================================
-   LOAD AUDIO BUFFER
+   AudioBuffer
 ===================================================== */
 
 async function loadAudioBuffer() {
 
     try {
 
-        if (
-            !audioContext
-        ) {
+        if (!audioContext) {
 
             audioContext =
                 new (
@@ -2629,62 +1514,35 @@ async function loadAudioBuffer() {
 
         }
 
-
         const arrayBuffer =
             await recordedBlob.arrayBuffer();
 
-
         audioBuffer =
-            await audioContext
-                .decodeAudioData(
-                    arrayBuffer
-                );
-
-
-        /*
-         * Range設定
-         */
+            await audioContext.decodeAudioData(
+                arrayBuffer
+            );
 
         const duration =
             audioBuffer.duration;
 
+        startRange.min = 0;
+        startRange.max = duration;
+        startRange.value = 0;
 
-        startRange.min =
-            0;
-
-        startRange.max =
-            duration;
-
-        startRange.value =
-            0;
-
-
-        endRange.min =
-            0;
-
-        endRange.max =
-            duration;
-
-        endRange.value =
-            duration;
-
+        endRange.min = 0;
+        endRange.max = duration;
+        endRange.value = duration;
 
         updateRangeDisplay();
-
-
         drawWaveform();
-
 
     }
     catch (error) {
 
-        console.error(
-            error
-        );
-
+        console.error(error);
 
         showMessage(
-            "音声波形を読み込めませんでした。",
+            "音声の解析に失敗しました。",
             "error"
         );
 
@@ -2694,94 +1552,65 @@ async function loadAudioBuffer() {
 
 
 /* =====================================================
-   DRAW WAVEFORM
+   波形
 ===================================================== */
 
 function drawWaveform() {
 
-    if (
-        !audioBuffer
-    ) {
-
+    if (!audioBuffer) {
         return;
-
     }
 
-
     const rect =
-        waveform
-            .getBoundingClientRect();
-
+        waveform.getBoundingClientRect();
 
     const dpr =
-        window.devicePixelRatio ||
-        1;
-
+        window.devicePixelRatio || 1;
 
     waveform.width =
-        rect.width *
-        dpr;
-
+        rect.width * dpr;
 
     waveform.height =
-        rect.height *
-        dpr;
-
+        rect.height * dpr;
 
     const ctx =
-        waveform.getContext(
-            "2d"
-        );
+        waveform.getContext("2d");
 
-
-    ctx.clearRect(
-        0,
-        0,
-        waveform.width,
-        waveform.height
-    );
-
-
-    ctx.scale(
+    ctx.setTransform(
         dpr,
-        dpr
+        0,
+        0,
+        dpr,
+        0,
+        0
     );
-
 
     const width =
         rect.width;
 
-
     const height =
         rect.height;
 
-
     const data =
-        audioBuffer
-            .getChannelData(0);
-
+        audioBuffer.getChannelData(0);
 
     const step =
-        Math.ceil(
-            data.length /
-            width
-        );
-
+        Math.ceil(data.length / width);
 
     const amp =
         height / 2;
 
+    ctx.clearRect(
+        0,
+        0,
+        width,
+        height
+    );
 
     ctx.beginPath();
 
-
     ctx.strokeStyle =
         "#00eaff";
-
-
-    ctx.lineWidth =
-        1;
-
 
     for (
         let x = 0;
@@ -2790,20 +1619,16 @@ function drawWaveform() {
     ) {
 
         let min = 1;
-
         let max = -1;
-
 
         const start =
             x * step;
-
 
         const end =
             Math.min(
                 start + step,
                 data.length
             );
-
 
         for (
             let i = start;
@@ -2814,32 +1639,20 @@ function drawWaveform() {
             const value =
                 data[i];
 
-
-            if (
-                value < min
-            ) {
-
+            if (value < min) {
                 min = value;
-
             }
 
-
-            if (
-                value > max
-            ) {
-
+            if (value > max) {
                 max = value;
-
             }
 
         }
-
 
         ctx.moveTo(
             x,
             (1 + min) * amp
         );
-
 
         ctx.lineTo(
             x,
@@ -2848,9 +1661,7 @@ function drawWaveform() {
 
     }
 
-
     ctx.stroke();
-
 
     updateSelection();
 
@@ -2858,40 +1669,22 @@ function drawWaveform() {
 
 
 /* =====================================================
-   RANGE DISPLAY
+   選択範囲
 ===================================================== */
 
 function updateRangeDisplay() {
 
-    if (
-        !audioBuffer
-    ) {
-
+    if (!audioBuffer) {
         return;
-
     }
 
-
     let start =
-        Number(
-            startRange.value
-        );
-
+        Number(startRange.value);
 
     let end =
-        Number(
-            endRange.value
-        );
+        Number(endRange.value);
 
-
-    /*
-     * 開始位置が終了位置を
-     * 超えないようにする
-     */
-
-    if (
-        start >= end
-    ) {
+    if (start >= end) {
 
         if (
             document.activeElement ===
@@ -2901,7 +1694,7 @@ function updateRangeDisplay() {
             start =
                 Math.max(
                     0,
-                    end - 0.01
+                    end - .01
                 );
 
             startRange.value =
@@ -2913,7 +1706,7 @@ function updateRangeDisplay() {
             end =
                 Math.min(
                     audioBuffer.duration,
-                    start + 0.01
+                    start + .01
                 );
 
             endRange.value =
@@ -2923,76 +1716,40 @@ function updateRangeDisplay() {
 
     }
 
-
     startValue.textContent =
-        formatTime(
-            start
-        );
-
+        formatTime(start);
 
     endValue.textContent =
-        formatTime(
-            end
-        );
-
+        formatTime(end);
 
     updateSelection();
 
 }
 
 
-/* =====================================================
-   UPDATE SELECTION
-===================================================== */
-
 function updateSelection() {
 
-    if (
-        !audioBuffer
-    ) {
-
+    if (!audioBuffer) {
         return;
-
     }
-
 
     const duration =
         audioBuffer.duration;
 
-
     const start =
-        Number(
-            startRange.value
-        );
-
+        Number(startRange.value);
 
     const end =
-        Number(
-            endRange.value
-        );
-
+        Number(endRange.value);
 
     const left =
-        (
-            start /
-            duration
-        )
-        *
-        100;
-
+        start / duration * 100;
 
     const width =
-        (
-            (end - start) /
-            duration
-        )
-        *
-        100;
-
+        (end - start) / duration * 100;
 
     selection.style.left =
         left + "%";
-
 
     selection.style.width =
         width + "%";
@@ -3005,131 +1762,342 @@ startRange.addEventListener(
     updateRangeDisplay
 );
 
-
 endRange.addEventListener(
     "input",
     updateRangeDisplay
 );
 
 
+/* =====================================================
+   音量表示
+===================================================== */
+
+volumeRange.addEventListener(
+    "input",
+    () => {
+
+        volumeValue.textContent =
+            volumeRange.value + "%";
+
+    }
+);
+
 
 /* =====================================================
-   PREVIEW SELECTION
+   音量プリセット
+===================================================== */
+
+document.querySelectorAll(
+    ".volume-presets button"
+).forEach(button => {
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            const value =
+                button.dataset.volume;
+
+            volumeRange.value =
+                value;
+
+            volumeValue.textContent =
+                value + "%";
+
+        }
+    );
+
+});
+
+
+/* =====================================================
+   選択範囲再生
 ===================================================== */
 
 previewButton.addEventListener(
     "click",
-    async function() {
+    async () => {
 
-        if (
-            !audioBuffer
-        ) {
-
+        if (!audioBuffer) {
             return;
-
         }
 
-
         const start =
-            Number(
-                startRange.value
-            );
-
+            Number(startRange.value);
 
         const end =
-            Number(
-                endRange.value
-            );
-
-
-        /*
-         * 元音声を指定位置から再生
-         */
+            Number(endRange.value);
 
         audioPlayer.currentTime =
             start;
 
-
         await audioPlayer.play();
 
-
-        const stopPreview =
-            function() {
+        const check =
+            () => {
 
                 if (
-                    audioPlayer.currentTime >=
-                    end
+                    audioPlayer.currentTime >= end
                 ) {
 
                     audioPlayer.pause();
 
                     audioPlayer.removeEventListener(
                         "timeupdate",
-                        stopPreview
+                        check
                     );
 
                 }
 
             };
 
-
         audioPlayer.addEventListener(
             "timeupdate",
-            stopPreview
+            check
         );
 
     }
 );
 
 
+/* =====================================================
+   音声編集
+===================================================== */
+
+function cloneAudioBuffer(buffer) {
+
+    const result =
+        audioContext.createBuffer(
+            buffer.numberOfChannels,
+            buffer.length,
+            buffer.sampleRate
+        );
+
+    for (
+        let channel = 0;
+        channel < buffer.numberOfChannels;
+        channel++
+    ) {
+
+        result
+            .getChannelData(channel)
+            .set(
+                buffer.getChannelData(channel)
+            );
+
+    }
+
+    return result;
+
+}
+
 
 /* =====================================================
-   CUT AUDIO
+   部分音量変更
+===================================================== */
+
+volumeButton.addEventListener(
+    "click",
+    async () => {
+
+        if (!audioBuffer) {
+
+            showMessage(
+                "音声がありません。",
+                "error"
+            );
+
+            return;
+
+        }
+
+        const start =
+            Number(startRange.value);
+
+        const end =
+            Number(endRange.value);
+
+        const volume =
+            Number(volumeRange.value) / 100;
+
+        if (end <= start) {
+
+            showMessage(
+                "範囲を確認してください。",
+                "error"
+            );
+
+            return;
+
+        }
+
+        try {
+
+            showMessage(
+                "指定範囲の音量を変更しています..."
+            );
+
+            const newBuffer =
+                cloneAudioBuffer(
+                    audioBuffer
+                );
+
+            const startSample =
+                Math.floor(
+                    start *
+                    newBuffer.sampleRate
+                );
+
+            const endSample =
+                Math.floor(
+                    end *
+                    newBuffer.sampleRate
+                );
+
+            for (
+                let channel = 0;
+                channel < newBuffer.numberOfChannels;
+                channel++
+            ) {
+
+                const data =
+                    newBuffer.getChannelData(
+                        channel
+                    );
+
+                for (
+                    let i = startSample;
+                    i < endSample;
+                    i++
+                ) {
+
+                    data[i] *= volume;
+
+                    /*
+                     * 音割れ防止
+                     */
+
+                    if (data[i] > 1) {
+                        data[i] = 1;
+                    }
+
+                    if (data[i] < -1) {
+                        data[i] = -1;
+                    }
+
+                }
+
+            }
+
+            await applyEditedBuffer(
+                newBuffer,
+                "部分音量変更"
+            );
+
+        }
+        catch (error) {
+
+            console.error(error);
+
+            showMessage(
+                "音量変更に失敗しました。",
+                "error"
+            );
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   無音化
+===================================================== */
+
+muteButton.addEventListener(
+    "click",
+    async () => {
+
+        if (!audioBuffer) {
+            return;
+        }
+
+        const start =
+            Number(startRange.value);
+
+        const end =
+            Number(endRange.value);
+
+        const newBuffer =
+            cloneAudioBuffer(
+                audioBuffer
+            );
+
+        const startSample =
+            Math.floor(
+                start *
+                newBuffer.sampleRate
+            );
+
+        const endSample =
+            Math.floor(
+                end *
+                newBuffer.sampleRate
+            );
+
+        for (
+            let channel = 0;
+            channel < newBuffer.numberOfChannels;
+            channel++
+        ) {
+
+            const data =
+                newBuffer.getChannelData(
+                    channel
+                );
+
+            for (
+                let i = startSample;
+                i < endSample;
+                i++
+            ) {
+
+                data[i] = 0;
+
+            }
+
+        }
+
+        await applyEditedBuffer(
+            newBuffer,
+            "部分ミュート"
+        );
+
+    }
+);
+
+
+/* =====================================================
+   カット
 ===================================================== */
 
 cutButton.addEventListener(
     "click",
-    async function() {
+    async () => {
 
-        if (
-            !audioBuffer
-        ) {
-
-            showMessage(
-                "カットする音声がありません。",
-                "error"
-            );
-
+        if (!audioBuffer) {
             return;
-
         }
-
 
         const start =
-            Number(
-                startRange.value
-            );
-
+            Number(startRange.value);
 
         const end =
-            Number(
-                endRange.value
-            );
+            Number(endRange.value);
 
-
-        if (
-            end <= start
-        ) {
-
-            showMessage(
-                "開始位置と終了位置を確認してください。",
-                "error"
-            );
-
+        if (end <= start) {
             return;
-
         }
-
 
         try {
 
@@ -3137,15 +2105,8 @@ cutButton.addEventListener(
                 "音声をカットしています..."
             );
 
-
-            /*
-             * AudioBufferを
-             * 指定範囲だけコピー
-             */
-
             const sampleRate =
                 audioBuffer.sampleRate;
-
 
             const startSample =
                 Math.floor(
@@ -3153,58 +2114,41 @@ cutButton.addEventListener(
                     sampleRate
                 );
 
-
             const endSample =
                 Math.floor(
                     end *
                     sampleRate
                 );
 
-
             const frameCount =
                 endSample -
                 startSample;
 
-
-            const channels =
-                audioBuffer.numberOfChannels;
-
-
             const newBuffer =
-                audioContext
-                    .createBuffer(
-                        channels,
-                        frameCount,
-                        sampleRate
-                    );
-
-
-            /*
-             * チャンネルごとコピー
-             */
+                audioContext.createBuffer(
+                    audioBuffer.numberOfChannels,
+                    frameCount,
+                    sampleRate
+                );
 
             for (
                 let channel = 0;
-                channel < channels;
+                channel < audioBuffer.numberOfChannels;
                 channel++
             ) {
 
-                const sourceData =
-                    audioBuffer
-                        .getChannelData(
-                            channel
-                        );
+                const source =
+                    audioBuffer.getChannelData(
+                        channel
+                    );
 
+                const destination =
+                    newBuffer.getChannelData(
+                        channel
+                    );
 
-                const destinationData =
-                    newBuffer
-                        .getChannelData(
-                            channel
-                        );
-
-
-                destinationData.set(
-                    sourceData.slice(
+                destination.set(
+                    source.slice(
                         startSample,
                         endSample
                     )
@@ -3212,102 +2156,18 @@ cutButton.addEventListener(
 
             }
 
-
-            /*
-             * WAVへ変換
-             */
-
-            cutBlob =
-                audioBufferToWav(
-                    newBuffer
-                );
-
-
-            /*
-             * URL
-             */
-
-            if (
-                cutURL
-            ) {
-
-                URL.revokeObjectURL(
-                    cutURL
-                );
-
-            }
-
-
-            cutURL =
-                URL.createObjectURL(
-                    cutBlob
-                );
-
-
-            /*
-             * プレイヤーを
-             * カット後音声に変更
-             */
-
-            audioPlayer.src =
-                cutURL;
-
-
-            audioPlayer.load();
-
-
-            /*
-             * ダウンロード
-             */
-
-            const cutName =
-                createCutFileName();
-
-
-            downloadButton.href =
-                cutURL;
-
-
-            downloadButton.download =
-                cutName;
-
-
-            /*
-             * 情報更新
-             */
-
-            fileName.textContent =
-                cutName;
-
-
-            recordDuration.textContent =
-                formatLongTime(
-                    end - start
-                );
-
-
-            fileSize.textContent =
-                formatFileSize(
-                    cutBlob.size
-                );
-
-
-            showMessage(
-                "✂️ 指定した範囲をカットしました。",
-                "success"
+            await applyEditedBuffer(
+                newBuffer,
+                "カット"
             );
-
 
         }
         catch (error) {
 
-            console.error(
-                error
-            );
-
+            console.error(error);
 
             showMessage(
-                "音声のカットに失敗しました。",
+                "カットに失敗しました。",
                 "error"
             );
 
@@ -3317,71 +2177,156 @@ cutButton.addEventListener(
 );
 
 
-
 /* =====================================================
-   WAV CONVERTER
+   編集結果を反映
 ===================================================== */
 
-function audioBufferToWav(
-    buffer
+async function applyEditedBuffer(
+    newBuffer,
+    operation
 ) {
 
-    const numberOfChannels =
-        buffer.numberOfChannels;
+    audioBuffer =
+        newBuffer;
 
+    cutBlob =
+        audioBufferToWav(
+            newBuffer
+        );
+
+    if (cutURL) {
+
+        URL.revokeObjectURL(
+            cutURL
+        );
+
+    }
+
+    cutURL =
+        URL.createObjectURL(
+            cutBlob
+        );
+
+    audioPlayer.src =
+        cutURL;
+
+    audioPlayer.load();
+
+    const duration =
+        newBuffer.duration;
+
+    startRange.min = 0;
+    startRange.max = duration;
+    startRange.value = 0;
+
+    endRange.min = 0;
+    endRange.max = duration;
+    endRange.value = duration;
+
+    drawWaveform();
+
+    updateRangeDisplay();
+
+    fileName.textContent =
+        `編集後_${operation}.wav`;
+
+    recordDuration.textContent =
+        formatLongTime(duration);
+
+    fileSize.textContent =
+        formatFileSize(
+            cutBlob.size
+        );
+
+    downloadButton.href =
+        cutURL;
+
+    downloadButton.download =
+        createEditedFileName(operation);
+
+    showMessage(
+        `✅ ${operation}を適用しました。`,
+        "success"
+    );
+
+}
+
+
+/* =====================================================
+   編集後ファイル名
+===================================================== */
+
+function createEditedFileName(
+    operation
+) {
+
+    const now =
+        new Date();
+
+    const stamp =
+        now.getFullYear()
+        +
+        String(
+            now.getMonth() + 1
+        ).padStart(2, "0")
+        +
+        String(
+            now.getDate()
+        ).padStart(2, "0")
+        +
+        "_"
+        +
+        String(
+            now.getHours()
+        ).padStart(2, "0")
+        +
+        String(
+            now.getMinutes()
+        ).padStart(2, "0")
+        +
+        String(
+            now.getSeconds()
+        ).padStart(2, "0");
+
+    return (
+        `録音_${operation}_${stamp}.wav`
+    );
+
+}
+
+
+/* =====================================================
+   WAV変換
+===================================================== */
+
+function audioBufferToWav(buffer) {
+
+    const channels =
+        buffer.numberOfChannels;
 
     const sampleRate =
         buffer.sampleRate;
 
-
-    const format =
-        1;
-
-
-    const bitDepth =
-        16;
-
-
-    const samples =
-        buffer.length;
-
+    const bitDepth = 16;
 
     const blockAlign =
-        numberOfChannels *
-        bitDepth /
-        8;
-
+        channels * bitDepth / 8;
 
     const byteRate =
-        sampleRate *
-        blockAlign;
-
+        sampleRate * blockAlign;
 
     const dataSize =
-        samples *
-        blockAlign;
-
-
-    const bufferSize =
-        44 +
-        dataSize;
-
+        buffer.length * blockAlign;
 
     const arrayBuffer =
         new ArrayBuffer(
-            bufferSize
+            44 + dataSize
         );
-
 
     const view =
         new DataView(
             arrayBuffer
         );
-
-
-    /*
-     * RIFF
-     */
 
     writeString(
         view,
@@ -3389,13 +2334,11 @@ function audioBufferToWav(
         "RIFF"
     );
 
-
     view.setUint32(
         4,
         36 + dataSize,
         true
     );
-
 
     writeString(
         view,
@@ -3403,17 +2346,11 @@ function audioBufferToWav(
         "WAVE"
     );
 
-
-    /*
-     * fmt
-     */
-
     writeString(
         view,
         12,
         "fmt "
     );
-
 
     view.setUint32(
         16,
@@ -3421,20 +2358,17 @@ function audioBufferToWav(
         true
     );
 
-
     view.setUint16(
         20,
-        format,
+        1,
         true
     );
-
 
     view.setUint16(
         22,
-        numberOfChannels,
+        channels,
         true
     );
-
 
     view.setUint32(
         24,
@@ -3442,13 +2376,11 @@ function audioBufferToWav(
         true
     );
 
-
     view.setUint32(
         28,
         byteRate,
         true
     );
-
 
     view.setUint16(
         32,
@@ -3456,17 +2388,11 @@ function audioBufferToWav(
         true
     );
 
-
     view.setUint16(
         34,
         bitDepth,
         true
     );
-
-
-    /*
-     * data
-     */
 
     writeString(
         view,
@@ -3474,71 +2400,50 @@ function audioBufferToWav(
         "data"
     );
 
-
     view.setUint32(
         40,
         dataSize,
         true
     );
 
-
-    /*
-     * PCMデータ
-     */
-
     let offset = 44;
-
 
     for (
         let i = 0;
-        i < samples;
+        i < buffer.length;
         i++
     ) {
 
         for (
             let channel = 0;
-            channel < numberOfChannels;
+            channel < channels;
             channel++
         ) {
 
-            const channelData =
-                buffer
-                    .getChannelData(
-                        channel
-                    );
-
+            const data =
+                buffer.getChannelData(
+                    channel
+                );
 
             let sample =
-                channelData[i];
-
-
-            sample =
                 Math.max(
                     -1,
                     Math.min(
                         1,
-                        sample
+                        data[i]
                     )
                 );
 
+            if (sample < 0) {
 
-            if (
-                sample < 0
-            ) {
-
-                sample =
-                    sample *
-                    0x8000;
+                sample *= 0x8000;
 
             }
             else {
 
-                sample =
-                    sample *
-                    0x7fff;
+                sample *= 0x7fff;
 
             }
-
 
             view.setInt16(
                 offset,
@@ -3546,19 +2451,16 @@ function audioBufferToWav(
                 true
             );
 
-
             offset += 2;
 
         }
 
     }
 
-
     return new Blob(
         [arrayBuffer],
         {
-            type:
-                "audio/wav"
+            type: "audio/wav"
         }
     );
 
@@ -3566,7 +2468,7 @@ function audioBufferToWav(
 
 
 /* =====================================================
-   WRITE STRING
+   文字列書き込み
 ===================================================== */
 
 function writeString(
@@ -3592,196 +2494,69 @@ function writeString(
 
 
 /* =====================================================
-   CUT FILE NAME
-===================================================== */
-
-function createCutFileName() {
-
-    const now =
-        new Date();
-
-
-    const year =
-        now.getFullYear();
-
-
-    const month =
-        String(
-            now.getMonth() + 1
-        )
-        .padStart(
-            2,
-            "0"
-        );
-
-
-    const day =
-        String(
-            now.getDate()
-        )
-        .padStart(
-            2,
-            "0"
-        );
-
-
-    const hour =
-        String(
-            now.getHours()
-        )
-        .padStart(
-            2,
-            "0"
-        );
-
-
-    const minute =
-        String(
-            now.getMinutes()
-        )
-        .padStart(
-            2,
-            "0"
-        );
-
-
-    const second =
-        String(
-            now.getSeconds()
-        )
-        .padStart(
-            2,
-            "0"
-        );
-
-
-    return (
-
-        "録音_カット_"
-
-        +
-        year
-        +
-        month
-        +
-        day
-        +
-        "_"
-        +
-        hour
-        +
-        minute
-        +
-        second
-        +
-        ".wav"
-
-    );
-
-}
-
-
-/* =====================================================
-   RESET
+   削除
 ===================================================== */
 
 resetButton.addEventListener(
     "click",
-    function() {
+    () => {
 
-        if (
-            !recordedBlob
-        ) {
-
+        if (!recordedBlob) {
             return;
-
         }
-
 
         if (
             !confirm(
                 "録音データを削除しますか？"
             )
         ) {
-
             return;
-
         }
 
-
         audioPlayer.pause();
-
 
         audioPlayer.removeAttribute(
             "src"
         );
 
-
         audioPlayer.load();
 
-
-        if (
-            audioURL
-        ) {
+        if (audioURL) {
 
             URL.revokeObjectURL(
                 audioURL
             );
 
-            audioURL =
-                null;
+            audioURL = null;
 
         }
 
-
-        if (
-            cutURL
-        ) {
+        if (cutURL) {
 
             URL.revokeObjectURL(
                 cutURL
             );
 
-            cutURL =
-                null;
+            cutURL = null;
 
         }
 
+        recordedBlob = null;
+        cutBlob = null;
+        audioBuffer = null;
+        audioChunks = [];
 
-        recordedBlob =
-            null;
+        result.classList.remove(
+            "show"
+        );
 
-
-        cutBlob =
-            null;
-
-
-        audioBuffer =
-            null;
-
-
-        audioChunks =
-            [];
-
-
-        result
-            .classList
-            .remove(
-                "show"
-            );
-
-
-        resetButton.disabled =
-            true;
-
+        resetButton.disabled = true;
 
         timer.textContent =
             "00:00:00";
 
-
         status.textContent =
             "録音待機中";
-
 
         showMessage(
             "録音データを削除しました。",
@@ -3792,133 +2567,94 @@ resetButton.addEventListener(
 );
 
 
-
 /* =====================================================
-   RESIZE WAVEFORM
+   リサイズ
 ===================================================== */
 
 window.addEventListener(
     "resize",
-    function() {
+    () => {
 
-        if (
-            audioBuffer
-        ) {
-
+        if (audioBuffer) {
             drawWaveform();
-
         }
 
     }
 );
 
 
-
 /* =====================================================
-   DEVICE CHANGE
+   デバイス変更
 ===================================================== */
 
-if (
-    navigator.mediaDevices
-) {
+if (navigator.mediaDevices) {
 
-    navigator
-        .mediaDevices
-        .addEventListener(
-            "devicechange",
-            function() {
+    navigator.mediaDevices.addEventListener(
+        "devicechange",
+        () => {
 
-                if (
-                    !mediaRecorder ||
-                    mediaRecorder.state !==
-                    "recording"
-                ) {
+            if (
+                !mediaRecorder ||
+                mediaRecorder.state !== "recording"
+            ) {
 
-                    loadMicrophones();
-
-                }
+                loadMicrophones();
 
             }
-        );
+
+        }
+    );
 
 }
 
 
-
 /* =====================================================
-   PAGE EXIT
+   終了処理
 ===================================================== */
 
 window.addEventListener(
     "beforeunload",
-    function() {
+    () => {
 
-        if (
-            currentStream
-        ) {
+        if (currentStream) {
 
-            currentStream
-                .getTracks()
-                .forEach(
-                    track =>
-                        track.stop()
-                );
-
-        }
-
-
-        if (
-            audioURL
-        ) {
-
-            URL.revokeObjectURL(
-                audioURL
+            currentStream.getTracks().forEach(
+                track => track.stop()
             );
 
         }
 
+        if (audioURL) {
+            URL.revokeObjectURL(audioURL);
+        }
 
-        if (
-            cutURL
-        ) {
-
-            URL.revokeObjectURL(
-                cutURL
-            );
-
+        if (cutURL) {
+            URL.revokeObjectURL(cutURL);
         }
 
     }
 );
 
 
-
 /* =====================================================
-   INITIALIZE
+   初期化
 ===================================================== */
 
 window.addEventListener(
     "load",
-    async function() {
+    async () => {
 
-        if (
-            !window.MediaRecorder
-        ) {
+        if (!window.MediaRecorder) {
 
             showMessage(
-                "このブラウザは録音機能に対応していません。",
+                "このブラウザは録音に対応していません。",
                 "error"
             );
 
-
-            startButton.disabled =
-                true;
-
+            startButton.disabled = true;
 
             return;
-
         }
-
 
         await requestMicrophonePermission();
 
@@ -3928,5 +2664,4 @@ window.addEventListener(
 </script>
 
 </body>
-
 </html>
