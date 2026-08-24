@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>GitHub Calendar</title>
+  <style>
+    :root { --primary: #1a73e8; --border: #dadce0; --sun: #d93025; --sat: #1967d2; }
+    body { font-family: sans-serif; background: #f1f3f4; display: flex; justify-content: center; padding: 20px; }
+    .container { width: 100%; max-width: 800px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th, td { border: 1px solid var(--border); text-align: left; vertical-align: top; padding: 5px; }
+    th { background: #f8f9fa; text-align: center; height: 30px; }
+    td { height: 80px; }
+    .date-num { font-weight: bold; }
+    .event { background: var(--primary); color: white; font-size: 11px; padding: 2px 4px; border-radius: 3px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .form { margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; display: flex; gap: 10px; }
+    input { padding: 8px; border: 1px solid var(--border); border-radius: 4px; }
+    button { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+    button:disabled { background: #ccc; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <button onclick="moveMonth(-1)">◀ 前月</button>
+    <h2 id="monthTitle"></h2>
+    <button onclick="moveMonth(1)">次月 ▶</button>
+  </header>
+  <table id="calendar">
+    <thead>
+      <tr><th style="color:var(--sun)">日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th style="color:var(--sat)">土</th></tr>
+    </thead>
+    <tbody id="calendarBody"></tbody>
+  </table>
+  <div class="form">
+    <input type="date" id="targetDate">
+    <input type="text" id="targetTitle" placeholder="予定を入力" style="flex:1">
+    <button id="saveBtn" onclick="saveEvent()">保存</button>
+  </div>
+</div>
+
+<script>
+  // ★ここにGASのウェブアプリURLを貼り付けてください★
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbz-RVKL1ov5uaE3TDWnQN0BD_ap33RwCSuZVQdX6u-PKgJRCdpd93cOlItLP3IWJ7AP/exec";
+
+  let currentView = new Date();
+  let events = [];
+
+  async function fetchEvents() {
+    const res = await fetch(`${GAS_URL}?action=get`);
+    events = await res.json();
+    render();
+  }
+
+  async function saveEvent() {
+    const date = document.getElementById('targetDate').value;
+    const title = document.getElementById('targetTitle').value;
+    if(!date || !title) return alert("入力してください");
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    
+    // GASへデータを送信
+    await fetch(`${GAS_URL}?action=add&date=${date}&title=${encodeURIComponent(title)}`, { mode: 'no-cors' });
+    
+    // no-corsの場合はレスポンスが取れないため、少し待って再読み込み
+    setTimeout(() => {
+      document.getElementById('targetTitle').value = "";
+      btn.disabled = false;
+      fetchEvents();
+    }, 1000);
+  }
+
+  function render() {
+    const year = currentView.getFullYear();
+    const month = currentView.getMonth();
+    document.getElementById('monthTitle').innerText = `${year}年 ${month + 1}月`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const tbody = document.getElementById('calendarBody');
+    tbody.innerHTML = "";
+
+    let date = 1;
+    for (let i = 0; i < 6; i++) {
+      let tr = document.createElement('tr');
+      for (let j = 0; j < 7; j++) {
+        let td = document.createElement('td');
+        if ((i === 0 && j < firstDay) || date > lastDate) {
+          // 空白
+        } else {
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+          td.innerHTML = `<div class="date-num">${date}</div>`;
+          events.filter(e => e.date === dateStr).forEach(e => {
+            td.innerHTML += `<div class="event">${e.title}</div>`;
+          });
+          date++;
+        }
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+      if (date > lastDate) break;
+    }
+  }
+
+  function moveMonth(n) {
+    currentView.setMonth(currentView.getMonth() + n);
+    render();
+  }
+
+  fetchEvents();
+</script>
+</body>
+</html>
