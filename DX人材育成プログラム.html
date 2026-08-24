@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simple Team Calendar</title>
+  <title>Detailed Team Calendar</title>
   <style>
     :root { --primary: #1a73e8; --border: #dadce0; --bg: #f8f9fa; --sun: #d93025; --sat: #1967d2; }
     body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; }
@@ -13,24 +13,29 @@
     
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     th { border: 1px solid var(--border); padding: 8px; font-size: 12px; background: #f8f9fa; }
-    td { border: 1px solid var(--border); height: 110px; vertical-align: top; padding: 2px; }
+    td { border: 1px solid var(--border); height: 110px; vertical-align: top; padding: 2px; cursor: pointer; transition: background 0.2s; }
+    td:hover { background: #f1f3f4; }
     
     .date-num { font-weight: bold; font-size: 13px; margin: 2px; }
     .is-today { background: #fef7e0; }
-    .is-today .date-num { color: var(--primary); }
 
-    /* 予定カード */
-    .event-card {
-      background: #e8f0fe;
-      color: #1967d2;
-      font-size: 11px;
-      padding: 3px 5px;
-      margin: 2px;
-      border-radius: 4px;
-      border-left: 3px solid var(--primary);
+    /* カレンダー内の予定ラベル */
+    .event-tag {
+      background: #e8f0fe; color: #1967d2; font-size: 10px; padding: 2px 4px; 
+      margin: 1px; border-radius: 3px; border-left: 3px solid var(--primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .event-info { display: block; font-size: 10px; color: #5f6368; font-weight: bold; }
-    .event-title { font-weight: 600; color: #202124; display: block; margin-top: 1px; }
+
+    /* モーダル（詳細画面） */
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+    .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 8px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+    .close-btn { font-size: 24px; cursor: pointer; color: #666; }
+    .detail-item { padding: 10px; border-bottom: 1px solid #f1f3f4; }
+    .detail-item:last-child { border-bottom: none; }
+    .detail-who { font-weight: bold; color: var(--primary); font-size: 12px; }
+    .detail-time { color: #666; font-size: 12px; margin-left: 10px; }
+    .detail-title { display: block; margin-top: 5px; font-size: 15px; }
 
     /* フォーム */
     .form-box { margin-top: 20px; padding: 15px; border-top: 2px solid #eee; }
@@ -47,7 +52,7 @@
 <div class="container">
   <header>
     <button class="nav-btn" onclick="moveMonth(-1)">◀ 前月</button>
-    <h2 id="monthTitle" style="font-size:1.1rem;"></h2>
+    <h2 id="monthTitle"></h2>
     <button class="nav-btn" onclick="moveMonth(1)">次月 ▶</button>
   </header>
   
@@ -59,20 +64,34 @@
   </table>
 
   <div class="form-box">
+    <h3>新しい予定を登録</h3>
     <div class="input-row">
       <div class="field"><label>日付</label><input type="date" id="formDate"></div>
       <div class="field"><label>お名前</label><input type="text" id="formName" placeholder="名前"></div>
       <div class="field"><label>開始</label><input type="time" id="formStart" value="09:00"></div>
       <div class="field"><label>終了</label><input type="time" id="formEnd" value="10:00"></div>
     </div>
-    <div class="field"><label>内容</label><input type="text" id="formTitle" placeholder="予定名"></div>
+    <div class="field"><label>内容</label><input type="text" id="formTitle" placeholder="予定の内容"></div>
     <button class="save-btn" id="saveBtn" onclick="saveData()" style="margin-top:10px;">保存</button>
     <div id="status"></div>
   </div>
 </div>
 
+<!-- 詳細表示モーダル -->
+<div id="detailModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalDateTitle" style="margin:0;">日付</h3>
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+    </div>
+    <div id="modalBody">
+      <!-- ここに予定一覧が入る -->
+    </div>
+  </div>
+</div>
+
 <script>
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyxZC5vclcF7CHF2RZ_ylmT7KxbqwBDQ5IBgd_S7NBwuXRcLKv4k861RYheDDYcHbk/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzaDgcFJk9Our_rWLXTGZwV4xKOIBg0Y2_LqSP6q6Gxw1kIiZJDKrY2F9fx8GLHVFgf/exec";
   let currentView = new Date();
   let events = [];
 
@@ -87,9 +106,9 @@
       const res = await fetch(`${GAS_URL}?action=get`);
       events = await res.json();
       render();
-      document.getElementById('status').innerText = "最新の状態です";
+      document.getElementById('status').innerText = "同期完了";
     } catch (e) {
-      document.getElementById('status').innerText = "通信エラー";
+      document.getElementById('status').innerText = "エラーが発生しました";
     }
   }
 
@@ -118,14 +137,14 @@
           if(dateStr === todayStr) td.className = "is-today";
           td.innerHTML = `<div class="date-num">${dateNum}</div>`;
           
+          // セルクリックで詳細表示
+          td.onclick = () => showDetails(dateStr);
+
+          // 簡易表示
           events.filter(e => e.date === dateStr)
                 .sort((a,b) => a.start.localeCompare(b.start))
                 .forEach(e => {
-                  td.innerHTML += `
-                    <div class="event-card">
-                      <span class="event-info">${e.start}-${e.end} | ${e.name}</span>
-                      <span class="event-title">${e.title}</span>
-                    </div>`;
+                  td.innerHTML += `<div class="event-tag">${e.start} ${e.title}</div>`;
                 });
           dateNum++;
         }
@@ -135,6 +154,37 @@
     }
   }
 
+  // 詳細モーダルを表示
+  function showDetails(dateStr) {
+    const dayEvents = events.filter(e => e.date === dateStr).sort((a,b) => a.start.localeCompare(b.start));
+    const modal = document.getElementById('detailModal');
+    const modalBody = document.getElementById('modalBody');
+    document.getElementById('modalDateTitle').innerText = dateStr;
+    
+    if(dayEvents.length === 0) {
+      modalBody.innerHTML = "<p style='color:#999;'>この日の予定はありません。</p>";
+    } else {
+      modalBody.innerHTML = dayEvents.map(e => `
+        <div class="detail-item">
+          <span class="detail-who">👤 ${e.name}</span>
+          <span class="detail-time">🕒 ${e.start} - ${e.end}</span>
+          <strong class="detail-title">${e.title}</strong>
+        </div>
+      `).join("");
+    }
+    modal.style.display = "block";
+  }
+
+  function closeModal() {
+    document.getElementById('detailModal').style.display = "none";
+  }
+
+  // モーダル外側クリックで閉じる
+  window.onclick = (event) => {
+    const modal = document.getElementById('detailModal');
+    if (event.target == modal) closeModal();
+  }
+
   async function saveData() {
     const date = document.getElementById('formDate').value;
     const name = document.getElementById('formName').value;
@@ -142,7 +192,7 @@
     const end = document.getElementById('formEnd').value;
     const title = document.getElementById('formTitle').value;
 
-    if(!date || !name || !title) return alert("入力不足です");
+    if(!date || !name || !title) return alert("名前と内容は必須です");
 
     const btn = document.getElementById('saveBtn');
     btn.disabled = true;
