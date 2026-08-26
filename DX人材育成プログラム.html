@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ultimate Team Calendar</title>
+  <!-- 演出用ライブラリ -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
   <style>
     :root {
@@ -13,99 +14,106 @@
     }
     [data-theme="dark"] {
       --bg: #202124; --text: #e8eaed; --border: #3c4043; --surface: #303134;
-      --shadow: 0 1px 3px rgba(0,0,0,0.5);
+      --shadow: 0 1px 6px rgba(0,0,0,0.6);
     }
 
-    body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; line-height: 1.5; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: background 0.3s; line-height: 1.5; overflow-x: hidden; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 15px; }
 
     /* ログイン画面 */
-    #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
-    .login-card { background: var(--surface); padding: 40px; border-radius: 16px; box-shadow: var(--shadow); width: 90%; max-width: 400px; text-align: center; }
-    .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 16px; }
+    #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+    .login-card { background: var(--surface); padding: 40px; border-radius: 20px; box-shadow: var(--shadow); width: 90%; max-width: 380px; text-align: center; }
+    .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 16px; box-sizing: border-box; }
 
     /* ダッシュボード */
-    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .stat-card { background: var(--surface); padding: 15px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
-    .stat-val { font-size: 24px; font-weight: bold; color: var(--p-color); }
+    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: var(--surface); padding: 15px; border-radius: 12px; border: 1px solid var(--border); text-align: center; animation: fadeIn 0.5s ease; }
+    .stat-val { font-size: 26px; font-weight: bold; color: var(--p-color); }
 
-    /* ヘッダー・ナビ */
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-    .btn { padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-weight: 600; transition: 0.2s; }
+    /* ナビゲーション */
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+    .btn { padding: 10px 18px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; transition: 0.2s; }
     .btn-p { background: var(--p-color); color: white; border: none; }
-    .btn:hover { opacity: 0.8; transform: translateY(-1px); }
+    .btn:hover { filter: brightness(0.9); transform: translateY(-1px); }
+
+    .search-box { position: relative; flex: 1; min-width: 200px; }
+    .search-box input { width: 100%; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text); box-sizing: border-box; }
 
     /* カレンダー */
-    .cal-grid { width: 100%; border-collapse: collapse; table-layout: fixed; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); }
-    .cal-grid th { background: var(--surface); padding: 12px; font-size: 13px; border: 1px solid var(--border); }
-    .cal-grid td { border: 1px solid var(--border); height: 120px; vertical-align: top; padding: 4px; transition: 0.2s; position: relative; }
+    .cal-grid { width: 100%; border-collapse: collapse; table-layout: fixed; box-shadow: var(--shadow); border-radius: 10px; overflow: hidden; background: var(--bg); }
+    .cal-grid th { background: var(--surface); padding: 10px; font-size: 12px; border: 1px solid var(--border); text-transform: uppercase; }
+    .cal-grid td { border: 1px solid var(--border); height: 110px; vertical-align: top; padding: 4px; transition: 0.2s; cursor: pointer; position: relative; }
     .cal-grid td:hover { background: var(--surface); }
-    .date-label { font-size: 14px; font-weight: bold; margin-bottom: 4px; display: inline-block; width: 24px; height: 24px; text-align: center; line-height: 24px; border-radius: 50%; }
+    .date-label { font-size: 14px; font-weight: bold; width: 26px; height: 26px; text-align: center; line-height: 26px; border-radius: 50%; display: inline-block; }
     .is-today .date-label { background: var(--p-color); color: white; }
 
     /* 予定タグ */
     .event { 
       font-size: 10px; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; 
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
-      border-left: 3px solid transparent; animation: fadeIn 0.3s ease-out;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      border-left: 3px solid #ccc; animation: slideIn 0.3s ease;
     }
     .cat-meeting { background: #e8f0fe; color: #1967d2; border-left-color: #1a73e8; }
     .cat-out { background: #fef7e0; color: #b06000; border-left-color: #fbbc04; }
     .cat-holiday { background: #fce8e6; color: #d93025; border-left-color: #ea4335; }
     .cat-remote { background: #e6fffa; color: #008b8b; border-left-color: #38b2ac; }
 
-    /* 検索バー */
-    .search-box { flex: 1; min-width: 250px; position: relative; }
-    .search-box input { width: 100%; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
-
     /* フォーム */
-    .editor { background: var(--surface); padding: 25px; border-radius: 16px; margin-top: 30px; border: 1px solid var(--border); }
-    .field-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px; }
-    .field label { font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; color: var(--p-color); }
-    .field input, .field select, .field textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; }
+    .editor { background: var(--surface); padding: 20px; border-radius: 15px; margin-top: 25px; border: 1px solid var(--border); }
+    .grid-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+    .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; }
+    .field label { font-size: 12px; font-weight: bold; color: var(--p-color); }
+    .field input, .field select, .field textarea { padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
 
     /* モーダル */
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-    .modal-content { background: var(--bg); padding: 30px; border-radius: 16px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-content { background: var(--bg); padding: 25px; border-radius: 15px; width: 90%; max-width: 450px; animation: pop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
 
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    @media (max-width: 768px) { .cal-grid td { height: 80px; } .dashboard { grid-template-columns: 1fr 1fr; } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-5px); } }
+    @keyframes pop { from { transform: scale(0.9); opacity: 0; } }
+
+    @media (max-width: 700px) {
+      .cal-grid td { height: 75px; }
+      .nav-text { display: none; }
+      .stat-card { padding: 8px; }
+    }
   </style>
 </head>
 <body data-theme="light">
 
 <div id="login-overlay">
   <div class="login-card">
-    <h1 style="color:var(--p-color)">Team Connect</h1>
-    <p>ルームに参加して予定を同期します</p>
-    <input type="text" id="joinRoomId" placeholder="ルーム名 (英数字)">
-    <input type="text" id="joinUserName" placeholder="あなたの名前">
-    <button class="btn btn-p" style="width:100%; margin-top:10px;" onclick="initApp()">入室する</button>
-    <button class="btn" style="width:100%; margin-top:10px; font-size:12px;" onclick="toggleTheme()">🌓 テーマ切り替え</button>
+    <h2 style="color:var(--p-color); margin-top:0;">Team Calendar</h2>
+    <p style="font-size:13px; color:#666;">ルームを作成または参加してください</p>
+    <input type="text" id="roomID" placeholder="ルームID (例: myteam2024)">
+    <input type="text" id="userName" placeholder="あなたの名前">
+    <button class="btn btn-p" style="width:100%; margin-top:10px;" onclick="joinApp()">入室する</button>
+    <p style="font-size:11px; margin-top:15px; cursor:pointer;" onclick="toggleTheme()">🌓 ダークモード切替</p>
   </div>
 </div>
 
 <div class="container">
   <header>
-    <div style="display:flex; align-items:center; gap:15px;">
-      <h2 id="viewMonth" style="margin:0;">2023年 10月</h2>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <h2 id="currentMonth" style="margin:0; min-width:150px;">---</h2>
       <div class="search-box">
-        <input type="text" id="searchFilter" placeholder="名前や予定で検索..." oninput="render()">
+        <input type="text" id="q" placeholder="検索..." oninput="render()">
       </div>
     </div>
-    <div style="display:flex; gap:8px;">
-      <button class="btn" onclick="moveMonth(-1)">◀</button>
-      <button class="btn" onclick="moveMonth(1)">▶</button>
-      <button class="btn" onclick="refresh()">🔄 更新</button>
-      <button class="btn" onclick="copyLink()">🔗 共有</button>
+    <div style="display:flex; gap:6px;">
+      <button class="btn" onclick="changeMonth(-1)">◀</button>
+      <button class="btn" onclick="changeMonth(1)">▶</button>
+      <button class="btn" onclick="refresh()">🔄 <span class="nav-text">更新</span></button>
+      <button class="btn" onclick="exit()">🚪 <span class="nav-text">退室</span></button>
     </div>
   </header>
 
   <div class="dashboard">
-    <div class="stat-card"><div>本日の予定</div><div class="stat-val" id="stat-today">0</div></div>
-    <div class="stat-card"><div>外出中</div><div class="stat-val" id="stat-out">0</div></div>
-    <div class="stat-card"><div>テレワーク</div><div class="stat-val" id="stat-remote">0</div></div>
-    <div class="stat-card"><div>メンバー数</div><div class="stat-val" id="stat-members">0</div></div>
+    <div class="stat-card"><div>今日の予定</div><div class="stat-val" id="st-today">0</div></div>
+    <div class="stat-card"><div>外出</div><div class="stat-val" id="st-out">0</div></div>
+    <div class="stat-card"><div>テレワーク</div><div class="stat-val" id="st-remote">0</div></div>
+    <div class="stat-card"><div>同期中の人数</div><div class="stat-val" id="st-users">0</div></div>
   </div>
 
   <table class="cal-grid">
@@ -116,113 +124,131 @@
   </table>
 
   <div class="editor">
-    <h3 style="margin-top:0; color:var(--p-color)">📅 新しい予定を追加</h3>
-    <div class="field-group">
+    <h3 style="margin:0 0 15px 0; color:var(--p-color);">予定の登録</h3>
+    <div class="grid-fields">
       <div class="field"><label>日付</label><input type="date" id="fDate"></div>
       <div class="field"><label>開始</label><input type="time" id="fStart" value="09:00"></div>
-      <div class="field"><label>終了</label><input type="time" id="fEnd" value="18:00"></div>
+      <div class="field"><label>終了</label><input type="time" id="fEnd" value="10:00"></div>
       <div class="field">
         <label>カテゴリ</label>
         <select id="fCat">
           <option value="meeting">会議</option>
-          <option value="out">外出・出張</option>
+          <option value="out">外出</option>
           <option value="remote">テレワーク</option>
-          <option value="holiday">休暇・欠勤</option>
+          <option value="holiday">休暇</option>
         </select>
       </div>
     </div>
-    <div class="field" style="margin-bottom:15px;">
-      <label>タイトル</label>
-      <input type="text" id="fTitle" placeholder="予定の件名を入力">
-    </div>
-    <div class="field" style="margin-bottom:20px;">
-      <label>メモ (詳細情報)</label>
-      <textarea id="fNote" rows="2" placeholder="場所、URL、連絡事項など"></textarea>
-    </div>
-    <button class="btn btn-p" id="saveBtn" style="width:100%; padding:15px;" onclick="saveEvent()">保存してチームに共有</button>
+    <div class="field"><label>タイトル</label><input type="text" id="fTitle" placeholder="予定名"></div>
+    <div class="field"><label>メモ</label><textarea id="fNote" rows="2" placeholder="詳細情報"></textarea></div>
+    <button class="btn btn-p" id="saveBtn" style="width:100%; justify-content:center; padding:15px;" onclick="save()">保存して同期</button>
+    <div id="status" style="text-align:center; font-size:11px; margin-top:8px; color:var(--p-color);"></div>
   </div>
 </div>
 
 <div id="modal" class="modal" onclick="closeModal()">
   <div class="modal-content" onclick="event.stopPropagation()">
-    <h2 id="mDate" style="border-bottom:2px solid var(--p-color); padding-bottom:10px;"></h2>
+    <h3 id="mDate" style="margin-top:0;"></h3>
     <div id="mList"></div>
-    <button class="btn" style="width:100%; margin-top:20px;" onclick="closeModal()">閉じる</button>
+    <button class="btn" style="width:100%; margin-top:15px; justify-content:center;" onclick="closeModal()">閉じる</button>
   </div>
 </div>
 
 <script>
-  // ★ここにデプロイしたGASのURLをセットしてください
-  const API_URL = "https://script.google.com/macros/s/AKfycbz7bCwYrdo1gFTAqFWviabs7AVHG3ONcbTRY3w8x8WvrPuZJGPitLRvmSLAtJK5Nvg3/exec";
+  // ★重要：ここにGASのURLを貼り付けてください★
+  const API_URL = "https://script.google.com/macros/s/AKfycbwQPUjlxd9rl6Mx-i97EDTGUzI7lnwkEEtEh4xsYwk46hvhwkmGyDFS6iJJ_5SJ9NFB/exec";
 
   let state = {
-    viewDate: new Date(),
+    curr: new Date(),
     events: [],
-    user: localStorage.getItem('tc_user') || "",
-    room: localStorage.getItem('tc_room') || ""
+    room: localStorage.getItem('tc_room') || "",
+    user: localStorage.getItem('tc_user') || ""
+  };
+
+  window.onload = () => {
+    if(state.room && state.user) {
+      document.getElementById('roomID').value = state.room;
+      document.getElementById('userName').value = state.user;
+      joinApp();
+    }
+    document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
   };
 
   function toggleTheme() {
     const b = document.body;
-    const next = b.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    b.setAttribute('data-theme', next);
+    const t = b.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    b.setAttribute('data-theme', t);
   }
 
-  async function initApp() {
-    const r = document.getElementById('joinRoomId').value.trim();
-    const u = document.getElementById('joinUserName').value.trim();
-    if(!r || !u) return alert("入力してください");
+  function joinApp() {
+    const r = document.getElementById('roomID').value.trim();
+    const u = document.getElementById('userName').value.trim();
+    if(!r || !u) return alert("ルームIDと名前を入力してください");
+    
     state.room = r; state.user = u;
-    localStorage.setItem('tc_room', r); localStorage.setItem('tc_user', u);
-    document.getElementById('login-overlay').style.opacity = "0";
-    setTimeout(() => document.getElementById('login-overlay').style.display = "none", 500);
+    localStorage.setItem('tc_room', r);
+    localStorage.setItem('tc_user', u);
+    document.getElementById('login-overlay').style.display = "none";
     refresh();
+    setInterval(refresh, 60000); // 1分ごとに自動更新
+  }
+
+  function exit() {
+    if(confirm("退室しますか？")) {
+      localStorage.clear();
+      location.reload();
+    }
   }
 
   async function refresh() {
-    if(!API_URL.includes("http")) return;
+    document.getElementById('status').innerText = "同期中...";
     try {
-      const res = await fetch(`${API_URL}?action=get&roomId=${state.room}`);
-      state.events = await res.json();
+      const res = await fetch(`${API_URL}?action=get&roomId=${encodeURIComponent(state.room)}`);
+      const data = await res.json();
+      state.events = Array.isArray(data) ? data : [];
       render();
-      updateStats();
-    } catch(e) { console.error(e); }
+      updateDashboard();
+      document.getElementById('status').innerText = "最終更新: " + new Date().toLocaleTimeString();
+    } catch(e) {
+      document.getElementById('status').innerText = "エラー: 同期に失敗しました";
+    }
   }
 
-  function updateStats() {
+  function updateDashboard() {
     const today = new Date().toISOString().split('T')[0];
     const todays = state.events.filter(e => e.date === today);
-    document.getElementById('stat-today').innerText = todays.length;
-    document.getElementById('stat-out').innerText = todays.filter(e => e.category === 'out').length;
-    document.getElementById('stat-remote').innerText = todays.filter(e => e.category === 'remote').length;
-    document.getElementById('stat-members').innerText = [...new Set(state.events.map(e => e.name))].length;
+    document.getElementById('st-today').innerText = todays.length;
+    document.getElementById('st-out').innerText = todays.filter(e => e.category === 'out').length;
+    document.getElementById('st-remote').innerText = todays.filter(e => e.category === 'remote').length;
+    document.getElementById('st-users').innerText = [...new Set(state.events.map(e => e.name))].length;
   }
 
   function render() {
-    const y = state.viewDate.getFullYear(), m = state.viewDate.getMonth();
-    document.getElementById('viewMonth').innerText = `${y}年 ${m+1}月`;
+    const y = state.curr.getFullYear(), m = state.curr.getMonth();
+    document.getElementById('currentMonth').innerText = `${y}年 ${m+1}月`;
     const first = new Date(y, m, 1).getDay(), last = new Date(y, m+1, 0).getDate();
     const body = document.getElementById('calBody'); body.innerHTML = "";
-    const filter = document.getElementById('searchFilter').value.toLowerCase();
-    
+    const query = document.getElementById('q').value.toLowerCase();
+    const today = new Date().toISOString().split('T')[0];
+
     let day = 1;
     for(let i=0; i<6; i++) {
       let tr = document.createElement('tr');
       for(let j=0; j<7; j++) {
         let td = document.createElement('td');
-        if((i===0 && j<first) || day > last) { tr.appendChild(td); continue; }
+        if((i===0 && j < first) || day > last) { tr.appendChild(td); continue; }
         
-        const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        if(dateStr === new Date().toISOString().split('T')[0]) td.className = "is-today";
+        const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        if(dStr === today) td.className = "is-today";
         td.innerHTML = `<div class="date-label">${day}</div>`;
-        td.onclick = () => showModal(dateStr);
+        td.onclick = () => openModal(dStr);
 
-        state.events.filter(e => e.date === dateStr).forEach(e => {
-          if(filter && !e.name.toLowerCase().includes(filter) && !e.title.toLowerCase().includes(filter)) return;
-          const div = document.createElement('div');
-          div.className = `event cat-${e.category}`;
-          div.innerText = `${e.start} ${e.name.substring(0,2)}: ${e.title}`;
-          td.appendChild(div);
+        state.events.filter(e => e.date === dStr).forEach(e => {
+          if(query && !e.title.toLowerCase().includes(query) && !e.name.toLowerCase().includes(query)) return;
+          const ev = document.createElement('div');
+          ev.className = `event cat-${e.category}`;
+          ev.innerText = `${e.start} ${e.name.substring(0,2)}: ${e.title}`;
+          td.appendChild(ev);
         });
         tr.appendChild(td); day++;
       }
@@ -230,50 +256,53 @@
     }
   }
 
-  async function saveEvent() {
-    const title = document.getElementById('fTitle').value;
-    const start = document.getElementById('fStart').value;
-    const end = document.getElementById('fEnd').value;
-    if(!title || start > end) return alert("入力内容を確認してください");
-
+  async function save() {
+    const t = document.getElementById('fTitle').value;
+    if(!t) return alert("タイトルを入力してください");
+    
     const btn = document.getElementById('saveBtn');
-    btn.disabled = true; btn.innerText = "送信中...";
+    btn.disabled = true; btn.innerText = "保存中...";
 
-    const params = new URLSearchParams({
+    const p = new URLSearchParams({
       action: 'add', roomId: state.room, name: state.user,
       date: document.getElementById('fDate').value,
-      start: start, end: end, title: title,
-      category: document.getElementById('fCat').value,
+      start: document.getElementById('fStart').value,
+      end: document.getElementById('fEnd').value,
+      title: t, category: document.getElementById('fCat').value,
       note: document.getElementById('fNote').value
     });
 
-    await fetch(`${API_URL}?${params.toString()}`, { mode: 'no-cors' });
-    
-    confetti({ filled: true, particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    setTimeout(() => {
-      document.getElementById('fTitle').value = "";
-      btn.disabled = false; btn.innerText = "保存してチームに共有";
-      refresh();
-    }, 1000);
+    try {
+      await fetch(`${API_URL}?${p.toString()}`, { mode: 'no-cors' });
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 } });
+      setTimeout(() => {
+        document.getElementById('fTitle').value = "";
+        document.getElementById('fNote').value = "";
+        btn.disabled = false; btn.innerText = "保存して同期";
+        refresh();
+      }, 1000);
+    } catch(e) { alert("失敗しました"); btn.disabled = false; }
   }
 
-  function showModal(date) {
+  function openModal(date) {
     document.getElementById('mDate').innerText = date;
     const list = document.getElementById('mList');
     const items = state.events.filter(e => e.date === date);
     list.innerHTML = items.length ? items.map(e => `
-      <div style="padding:15px; border-bottom:1px solid var(--border); position:relative;">
-        <span class="event cat-${e.category}" style="display:inline-block">${e.category}</span>
-        <div style="font-weight:bold; font-size:18px; margin:5px 0;">${e.title}</div>
-        <div style="font-size:13px; color:#666;">👤 ${e.name} | 🕒 ${e.start} - ${e.end}</div>
-        <div style="font-size:12px; margin-top:8px; white-space:pre-wrap;">${e.note || ''}</div>
-        ${e.name === state.user ? `<button class="btn" style="color:red; font-size:11px; margin-top:10px;" onclick="deleteEv('${e.date}','${e.title}')">削除</button>` : ''}
+      <div style="padding:12px 0; border-bottom:1px solid var(--border);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="event cat-${e.category}">${e.category}</span>
+          ${e.name === state.user ? `<button onclick="delEv('${e.date}','${e.title}')" style="color:var(--sun); border:none; background:none; cursor:pointer;">削除</button>` : ""}
+        </div>
+        <div style="font-weight:bold; font-size:16px; margin:5px 0;">${e.title}</div>
+        <div style="font-size:12px; color:#666;">👤 ${e.name} | 🕒 ${e.start} - ${e.end}</div>
+        <div style="font-size:12px; margin-top:5px; white-space:pre-wrap;">${e.note}</div>
       </div>
-    `).join('') : "<p>予定はありません</p>";
+    `).join('') : "予定はありません";
     document.getElementById('modal').style.display = "flex";
   }
 
-  async function deleteEv(date, title) {
+  async function delEv(date, title) {
     if(!confirm("削除しますか？")) return;
     const p = new URLSearchParams({ action:'delete', roomId:state.room, date:date, name:state.user, title:title });
     await fetch(`${API_URL}?${p.toString()}`, { mode: 'no-cors' });
@@ -281,18 +310,7 @@
   }
 
   function closeModal() { document.getElementById('modal').style.display = "none"; }
-  function moveMonth(n) { state.viewDate.setMonth(state.viewDate.getMonth() + n); render(); }
-  function copyLink() {
-    navigator.clipboard.writeText(window.location.href);
-    alert("URLをコピーしました。メンバーに共有してください。");
-  }
-  
-  if(state.room) {
-    document.getElementById('joinRoomId').value = state.room;
-    document.getElementById('joinUserName').value = state.user;
-    initApp();
-  }
-  document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+  function changeMonth(n) { state.curr.setMonth(state.curr.getMonth() + n); render(); }
 </script>
 </body>
 </html>
