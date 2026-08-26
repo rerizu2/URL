@@ -4,263 +4,1492 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>共有カレンダー</title>
+
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
   <style>
     :root {
-      --p-color: #1a73e8; --p-hover: #1765cc; --bg: #ffffff; --text: #202124;
-      --border: #dadce0; --surface: #f8f9fa; --sun: #d93025; --sat: #1967d2;
+      --p-color: #1a73e8;
+      --p-hover: #1765cc;
+      --bg: #ffffff;
+      --text: #202124;
+      --border: #dadce0;
+      --surface: #f8f9fa;
+      --sun: #d93025;
+      --sat: #1967d2;
       --shadow: 0 1px 3px rgba(60,64,67,0.3);
     }
+
     [data-theme="dark"] {
-      --bg: #202124; --text: #e8eaed; --border: #3c4043; --surface: #303134;
+      --bg: #202124;
+      --text: #e8eaed;
+      --border: #3c4043;
+      --surface: #303134;
       --shadow: 0 1px 6px rgba(0,0,0,0.6);
     }
-    body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: background 0.3s; line-height: 1.5; overflow-x: hidden; }
-    .container { max-width: 1100px; margin: 0 auto; padding: 15px; }
 
-    #login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-    .login-card { background: var(--surface); padding: 40px; border-radius: 20px; box-shadow: var(--shadow); width: 90%; max-width: 380px; text-align: center; }
-    .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 16px; box-sizing: border-box; }
-
-    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
-    .stat-card { background: var(--surface); padding: 15px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
-    .stat-val { font-size: 26px; font-weight: bold; color: var(--p-color); }
-
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-    .btn { padding: 10px 18px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; transition: 0.2s; }
-    .btn-p { background: var(--p-color); color: white; border: none; }
-
-    .search-box { position: relative; flex: 1; min-width: 200px; }
-    .search-box input { width: 100%; padding: 10px 15px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text); box-sizing: border-box; }
-
-    .cal-grid { width: 100%; border-collapse: collapse; table-layout: fixed; box-shadow: var(--shadow); border-radius: 10px; overflow: hidden; background: var(--bg); }
-    .cal-grid th { background: var(--surface); padding: 10px; font-size: 12px; border: 1px solid var(--border); }
-    .cal-grid td { border: 1px solid var(--border); height: 110px; vertical-align: top; padding: 4px; transition: 0.2s; cursor: pointer; }
-    .cal-grid td:hover { background: var(--surface); }
-    .date-label { font-size: 14px; font-weight: bold; width: 26px; height: 26px; text-align: center; line-height: 26px; border-radius: 50%; display: inline-block; }
-    .is-today .date-label { background: var(--p-color); color: white; }
-
-    .event { 
-      font-size: 9px; padding: 2px 4px; border-radius: 3px; margin-bottom: 1px; 
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      border-left: 2px solid #ccc; line-height: 1.2;
+    * {
+      box-sizing: border-box;
     }
-    .cat-meeting { background: #e8f0fe; color: #1967d2; border-left-color: #1a73e8; }
-    .cat-out { background: #fef7e0; color: #b06000; border-left-color: #fbbc04; }
-    .cat-holiday { background: #fce8e6; color: #d93025; border-left-color: #ea4335; }
-    .cat-remote { background: #e6fffa; color: #008b8b; border-left-color: #38b2ac; }
 
-    .editor { background: var(--surface); padding: 20px; border-radius: 15px; margin-top: 25px; border: 1px solid var(--border); }
-    .grid-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
-    .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; }
-    .field label { font-size: 12px; font-weight: bold; color: var(--p-color); }
-    .field input, .field select, .field textarea { padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+    body {
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      transition: background 0.3s;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
 
-    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-    .modal-content { background: var(--bg); padding: 25px; border-radius: 15px; width: 90%; max-width: 450px; }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 15px;
+    }
 
-    @media (max-width: 700px) { .cal-grid td { height: 75px; } .nav-text { display: none; } }
+    /* =========================
+       ログイン画面
+    ========================= */
+
+    #login-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      background: var(--surface);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      width: 90%;
+      max-width: 380px;
+      text-align: center;
+    }
+
+    .login-card input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    /* =========================
+       ダッシュボード
+    ========================= */
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 26px;
+      font-weight: bold;
+      color: var(--p-color);
+    }
+
+    /* =========================
+       ヘッダー
+    ========================= */
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-p {
+      background: var(--p-color);
+      color: white;
+      border: none;
+    }
+
+    .btn-p:hover {
+      background: var(--p-hover);
+    }
+
+    /* =========================
+       検索
+    ========================= */
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      box-sizing: border-box;
+    }
+
+    /* =========================
+       カレンダー
+    ========================= */
+
+    .cal-grid {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      box-shadow: var(--shadow);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .cal-grid th {
+      background: var(--surface);
+      padding: 10px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .cal-grid td {
+      border: 1px solid var(--border);
+      height: 110px;
+      vertical-align: top;
+      padding: 4px;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+
+    .cal-grid td:hover {
+      background: var(--surface);
+    }
+
+    .date-label {
+      font-size: 14px;
+      font-weight: bold;
+      width: 26px;
+      height: 26px;
+      text-align: center;
+      line-height: 26px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .is-today .date-label {
+      background: var(--p-color);
+      color: white;
+    }
+
+    /* =========================
+       イベント
+    ========================= */
+
+    .event {
+      font-size: 9px;
+      padding: 2px 4px;
+      border-radius: 3px;
+      margin-bottom: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-left: 2px solid #ccc;
+      line-height: 1.2;
+    }
+
+    .cat-meeting {
+      background: #e8f0fe;
+      color: #1967d2;
+      border-left-color: #1a73e8;
+    }
+
+    .cat-out {
+      background: #fef7e0;
+      color: #b06000;
+      border-left-color: #fbbc04;
+    }
+
+    .cat-holiday {
+      background: #fce8e6;
+      color: #d93025;
+      border-left-color: #ea4335;
+    }
+
+    .cat-remote {
+      background: #e6fffa;
+      color: #008b8b;
+      border-left-color: #38b2ac;
+    }
+
+    /* =========================
+       編集エリア
+    ========================= */
+
+    .editor {
+      background: var(--surface);
+      padding: 20px;
+      border-radius: 15px;
+      margin-top: 25px;
+      border: 1px solid var(--border);
+    }
+
+    .grid-fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: bold;
+      color: var(--p-color);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* =========================
+       モーダル
+    ========================= */
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      background: var(--bg);
+      padding: 25px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 450px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    /* =========================
+       著作権表示
+    ========================= */
+
+    .copyright {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text);
+      opacity: 0.6;
+      padding: 25px 15px 20px;
+      margin-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* =========================
+       スマートフォン対応
+    ========================= */
+
+    @media (max-width: 700px) {
+      .cal-grid td {
+        height: 75px;
+      }
+
+      .nav-text {
+        display: none;
+      }
+
+      .container {
+        padding: 10px;
+      }
+
+      header {
+        gap: 8px;
+      }
+
+      header h2 {
+        min-width: auto !important;
+        font-size: 20px;
+      }
+
+      .search-box {
+        min-width: 150px;
+      }
+
+      .btn {
+        padding: 8px 12px;
+      }
+
+      .editor {
+        padding: 15px;
+      }
+
+      .copyright {
+        font-size: 11px;
+        padding: 20px 10px 15px;
+      }
+    }
   </style>
 </head>
+
 <body data-theme="light">
 
-<div id="login-overlay">
-  <div class="login-card">
-    <h2 style="color:var(--p-color); margin-top:0;">共有カレンダー</h2>
-    <input type="text" id="roomID" placeholder="ルームID">
-    <input type="text" id="userName" placeholder="あなたの名前">
-    <button class="btn btn-p" style="width:100%; margin-top:10px;" onclick="joinApp()">入室する</button>
-  </div>
-</div>
+  <!-- =========================
+       ログイン画面
+  ========================= -->
 
-<div class="container">
-  <header>
-    <div style="display:flex; align-items:center; gap:12px;">
-      <h2 id="currentMonth" style="margin:0; min-width:150px;">---</h2>
-      <div class="search-box"><input type="text" id="q" placeholder="検索..." oninput="render()"></div>
+  <div id="login-overlay">
+    <div class="login-card">
+
+      <h2 style="color:var(--p-color); margin-top:0;">
+        共有カレンダー
+      </h2>
+
+      <input
+        type="text"
+        id="roomID"
+        placeholder="ルームID"
+      >
+
+      <input
+        type="text"
+        id="userName"
+        placeholder="あなたの名前"
+      >
+
+      <button
+        class="btn btn-p"
+        style="width:100%; margin-top:10px;"
+        onclick="joinApp()"
+      >
+        入室する
+      </button>
+
     </div>
-    <div style="display:flex; gap:6px;">
-      <button class="btn" onclick="changeMonth(-1)">◀</button>
-      <button class="btn" onclick="changeMonth(1)">▶</button>
-      <button class="btn" onclick="refresh()">🔄 <span class="nav-text">更新</span></button>
-      <button class="btn" onclick="exit()">🚪 <span class="nav-text">退室</span></button>
-    </div>
-  </header>
-
-  <div class="dashboard">
-    <div class="stat-card"><div>今日の予定</div><div class="stat-val" id="st-today">0</div></div>
-    <div class="stat-card"><div>外出</div><div class="stat-val" id="st-out">0</div></div>
-    <div class="stat-card"><div>テレワーク</div><div class="stat-val" id="st-remote">0</div></div>
-    <div class="stat-card"><div>同期人数</div><div class="stat-val" id="st-users">0</div></div>
   </div>
 
-  <table class="cal-grid">
-    <thead>
-      <tr><th style="color:var(--sun)">日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th style="color:var(--sat)">土</th></tr>
-    </thead>
-    <tbody id="calBody"></tbody>
-  </table>
 
-  <div class="editor">
-    <div class="grid-fields">
-      <div class="field"><label>日付</label><input type="date" id="fDate"></div>
-      <div class="field"><label>開始</label><input type="time" id="fStart" value="09:00"></div>
-      <div class="field"><label>終了</label><input type="time" id="fEnd" value="10:00"></div>
-      <div class="field">
-        <label>カテゴリ</label>
-        <select id="fCat">
-          <option value="meeting">会議</option>
-          <option value="out">外出</option>
-          <option value="remote">テレワーク</option>
-          <option value="holiday">休暇</option>
-        </select>
-      </div>
-    </div>
-    <div class="field"><label>タイトル</label><input type="text" id="fTitle" placeholder="予定名"></div>
-    <div class="field"><label>メモ</label><textarea id="fNote" rows="2" placeholder="詳細"></textarea></div>
-    <button class="btn btn-p" id="saveBtn" style="width:100%; padding:15px;" onclick="save()">保存して同期</button>
-    <div id="status" style="text-align:center; font-size:11px; margin-top:8px; color:var(--p-color);"></div>
-  </div>
-</div>
+  <!-- =========================
+       メインコンテンツ
+  ========================= -->
 
-<div id="modal" class="modal" onclick="closeModal()">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h3 id="mDate" style="margin-top:0;"></h3>
-    <div id="mList"></div>
-    <button class="btn" style="width:100%; margin-top:15px; width:100%; justify-content:center;" onclick="closeModal()">閉じる</button>
-  </div>
-</div>
+  <div class="container">
 
-<script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbxqT6UmnYz4ubgdSiZYlAZwZBd9pXMlcImo7l4E3s_ZbyDPQPmezKdHBQm4CB-cDDWf/exec";
+    <!-- ヘッダー -->
 
-  let state = {
-    curr: new Date(),
-    events: [],
-    room: localStorage.getItem('tc_room') || "",
-    user: localStorage.getItem('tc_user') || ""
-  };
+    <header>
 
-  window.onload = () => {
-    if(state.room && state.user) {
-      document.getElementById('roomID').value = state.room;
-      document.getElementById('userName').value = state.user;
-      joinApp();
-    }
-    document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
-  };
+      <div style="display:flex; align-items:center; gap:12px;">
 
-  function joinApp() {
-    const r = document.getElementById('roomID').value.trim();
-    const u = document.getElementById('userName').value.trim();
-    if(!r || !u) return;
-    state.room = r; state.user = u;
-    localStorage.setItem('tc_room', r); localStorage.setItem('tc_user', u);
-    document.getElementById('login-overlay').style.display = "none";
-    refresh();
-  }
+        <h2
+          id="currentMonth"
+          style="margin:0; min-width:150px;"
+        >
+          ---
+        </h2>
 
-  function exit() { localStorage.clear(); location.reload(); }
+        <div class="search-box">
 
-  async function refresh() {
-    document.getElementById('status').innerText = "同期中...";
-    try {
-      const res = await fetch(`${API_URL}?action=get&roomId=${encodeURIComponent(state.room)}`);
-      state.events = await res.json();
-      render();
-      updateDashboard();
-      document.getElementById('status').innerText = "最終更新: " + new Date().toLocaleTimeString();
-    } catch(e) { document.getElementById('status').innerText = "同期失敗"; }
-  }
+          <input
+            type="text"
+            id="q"
+            placeholder="検索..."
+            oninput="render()"
+          >
 
-  function updateDashboard() {
-    const today = new Date().toISOString().split('T')[0];
-    const todays = state.events.filter(e => e.date === today);
-    document.getElementById('st-today').innerText = todays.length;
-    document.getElementById('st-out').innerText = todays.filter(e => e.category === 'out').length;
-    document.getElementById('st-remote').innerText = todays.filter(e => e.category === 'remote').length;
-    document.getElementById('st-users').innerText = [...new Set(state.events.map(e => e.name))].length;
-  }
-
-  function render() {
-    const y = state.curr.getFullYear(), m = state.curr.getMonth();
-    document.getElementById('currentMonth').innerText = `${y}年 ${m+1}月`;
-    const first = new Date(y, m, 1).getDay(), last = new Date(y, m+1, 0).getDate();
-    const body = document.getElementById('calBody'); body.innerHTML = "";
-    const query = document.getElementById('q').value.toLowerCase();
-    const today = new Date().toISOString().split('T')[0];
-
-    let day = 1;
-    for(let i=0; i<6; i++) {
-      let tr = document.createElement('tr');
-      for(let j=0; j<7; j++) {
-        let td = document.createElement('td');
-        if((i===0 && j < first) || day > last) { tr.appendChild(td); continue; }
-        const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        if(dStr === today) td.className = "is-today";
-        td.innerHTML = `<div class="date-label">${day}</div>`;
-        td.onclick = () => openModal(dStr);
-
-        state.events.filter(e => e.date === dStr).forEach(e => {
-          if(query && !e.title.toLowerCase().includes(query) && !e.name.toLowerCase().includes(query)) return;
-          const ev = document.createElement('div');
-          ev.className = `event cat-${e.category}`;
-          // ★ここで 16:30-17:30 形式で表示
-          ev.innerText = `${e.start}-${e.end} ${e.name.substring(0,2)}: ${e.title}`;
-          td.appendChild(ev);
-        });
-        tr.appendChild(td); day++;
-      }
-      body.appendChild(tr); if(day > last) break;
-    }
-  }
-
-  async function save() {
-    const t = document.getElementById('fTitle').value;
-    if(!t) return alert("タイトルを入力してください");
-    const btn = document.getElementById('saveBtn');
-    btn.disabled = true;
-    const p = new URLSearchParams({
-      action: 'add', roomId: state.room, name: state.user,
-      date: document.getElementById('fDate').value,
-      start: document.getElementById('fStart').value,
-      end: document.getElementById('fEnd').value,
-      title: t, category: document.getElementById('fCat').value,
-      note: document.getElementById('fNote').value
-    });
-    await fetch(`${API_URL}?${p.toString()}`, { mode: 'no-cors' });
-    confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 } });
-    setTimeout(() => {
-      document.getElementById('fTitle').value = ""; document.getElementById('fNote').value = "";
-      btn.disabled = false; refresh();
-    }, 1000);
-  }
-
-  function openModal(date) {
-    document.getElementById('mDate').innerText = date;
-    const items = state.events.filter(e => e.date === date);
-    document.getElementById('mList').innerHTML = items.length ? items.map(e => `
-      <div style="padding:12px 0; border-bottom:1px solid var(--border);">
-        <div style="display:flex; justify-content:space-between;">
-          <span class="event cat-${e.category}">${e.category}</span>
-          ${e.name === state.user ? `<button onclick="delEv('${e.date}','${e.title}')" style="color:var(--sun); border:none; background:none; cursor:pointer;">削除</button>` : ""}
         </div>
-        <div style="font-weight:bold; font-size:16px; margin:5px 0;">${e.title}</div>
-        <div style="font-size:12px; color:#666;">👤 ${e.name} | 🕒 ${e.start} - ${e.end}</div>
-        <div style="font-size:12px; margin-top:5px; white-space:pre-wrap;">${e.note}</div>
-      </div>
-    `).join('') : "予定なし";
-    document.getElementById('modal').style.display = "flex";
-  }
 
-  async function delEv(date, title) {
-    if(!confirm("削除しますか？")) return;
-    const p = new URLSearchParams({ action:'delete', roomId:state.room, date:date, name:state.user, title:title });
-    await fetch(`${API_URL}?${p.toString()}`, { mode: 'no-cors' });
-    closeModal(); refresh();
-  }
-  function closeModal() { document.getElementById('modal').style.display = "none"; }
-  function changeMonth(n) { state.curr.setMonth(state.curr.getMonth() + n); render(); }
-</script>
+      </div>
+
+
+      <div style="display:flex; gap:6px;">
+
+        <button
+          class="btn"
+          onclick="changeMonth(-1)"
+        >
+          ◀
+        </button>
+
+        <button
+          class="btn"
+          onclick="changeMonth(1)"
+        >
+          ▶
+        </button>
+
+        <button
+          class="btn"
+          onclick="refresh()"
+        >
+          🔄
+          <span class="nav-text">
+            更新
+          </span>
+        </button>
+
+        <button
+          class="btn"
+          onclick="exit()"
+        >
+          🚪
+          <span class="nav-text">
+            退室
+          </span>
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <!-- =========================
+         ダッシュボード
+    ========================= -->
+
+    <div class="dashboard">
+
+      <div class="stat-card">
+        <div>今日の予定</div>
+        <div
+          class="stat-val"
+          id="st-today"
+        >
+          0
+        </div>
+      </div>
+
+
+      <div class="stat-card">
+        <div>外出</div>
+        <div
+          class="stat-val"
+          id="st-out"
+        >
+          0
+        </div>
+      </div>
+
+
+      <div class="stat-card">
+        <div>テレワーク</div>
+        <div
+          class="stat-val"
+          id="st-remote"
+        >
+          0
+        </div>
+      </div>
+
+
+      <div class="stat-card">
+        <div>同期人数</div>
+        <div
+          class="stat-val"
+          id="st-users"
+        >
+          0
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- =========================
+         カレンダー
+    ========================= -->
+
+    <table class="cal-grid">
+
+      <thead>
+
+        <tr>
+          <th style="color:var(--sun)">
+            日
+          </th>
+
+          <th>
+            月
+          </th>
+
+          <th>
+            火
+          </th>
+
+          <th>
+            水
+          </th>
+
+          <th>
+            木
+          </th>
+
+          <th>
+            金
+          </th>
+
+          <th style="color:var(--sat)">
+            土
+          </th>
+        </tr>
+
+      </thead>
+
+      <tbody id="calBody"></tbody>
+
+    </table>
+
+
+    <!-- =========================
+         予定編集
+    ========================= -->
+
+    <div class="editor">
+
+      <div class="grid-fields">
+
+        <div class="field">
+
+          <label>
+            日付
+          </label>
+
+          <input
+            type="date"
+            id="fDate"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            開始
+          </label>
+
+          <input
+            type="time"
+            id="fStart"
+            value="09:00"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            終了
+          </label>
+
+          <input
+            type="time"
+            id="fEnd"
+            value="10:00"
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            カテゴリ
+          </label>
+
+          <select id="fCat">
+
+            <option value="meeting">
+              会議
+            </option>
+
+            <option value="out">
+              外出
+            </option>
+
+            <option value="remote">
+              テレワーク
+            </option>
+
+            <option value="holiday">
+              休暇
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          タイトル
+        </label>
+
+        <input
+          type="text"
+          id="fTitle"
+          placeholder="予定名"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          メモ
+        </label>
+
+        <textarea
+          id="fNote"
+          rows="2"
+          placeholder="詳細"
+        ></textarea>
+
+      </div>
+
+
+      <button
+        class="btn btn-p"
+        id="saveBtn"
+        style="width:100%; padding:15px;"
+        onclick="save()"
+      >
+        保存して同期
+      </button>
+
+
+      <div
+        id="status"
+        style="
+          text-align:center;
+          font-size:11px;
+          margin-top:8px;
+          color:var(--p-color);
+        "
+      ></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       著作権表示
+  ========================= -->
+
+  <footer class="copyright">
+    © 2026 共有カレンダー All Rights Reserved.
+  </footer>
+
+
+  <!-- =========================
+       モーダル
+  ========================= -->
+
+  <div
+    id="modal"
+    class="modal"
+    onclick="closeModal()"
+  >
+
+    <div
+      class="modal-content"
+      onclick="event.stopPropagation()"
+    >
+
+      <h3
+        id="mDate"
+        style="margin-top:0;"
+      ></h3>
+
+      <div id="mList"></div>
+
+      <button
+        class="btn"
+        style="
+          width:100%;
+          margin-top:15px;
+          justify-content:center;
+        "
+        onclick="closeModal()"
+      >
+        閉じる
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       JavaScript
+  ========================= -->
+
+  <script>
+
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbxqT6UmnYz4ubgdSiZYlAZwZBd9pXMlcImo7l4E3s_ZbyDPQPmezKdHBQm4CB-cDDWf/exec";
+
+
+    let state = {
+
+      curr: new Date(),
+
+      events: [],
+
+      room:
+        localStorage.getItem('tc_room') || "",
+
+      user:
+        localStorage.getItem('tc_user') || ""
+
+    };
+
+
+    /* =========================
+       起動時処理
+    ========================= */
+
+    window.onload = () => {
+
+      if (state.room && state.user) {
+
+        document.getElementById('roomID').value =
+          state.room;
+
+        document.getElementById('userName').value =
+          state.user;
+
+        joinApp();
+
+      }
+
+      document.getElementById('fDate').value =
+        new Date().toISOString().split('T')[0];
+
+    };
+
+
+    /* =========================
+       入室
+    ========================= */
+
+    function joinApp() {
+
+      const r =
+        document.getElementById('roomID').value.trim();
+
+      const u =
+        document.getElementById('userName').value.trim();
+
+
+      if (!r || !u) {
+
+        alert("ルームIDと名前を入力してください。");
+
+        return;
+
+      }
+
+
+      state.room = r;
+
+      state.user = u;
+
+
+      localStorage.setItem(
+        'tc_room',
+        r
+      );
+
+      localStorage.setItem(
+        'tc_user',
+        u
+      );
+
+
+      document.getElementById(
+        'login-overlay'
+      ).style.display = "none";
+
+
+      refresh();
+
+    }
+
+
+    /* =========================
+       退室
+    ========================= */
+
+    function exit() {
+
+      localStorage.clear();
+
+      location.reload();
+
+    }
+
+
+    /* =========================
+       データ更新
+    ========================= */
+
+    async function refresh() {
+
+      document.getElementById(
+        'status'
+      ).innerText = "同期中...";
+
+
+      try {
+
+        const res = await fetch(
+          `${API_URL}?action=get&roomId=${encodeURIComponent(state.room)}`
+        );
+
+
+        state.events = await res.json();
+
+
+        render();
+
+        updateDashboard();
+
+
+        document.getElementById(
+          'status'
+        ).innerText =
+          "最終更新: " +
+          new Date().toLocaleTimeString();
+
+
+      } catch (e) {
+
+        console.error(e);
+
+        document.getElementById(
+          'status'
+        ).innerText =
+          "同期失敗";
+
+      }
+
+    }
+
+
+    /* =========================
+       ダッシュボード更新
+    ========================= */
+
+    function updateDashboard() {
+
+      const today =
+        new Date()
+          .toISOString()
+          .split('T')[0];
+
+
+      const todays =
+        state.events.filter(
+          e => e.date === today
+        );
+
+
+      document.getElementById(
+        'st-today'
+      ).innerText =
+        todays.length;
+
+
+      document.getElementById(
+        'st-out'
+      ).innerText =
+        todays.filter(
+          e => e.category === 'out'
+        ).length;
+
+
+      document.getElementById(
+        'st-remote'
+      ).innerText =
+        todays.filter(
+          e => e.category === 'remote'
+        ).length;
+
+
+      document.getElementById(
+        'st-users'
+      ).innerText =
+        [
+          ...new Set(
+            state.events.map(
+              e => e.name
+            )
+          )
+        ].length;
+
+    }
+
+
+    /* =========================
+       カレンダー描画
+    ========================= */
+
+    function render() {
+
+      const y =
+        state.curr.getFullYear();
+
+      const m =
+        state.curr.getMonth();
+
+
+      document.getElementById(
+        'currentMonth'
+      ).innerText =
+        `${y}年 ${m + 1}月`;
+
+
+      const first =
+        new Date(
+          y,
+          m,
+          1
+        ).getDay();
+
+
+      const last =
+        new Date(
+          y,
+          m + 1,
+          0
+        ).getDate();
+
+
+      const body =
+        document.getElementById(
+          'calBody'
+        );
+
+
+      body.innerHTML = "";
+
+
+      const query =
+        document.getElementById(
+          'q'
+        ).value.toLowerCase();
+
+
+      const today =
+        new Date()
+          .toISOString()
+          .split('T')[0];
+
+
+      let day = 1;
+
+
+      for (
+        let i = 0;
+        i < 6;
+        i++
+      ) {
+
+        let tr =
+          document.createElement('tr');
+
+
+        for (
+          let j = 0;
+          j < 7;
+          j++
+        ) {
+
+          let td =
+            document.createElement('td');
+
+
+          if (
+            (i === 0 && j < first) ||
+            day > last
+          ) {
+
+            tr.appendChild(td);
+
+            continue;
+
+          }
+
+
+          const dStr =
+            `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+
+          if (dStr === today) {
+
+            td.className =
+              "is-today";
+
+          }
+
+
+          td.innerHTML =
+            `<div class="date-label">${day}</div>`;
+
+
+          td.onclick =
+            () => openModal(dStr);
+
+
+          state.events
+            .filter(
+              e => e.date === dStr
+            )
+            .forEach(e => {
+
+              if (
+                query &&
+                !e.title.toLowerCase().includes(query) &&
+                !e.name.toLowerCase().includes(query)
+              ) {
+
+                return;
+
+              }
+
+
+              const ev =
+                document.createElement('div');
+
+
+              ev.className =
+                `event cat-${e.category}`;
+
+
+              ev.innerText =
+                `${e.start}-${e.end} ${e.name.substring(0,2)}: ${e.title}`;
+
+
+              td.appendChild(ev);
+
+            });
+
+
+          tr.appendChild(td);
+
+          day++;
+
+        }
+
+
+        body.appendChild(tr);
+
+
+        if (day > last) {
+
+          break;
+
+        }
+
+      }
+
+    }
+
+
+    /* =========================
+       予定保存
+    ========================= */
+
+    async function save() {
+
+      const t =
+        document.getElementById(
+          'fTitle'
+        ).value;
+
+
+      if (!t) {
+
+        return alert(
+          "タイトルを入力してください"
+        );
+
+      }
+
+
+      const btn =
+        document.getElementById(
+          'saveBtn'
+        );
+
+
+      btn.disabled = true;
+
+
+      const p =
+        new URLSearchParams({
+
+          action: 'add',
+
+          roomId: state.room,
+
+          name: state.user,
+
+          date:
+            document.getElementById(
+              'fDate'
+            ).value,
+
+          start:
+            document.getElementById(
+              'fStart'
+            ).value,
+
+          end:
+            document.getElementById(
+              'fEnd'
+            ).value,
+
+          title: t,
+
+          category:
+            document.getElementById(
+              'fCat'
+            ).value,
+
+          note:
+            document.getElementById(
+              'fNote'
+            ).value
+
+        });
+
+
+      try {
+
+        await fetch(
+          `${API_URL}?${p.toString()}`,
+          {
+            mode: 'no-cors'
+          }
+        );
+
+
+        confetti({
+
+          particleCount: 150,
+
+          spread: 70,
+
+          origin: {
+            y: 0.7
+          }
+
+        });
+
+
+        setTimeout(() => {
+
+          document.getElementById(
+            'fTitle'
+          ).value = "";
+
+
+          document.getElementById(
+            'fNote'
+          ).value = "";
+
+
+          btn.disabled = false;
+
+
+          refresh();
+
+        }, 1000);
+
+
+      } catch (e) {
+
+        console.error(e);
+
+        btn.disabled = false;
+
+        alert(
+          "保存に失敗しました。"
+        );
+
+      }
+
+    }
+
+
+    /* =========================
+       日付の予定表示
+    ========================= */
+
+    function openModal(date) {
+
+      document.getElementById(
+        'mDate'
+      ).innerText = date;
+
+
+      const items =
+        state.events.filter(
+          e => e.date === date
+        );
+
+
+      document.getElementById(
+        'mList'
+      ).innerHTML =
+
+        items.length
+
+        ?
+
+        items.map(e => `
+
+          <div
+            style="
+              padding:12px 0;
+              border-bottom:1px solid var(--border);
+            "
+          >
+
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+              "
+            >
+
+              <span
+                class="event cat-${e.category}"
+              >
+                ${e.category}
+              </span>
+
+
+              ${
+                e.name === state.user
+
+                ?
+
+                `<button
+                  onclick="delEv('${e.date}','${e.title}')"
+                  style="
+                    color:var(--sun);
+                    border:none;
+                    background:none;
+                    cursor:pointer;
+                  "
+                >
+                  削除
+                </button>`
+
+                :
+
+                ""
+
+              }
+
+            </div>
+
+
+            <div
+              style="
+                font-weight:bold;
+                font-size:16px;
+                margin:5px 0;
+              "
+            >
+              ${e.title}
+            </div>
+
+
+            <div
+              style="
+                font-size:12px;
+                color:#666;
+              "
+            >
+              👤 ${e.name}
+              |
+              🕒 ${e.start} - ${e.end}
+            </div>
+
+
+            <div
+              style="
+                font-size:12px;
+                margin-top:5px;
+                white-space:pre-wrap;
+              "
+            >
+              ${e.note}
+            </div>
+
+          </div>
+
+        `).join('')
+
+        :
+
+        "予定なし";
+
+
+      document.getElementById(
+        'modal'
+      ).style.display = "flex";
+
+    }
+
+
+    /* =========================
+       予定削除
+    ========================= */
+
+    async function delEv(
+      date,
+      title
+    ) {
+
+      if (
+        !confirm(
+          "削除しますか？"
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      const p =
+        new URLSearchParams({
+
+          action: 'delete',
+
+          roomId: state.room,
+
+          date: date,
+
+          name: state.user,
+
+          title: title
+
+        });
+
+
+      await fetch(
+        `${API_URL}?${p.toString()}`,
+        {
+          mode: 'no-cors'
+        }
+      );
+
+
+      closeModal();
+
+      refresh();
+
+    }
+
+
+    /* =========================
+       モーダルを閉じる
+    ========================= */
+
+    function closeModal() {
+
+      document.getElementById(
+        'modal'
+      ).style.display =
+        "none";
+
+    }
+
+
+    /* =========================
+       月変更
+    ========================= */
+
+    function changeMonth(n) {
+
+      state.curr.setMonth(
+        state.curr.getMonth() + n
+      );
+
+      render();
+
+    }
+
+  </script>
+
 </body>
 </html>
