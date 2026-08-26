@@ -3,86 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ルーム共有・チームカレンダー</title>
+  <title>グループ共有カレンダー</title>
   <style>
-    :root { --primary: #1a73e8; --border: #dadce0; --bg: #f8f9fa; --sun: #d93025; --sat: #1967d2; --danger: #d93025; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-    .container { width: 100%; max-width: 1000px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    :root { --primary: #1a73e8; --border: #dadce0; --bg: #f1f3f4; --sun: #d93025; --sat: #1967d2; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+    .container { width: 100%; max-width: 1000px; margin: auto; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
     
-    /* ルーム選択画面 */
-    #room-selection { 
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-      background: white; z-index: 200; display: flex; align-items: center; justify-content: center; 
-    }
-    .room-box { width: 90%; max-width: 400px; padding: 30px; border: 1px solid var(--border); border-radius: 12px; text-align: center; }
-    .room-box h2 { margin-top: 0; }
-    .room-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
-    .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-    .primary-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; flex: 1; font-weight: bold; }
-    .secondary-btn { background: #5f6368; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; flex: 1; font-weight: bold; }
+    /* ログイン画面 */
+    #room-selection { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+    .room-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
+    .room-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+    .primary-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; }
 
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .nav-btn { padding: 8px 15px; border: 1px solid var(--border); background: white; cursor: pointer; border-radius: 6px; font-weight: bold; }
-    .room-info { font-size: 12px; color: #5f6368; text-align: right; margin-bottom: 5px; }
+    /* ヘッダー情報 */
+    .header-info { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .room-badge { background: #e8f0fe; color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+    .member-list { font-size: 12px; color: #5f6368; margin-top: 5px; }
+
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .nav-btn { padding: 6px 12px; border: 1px solid var(--border); background: white; cursor: pointer; border-radius: 4px; }
     
+    /* カレンダー表示 */
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    th { border: 1px solid var(--border); padding: 10px; font-size: 12px; background: #f8f9fa; color: #70757a; }
-    td { border: 1px solid var(--border); height: 110px; vertical-align: top; padding: 4px; cursor: pointer; overflow: hidden; }
-    td:hover { background: #f8f9fa; }
-    .date-num { font-weight: bold; font-size: 14px; margin: 2px; display: inline-block; width: 22px; text-align: center; }
+    th { border: 1px solid var(--border); padding: 8px; font-size: 12px; background: #f8f9fa; }
+    td { border: 1px solid var(--border); height: 100px; vertical-align: top; padding: 2px; cursor: pointer; position: relative; }
+    .date-num { font-weight: bold; font-size: 13px; padding: 4px; }
     .is-today { background: #fef7e0; }
-    .is-today .date-num { color: var(--primary); font-size: 16px; border-bottom: 2px solid var(--primary); }
-
+    
     .event-tag {
-      background: #e8f0fe; color: #1967d2; font-size: 10px; padding: 2px 4px; 
-      margin: 1px 0; border-radius: 3px; border-left: 3px solid var(--primary);
+      background: #f1f3f4; border-left: 3px solid #1a73e8; color: #3c4043;
+      font-size: 10px; padding: 2px 4px; margin-bottom: 1px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    .event-tag.mine { background: #e8f0fe; border-left-color: #1a73e8; font-weight: bold; }
 
-    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-    .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 450px; border-radius: 10px; position: relative; }
-    .modal-header { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-    .close-btn { font-size: 28px; cursor: pointer; color: #aaa; }
-    .detail-item { padding: 15px; border-bottom: 1px solid #f1f3f4; position: relative; }
-    .detail-who { font-weight: bold; color: var(--primary); font-size: 12px; display: block; }
-    .detail-time { color: #5f6368; font-size: 12px; }
-    .detail-title { display: block; margin-top: 5px; font-size: 16px; font-weight: bold; }
-    .del-btn { position: absolute; right: 0; top: 15px; background: #fff; border: 1px solid #fcc; color: var(--danger); padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-
-    .form-box { margin-top: 20px; padding: 20px; border-top: 2px solid #f1f3f4; }
-    .grid-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 12px; }
+    /* フォーム */
+    .form-box { margin-top: 20px; padding: 15px; border: 1px solid var(--border); border-radius: 8px; background: #fafafa; }
+    .grid-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 10px; }
     .field { display: flex; flex-direction: column; }
-    label { font-size: 11px; font-weight: bold; color: #5f6368; margin-bottom: 4px; }
-    input { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
-    .save-btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; }
-    #status { font-size: 12px; text-align: center; margin-top: 10px; color: var(--primary); font-weight: bold; }
+    label { font-size: 11px; font-weight: bold; color: #5f6368; }
+    input { padding: 8px; border: 1px solid var(--border); border-radius: 4px; }
+    .save-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
+
+    /* モーダル */
+    .modal { display: none; position: fixed; z-index: 500; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+    .modal-content { background: white; margin: 15% auto; padding: 20px; width: 85%; max-width: 400px; border-radius: 8px; }
+    .detail-item { border-bottom: 1px solid #eee; padding: 10px 0; position: relative; }
+    .del-btn { position: absolute; right: 0; top: 10px; color: #d93025; background: none; border: 1px solid #fcc; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
   </style>
 </head>
 <body>
 
-<!-- ルーム選択画面 -->
+<!-- ルーム選択（初回のみ） -->
 <div id="room-selection">
   <div class="room-box">
-    <h2>チームカレンダー</h2>
-    <p style="font-size: 13px; color: #666;">名前とルームIDを入力してください</p>
+    <h2 style="margin-bottom:20px;">チームカレンダー</h2>
+    <input type="text" id="roomInputId" placeholder="ルームID (例: team123)">
     <input type="text" id="roomUserName" placeholder="あなたの名前">
-    <input type="text" id="roomInputId" placeholder="ルームID (例: team-abc)">
-    <div class="btn-group">
-      <button class="primary-btn" onclick="enterRoom()">参加 / 作成</button>
-    </div>
-    <p style="font-size: 11px; color: #999; margin-top: 20px;">※新しいIDを入力すると新規作成されます</p>
+    <button class="primary-btn" onclick="enterRoom()">カレンダーに入る</button>
+    <p style="font-size:11px; color:#666; margin-top:15px;">同じIDを入れたメンバーと同期されます</p>
   </div>
 </div>
 
 <div class="container">
-  <div class="room-info">
-    ルームID: <span id="displayRoomId">---</span> | 
-    名前: <span id="displayUserName">---</span>
-    <button onclick="leaveRoom()" style="margin-left:10px; font-size:10px;">退室</button>
+  <div class="header-info">
+    <div>
+      <span class="room-badge">Room: <span id="displayRoomId"></span></span>
+      <div class="member-list" id="memberList">メンバーを取得中...</div>
+    </div>
+    <div style="text-align:right">
+      <button class="nav-btn" onclick="refresh()" style="font-size:11px;">🔄 更新</button>
+      <button class="nav-btn" onclick="leaveRoom()" style="font-size:11px;">退室</button>
+    </div>
   </div>
+
   <header>
     <button class="nav-btn" onclick="moveMonth(-1)">◀ 前月</button>
-    <h2 id="monthTitle" style="margin:0;">読み込み中...</h2>
+    <h3 id="monthTitle" style="margin:0;"></h3>
     <button class="nav-btn" onclick="moveMonth(1)">次月 ▶</button>
   </header>
   
@@ -99,82 +96,81 @@
       <div class="field"><label>開始</label><input type="time" id="fStart" value="09:00"></div>
       <div class="field"><label>終了</label><input type="time" id="fEnd" value="10:00"></div>
     </div>
-    <div class="field" style="margin-bottom:12px;">
-      <label>予定の内容</label><input type="text" id="fTitle" placeholder="予定を入力してください">
+    <div class="field" style="margin-bottom:10px;">
+      <label>予定の内容</label><input type="text" id="fTitle" placeholder="会議、外出など">
     </div>
-    <button class="save-btn" id="saveBtn" onclick="saveData()">保存して同期</button>
-    <div id="status"></div>
+    <button class="save-btn" id="saveBtn" onclick="saveData()">予定を追加してメンバーに共有</button>
+    <div id="status" style="text-align:center; font-size:11px; margin-top:5px; color:#666;"></div>
   </div>
 </div>
 
+<!-- 詳細モーダル -->
 <div id="detailModal" class="modal">
   <div class="modal-content">
-    <div class="modal-header">
-      <h3 id="modalDate" style="margin:0;"></h3>
-      <span class="close-btn" onclick="closeModal()">&times;</span>
-    </div>
+    <h3 id="modalDate" style="margin-top:0; border-bottom:2px solid var(--primary);"></h3>
     <div id="modalBody"></div>
+    <button class="primary-btn" style="margin-top:20px; background:#5f6368;" onclick="closeModal()">閉じる</button>
   </div>
 </div>
 
 <script>
   // ★重要：ここにGASのウェブアプリURLを貼り付けてください★
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbz5eZcy3wG9j0R1kdDq8kiHJ3gYswrCtwrZ7Ub-VzJRq60AU1tI2PFQdHB5Aoz7odQP/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyCSI-8lbLnFAFRr7PxU7bQy65uUEfUUvkOy_L39E9WhybfFkeG1rZu8OwThn1W5toX/exec";
 
   let currentView = new Date();
   let events = [];
-  let currentRoomId = "";
-  let currentUserName = "";
+  let myName = "";
+  let myRoomId = "";
 
   window.onload = () => {
     document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
-    
-    // 保存された情報の確認
     const savedRoomId = localStorage.getItem('room_id');
     const savedName = localStorage.getItem('user_name');
-
-    if (savedRoomId && savedName) {
-      setupApp(savedRoomId, savedName);
-    }
+    if (savedRoomId && savedName) setupApp(savedRoomId, savedName);
   };
 
   function enterRoom() {
-    const name = document.getElementById('roomUserName').value.trim();
-    const roomId = document.getElementById('roomInputId').value.trim();
-    if (!name || !roomId) return alert("名前とルームIDを入力してください");
-    
-    localStorage.setItem('room_id', roomId);
-    localStorage.setItem('user_name', name);
-    setupApp(roomId, name);
+    const r = document.getElementById('roomInputId').value.trim();
+    const n = document.getElementById('roomUserName').value.trim();
+    if (!r || !n) return alert("ルームIDと名前を入力してください");
+    localStorage.setItem('room_id', r);
+    localStorage.setItem('user_name', n);
+    setupApp(r, n);
   }
 
   function setupApp(roomId, name) {
-    currentRoomId = roomId;
-    currentUserName = name;
+    myRoomId = roomId;
+    myName = name;
     document.getElementById('displayRoomId').innerText = roomId;
-    document.getElementById('displayUserName').innerText = name;
     document.getElementById('room-selection').style.display = "none";
     refresh();
+    // 60秒ごとに自動更新
+    setInterval(refresh, 60000);
   }
 
   function leaveRoom() {
-    if(!confirm("ルームを退室しますか？")) return;
-    localStorage.removeItem('room_id');
-    localStorage.removeItem('user_name');
-    location.reload();
+    if(confirm("ルームを退室しますか？")) {
+      localStorage.clear();
+      location.reload();
+    }
   }
 
   async function refresh() {
-    const statusEl = document.getElementById('status');
-    statusEl.innerText = "データを同期中...";
+    document.getElementById('status').innerText = "同期中...";
     try {
-      const res = await fetch(`${GAS_URL}?action=get&roomId=${encodeURIComponent(currentRoomId)}`);
+      const res = await fetch(`${GAS_URL}?action=get&roomId=${encodeURIComponent(myRoomId)}`);
       events = await res.json();
+      updateMemberList();
       render();
-      statusEl.innerText = "最新の状態です";
+      document.getElementById('status').innerText = "最新の状態です (" + new Date().toLocaleTimeString() + ")";
     } catch (e) {
-      statusEl.innerText = "エラー: 取得できません。URLを確認してください。";
+      document.getElementById('status').innerText = "エラー：更新に失敗しました";
     }
+  }
+
+  function updateMemberList() {
+    const members = [...new Set(events.map(e => e.name))];
+    document.getElementById('memberList').innerText = "参加中メンバー: " + (members.length ? members.join(", ") : "まだ誰もいません");
   }
 
   function render() {
@@ -201,7 +197,8 @@
           td.onclick = () => showDetails(dateStr);
           
           events.filter(e => e.date === dateStr).sort((a,b) => a.start.localeCompare(b.start)).forEach(e => {
-            td.innerHTML += `<div class="event-tag">${e.start} ${e.title}</div>`;
+            const isMine = e.name === myName;
+            td.innerHTML += `<div class="event-tag ${isMine ? 'mine' : ''}">${e.name.substring(0,3)}: ${e.title}</div>`;
           });
           dateNum++;
         }
@@ -217,16 +214,13 @@
     document.getElementById('modalDate').innerText = dateStr;
     
     modalBody.innerHTML = dayEvents.length === 0 ? "<p>予定はありません</p>" : 
-      dayEvents.map(e => {
-        const canDelete = (e.name === currentUserName);
-        return `
-          <div class="detail-item">
-            <span class="detail-who">👤 ${e.name}</span>
-            <span class="detail-time">🕒 ${e.start} - ${e.end}</span>
-            <strong class="detail-title">${e.title}</strong>
-            ${canDelete ? `<button class="del-btn" onclick='deleteEvent(${JSON.stringify(e)})'>🗑️ 削除</button>` : ""}
-          </div>`;
-      }).join("");
+      dayEvents.map(e => `
+        <div class="detail-item">
+          <span style="font-size:12px; color:var(--primary); font-weight:bold;">${e.name}</span>
+          <div style="font-size:11px; color:#666;">${e.start} ～ ${e.end}</div>
+          <div style="font-weight:bold; margin-top:3px;">${e.title}</div>
+          ${e.name === myName ? `<button class="del-btn" onclick='deleteEvent(${JSON.stringify(e)})'>削除</button>` : ""}
+        </div>`).join("");
     document.getElementById('detailModal').style.display = "block";
   }
 
@@ -235,28 +229,25 @@
     const title = document.getElementById('fTitle').value;
     const start = document.getElementById('fStart').value;
     const end = document.getElementById('fEnd').value;
+    if(!title) return alert("内容を入力してください");
 
-    if(!date || !title) return alert("内容を入力してください。");
-
-    const btn = document.getElementById('saveBtn');
-    btn.disabled = true;
-    const q = `action=add&roomId=${encodeURIComponent(currentRoomId)}&date=${date}&name=${encodeURIComponent(currentUserName)}&start=${start}&end=${end}&title=${encodeURIComponent(title)}`;
+    document.getElementById('saveBtn').disabled = true;
+    const q = `action=add&roomId=${encodeURIComponent(myRoomId)}&date=${date}&name=${encodeURIComponent(myName)}&start=${start}&end=${end}&title=${encodeURIComponent(title)}`;
     
     await fetch(`${GAS_URL}?${q}`, { mode: 'no-cors' });
-
     setTimeout(() => {
       document.getElementById('fTitle').value = "";
-      btn.disabled = false;
+      document.getElementById('saveBtn').disabled = false;
       refresh();
-    }, 1500);
+    }, 1000);
   }
 
   async function deleteEvent(e) {
     if(!confirm("削除しますか？")) return;
     closeModal();
-    const q = `action=delete&roomId=${encodeURIComponent(currentRoomId)}&date=${e.date}&name=${encodeURIComponent(e.name)}&start=${e.start}&end=${e.end}&title=${encodeURIComponent(e.title)}`;
+    const q = `action=delete&roomId=${encodeURIComponent(myRoomId)}&date=${e.date}&name=${encodeURIComponent(e.name)}&start=${e.start}&end=${e.end}&title=${encodeURIComponent(e.title)}`;
     await fetch(`${GAS_URL}?${q}`, { mode: 'no-cors' });
-    setTimeout(refresh, 1500);
+    setTimeout(refresh, 1000);
   }
 
   function closeModal() { document.getElementById('detailModal').style.display = "none"; }
