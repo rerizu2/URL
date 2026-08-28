@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>吉野町マップ 修正版</title>
+    <title>吉野町 住所でピン立てマップ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body, html { margin: 0; padding: 0; height: 100%; }
-        #map { width: 100%; height: 100vh; background: #f0f0f0; }
+        #map { width: 100%; height: 100vh; }
         .overlay {
             position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
             z-index: 1000; background: white; padding: 10px 20px; border-radius: 20px;
@@ -18,7 +18,7 @@
 <body>
 
     <div class="overlay">
-        <b id="status">ピンを探しています...</b>
+        <b id="status">住所からピンを生成中...</b>
     </div>
 
     <div id="map"></div>
@@ -26,15 +26,13 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // ★GASのURLを再度確認して貼り付けてください
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycby2OXZl-fNfb-xV0Ym1-6pRm2v0Go9Xt7MN2XIPB2pEX_EgBUuKFYEPvg6_opXKqnHz/exec'; 
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwb1PXFo0LNejmTxdCs5ibpoH9d9MDJBBtd3r0vuqYnDQTCQde3kndfpsx5jqNEqjbI/exec'; 
 
         const map = L.map('map').setView([34.3750, 135.8650], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
-        // マーカーをまとめて管理するためのグループ
         const markerGroup = new L.featureGroup();
 
         async function fetchMapData() {
@@ -43,45 +41,38 @@
                 const data = await response.json();
                 
                 if (data.length === 0) {
-                    document.getElementById('status').innerText = "データが空です";
+                    document.getElementById('status').innerText = "データが取得できませんでした";
                     return;
                 }
 
                 data.forEach(item => {
-                    let lat = parseFloat(item['緯度']);
-                    let lng = parseFloat(item['経度']);
-                    const name = item['場所名'];
-                    const type = item['タイプ'];
-
-                    // 緯度・経度が逆（例: 緯度が135、経度が34）になっていないかチェック
-                    // 日本国内なら 緯度は20〜50、経度は120〜150の間のはず
-                    if (lat > 100 && lng < 100) {
-                        console.warn("緯度と経度が逆の可能性があるため、入れ替えました:", name);
-                        [lat, lng] = [lng, lat];
-                    }
-
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        // 標準の青いピンを作成
-                        const marker = L.marker([lat, lng])
-                            .bindPopup(`<b>${name}</b><br>タイプ: ${type}<br>${item['詳細']}`);
-                        
-                        markerGroup.addLayer(marker);
-                    }
+                    const color = (item.type === 'クイズ') ? 'red' : 'blue';
+                    
+                    // 住所から変換された緯度・経度を使用
+                    const marker = L.circleMarker([item.lat, item.lng], {
+                        radius: 12,
+                        fillColor: color,
+                        color: "#fff",
+                        weight: 3,
+                        fillOpacity: 0.9
+                    }).bindPopup(`
+                        <b style="font-size:1.1rem;">${item.name}</b><br>
+                        <span style="color:#666;">${item.address}</span><hr>
+                        ${item.detail}
+                    `);
+                    
+                    markerGroup.addLayer(marker);
                 });
 
-                // マップにマーカーを追加
                 map.addLayer(markerGroup);
-
-                // ★重要：すべてのピンが画面に収まるように表示範囲を自動調整
                 if (markerGroup.getLayers().length > 0) {
                     map.fitBounds(markerGroup.getBounds(), { padding: [50, 50] });
-                    document.getElementById('status').innerText = `成功：${markerGroup.getLayers().length}件を表示`;
-                } else {
-                    document.getElementById('status').innerText = "有効な座標がありませんでした";
+                    document.getElementById('status').innerText = `住所から ${markerGroup.getLayers().length}件を表示`;
                 }
 
             } catch (e) {
-                document.getElementById('status').innerText = "エラー: " + e.message;
+                document.getElementById('status').innerText = "通信エラーが発生しました";
+                console.error(e);
             }
         }
 
