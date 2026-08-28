@@ -3,33 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>吉野町 クイズ＆スタンプラリーマップ</title>
-    
+    <title>デバッグ版：吉野町マップ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- CSVを解析するためのライブラリ PapaParse -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
-        #map { width: 100%; height: 100vh; }
-        .map-title {
+        body, html { margin: 0; padding: 0; height: 100%; }
+        #map { width: 100%; height: 100vh; background: #eee; } /* 背景色をつけて地図自体が出てるか確認 */
+        .overlay {
             position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; background: white; padding: 10px 20px;
-            border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            text-align: center; min-width: 250px;
-        }
-        /* ポップアップ内のボタン */
-        .btn {
-            display: inline-block; margin-top: 10px; padding: 5px 10px;
-            background: #d04255; color: white; text-decoration: none; border-radius: 5px;
+            z-index: 1000; background: white; padding: 10px; border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
 
-    <div class="map-title">
-        <h2 style="margin:0; font-size: 1.1rem;">吉野町 散策マップ</h2>
-        <div style="font-size: 0.8rem;">🔴=クイズ / 🔵=スタンプ</div>
+    <div class="overlay">
+        <b>マップ読み込みテスト</b><br>
+        <span id="status">読み込み中...</span>
     </div>
 
     <div id="map"></div>
@@ -37,8 +27,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // ★ここにGoogleスプレッドシートで公開したCSVのURLを貼り付けてください
-        const sheetUrl = 'https://script.google.com/macros/s/AKfycby2OXZl-fNfb-xV0Ym1-6pRm2v0Go9Xt7MN2XIPB2pEX_EgBUuKFYEPvg6_opXKqnHz/exec';
+        // ★ここに新しいGASのURLを貼り付け
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycby2OXZl-fNfb-xV0Ym1-6pRm2v0Go9Xt7MN2XIPB2pEX_EgBUuKFYEPvg6_opXKqnHz/exec'; 
 
         const map = L.map('map').setView([34.3750, 135.8650], 15);
 
@@ -46,67 +36,58 @@
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
-        // スプレッドシートからデータを取得する関数
-        async function loadSheetData() {
+        async function fetchMapData() {
+            const statusEl = document.getElementById('status');
+            console.log("GASへの通信開始...");
+
             try {
-                const response = await fetch(sheetUrl);
-                const csvData = await response.text();
-                
-                // PapaParseでCSVをJSON形式に変換
-                Papa.parse(csvData, {
-                    header: true, // 1行目をヘッダーとして扱う
-                    complete: function(results) {
-                        addMarkers(results.data);
+                const response = await fetch(GAS_URL);
+                console.log("GASからのレスポンス受信:", response);
+
+                if (!response.ok) throw new Error("ネットワークエラーです");
+
+                const data = await response.json();
+                console.log("受け取ったデータ一覧:", data);
+
+                if (data.length === 0) {
+                    statusEl.innerText = "データが空です（シートの中身を確認してください）";
+                    return;
+                }
+
+                data.forEach((item, index) => {
+                    const lat = parseFloat(item['緯度']);
+                    const lng = parseFloat(item['経度']);
+                    const name = item['場所名'];
+                    const type = item['タイプ'];
+
+                    console.log(`地点${index + 1}: ${name} (${lat}, ${lng}) - ${type}`);
+
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const color = (type === 'クイズ') ? 'red' : 'blue';
+                        
+                        // 簡易的な円形マーカーを表示（アイコン画像の問題を避けるため）
+                        L.circleMarker([lat, lng], {
+                            radius: 10,
+                            fillColor: color,
+                            color: "#fff",
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.8
+                        }).addTo(map).bindPopup(`<b>${name}</b><br>${type}<br>${item['詳細']}`);
+                    } else {
+                        console.warn(`地点${index + 1} (${name}) の座標が正しくありません。`);
                     }
                 });
-            } catch (error) {
-                console.error('データの取得に失敗しました:', error);
-                alert('スプレッドシートのデータを読み込めませんでした。URLを確認してください。');
+
+                statusEl.innerText = `成功：${data.length}件のピンを表示`;
+
+            } catch (e) {
+                console.error("エラー詳細:", e);
+                statusEl.innerHTML = `<span style="color:red">エラー発生: ${e.message}</span><br><small>コンソール(F12)を確認してください</small>`;
             }
         }
 
-        function addMarkers(data) {
-            data.forEach(row => {
-                const name = row['場所名'];
-                const type = row['タイプ']; // クイズ or スタンプ
-                const lat = parseFloat(row['緯度']);
-                const lng = parseFloat(row['経度']);
-                const info = row['内容'];
-
-                if (!lat || !lng) return; // 座標がない行はスキップ
-
-                // タイプによってピンの色を変える設定
-                let markerColor = "red";
-                let iconSymbol = "Q";
-                if (type === "スタンプ") {
-                    markerColor = "blue";
-                    iconSymbol = "S";
-                }
-
-                // マーカーを作成
-                const marker = L.marker([lat, lng]).addTo(map);
-
-                // ポップアップの内容をカスタマイズ
-                const popupContent = `
-                    <div style="text-align:center;">
-                        <strong style="color:${markerColor === 'red' ? '#d04255' : '#007bff'}">
-                            【${type}ポイント】
-                        </strong><br>
-                        <b style="font-size:1.2rem;">${name}</b><br>
-                        <p>${info}</p>
-                        ${type === 'クイズ' 
-                            ? `<button onclick="alert('クイズ画面へ移動します')" class="btn">クイズに答える</button>` 
-                            : `<button onclick="alert('スタンプを押しました！')" class="btn" style="background:#007bff">スタンプを押す</button>`
-                        }
-                    </div>
-                `;
-                
-                marker.bindPopup(popupContent);
-            });
-        }
-
-        // 実行
-        loadSheetData();
+        fetchMapData();
     </script>
 </body>
 </html>
