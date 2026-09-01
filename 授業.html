@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>リアルタイム授業システム</title>
+    <style>
+        :root {
+            --teacher-color: #2c3e50;
+            --student-color: #27ae60;
+            --bg: #f4f7f6;
+        }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+        
+        /* ヘッダー */
+        header { padding: 15px 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .teacher-mode { background: var(--teacher-color); }
+        .student-mode { background: var(--student-color); }
+
+        .container { display: grid; grid-template-columns: 1fr 300px; gap: 20px; padding: 20px; flex-grow: 1; overflow: hidden; }
+
+        .panel { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        
+        /* 表示切り替え */
+        .only-teacher, .only-student { display: none; }
+        body.is-teacher .only-teacher { display: block; }
+        body.is-student .only-student { display: block; }
+
+        /* タイマー */
+        #timer-display { font-size: 3rem; font-weight: bold; text-align: center; margin: 20px 0; color: #e74c3c; }
+        
+        /* 課題・メッセージ */
+        #announcement-area { background: #fff9c4; padding: 15px; border-left: 5px solid #f1c40f; min-height: 50px; margin-bottom: 20px; font-size: 1.2rem; }
+        
+        textarea { width: 100%; height: 200px; font-size: 16px; margin-top: 10px; padding: 10px; box-sizing: border-box; }
+        input[type="text"] { width: 70%; padding: 8px; }
+        button { padding: 8px 15px; cursor: pointer; border: none; border-radius: 4px; background: #3498db; color: white; }
+        button:hover { opacity: 0.8; }
+
+        .status-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; background: rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body id="main-body">
+
+<header id="header">
+    <div>
+        <span id="role-label">読み込み中...</span>
+        <span class="status-badge" id="room-id">Room: 101</span>
+    </div>
+    <div class="only-teacher">
+        <button onclick="copyStudentURL()" style="background: #f39c12;">🔗 生徒用URLをコピー</button>
+    </div>
+    <div id="clock">00:00:00</div>
+</header>
+
+<main class="container">
+    <!-- メインエリア -->
+    <div class="panel">
+        <div id="announcement-area">
+            <strong>📢 先生からの連絡:</strong> <span id="current-msg">まだ連絡はありません。</span>
+        </div>
+
+        <div class="only-teacher">
+            <h3>教員用コントロール</h3>
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="msg-input" placeholder="生徒に送る指示や課題を入力...">
+                <button onclick="sendMessage()">送信</button>
+            </div>
+            <hr>
+            <h3>授業タイマー</h3>
+            <input type="number" id="timer-min" value="45" style="width: 50px;"> 分
+            <button onclick="syncTimer()">タイマー開始</button>
+        </div>
+
+        <div class="only-student">
+            <h3>個人ノート (自分専用・自動保存)</h3>
+            <textarea id="student-note" placeholder="授業のメモをここに取ってください。先生には見えません。"></textarea>
+        </div>
+    </div>
+
+    <!-- サイドバー -->
+    <div class="sidebar">
+        <div class="panel">
+            <h3>残り時間</h3>
+            <div id="timer-display">45:00</div>
+        </div>
+        
+        <div class="panel" style="margin-top: 20px;">
+            <h3>ToDo / 質問</h3>
+            <ul id="todo-list"></ul>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="todo-input" style="width: 100%;">
+                <button onclick="addTodo()">+</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 1. ロール（役割）の判定
+    const urlParams = new URLSearchParams(window.location.search);
+    const isStudent = urlParams.get('role') === 'student';
+    const body = document.getElementById('main-body');
+    const header = document.getElementById('header');
+    const roleLabel = document.getElementById('role-label');
+
+    // 通信チャネルの設定 (同じブラウザのタブ間でデータをやり取りする)
+    const channel = new BroadcastChannel('class_room_101');
+
+    if (isStudent) {
+        body.classList.add('is-student');
+        header.classList.add('student-mode');
+        roleLabel.innerText = "生徒モード";
+        // 生徒はノートを自動保存
+        const note = document.getElementById('student-note');
+        note.value = localStorage.getItem('my_class_note') || '';
+        note.oninput = () => localStorage.setItem('my_class_note', note.value);
+    } else {
+        body.classList.add('is-teacher');
+        header.classList.add('teacher-mode');
+        roleLabel.innerText = "教員モード";
+    }
+
+    // 2. 教員から生徒への送信機能
+    function sendMessage() {
+        const msg = document.getElementById('msg-input').value;
+        channel.postMessage({ type: 'MESSAGE', data: msg });
+        document.getElementById('current-msg').innerText = msg;
+    }
+
+    function syncTimer() {
+        const mins = document.getElementById('timer-min').value;
+        const endTime = Date.now() + mins * 60000;
+        channel.postMessage({ type: 'TIMER', endTime: endTime });
+        startTimer(endTime);
+    }
+
+    // 3. 受信側の処理
+    channel.onmessage = (event) => {
+        if (event.data.type === 'MESSAGE') {
+            document.getElementById('current-msg').innerText = event.data.data;
+            if (isStudent) alert("先生から新しい連絡があります！");
+        }
+        if (event.data.type === 'TIMER') {
+            startTimer(event.data.endTime);
+        }
+    };
+
+    // 4. タイマー処理
+    let timerInterval;
+    function startTimer(endTime) {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            const now = Date.now();
+            const diff = endTime - now;
+            if (diff <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById('timer-display').innerText = "00:00";
+                return;
+            }
+            const m = Math.floor(diff / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            document.getElementById('timer-display').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+        }, 1000);
+    }
+
+    // 5. 便利機能
+    function copyStudentURL() {
+        const studentURL = window.location.origin + window.location.pathname + "?role=student";
+        navigator.clipboard.writeText(studentURL);
+        alert("生徒用URLをコピーしました。新しいタブで開いてください。\n" + studentURL);
+    }
+
+    function updateClock() {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+
+    function addTodo() {
+        const input = document.getElementById('todo-input');
+        if (!input.value) return;
+        const li = document.createElement('li');
+        li.innerHTML = `<input type="checkbox"> ${input.value}`;
+        document.getElementById('todo-list').appendChild(li);
+        input.value = '';
+    }
+</script>
+</body>
+</html>
