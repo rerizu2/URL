@@ -2,13 +2,14 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>授業支援システム - アンケート形式選択版</title>
+    <title>授業支援システム - アンケート共有機能付</title>
     <style>
         :root {
             --teacher-color: #2c3e50;
             --student-color: #27ae60;
             --bg: #f4f7f6;
             --accent: #3498db;
+            --share-color: #e67e22;
         }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; background: var(--bg); color: #333; display: flex; flex-direction: column; height: 100vh; }
         
@@ -23,27 +24,31 @@
         body.is-teacher .only-teacher { display: block; }
         body.is-student .only-student { display: block; }
 
-        /* アンケート設定エリア */
+        /* アンケート設定 */
         .config-row { margin-bottom: 15px; }
         label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9rem; }
         select, input[type="text"], textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
         
         /* グラフと回答リスト */
+        .result-box { background: #fdfdfd; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-top: 15px; }
         .result-item { margin-bottom: 10px; }
         .bar-container { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; }
         .bar-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.4s; }
-        #text-responses { background: #f9f9f9; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto; list-style: none; padding: 0; }
-        #text-responses li { padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .text-list { background: #f9f9f9; padding: 0; border-radius: 5px; max-height: 200px; overflow-y: auto; list-style: none; }
+        .text-list li { padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+
+        /* 共有中バッジ */
+        .sharing-badge { background: var(--share-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; display: inline-block; margin-bottom: 10px; }
 
         /* 生徒回答エリア */
         .survey-card { border: 2px solid var(--accent); padding: 15px; border-radius: 10px; background: #f0f8ff; }
         .option-label { display: block; padding: 10px; background: white; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 5px; cursor: pointer; }
-        .option-label:hover { background: #eef; }
 
         button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; background: var(--accent); }
-        button:hover { opacity: 0.9; }
         .btn-green { background: #27ae60; }
         .btn-red { background: #e74c3c; }
+        .btn-orange { background: var(--share-color); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
 
         #timer-display { font-size: 2.5rem; font-weight: bold; text-align: center; color: #e74c3c; margin: 10px 0; }
     </style>
@@ -60,58 +65,69 @@
 
 <main class="container">
     <div class="main-content">
-        <!-- アンケート機能パネル -->
+        <!-- アンケート機能 -->
         <div class="panel">
             <h2 style="margin-top:0;">📊 アンケート</h2>
             
-            <!-- 教員用：アンケート作成 -->
+            <!-- 教員用コントロール -->
             <div class="only-teacher">
-                <div class="config-row">
-                    <label>形式を選択</label>
-                    <select id="survey-type" onchange="toggleSurveyInputs()">
-                        <option value="single">単一選択（ラジオボタン）</option>
-                        <option value="multiple">複数選択（チェックボックス）</option>
-                        <option value="text">自由記述（テキスト入力）</option>
-                    </select>
+                <div id="setup-area">
+                    <div class="config-row">
+                        <label>形式</label>
+                        <select id="survey-type" onchange="toggleInputs()">
+                            <option value="single">単一選択</option>
+                            <option value="multiple">複数選択</option>
+                            <option value="text">記述式</option>
+                        </select>
+                    </div>
+                    <div class="config-row">
+                        <label>質問</label>
+                        <input type="text" id="survey-q" placeholder="例：理解できましたか？">
+                    </div>
+                    <div id="options-area" class="config-row">
+                        <label>選択肢（改行区切り）</label>
+                        <textarea id="survey-options" rows="3" placeholder="はい&#13;&#10;いいえ"></textarea>
+                    </div>
+                    <button onclick="startSurvey()" class="btn-green">配信開始</button>
                 </div>
-                <div class="config-row">
-                    <label>質問</label>
-                    <input type="text" id="survey-q" placeholder="例：この問題の答えはわかりますか？">
-                </div>
-                <div id="options-config-area">
-                    <label>選択肢（カンマ区切り、または各行に入力）</label>
-                    <textarea id="survey-options" placeholder="はい&#13;&#10;いいえ&#13;&#10;どちらでもない" rows="3"></textarea>
-                </div>
-                <button onclick="broadcastSurvey()" class="btn-green">アンケートを配信する</button>
-                <button onclick="resetSurvey()" class="btn-red">終了・リセット</button>
 
-                <div id="result-area" style="margin-top:20px; display:none;">
-                    <strong>集計結果 (<span id="vote-count">0</span>件):</strong>
-                    <div id="choices-results" class="only-choice"></div>
-                    <ul id="text-responses" class="only-text" style="display:none;"></ul>
+                <div id="teacher-result-ui" style="display:none; margin-top:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>集計結果 (<span id="total-count">0</span>件)</strong>
+                        <div>
+                            <label style="display:inline; font-size:0.8rem;"><input type="checkbox" id="share-toggle" onchange="toggleShare()"> 生徒に結果を共有する</label>
+                        </div>
+                    </div>
+                    <div id="res-display" class="result-box"></div>
+                    <button onclick="resetSurvey()" class="btn-red" style="margin-top:10px;">終了してクリア</button>
                 </div>
             </div>
 
-            <!-- 生徒用：アンケート回答 -->
-            <div class="only-student" id="student-survey-container">
-                <p id="wait-msg">現在、アンケートは実施されていません。</p>
-                <div id="survey-ui" class="survey-card" style="display:none;">
-                    <h3 id="display-q">質問内容</h3>
-                    <div id="display-options"></div>
-                    <button id="submit-survey-btn" onclick="submitAnswer()" style="margin-top:10px; width:100%;">回答を送信する</button>
+            <!-- 生徒用UI -->
+            <div class="only-student">
+                <div id="student-wait-msg">アンケートの開始を待っています...</div>
+                
+                <div id="student-survey-ui" class="survey-card" style="display:none;">
+                    <h3 id="st-question"></h3>
+                    <div id="st-options"></div>
+                    <button id="st-submit" onclick="submitAnswer()" style="width:100%; margin-top:10px;">回答を送信</button>
+                </div>
+
+                <div id="student-result-ui" style="display:none; margin-top:20px; border-top: 2px dashed #ccc; padding-top:10px;">
+                    <span class="sharing-badge">📢 全体の集計結果</span>
+                    <div id="st-res-display" class="result-box"></div>
                 </div>
             </div>
         </div>
 
         <div class="panel only-student">
-            <h3>📝 授業ノート</h3>
-            <textarea id="student-note" style="height: 200px;" placeholder="自分だけのメモ帳です..."></textarea>
+            <h3>📝 授業メモ</h3>
+            <textarea id="student-note" style="height: 150px;"></textarea>
         </div>
 
         <div class="panel only-teacher">
-            <h3>📢 クラス全体へのメッセージ送信</h3>
-            <input type="text" id="teacher-msg" placeholder="例：教科書120ページを開いてください">
-            <button onclick="sendGlobalMsg()" style="margin-top:10px;">送信</button>
+            <h3>📢 全体連絡</h3>
+            <input type="text" id="teacher-msg" style="width:70%;"> <button onclick="sendMsg()">送信</button>
         </div>
     </div>
 
@@ -121,199 +137,188 @@
             <h3>⏰ 残り時間</h3>
             <div id="timer-display">45:00</div>
             <div class="only-teacher">
-                <input type="number" id="timer-min" value="45" style="width:60px;"> 分
-                <button onclick="startTimerSync()">開始</button>
+                <input type="number" id="timer-min" value="45" style="width:50px;"> 分 <button onclick="syncTimer()">開始</button>
             </div>
         </div>
-        <div class="panel">
-            <div id="announcement" style="background:#fff9c4; padding:10px; border-left:4px solid #f1c40f; font-weight:bold;">
-                連絡: なし
-            </div>
+        <div class="panel" id="notice-board" style="background:#fff9c4; border-left:5px solid #f1c40f;">
+            連絡: なし
         </div>
     </aside>
 </main>
 
 <script>
-    const channel = new BroadcastChannel('mega_class_channel');
+    const channel = new BroadcastChannel('class_pro_channel');
     const params = new URLSearchParams(window.location.search);
     const isStudent = params.get('role') === 'student';
     
-    // UI初期化
+    let currentSurvey = { active: false, type: '', question: '', options: [], votes: [], texts: [], count: 0, shared: false };
+
+    // 初期表示設定
     if (isStudent) {
         document.body.classList.add('is-student');
         document.getElementById('header').classList.add('student-mode');
-        document.getElementById('role-label').innerText = "👨‍🎓 生徒用画面";
-        const note = document.getElementById('student-note');
-        note.value = localStorage.getItem('class_note_cache') || '';
-        note.oninput = () => localStorage.setItem('class_note_cache', note.value);
+        document.getElementById('role-label').innerText = "STUDENT";
+        document.getElementById('student-note').value = localStorage.getItem('note') || '';
+        document.getElementById('student-note').oninput = (e) => localStorage.setItem('note', e.target.value);
     } else {
         document.body.classList.add('is-teacher');
         document.getElementById('header').classList.add('teacher-mode');
-        document.getElementById('role-label').innerText = "👨‍🏫 教員用画面";
+        document.getElementById('role-label').innerText = "TEACHER";
     }
 
-    // 教員：入力欄の出し分け
-    function toggleSurveyInputs() {
+    function toggleInputs() {
         const type = document.getElementById('survey-type').value;
-        document.getElementById('options-config-area').style.display = (type === 'text') ? 'none' : 'block';
+        document.getElementById('options-area').style.display = (type === 'text') ? 'none' : 'block';
     }
 
-    // 教員：アンケート配信
-    let currentSurveyData = { type: '', options: [], votes: [], texts: [] };
-
-    function broadcastSurvey() {
+    // --- アンケートロジック ---
+    function startSurvey() {
         const type = document.getElementById('survey-type').value;
-        const question = document.getElementById('survey-q').value;
-        const optionsRaw = document.getElementById('survey-options').value.split(/\n|,/).filter(s => s.trim() !== "");
+        const q = document.getElementById('survey-q').value;
+        const opts = document.getElementById('survey-options').value.split('\n').filter(s => s.trim() !== "");
         
-        if (!question) return alert("質問を入力してください");
+        if (!q) return alert("質問を入力してください");
 
-        currentSurveyData = { type, question, options: optionsRaw, votes: new Array(optionsRaw.length).fill(0), texts: [], count: 0 };
-        channel.postMessage({ action: 'SURVEY_START', data: currentSurveyData });
+        currentSurvey = { active: true, type, question: q, options: opts, votes: new Array(opts.length).fill(0), texts: [], count: 0, shared: false };
+        document.getElementById('setup-area').style.display = 'none';
+        document.getElementById('teacher-result-ui').style.display = 'block';
         
-        showResultsUI();
+        renderResults('res-display');
+        channel.postMessage({ action: 'START', data: currentSurvey });
+    }
+
+    function toggleShare() {
+        currentSurvey.shared = document.getElementById('share-toggle').checked;
+        channel.postMessage({ action: 'SYNC', data: currentSurvey });
     }
 
     function resetSurvey() {
-        if(!confirm("アンケートを終了してリセットしますか？")) return;
-        channel.postMessage({ action: 'SURVEY_RESET' });
+        if(!confirm("アンケートをリセットしますか？")) return;
+        channel.postMessage({ action: 'RESET' });
         location.reload();
     }
 
-    // 教員：結果表示の更新
-    function showResultsUI() {
-        const resArea = document.getElementById('result-area');
-        resArea.style.display = 'block';
-        document.getElementById('vote-count').innerText = currentSurveyData.count;
-
-        if (currentSurveyData.type === 'text') {
-            document.querySelector('.only-choice').style.display = 'none';
-            document.querySelector('.only-text').style.display = 'block';
+    function renderResults(elementId) {
+        const target = document.getElementById(elementId);
+        target.innerHTML = '';
+        if (currentSurvey.type === 'text') {
+            const ul = document.createElement('ul');
+            ul.className = 'text-list';
+            currentSurvey.texts.forEach(t => {
+                const li = document.createElement('li');
+                li.innerText = t;
+                ul.prepend(li);
+            });
+            target.appendChild(ul);
         } else {
-            document.querySelector('.only-choice').style.display = 'block';
-            document.querySelector('.only-text').style.display = 'none';
-            
-            const container = document.getElementById('choices-results');
-            container.innerHTML = '';
-            currentSurveyData.options.forEach((opt, i) => {
-                const count = currentSurveyData.votes[i];
-                const percent = currentSurveyData.count === 0 ? 0 : Math.round((count / currentSurveyData.count) * 100);
-                container.innerHTML += `
+            currentSurvey.options.forEach((opt, i) => {
+                const val = currentSurvey.votes[i];
+                const per = currentSurvey.count === 0 ? 0 : Math.round((val / currentSurvey.count) * 100);
+                target.innerHTML += `
                     <div class="result-item">
                         <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                            <span>${opt}</span><span>${count}票 (${percent}%)</span>
+                            <span>${opt}</span><span>${val}票 (${per}%)</span>
                         </div>
-                        <div class="bar-container"><div class="bar-fill" style="width:${percent}%"></div></div>
+                        <div class="bar-container"><div class="bar-fill" style="width:${per}%"></div></div>
                     </div>
                 `;
             });
         }
+        if(!isStudent) document.getElementById('total-count').innerText = currentSurvey.count;
     }
 
-    // --- 通信ハンドラ ---
+    // --- 受信処理 ---
     channel.onmessage = (e) => {
-        const { action, data, index, text, endTime } = e.data;
+        const { action, data, ansIndex, ansText, endTime } = e.data;
 
-        // 生徒側：アンケート開始を受信
-        if (action === 'SURVEY_START' && isStudent) {
-            document.getElementById('wait-msg').style.display = 'none';
-            const ui = document.getElementById('survey-ui');
-            ui.style.display = 'block';
-            document.getElementById('display-q').innerText = data.question;
-            const optContainer = document.getElementById('display-options');
-            optContainer.innerHTML = '';
-
+        if (action === 'START' && isStudent) {
+            currentSurvey = data;
+            document.getElementById('student-wait-msg').style.display = 'none';
+            document.getElementById('student-survey-ui').style.display = 'block';
+            document.getElementById('st-question').innerText = data.question;
+            const container = document.getElementById('st-options');
+            container.innerHTML = '';
             if (data.type === 'text') {
-                optContainer.innerHTML = `<textarea id="answer-text" rows="3" placeholder="回答を入力してください"></textarea>`;
+                container.innerHTML = `<textarea id="st-ans-text" placeholder="回答を入力..."></textarea>`;
             } else {
                 data.options.forEach((opt, i) => {
-                    const inputType = (data.type === 'single') ? 'radio' : 'checkbox';
-                    optContainer.innerHTML += `
-                        <label class="option-label">
-                            <input type="${inputType}" name="student-ans" value="${i}"> ${opt}
-                        </label>
-                    `;
+                    const inputType = data.type === 'single' ? 'radio' : 'checkbox';
+                    container.innerHTML += `<label class="option-label"><input type="${inputType}" name="ans" value="${i}"> ${opt}</label>`;
                 });
             }
-            document.getElementById('submit-survey-btn').disabled = false;
-            document.getElementById('submit-survey-btn').innerText = "回答を送信する";
+            document.getElementById('st-submit').disabled = false;
+            document.getElementById('st-submit').innerText = "回答を送信";
+            document.getElementById('student-result-ui').style.display = 'none';
         }
 
-        // 教員側：生徒からの回答を受信
-        if (action === 'SURVEY_SUBMIT' && !isStudent) {
-            currentSurveyData.count++;
-            if (currentSurveyData.type === 'text') {
-                const li = document.createElement('li');
-                li.innerText = text;
-                document.getElementById('text-responses').prepend(li);
+        if (action === 'SUBMIT' && !isStudent) {
+            currentSurvey.count++;
+            if (currentSurvey.type === 'text') {
+                currentSurvey.texts.push(ansText);
             } else {
-                // indexは単一なら数値、複数なら配列で届く
-                if (Array.isArray(index)) {
-                    index.forEach(i => currentSurveyData.votes[i]++);
-                } else {
-                    currentSurveyData.votes[index]++;
-                }
+                if (Array.isArray(ansIndex)) ansIndex.forEach(i => currentSurvey.votes[i]++);
+                else currentSurvey.votes[ansIndex]++;
             }
-            showResultsUI();
+            renderResults('res-display');
+            if (currentSurvey.shared) channel.postMessage({ action: 'SYNC', data: currentSurvey });
         }
 
-        if (action === 'SURVEY_RESET') {
-            if (isStudent) {
-                document.getElementById('survey-ui').style.display = 'none';
-                document.getElementById('wait-msg').style.display = 'block';
-                document.getElementById('wait-msg').innerText = "アンケートは終了しました。";
+        if (action === 'SYNC' && isStudent) {
+            currentSurvey = data;
+            if (data.shared) {
+                document.getElementById('student-result-ui').style.display = 'block';
+                renderResults('st-res-display');
+            } else {
+                document.getElementById('student-result-ui').style.display = 'none';
             }
         }
 
-        if (action === 'MSG') document.getElementById('announcement').innerText = "連絡: " + data;
+        if (action === 'RESET') location.reload();
+        if (action === 'MSG') document.getElementById('notice-board').innerText = "連絡: " + data;
         if (action === 'TIMER') startTimer(endTime);
     };
 
     // 生徒：回答送信
     function submitAnswer() {
-        const type = document.getElementById('survey-type') ? 'teacher_ignore' : 'detect_from_ui';
-        // 生徒側で現在の形式を判別（UIの状態から）
-        const textInput = document.getElementById('answer-text');
-        const checkedInputs = document.querySelectorAll('input[name="student-ans"]:checked');
-
-        let payload = { action: 'SURVEY_SUBMIT' };
+        const textInput = document.getElementById('st-ans-text');
+        const checked = document.querySelectorAll('input[name="ans"]:checked');
+        let payload = { action: 'SUBMIT' };
 
         if (textInput) {
-            payload.text = textInput.value;
-        } else if (checkedInputs.length > 0) {
-            const indices = Array.from(checkedInputs).map(i => parseInt(i.value));
-            // 単一選択なら数値、複数なら配列
-            payload.index = (indices.length === 1 && document.querySelector('input[type="radio"]')) ? indices[0] : indices;
+            payload.ansText = textInput.value;
+        } else if (checked.length > 0) {
+            const vals = Array.from(checked).map(i => parseInt(i.value));
+            payload.ansIndex = (document.querySelector('input[type="radio"]')) ? vals[0] : vals;
         } else {
-            return alert("回答を選択・入力してください");
+            return alert("入力してください");
         }
 
         channel.postMessage(payload);
-        document.getElementById('submit-survey-btn').disabled = true;
-        document.getElementById('submit-survey-btn').innerText = "送信済み";
+        document.getElementById('st-submit').disabled = true;
+        document.getElementById('st-submit').innerText = "送信完了";
     }
 
-    // 共通：その他機能
-    function sendGlobalMsg() {
-        const msg = document.getElementById('teacher-msg').value;
-        channel.postMessage({ action: 'MSG', data: msg });
-        document.getElementById('announcement').innerText = "連絡: " + msg;
+    // その他共通機能
+    function sendMsg() {
+        const m = document.getElementById('teacher-msg').value;
+        channel.postMessage({ action: 'MSG', data: m });
+        document.getElementById('notice-board').innerText = "連絡: " + m;
     }
 
-    function startTimerSync() {
-        const mins = document.getElementById('timer-min').value;
-        const endTime = Date.now() + mins * 60000;
+    function syncTimer() {
+        const t = document.getElementById('timer-min').value;
+        const endTime = Date.now() + t * 60000;
         channel.postMessage({ action: 'TIMER', endTime });
         startTimer(endTime);
     }
 
-    let timerInterval;
+    let timerId;
     function startTimer(endTime) {
-        clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
+        clearInterval(timerId);
+        timerId = setInterval(() => {
             const diff = endTime - Date.now();
             if (diff <= 0) {
-                clearInterval(timerInterval);
+                clearInterval(timerId);
                 document.getElementById('timer-display').innerText = "00:00";
                 return;
             }
@@ -324,15 +329,13 @@
     }
 
     function copyStudentURL() {
-        const url = window.location.origin + window.location.pathname + "?role=student";
-        navigator.clipboard.writeText(url);
-        alert("生徒用URLをコピーしました。");
+        navigator.clipboard.writeText(window.location.origin + window.location.pathname + "?role=student");
+        alert("コピーしました");
     }
 
     setInterval(() => {
         document.getElementById('clock').innerText = new Date().toLocaleTimeString();
     }, 1000);
 </script>
-
 </body>
 </html>
