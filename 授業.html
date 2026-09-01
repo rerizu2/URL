@@ -2,362 +2,655 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>授業支援DX - プロ仕様ビデオ共有版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>授業支援DX - THE COMPLETE DASHBOARD</title>
     <style>
+        /* --- CSS: デザインとレイアウト --- */
         :root {
-            --t-color: #2c3e50; --s-color: #27ae60; --bg: #f0f2f5; --accent: #3498db; --danger: #e74c3c;
+            --t-color: #2c3e50; /* 教員用テーマカラー */
+            --s-color: #27ae60; /* 生徒用テーマカラー */
+            --bg: #f8fafc;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --panel-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
         }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; background: var(--bg); color: #333; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* 入室画面 */
-        #setup-screen { position: fixed; inset: 0; background: var(--t-color); color: white; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .setup-box { background: white; color: #333; padding: 40px; border-radius: 20px; width: 350px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .setup-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
 
-        header { padding: 10px 25px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .t-mode { background: var(--t-color); } .s-mode { background: var(--s-color); }
-        
-        .main-layout { display: grid; grid-template-columns: 280px 1fr 300px; gap: 15px; padding: 15px; flex-grow: 1; overflow: hidden; }
-        .panel { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; }
-        h3 { margin-top: 0; font-size: 1rem; border-bottom: 2px solid var(--bg); padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
 
+        /* セットアップ（入室）画面 */
+        #setup-screen {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, var(--t-color) 0%, #1a252f 100%);
+            color: white; display: flex; align-items: center; justify-content: center; z-index: 10000;
+        }
+        .setup-box {
+            background: white; color: var(--text-main); padding: 40px;
+            border-radius: 24px; width: 380px; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        .setup-box h1 { margin-top: 0; color: var(--t-color); font-size: 1.8rem; }
+        .setup-box input {
+            width: 100%; padding: 12px; margin: 12px 0;
+            border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; outline: none; transition: 0.3s;
+        }
+        .setup-box input:focus { border-color: var(--accent); }
+        .setup-btn-group { display: flex; gap: 12px; margin-top: 20px; }
+        .setup-btn-group button {
+            flex: 1; padding: 14px; border: none; border-radius: 10px;
+            cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.3s;
+        }
+        #btn-join-teacher { background-color: var(--t-color); color: white; }
+        #btn-join-student { background-color: var(--s-color); color: white; }
+
+        /* ヘッダー */
+        header {
+            padding: 12px 24px; color: white; display: flex;
+            justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        header.teacher-header { background-color: var(--t-color); }
+        header.student-header { background-color: var(--s-color); }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; }
+
+        /* メインレイアウト */
+        .main-layout {
+            display: grid; grid-template-columns: 300px 1fr 320px;
+            gap: 16px; padding: 16px; flex-grow: 1; overflow: hidden;
+        }
+
+        .panel {
+            background: var(--panel-bg); border-radius: 16px;
+            padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        h3 {
+            margin-top: 0; font-size: 0.95rem; color: var(--text-sub);
+            text-transform: uppercase; letter-spacing: 0.05em;
+            display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;
+        }
+
+        /* 権限表示切り替え */
         .only-teacher, .only-student { display: none !important; }
         body.is-teacher .only-teacher { display: block !important; }
         body.is-student .only-student { display: block !important; }
 
-        /* ビデオ共有エリア */
-        #video-share-container { background: #000; border-radius: 10px; margin-bottom: 15px; position: relative; overflow: hidden; display: none; aspect-ratio: 16/9; }
-        #remote-video { width: 100%; height: 100%; object-fit: contain; }
-        .live-badge { position: absolute; top: 10px; left: 10px; background: var(--danger); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; z-index: 10; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        /* ビデオ共有 */
+        #video-panel {
+            background: #000; border-radius: 12px; margin-bottom: 16px;
+            position: relative; overflow: hidden; display: none; aspect-ratio: 16/9;
+        }
+        #video-element { width: 100%; height: 100%; object-fit: contain; }
+        .live-tag {
+            position: absolute; top: 12px; left: 12px; background: var(--danger);
+            color: white; padding: 4px 12px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: bold; animation: blink 1.5s infinite;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         /* アンケート */
-        #survey-box { background: #fff; border: 2px solid var(--accent); padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        .survey-btn { display: block; width: 100%; text-align: left; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; }
-        .res-bar-container { background: #eee; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px; }
-        .res-bar-fill { background: var(--accent); height: 100%; transition: width 0.8s ease; }
+        #survey-display-card {
+            background: #f0f9ff; border: 2px solid var(--accent);
+            padding: 20px; border-radius: 16px; margin-bottom: 16px;
+        }
+        .survey-choice-btn {
+            display: block; width: 100%; text-align: left; padding: 12px;
+            margin: 8px 0; border: 1px solid #bae6fd; border-radius: 8px;
+            background: white; cursor: pointer; transition: 0.2s;
+        }
+        .survey-choice-btn:hover { background: #e0f2fe; }
+        .result-bar-wrap { background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 12px; }
+        .result-bar-fill { background: var(--accent); height: 100%; width: 0%; transition: 1s cubic-bezier(0.16, 1, 0.3, 1); }
 
-        /* UI要素 */
-        button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 15px; font-weight: bold; transition: 0.2s; }
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        #timer-display { font-size: 3rem; text-align: center; font-weight: bold; color: var(--danger); font-family: monospace; }
-        #my-note { flex-grow: 1; resize: none; border: 1px solid #ddd; border-radius: 8px; padding: 10px; line-height: 1.5; }
+        /* 出席・挙手リスト */
+        .scroll-list { flex-grow: 1; overflow-y: auto; margin: 10px 0; }
+        .list-item {
+            padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;
+            font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;
+        }
+        .hand-up { background: #fef3c7; border-left: 4px solid var(--warning); color: #92400e; font-weight: bold; }
 
-        #reaction-layer { position: fixed; inset: 0; pointer-events: none; z-index: 1000; }
-        .floating-emoji { position: absolute; bottom: 0; animation: floatUp 3s forwards; font-size: 2.5rem; }
-        @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-80vh); opacity: 0; } }
+        /* リアクション */
+        #reaction-container { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
+        .emoji-float {
+            position: absolute; bottom: -50px; font-size: 3rem;
+            animation: float-up 3s ease-out forwards;
+        }
+        @keyframes float-up {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            20% { opacity: 1; transform: translateY(-10vh) scale(1.2); }
+            100% { transform: translateY(-90vh) scale(1); opacity: 0; }
+        }
+
+        /* 入力フォーム類 */
+        textarea#my-note {
+            flex-grow: 1; border: 1px solid #e2e8f0; border-radius: 12px;
+            padding: 15px; font-size: 1rem; line-height: 1.6; resize: none; outline: none;
+        }
+        textarea#my-note:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
+        
+        button.action-btn {
+            background: var(--accent); color: white; border: none;
+            padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;
+        }
+        .timer-text { font-size: 3.5rem; text-align: center; font-weight: bold; font-family: monospace; color: var(--danger); }
+
+        /* 理解度 */
+        .level-btns { display: flex; gap: 8px; margin-bottom: 10px; }
+        .level-btns button { flex: 1; height: 45px; font-size: 1.2rem; border-radius: 8px; border: none; cursor: pointer; color: white; }
     </style>
 </head>
 <body>
 
+<!-- 入室画面 -->
 <div id="setup-screen">
     <div class="setup-box">
-        <h2 id="setup-title">授業支援DXシステム</h2>
-        <div id="room-input-box"><input type="text" id="in-room" placeholder="ルームID"></div>
-        <input type="text" id="in-name" placeholder="お名前">
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button id="btn-teach" onclick="join('teacher')" style="flex:1; background:var(--t-color); color:white;">教員</button>
-            <button id="btn-stud" onclick="join('student')" style="flex:1; background:var(--s-color); color:white;">生徒</button>
+        <h1>Lecture DX Platform</h1>
+        <div id="room-id-input-wrap">
+            <input type="text" id="setup-room-id" placeholder="ルームID (例: math101)">
+        </div>
+        <input type="text" id="setup-name" placeholder="お名前">
+        <div class="setup-btn-group">
+            <button id="btn-join-teacher" onclick="enterRoom('teacher')">教員として開始</button>
+            <button id="btn-join-student" onclick="enterRoom('student')">生徒として参加</button>
         </div>
     </div>
 </div>
 
-<div id="reaction-layer"></div>
+<div id="reaction-container"></div>
 
-<header id="header">
-    <div>
-        Room: <span id="disp-room">--</span> | <span id="disp-role">--</span>
-        <button class="only-teacher" id="share-btn" onclick="toggleVideoShare()" style="background:#9b59b6; color:white; margin-left:10px;">🖥 ビデオ共有</button>
-        <button class="only-teacher" onclick="copyInviteURL()" style="background:#f39c12; color:white; font-size:0.8rem; margin-left:5px;">🔗 生徒URLコピー</button>
+<!-- ヘッダー -->
+<header id="app-header">
+    <div class="header-left">
+        <span class="badge" id="role-display">---</span>
+        <span>Room: <b id="room-display">---</b></span>
+        <button class="only-teacher" id="btn-screen-share" onclick="toggleScreenShare()" style="background:#9b59b6; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">🖥 画面共有を開始</button>
+        <button class="only-teacher" onclick="copyStudentInviteURL()" style="background:var(--warning); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">🔗 招待URLコピー</button>
     </div>
-    <div id="clock">00:00:00</div>
+    <div id="digital-clock" style="font-family:monospace; font-size:1.2rem; font-weight:bold;">00:00:00</div>
 </header>
 
 <main class="main-layout">
-    <!-- 左サイド -->
+    <!-- 左サイド: 名簿・理解度 -->
     <aside class="left-col">
-        <div class="panel" style="flex:1.5;">
-            <h3>👥 出席者 (<span id="count-p">0</span>)</h3>
-            <div id="student-list" style="overflow-y:auto; flex-grow:1; font-size:0.9rem;"></div>
-            <button class="only-teacher btn-primary" onclick="pickRandom()" style="width:100%;">🎲 ランダム指名</button>
+        <div class="panel" style="flex: 1.5;">
+            <h3>👥 出席者 (<span id="attendee-count">0</span>)</h3>
+            <div id="attendee-list" class="scroll-list"></div>
+            <button class="only-teacher action-btn" style="width:100%; background:#9b59b6;" onclick="randomPick()">🎲 生徒をランダム指名</button>
         </div>
-        <div class="panel" style="flex:2; margin-top:15px;">
+
+        <div class="panel" style="flex: 2; margin-top: 16px;">
             <h3>📊 理解度メーター</h3>
             <div class="only-student">
-                <div style="display:flex; gap:4px;">
-                    <button onclick="sendLevel(100)" style="background:#2ecc71; flex:1;">😊</button>
-                    <button onclick="sendLevel(50)" style="background:#f1c40f; flex:1;">😐</button>
-                    <button onclick="sendLevel(0)" style="background:#e74c3c; flex:1;">❓</button>
+                <div class="level-btns">
+                    <button onclick="reportLevel(100)" style="background:#2ecc71;">😊</button>
+                    <button onclick="reportLevel(50)" style="background:#f1c40f;">😐</button>
+                    <button onclick="reportLevel(0)" style="background:#e74c3c;">❓</button>
                 </div>
             </div>
-            <div style="margin-top:10px; font-size:0.8rem;">平均: <span id="avg-val">0</span>%</div>
-            <div style="background:#eee; height:8px; border-radius:4px; overflow:hidden;">
-                <div id="avg-fill" style="width:0%; height:100%; background:#2ecc71; transition:0.5s;"></div>
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-top:10px;">
+                <span>平均理解度</span><span id="level-avg-text">0%</span>
             </div>
-            <h3 style="margin-top:15px;">🙋 挙手</h3>
-            <div id="hand-list" style="flex-grow:1; overflow-y:auto;"></div>
-            <button class="only-student" id="hand-btn" onclick="toggleHand()" style="background:#e67e22; color:white; width:100%;">🖐 質問する</button>
+            <div class="result-bar-wrap"><div id="level-avg-bar" class="result-bar-fill"></div></div>
+
+            <h3>🙋 挙手リスト</h3>
+            <div id="hand-raise-list" class="scroll-list" style="max-height: 120px;"></div>
+            <button class="only-student" id="btn-hand-toggle" onclick="toggleHandRaise()" style="width:100%; background:var(--warning); color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; cursor:pointer;">🖐 質問があります</button>
         </div>
     </aside>
 
-    <!-- 中央：メインエリア -->
+    <!-- 中央: ノート・アンケート・ビデオ -->
     <section class="panel">
-        <!-- ビデオ共有プレイヤー -->
-        <div id="video-share-container">
-            <div class="live-badge">LIVE</div>
-            <video id="remote-video" autoplay playsinline></video>
+        <div id="video-panel">
+            <div class="live-tag">LIVE SCREEN</div>
+            <video id="video-element" autoplay playsinline></video>
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>📝 授業メイン</h3>
-            <div>
-                <button onclick="sendReact('👏')">👏</button>
-                <button onclick="sendReact('😮')">😮</button>
-                <button onclick="sendReact('👍')">👍</button>
+            <h3>📝 授業メインノート</h3>
+            <div class="reactions">
+                <button onclick="sendReaction('👏')">👏</button>
+                <button onclick="sendReaction('👍')">👍</button>
+                <button onclick="sendReaction('😮')">😮</button>
+                <button onclick="sendReaction('🔥')">🔥</button>
             </div>
         </div>
 
-        <!-- アンケート -->
-        <div id="survey-box" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:start;">
-                <h4 id="sv-q" style="margin:0 0 10px 0;"></h4>
-                <button class="only-teacher" id="sv-toggle-btn" onclick="toggleSvRes()" style="font-size:0.7rem; background:#9b59b6; color:white;">結果を公開中</button>
+        <!-- アクティブアンケート表示 -->
+        <div id="survey-display-card" style="display:none;">
+            <div style="display:flex; justify-content:space-between;">
+                <h2 id="sv-display-q" style="margin:0 0 15px 0; font-size:1.2rem;"></h2>
+                <div class="only-teacher">
+                    <button id="sv-visibility-toggle" onclick="toggleSurveyResultsVisibility()" style="background:#9b59b6; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">結果を公開中</button>
+                </div>
             </div>
-            <div id="sv-ui"></div>
-            <button id="sv-submit" class="btn-primary" style="width:100%; margin-top:10px;">回答送信</button>
-            <div id="sv-results" style="margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;">
-                <div id="sv-hidden-msg" style="display:none; text-align:center; color:#888;">先生が結果を公開するまで隠されています</div>
-                <div id="sv-res-display"></div>
+            <div id="sv-display-ui"></div>
+            <button id="sv-submit-btn" class="action-btn" style="width:100%; margin-top:15px;">回答を送信する</button>
+            
+            <div id="sv-results-area" style="margin-top:20px; padding-top:15px; border-top:1px dashed #cbd5e1;">
+                <div id="sv-hidden-msg" style="display:none; text-align:center; color:var(--text-sub); font-style:italic;">結果は集計後に公開されます...</div>
+                <div id="sv-results-render"></div>
             </div>
         </div>
 
-        <textarea id="my-note" placeholder="自分用のノートです..."></textarea>
+        <textarea id="my-note" placeholder="ここに入力した内容はブラウザに自動保存され、先生や他の生徒には見えません。"></textarea>
 
-        <div class="only-teacher" style="margin-top:10px; padding:10px; background:#f8f9fa; border-radius:10px; border:1px solid #ddd;">
-            <h4 style="margin:0 0 10px 0;">📊 アンケート作成</h4>
-            <div style="display:flex; gap:5px;">
-                <select id="sv-type-in" style="padding:5px;" onchange="toggleSvIn()">
-                    <option value="single">単一</option><option value="multi">複数</option>
-                    <option value="text">記述</option><option value="scale">5段階</option>
+        <!-- 教員用: アンケート作成 -->
+        <div class="only-teacher" style="margin-top:15px; padding:15px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
+            <h4 style="margin:0 0 10px 0;">📊 アンケート作成・配信</h4>
+            <div style="display:flex; gap:8px;">
+                <select id="sv-type-input" onchange="toggleSurveyOptionInput()" style="padding:8px; border-radius:6px; border:1px solid #ccc;">
+                    <option value="single">単一選択</option>
+                    <option value="multi">複数選択</option>
+                    <option value="text">自由記述</option>
+                    <option value="scale">5段階評価</option>
                 </select>
-                <input type="text" id="sv-q-in" placeholder="質問文">
+                <input type="text" id="sv-q-input" placeholder="質問文を入力してください" style="flex:1; padding:8px; border-radius:6px; border:1px solid #ccc;">
             </div>
-            <input type="text" id="sv-o-in" placeholder="選択肢 (カンマ区切り)">
-            <button onclick="startSurvey()" class="btn-primary" style="width:100%; margin-top:5px;">アンケート配信</button>
+            <input type="text" id="sv-o-input" placeholder="選択肢 (カンマ区切り。例: はい,いいえ,わからない)" style="width:100%; margin-top:8px; padding:8px; border-radius:6px; border:1px solid #ccc;">
+            <button onclick="distributeSurvey()" class="action-btn" style="width:100%; margin-top:10px;">クラス全員に配信</button>
         </div>
     </section>
 
-    <!-- 右：タイマーと掲示板 -->
+    <!-- 右サイド: タイマー・掲示板 -->
     <aside class="right-col">
         <div class="panel">
-            <h3>⏰ タイマー</h3>
-            <div id="timer-display">00:00</div>
-            <div class="only-teacher" style="display:flex; gap:5px;">
-                <input type="number" id="t-min" value="45" style="width:60px;">分
-                <button onclick="setTimer()" class="btn-primary">開始</button>
+            <h3>⏰ 授業タイマー</h3>
+            <div id="timer-display" class="timer-text">00:00</div>
+            <div class="only-teacher" style="display:flex; gap:6px; margin-top:10px;">
+                <input type="number" id="timer-min-input" value="45" style="width:60px; padding:8px; border-radius:6px; border:1px solid #ccc;">
+                <button onclick="syncTimerStart()" class="btn-primary action-btn" style="flex:1;">開始</button>
             </div>
         </div>
-        <div class="panel" style="margin-top:15px; flex-grow:1;">
-            <h3>📢 掲示板</h3>
-            <div id="board" style="background:#fff9c4; padding:10px; border-radius:8px; flex-grow:1; overflow-y:auto; font-size:0.85rem;"></div>
+
+        <div class="panel" style="flex-grow:1; margin-top:16px;">
+            <h3>📢 クラス掲示板</h3>
+            <div id="bulletin-board" class="scroll-list" style="background:#fff9c4; padding:10px; border-radius:8px; flex-grow:1;"></div>
             <div class="only-teacher" style="margin-top:10px;">
-                <textarea id="msg-in" placeholder="全体連絡..." rows="2"></textarea>
-                <button onclick="sendMsg()" class="btn-primary" style="width:100%; margin-top:5px;">送信</button>
+                <textarea id="board-input" rows="2" placeholder="全体連絡を入力..." style="width:100%; border-radius:8px; border:1px solid #ccc; padding:8px;"></textarea>
+                <button onclick="postToBoard()" class="action-btn" style="width:100%; margin-top:6px;">送信</button>
             </div>
         </div>
     </aside>
 </main>
 
 <script>
-    let channel, role, room, myName, timerInt;
-    let students = {}, hands = [], currentSv = null;
+    /* --- JavaScript: 通信とロジック --- */
+
+    let channel;
+    let role = '';
+    let myName = '';
+    let roomID = '';
+    let attendees = {};
+    let handRaisers = [];
+    let currentSurvey = null;
+    let timerInterval;
+
+    // WebRTC 関連 (画面共有)
     let localStream = null;
-    let pc = null; // RTCPeerConnection
+    let peerConn = null;
+    const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-    // WebRTC 設定 (同一PC内通信用)
-    const pcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-
+    // --- 入室処理 ---
     window.onload = () => {
-        const p = new URLSearchParams(window.location.search);
-        if(p.get('room') && p.get('role')==='student'){
-            document.getElementById('in-room').value = p.get('room');
-            document.getElementById('room-input-box').style.display='none';
-            document.getElementById('btn-teach').style.display='none';
-            document.getElementById('setup-title').innerText="授業に参加 (Room:"+p.get('room')+")";
+        const params = new URLSearchParams(window.location.search);
+        const urlRoom = params.get('room');
+        const urlRole = params.get('role');
+        if (urlRoom && urlRole === 'student') {
+            document.getElementById('setup-room-id').value = urlRoom;
+            document.getElementById('room-id-input-wrap').style.display = 'none';
+            document.getElementById('btn-join-teacher').style.display = 'none';
+            document.getElementById('setup-title').innerText = "招待された授業に参加";
         }
     };
 
-    function join(r) {
-        room = document.getElementById('in-room').value.trim();
-        myName = document.getElementById('in-name').value.trim() || '匿名';
-        if(!room) return alert("RoomID必須");
-        role = r;
-        document.body.classList.add(role==='teacher'?'is-teacher':'is-student');
-        document.getElementById('disp-room').innerText = room;
-        document.getElementById('disp-role').innerText = role==='teacher'?'教員':'生徒';
-        channel = new BroadcastChannel('class_sync_v7_'+room);
-        channel.onmessage = handle;
-        document.getElementById('setup-screen').style.display='none';
-        send({ action: 'HELLO', name: myName, isTeacher: role==='teacher' });
-        if(role==='student'){
-            document.getElementById('my-note').value = localStorage.getItem('note_'+room) || '';
-            document.getElementById('my-note').oninput = (e) => localStorage.setItem('note_'+room, e.target.value);
+    function enterRoom(selectedRole) {
+        roomID = document.getElementById('setup-room-id').value.trim();
+        myName = document.getElementById('setup-name').value.trim() || '匿名ユーザー';
+        if (!roomID) return alert("ルームIDを入力してください");
+
+        role = selectedRole;
+        document.body.classList.add(role === 'teacher' ? 'is-teacher' : 'is-student');
+        document.getElementById('app-header').className = (role === 'teacher' ? 'teacher-header' : 'student-header');
+        document.getElementById('role-display').innerText = (role === 'teacher' ? '👨‍🏫 教員' : '👨‍🎓 生徒');
+        document.getElementById('room-display').innerText = roomID;
+
+        // 通信開始
+        channel = new BroadcastChannel('lecture_dx_' + roomID);
+        channel.onmessage = (e) => handleData(e.data);
+
+        document.getElementById('setup-screen').style.display = 'none';
+
+        // 入室通知
+        sendData({ action: 'HELLO', name: myName, isTeacher: (role === 'teacher') });
+
+        // ノート復元
+        if (role === 'student') {
+            const savedNote = localStorage.getItem('dx_note_' + roomID);
+            if (savedNote) document.getElementById('my-note').value = savedNote;
+            document.getElementById('my-note').oninput = (e) => localStorage.setItem('dx_note_' + roomID, e.target.value);
         }
     }
 
-    function send(data) { channel.postMessage(data); }
+    function sendData(data) { if (channel) channel.postMessage(data); }
 
-    // --- ビデオ共有ロジック (WebRTC) ---
-    async function toggleVideoShare() {
-        const btn = document.getElementById('share-btn');
-        if(btn.innerText.includes("停止")){ stopVideoShare(); return; }
+    // --- 通信ハンドリング ---
+    function handleData(data) {
+        switch (data.action) {
+            case 'HELLO':
+                if (!attendees[data.name]) {
+                    attendees[data.name] = { isTeacher: data.isTeacher, level: 100 };
+                    updateAttendeeList();
+                    if (role === 'teacher') sendData({ action: 'SYNC_LIST', attendees });
+                }
+                break;
+            case 'SYNC_LIST':
+                attendees = data.attendees;
+                updateAttendeeList();
+                updateLevelUI();
+                break;
+            case 'LEVEL_UPDATE':
+                if (attendees[data.name]) attendees[data.name].level = data.val;
+                updateLevelUI();
+                break;
+            case 'HAND_RAISE':
+                updateHandRaiseQueue(data.name, data.on);
+                break;
+            case 'REACTION':
+                spawnEmoji(data.emoji);
+                break;
+            case 'BOARD':
+                const board = document.getElementById('bulletin-board');
+                board.innerHTML += `<div style="margin-bottom:8px; border-bottom:1px solid #ddd; padding-bottom:4px;"><b>${data.sender}:</b> ${data.text}</div>`;
+                board.scrollTop = board.scrollHeight;
+                break;
+            case 'TIMER_SYNC':
+                runTimer(data.endTime);
+                break;
+            case 'SURVEY_DIST':
+                setupSurveyUI(data.survey);
+                break;
+            case 'SURVEY_VOTE':
+                if (role === 'teacher') processVote(data.value);
+                break;
+            case 'SURVEY_SYNC':
+                syncSurveyState(data.survey);
+                break;
+            
+            // WebRTC 
+            case 'SHARE_REQ':
+                if (role === 'student') sendData({ action: 'NEED_OFFER' });
+                break;
+            case 'NEED_OFFER':
+                if (role === 'teacher') initiateWebRTC();
+                break;
+            case 'RTC_OFFER':
+                handleRTCOffer(data.sdp);
+                break;
+            case 'RTC_ANSWER':
+                if (peerConn) peerConn.setRemoteDescription(new RTCSessionDescription(data.sdp));
+                break;
+            case 'RTC_ICE':
+                if (peerConn) peerConn.addIceCandidate(new RTCIceCandidate(data.candidate));
+                break;
+            case 'SHARE_STOP':
+                document.getElementById('video-panel').style.display = 'none';
+                if (peerConn) { peerConn.close(); peerConn = null; }
+                break;
+        }
+    }
 
+    // --- ビデオ画面共有 (WebRTC) ---
+    async function toggleScreenShare() {
+        const btn = document.getElementById('btn-screen-share');
+        if (btn.innerText.includes("停止")) {
+            stopScreenShare(); return;
+        }
         try {
             localStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            document.getElementById('video-share-container').style.display = 'block';
-            document.getElementById('remote-video').srcObject = localStream;
-            btn.innerText = "🛑 停止"; btn.style.background = "var(--danger)";
-
-            // シグナリング: 生徒側に共有開始を通知
-            send({ action: 'SHARE_START' });
-
-            localStream.getVideoTracks()[0].onended = stopVideoShare;
-        } catch(e) { console.error(e); }
+            document.getElementById('video-panel').style.display = 'block';
+            document.getElementById('video-element').srcObject = localStream;
+            btn.innerText = "🛑 画面共有を停止";
+            btn.style.background = "var(--danger)";
+            sendData({ action: 'SHARE_REQ' });
+            localStream.getVideoTracks()[0].onended = stopScreenShare;
+        } catch (e) { console.error(e); }
     }
 
-    async function startWebRTCAsTeacher() {
-        if(!localStream) return;
-        pc = new RTCPeerConnection(pcConfig);
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    function stopScreenShare() {
+        if (localStream) localStream.getTracks().forEach(t => t.stop());
+        document.getElementById('video-panel').style.display = 'none';
+        document.getElementById('btn-screen-share').innerText = "🖥 画面共有を開始";
+        document.getElementById('btn-screen-share').style.background = "#9b59b6";
+        sendData({ action: 'SHARE_STOP' });
+    }
+
+    async function initiateWebRTC() {
+        if (!localStream) return;
+        peerConn = new RTCPeerConnection(rtcConfig);
+        localStream.getTracks().forEach(t => peerConn.addTrack(t, localStream));
+        peerConn.onicecandidate = e => { if (e.candidate) sendData({ action: 'RTC_ICE', candidate: e.candidate }); };
+        const offer = await peerConn.createOffer();
+        await peerConn.setLocalDescription(offer);
+        sendData({ action: 'RTC_OFFER', sdp: offer });
+    }
+
+    async function handleRTCOffer(sdp) {
+        if (role !== 'student') return;
+        peerConn = new RTCPeerConnection(rtcConfig);
+        peerConn.onicecandidate = e => { if (e.candidate) sendData({ action: 'RTC_ICE', candidate: e.candidate }); };
+        peerConn.ontrack = e => {
+            document.getElementById('video-panel').style.display = 'block';
+            document.getElementById('video-element').srcObject = e.streams[0];
+        };
+        await peerConn.setRemoteDescription(new RTCSessionDescription(sdp));
+        const answer = await peerConn.createAnswer();
+        await peerConn.setLocalDescription(answer);
+        sendData({ action: 'RTC_ANSWER', sdp: answer });
+    }
+
+    // --- アンケート機能 ---
+    function toggleSurveyOptionInput() {
+        const type = document.getElementById('sv-type-input').value;
+        document.getElementById('sv-o-input').style.display = (type === 'text' || type === 'scale' ? 'none' : 'block');
+    }
+
+    function distributeSurvey() {
+        const type = document.getElementById('sv-type-input').value;
+        const question = document.getElementById('sv-q-input').value;
+        let opts = document.getElementById('sv-o-input').value.split(',').map(s => s.trim()).filter(v => v);
         
-        pc.onicecandidate = e => {
-            if(e.candidate) send({ action: 'ICE', candidate: e.candidate });
-        };
+        if (type === 'scale') opts = ["1:悪い", "2", "3", "4", "5:非常に良い"];
+        if (!question) return alert("質問を入力してください");
 
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        send({ action: 'OFFER', sdp: offer });
+        currentSurvey = { type, question, options: opts, votes: (type === 'text' ? [] : {}), total: 0, visible: true };
+        if (type !== 'text') opts.forEach(o => currentSurvey.votes[o] = 0);
+
+        sendData({ action: 'SURVEY_DIST', survey: currentSurvey });
+        setupSurveyUI(currentSurvey);
     }
 
-    async function handleOffer(sdp) {
-        if(role !== 'student') return;
-        pc = new RTCPeerConnection(pcConfig);
-        pc.onicecandidate = e => {
-            if(e.candidate) send({ action: 'ICE', candidate: e.candidate });
-        };
-        pc.ontrack = e => {
-            document.getElementById('video-share-container').style.display = 'block';
-            document.getElementById('remote-video').srcObject = e.streams[0];
-        };
-        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        send({ action: 'ANSWER', sdp: answer });
-    }
+    function setupSurveyUI(sv) {
+        currentSurvey = sv;
+        document.getElementById('survey-display-card').style.display = 'block';
+        document.getElementById('sv-display-q').innerText = "📊 " + sv.question;
+        const ui = document.getElementById('sv-display-ui');
+        ui.innerHTML = '';
 
-    function stopVideoShare() {
-        const btn = document.getElementById('share-btn');
-        if(localStream) localStream.getTracks().forEach(t => t.stop());
-        document.getElementById('video-share-container').style.display = 'none';
-        btn.innerText = "🖥 ビデオ共有"; btn.style.background = "#9b59b6";
-        send({ action: 'SHARE_STOP' });
-    }
-
-    function handle(e) {
-        const d = e.data;
-        // WebRTC シグナリング
-        if(d.action === 'SHARE_START' && role === 'student') send({ action: 'REQUEST_OFFER' });
-        if(d.action === 'REQUEST_OFFER' && role === 'teacher') startWebRTCAsTeacher();
-        if(d.action === 'OFFER') handleOffer(d.sdp);
-        if(d.action === 'ANSWER' && role === 'teacher') pc.setRemoteDescription(new RTCSessionDescription(d.sdp));
-        if(d.action === 'ICE' && pc) pc.addIceCandidate(new RTCIceCandidate(d.candidate));
-        if(d.action === 'SHARE_STOP') {
-            document.getElementById('video-share-container').style.display = 'none';
-            if(pc) { pc.close(); pc = null; }
+        if (role === 'student') {
+            const btn = document.getElementById('sv-submit-btn');
+            btn.style.display = 'block'; btn.disabled = false; btn.innerText = "回答を送信する";
+            if (sv.type === 'text') {
+                ui.innerHTML = `<textarea id="sv-student-text" rows="3" style="width:100%; border-radius:8px; padding:10px;"></textarea>`;
+            } else {
+                const inputType = (sv.type === 'multi' ? 'checkbox' : 'radio');
+                sv.options.forEach(o => {
+                    ui.innerHTML += `<label class="survey-choice-btn"><input type="${inputType}" name="sv-choice" value="${o}"> ${o}</label>`;
+                });
+            }
+            btn.onclick = submitSurveyResponse;
+        } else {
+            document.getElementById('sv-submit-btn').style.display = 'none';
         }
-
-        // 基本同期
-        if(d.action === 'HELLO') {
-            if(!students[d.name]) { students[d.name]={isTeacher:d.isTeacher, level:100}; updateList(); if(role==='teacher') send({action:'SYNC_LIST', students}); }
-        }
-        if(d.action === 'SYNC_LIST') { students = d.students; updateList(); updateLevel(); }
-        if(d.action === 'LEVEL') { students[d.name].level = d.val; updateLevel(); }
-        if(d.action === 'HAND') { 
-            if(d.on) { if(!hands.includes(d.name)) hands.push(d.name); } else hands=hands.filter(h=>h!==d.name);
-            document.getElementById('hand-list').innerHTML = hands.map(h=>`<div style="color:#e67e22;font-weight:bold;">🙋 ${h}</div>`).join('');
-        }
-        if(d.action === 'REACT') showEmoji(d.emoji);
-        if(d.action === 'MSG') {
-            const b = document.getElementById('board');
-            b.innerHTML += `<div><b>${d.sender}:</b> ${d.text}</div>`;
-            b.scrollTop = b.scrollHeight;
-        }
-        if(d.action === 'TIMER') startTimer(d.endTime);
-        if(d.action === 'SV_START') showSvUI(d.data);
-        if(d.action === 'SV_VOTE' && role==='teacher') collectVote(d.val);
-        if(d.action === 'SV_SYNC') syncSvRes(d.data);
+        syncSurveyState(sv);
     }
 
-    // --- その他共通ロジック (アンケート/タイマー等) ---
-    function toggleSvIn() { const t = document.getElementById('sv-type-in').value; document.getElementById('sv-o-in').style.display = (t==='text'||t==='scale')?'none':'block'; }
-    function startSurvey() {
-        const type = document.getElementById('sv-type-in').value; const q = document.getElementById('sv-q-in').value;
-        let opts = document.getElementById('sv-o-in').value.split(',').map(s=>s.trim()).filter(v=>v);
-        if(type==='scale') opts = ["1","2","3","4","5"];
-        currentSv = { type, question:q, options:opts, votes: type==='text'?[]:{}, total:0, show:true };
-        if(type!=='text') opts.forEach(o=>currentSv.votes[o]=0);
-        send({action:'SV_START', data: currentSv}); showSvUI(currentSv);
-    }
-    function showSvUI(data) {
-        currentSv = data; const box = document.getElementById('survey-box'); box.style.display='block';
-        document.getElementById('sv-q').innerText="📊 "+data.question;
-        const ui = document.getElementById('sv-ui'); ui.innerHTML='';
-        if(role==='student'){
-            const sub = document.getElementById('sv-submit'); sub.style.display='block'; sub.disabled=false; sub.innerText="回答送信";
-            if(data.type==='text') ui.innerHTML=`<textarea id="sv-ans-t" rows="2" style="width:100%"></textarea>`;
-            else { const it = data.type==='multi'?'checkbox':'radio'; data.options.forEach(o=>ui.innerHTML+=`<label style="display:block;padding:5px;"><input type="${it}" name="sv-o" value="${o}"> ${o}</label>`); }
-        } else document.getElementById('sv-submit').style.display='none';
-        syncSvRes(data);
-    }
-    function collectVote(val) {
-        currentSv.total++;
-        if(currentSv.type==='text') currentSv.votes.push(val);
-        else if(Array.isArray(val)) val.forEach(v=>currentSv.votes[v]++);
-        else currentSv.votes[val]++;
-        send({action:'SV_SYNC', data: currentSv}); syncSvRes(currentSv);
-    }
-    function syncSvRes(data) {
-        currentSv = data; const res = document.getElementById('sv-res-display'); const msg = document.getElementById('sv-hidden-msg');
-        if(role==='student' && !data.show){ res.style.display='none'; msg.style.display='block'; return; }
-        res.style.display='block'; msg.style.display='none';
-        res.innerHTML=`<div style="font-size:0.8rem;margin-bottom:5px;">計 ${data.total} 票</div>`;
-        if(data.type==='text') res.innerHTML+=`<div style="font-size:0.8rem;background:#f9f9f9;padding:5px;">${data.votes.map(v=>`<div>・${v}</div>`).reverse().join('')}</div>`;
-        else for(let o in data.votes){
-            const p = data.total===0?0:Math.round(data.votes[o]/data.total*100);
-            res.innerHTML+=`<div style="font-size:0.7rem;">${o} (${data.votes[o]}票)</div><div class="res-bar-container"><div class="res-bar-fill" style="width:${p}%"></div></div>`;
+    function submitSurveyResponse() {
+        let val;
+        if (currentSurvey.type === 'text') {
+            val = document.getElementById('sv-student-text').value;
+        } else {
+            const checked = Array.from(document.querySelectorAll('input[name="sv-choice"]:checked')).map(i => i.value);
+            if (!checked.length) return;
+            val = (currentSurvey.type === 'multi' ? checked : checked[0]);
         }
-        if(role==='teacher'){ const btn = document.getElementById('sv-toggle-btn'); btn.innerText = data.show?"結果を公開中":"結果は非公開"; btn.style.background = data.show?"#9b59b6":"#7f8c8d"; }
-    }
-    function toggleSvRes(){ currentSv.show=!currentSv.show; send({action:'SV_SYNC', data:currentSv}); syncSvRes(currentSv); }
-    document.getElementById('sv-submit').onclick = function() {
-        let v; if(currentSv.type==='text') v=document.getElementById('sv-ans-t').value;
-        else { const ck = Array.from(document.querySelectorAll('input[name="sv-o"]:checked')).map(i=>i.value); if(!ck.length) return; v=currentSv.type==='multi'?ck:ck[0]; }
-        send({action:'SV_VOTE', val:v}); this.disabled=true; this.innerText="送信完了";
+        sendData({ action: 'SURVEY_VOTE', value: val });
+        const btn = document.getElementById('sv-submit-btn');
+        btn.disabled = true; btn.innerText = "送信完了";
     }
 
-    function updateList() { const list = Object.keys(students).filter(k=>!students[k].isTeacher); document.getElementById('student-list').innerHTML = list.map(s=>`<div>👤 ${s}</div>`).join(''); document.getElementById('count-p').innerText = list.length; }
-    function updateLevel() { let t=0, c=0; for(let s in students) if(!students[s].isTeacher){ t+=students[s].level; c++; } let a = c?Math.round(t/c):0; document.getElementById('avg-val').innerText=a; document.getElementById('avg-fill').style.width=a+'%'; }
-    function sendLevel(v){ send({action:'LEVEL', name:myName, val:v}); }
-    function toggleHand(){ const b=document.getElementById('hand-btn'); const isOn=b.innerText.includes('下ろす'); b.innerText=isOn?"🖐 質問する":"✋ 下ろす"; send({action:'HAND', name:myName, on:!isOn}); }
-    function sendReact(e){ send({action:'REACT', emoji:e}); showEmoji(e); }
-    function showEmoji(e){ const el=document.createElement('div'); el.className='floating-emoji'; el.innerText=e; el.style.left=Math.random()*80+'%'; document.getElementById('reaction-layer').appendChild(el); setTimeout(()=>el.remove(), 3000); }
-    function setTimer(){ const e=Date.now()+(document.getElementById('t-min').value*60000); send({action:'TIMER', endTime:e}); startTimer(e); }
-    function startTimer(e){ clearInterval(timerInt); timerInt=setInterval(()=>{ const d=e-Date.now(); if(d<=0){ clearInterval(timerInt); document.getElementById('timer-display').innerText="00:00"; return; } const m=Math.floor(d/60000), s=Math.floor((d%60000)/1000); document.getElementById('timer-display').innerText=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; },1000); }
-    function sendMsg(){ const t=document.getElementById('msg-in').value; if(!t)return; send({action:'MSG', sender:myName, text:t}); document.getElementById('msg-in').value=''; }
-    function pickRandom(){ const s=Object.keys(students).filter(k=>!students[k].isTeacher); if(!s.length) return; const p=s[Math.floor(Math.random()*s.length)]; send({action:'MSG', sender:'SYSTEM', text:`🎯 <b>${p}</b> さん指名！`}); }
-    function copyInviteURL(){ const u=`${window.location.origin}${window.location.pathname}?room=${room}&role=student`; navigator.clipboard.writeText(u); alert("生徒用URLをコピーしました"); }
-    setInterval(()=>document.getElementById('clock').innerText=new Date().toLocaleTimeString(), 1000);
+    function processVote(val) {
+        currentSurvey.total++;
+        if (currentSurvey.type === 'text') currentSurvey.votes.push(val);
+        else if (Array.isArray(val)) val.forEach(v => currentSurvey.votes[v]++);
+        else currentSurvey.votes[val]++;
+        sendData({ action: 'SURVEY_SYNC', survey: currentSurvey });
+        syncSurveyState(currentSurvey);
+    }
+
+    function syncSurveyState(sv) {
+        currentSurvey = sv;
+        const resDiv = document.getElementById('sv-results-render');
+        const hiddenMsg = document.getElementById('sv-hidden-msg');
+
+        if (role === 'student' && !sv.visible) {
+            resDiv.style.display = 'none'; hiddenMsg.style.display = 'block';
+            return;
+        }
+        resDiv.style.display = 'block'; hiddenMsg.style.display = 'none';
+        resDiv.innerHTML = `<div style="font-size:0.8rem; margin-bottom:10px;">合計回答: ${sv.total}</div>`;
+
+        if (sv.type === 'text') {
+            resDiv.innerHTML += `<div style="max-height:150px; overflow-y:auto; background:white; padding:10px; border-radius:8px;">${sv.votes.map(v => `<div style="border-bottom:1px solid #eee; padding:4px;">・${v}</div>`).reverse().join('')}</div>`;
+        } else {
+            for (let opt in sv.votes) {
+                const count = sv.votes[opt];
+                const pct = sv.total === 0 ? 0 : Math.round(count / sv.total * 100);
+                resDiv.innerHTML += `
+                    <div style="font-size:0.75rem; display:flex; justify-content:space-between;"><span>${opt}</span><span>${count}票 (${pct}%)</span></div>
+                    <div class="result-bar-wrap"><div class="result-bar-fill" style="width:${pct}%"></div></div>`;
+            }
+        }
+        if (role === 'teacher') {
+            const vBtn = document.getElementById('sv-visibility-toggle');
+            vBtn.innerText = sv.visible ? "結果を公開中" : "結果は非公開";
+            vBtn.style.background = sv.visible ? "#9b59b6" : "#7f8c8d";
+        }
+    }
+
+    function toggleSurveyResultsVisibility() {
+        currentSurvey.visible = !currentSurvey.visible;
+        sendData({ action: 'SURVEY_SYNC', survey: currentSurvey });
+        syncSurveyState(currentSurvey);
+    }
+
+    // --- その他基本機能 ---
+    function updateAttendeeList() {
+        const list = document.getElementById('attendee-list');
+        list.innerHTML = '';
+        let count = 0;
+        for (let name in attendees) {
+            if (!attendees[name].isTeacher) {
+                list.innerHTML += `<div class="list-item"><span>👤 ${name}</span></div>`;
+                count++;
+            }
+        }
+        document.getElementById('attendee-count').innerText = count;
+    }
+
+    function reportLevel(val) { sendData({ action: 'LEVEL_UPDATE', name: myName, val }); }
+    function updateLevelUI() {
+        let total = 0, count = 0;
+        for (let n in attendees) { if (!attendees[n].isTeacher) { total += attendees[n].level; count++; } }
+        const avg = count ? Math.round(total / count) : 0;
+        document.getElementById('level-avg-text').innerText = avg + "%";
+        document.getElementById('level-avg-bar').style.width = avg + "%";
+        document.getElementById('level-avg-bar').style.background = (avg < 40 ? 'var(--danger)' : avg < 75 ? 'var(--warning)' : '#2ecc71');
+    }
+
+    function toggleHandRaise() {
+        const btn = document.getElementById('btn-hand-toggle');
+        const isOn = btn.innerText.includes('下ろす');
+        btn.innerText = isOn ? "🖐 質問があります" : "✋ 手を下ろす";
+        sendData({ action: 'HAND_RAISE', name: myName, on: !isOn });
+    }
+    function updateHandRaiseQueue(name, on) {
+        if (on) { if (!handRaisers.includes(name)) handRaisers.push(name); }
+        else { handRaisers = handRaisers.filter(h => h !== name); }
+        document.getElementById('hand-raise-list').innerHTML = handRaisers.map(h => `<div class="list-item hand-up"><span>🙋 ${h}</span></div>`).join('');
+    }
+
+    function spawnEmoji(emoji) {
+        const el = document.createElement('div');
+        el.className = 'emoji-float';
+        el.innerText = emoji;
+        el.style.left = (Math.random() * 80 + 10) + '%';
+        document.getElementById('reaction-container').appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+    }
+    function sendReaction(emoji) { sendData({ action: 'REACTION', emoji }); spawnEmoji(emoji); }
+
+    function postToBoard() {
+        const text = document.getElementById('board-input').value.trim();
+        if (!text) return;
+        sendData({ action: 'BOARD', sender: myName + " (先生)", text });
+        handleData({ action: 'BOARD', sender: myName + " (先生)", text });
+        document.getElementById('board-input').value = '';
+    }
+
+    function syncTimerStart() {
+        const min = document.getElementById('timer-min-input').value;
+        const endTime = Date.now() + (min * 60 * 1000);
+        sendData({ action: 'TIMER_SYNC', endTime });
+        runTimer(endTime);
+    }
+    function runTimer(endTime) {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            const diff = endTime - Date.now();
+            if (diff <= 0) { clearInterval(timerInterval); document.getElementById('timer-display').innerText = "00:00"; return; }
+            const m = Math.floor(diff / 60000), s = Math.floor((diff % 60000) / 1000);
+            document.getElementById('timer-display').innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }, 1000);
+    }
+
+    function randomPick() {
+        const students = Object.keys(attendees).filter(n => !attendees[n].isTeacher);
+        if (!students.length) return alert("生徒がいません");
+        const picked = students[Math.floor(Math.random() * students.length)];
+        const text = `🎯 指名ルーレット: <b>${picked}</b> さん、お願いします！`;
+        sendData({ action: 'BOARD', sender: 'SYSTEM', text });
+        handleData({ action: 'BOARD', sender: 'SYSTEM', text });
+    }
+
+    function copyStudentInviteURL() {
+        const url = `${window.location.origin}${window.location.pathname}?room=${roomID}&role=student`;
+        navigator.clipboard.writeText(url).then(() => alert("生徒用招待URLをコピーしました！"));
+    }
+
+    setInterval(() => { document.getElementById('digital-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 </script>
 </body>
 </html>
