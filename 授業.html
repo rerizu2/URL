@@ -2,59 +2,74 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>授業支援DXダッシュボード</title>
+    <title>授業支援DX - 教員コントロール版</title>
     <style>
         :root {
             --t-color: #2c3e50; --s-color: #27ae60; --bg: #f0f2f5; --accent: #3498db; --danger: #e74c3c;
         }
-        body { font-family: sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; background: var(--bg); color: #333; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* ログイン・ヘッダー */
+        /* ログイン画面 */
         #setup-screen { position: fixed; inset: 0; background: var(--t-color); color: white; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .setup-box { background: white; color: #333; padding: 30px; border-radius: 15px; width: 320px; text-align: center; }
-        header { padding: 10px 20px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .setup-box { background: white; color: #333; padding: 40px; border-radius: 20px; width: 350px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .setup-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+
+        /* ヘッダー */
+        header { padding: 10px 25px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .t-mode { background: var(--t-color); } .s-mode { background: var(--s-color); }
 
         /* レイアウト */
-        .main-layout { display: grid; grid-template-columns: 250px 1fr 300px; gap: 15px; padding: 15px; flex-grow: 1; overflow: hidden; }
-        .panel { background: white; border-radius: 10px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; }
-        h3 { margin-top: 0; font-size: 1rem; border-bottom: 2px solid var(--bg); padding-bottom: 5px; }
+        .main-layout { display: grid; grid-template-columns: 280px 1fr 300px; gap: 15px; padding: 15px; flex-grow: 1; overflow: hidden; }
+        .panel { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; }
+        h3 { margin-top: 0; font-size: 1.1rem; border-bottom: 2px solid var(--bg); padding-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+
+        /* 権限による表示制御 */
+        .only-teacher, .only-student { display: none !important; }
+        body.is-teacher .only-teacher { display: block !important; }
+        body.is-teacher .only-teacher-flex { display: flex !important; }
+        body.is-student .only-student { display: block !important; }
 
         /* 理解度メーター */
-        .meter-btns { display: flex; gap: 5px; margin-bottom: 10px; }
-        .meter-btns button { flex: 1; font-size: 0.8rem; }
-        .meter-bar { height: 10px; border-radius: 5px; background: #eee; margin-top: 5px; overflow: hidden; }
-        .meter-fill { height: 100%; width: 0%; transition: 0.5s; }
+        .meter-btns { display: flex; gap: 8px; margin-bottom: 15px; }
+        .meter-btns button { flex: 1; font-weight: bold; border-radius: 8px; border: none; padding: 10px; color: white; cursor: pointer; }
+        .meter-bar { height: 12px; border-radius: 6px; background: #eee; margin-top: 10px; overflow: hidden; }
+        .meter-fill { height: 100%; width: 0%; transition: 1s cubic-bezier(0.075, 0.82, 0.165, 1); }
 
+        /* リスト */
+        .list-area { flex-grow: 1; overflow-y: auto; margin: 10px 0; }
+        .list-item { padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 0.9rem; display: flex; justify-content: space-between; }
+        .hand-on { background: #fff3e0; border-left: 4px solid #e67e22; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        /* アンケート・コントロール */
+        .admin-controls { background: #f8f9fa; border-radius: 8px; padding: 15px; margin-top: auto; border: 1px solid #dee2e6; }
+        .admin-controls input, .admin-controls textarea { margin-bottom: 8px; font-size: 0.85rem; }
+        
+        button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 15px; font-weight: bold; transition: 0.2s; }
+        button:hover { opacity: 0.8; transform: translateY(-1px); }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        #timer-display { font-size: 3.5rem; text-align: center; font-weight: bold; color: var(--danger); font-family: 'Courier New', Courier, monospace; margin: 10px 0; }
+        #my-note { flex-grow: 1; border: 1px solid #ddd; border-radius: 8px; padding: 15px; font-size: 1rem; line-height: 1.6; resize: none; }
+        
         /* リアクション */
-        #reaction-layer { position: fixed; bottom: 50px; right: 50px; pointer-events: none; z-index: 1000; }
-        .floating-emoji { position: absolute; animation: floatUp 2s forwards; font-size: 2rem; opacity: 0; }
-        @keyframes floatUp { 0% { bottom: 0; opacity: 1; transform: translateX(0); } 100% { bottom: 300px; opacity: 0; transform: translateX(50px); } }
-
-        /* リスト・キュー */
-        .list-area { flex-grow: 1; overflow-y: auto; font-size: 0.9rem; }
-        .list-item { display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px solid #eee; }
-        .hand-on { background: #fff3e0; border-left: 4px solid #ff9800; }
-
-        /* フォーム系 */
-        textarea { width: 100%; border: 1px solid #ddd; border-radius: 5px; padding: 8px; box-sizing: border-box; }
-        button { cursor: pointer; border: none; border-radius: 4px; padding: 8px 12px; background: var(--accent); color: white; transition: 0.2s; }
-        button:hover { opacity: 0.8; }
-        input[type="text"] { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-
-        #timer-display { font-size: 2.5rem; text-align: center; font-weight: bold; color: var(--danger); font-family: monospace; }
+        #reaction-layer { position: fixed; inset: 0; pointer-events: none; z-index: 1000; }
+        .floating-emoji { position: absolute; bottom: 0; animation: floatUp 3s forwards; font-size: 2.5rem; }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80vh) scale(1.5); opacity: 0; } }
     </style>
 </head>
 <body>
 
+<!-- 入室画面 -->
 <div id="setup-screen">
     <div class="setup-box">
-        <h2>授業Roomログイン</h2>
-        <input type="text" id="in-room" placeholder="ルームID (例: room1)">
-        <input type="text" id="in-name" placeholder="あなたの名前">
+        <h1 style="margin-top:0; color:var(--t-color)">Lecture DX</h1>
+        <input type="text" id="in-room" placeholder="ルームID (例: class101)">
+        <input type="text" id="in-name" placeholder="お名前">
         <div style="display:flex; gap:10px; margin-top:15px;">
-            <button onclick="join('teacher')" style="flex:1; background:var(--t-color)">教員</button>
-            <button onclick="join('student')" style="flex:1; background:var(--s-color)">生徒</button>
+            <button onclick="join('teacher')" style="flex:1; background:var(--t-color); color:white;">教員として開始</button>
+            <button onclick="join('student')" style="flex:1; background:var(--s-color); color:white;">生徒として入室</button>
         </div>
     </div>
 </div>
@@ -62,100 +77,116 @@
 <div id="reaction-layer"></div>
 
 <header id="header">
-    <div id="header-info">Room: -- | Name: --</div>
+    <div id="header-info">Room: -- | Mode: --</div>
     <div id="clock">00:00:00</div>
 </header>
 
 <main class="main-layout">
-    <!-- 左サイド：出席と理解度 -->
-    <section class="left-col">
-        <div class="panel" style="height: 40%;">
+    <!-- 左サイド：出席者・理解度・挙手 -->
+    <aside class="left-col">
+        <div class="panel" style="flex: 1;">
             <h3>👥 出席者 (<span id="count-p">0</span>)</h3>
             <div id="student-list" class="list-area"></div>
-            <button class="only-teacher" onclick="pickRandom()" style="margin-top:10px; background:#9b59b6;">🎲 ランダム指名</button>
+            <button class="only-teacher btn-primary" onclick="pickRandom()" style="width:100%; background:#9b59b6;">🎲 ランダム指名</button>
         </div>
-        <div class="panel" style="height: 55%; margin-top:15px;">
-            <h3>📊 クラスの理解度</h3>
+        
+        <div class="panel" style="flex: 1.5; margin-top:15px;">
+            <h3>📊 クラス理解度</h3>
             <div class="only-student">
                 <div class="meter-btns">
-                    <button onclick="sendLevel(100)" style="background:#2ecc71;">😊OK</button>
-                    <button onclick="sendLevel(50)" style="background:#f1c40f;">😐微妙</button>
-                    <button onclick="sendLevel(0)" style="background:#e74c3c;">❓SOS</button>
+                    <button onclick="sendLevel(100)" style="background:#2ecc71;">分かった</button>
+                    <button onclick="sendLevel(50)" style="background:#f1c40f;">微妙</button>
+                    <button onclick="sendLevel(0)" style="background:#e74c3c;">迷子</button>
                 </div>
             </div>
             <div id="meter-results">
-                <div style="font-size:0.8rem;">理解度平均: <span id="avg-val">0</span>%</div>
-                <div class="meter-bar"><div id="avg-fill" class="meter-fill" style="background:#2ecc71;"></div></div>
+                <div style="font-size:0.85rem; display:flex; justify-content:space-between;">
+                    <span>理解度平均</span><span id="avg-val">0</span>%
+                </div>
+                <div class="meter-bar"><div id="avg-fill" class="meter-fill" style="background:#2ecc71; width:0%"></div></div>
             </div>
-            <hr>
-            <h3>🙋 挙手リスト</h3>
+            
+            <h3 style="margin-top:20px;">🙋 質問・挙手</h3>
             <div id="hand-list" class="list-area"></div>
-            <button class="only-student" id="hand-btn" onclick="toggleHand()" style="background:#e67e22;">🖐 手を挙げる</button>
+            <button class="only-student" id="hand-btn" onclick="toggleHand()" style="width:100%; background:#e67e22; color:white;">🖐 質問があります</button>
         </div>
-    </section>
+    </aside>
 
-    <!-- 中央：メインノート・アンケート -->
+    <!-- 中央：メインコンテンツ -->
     <section class="panel">
-        <div style="display:flex; justify-content: space-between;">
-            <h3>📝 授業メイン</h3>
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <h3>📝 授業ノート</h3>
             <div id="reactions-btns">
                 <button onclick="sendReact('👏')">👏</button>
                 <button onclick="sendReact('😮')">😮</button>
                 <button onclick="sendReact('👍')">👍</button>
+                <button onclick="sendReact('❓')">❓</button>
             </div>
         </div>
-        
-        <div id="survey-area" style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom:10px; display:none;">
-            <h4 id="q-title" style="margin:0;"></h4>
-            <div id="q-options" style="margin-top:10px;"></div>
-            <div id="q-res" style="margin-top:10px; border-top:1px solid #ddd;"></div>
+
+        <!-- アンケート表示エリア (教員・生徒両方) -->
+        <div id="survey-area" style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-bottom:15px; border-left: 5px solid var(--accent); display:none;">
+            <h4 id="q-title" style="margin:0 0 10px 0;"></h4>
+            <div id="q-options" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+            <div id="q-res" class="only-teacher" style="margin-top:10px; font-size:0.9rem; color:#555;"></div>
         </div>
 
-        <textarea id="my-note" style="flex-grow:1;" placeholder="ここにノートを取ります..."></textarea>
+        <textarea id="my-note" placeholder="自分用のメモをここに記入してください。この内容は誰にも共有されません。"></textarea>
         
-        <div class="only-teacher" style="margin-top:10px; border-top:2px solid #eee; padding-top:10px;">
-            <input type="text" id="q-input" placeholder="アンケート質問">
-            <input type="text" id="o-input" placeholder="選択肢 (改行かカンマ区切り)" style="margin-top:5px;">
-            <button onclick="startSurvey()" style="margin-top:5px;">アンケート配信</button>
+        <!-- 教員専用：アンケート作成コントロール -->
+        <div class="only-teacher admin-controls">
+            <h4 style="margin:0 0 10px 0;">📊 アンケート配信 (教員専用)</h4>
+            <input type="text" id="q-input" placeholder="例：ここまでの内容は理解できましたか？">
+            <input type="text" id="o-input" placeholder="選択肢をカンマで区切る（例：はい,いいえ,少し不安）">
+            <button onclick="startSurvey()" class="btn-primary" style="width:100%;">アンケートをクラス全員に配信</button>
         </div>
     </section>
 
-    <!-- 右サイド：タイマー・連絡 -->
-    <section class="right-col">
+    <!-- 右サイド：タイマー・掲示板 -->
+    <aside class="right-col">
         <div class="panel">
-            <h3>⏰ タイマー</h3>
+            <h3>⏰ 授業タイマー</h3>
             <div id="timer-display">00:00</div>
-            <div class="only-teacher">
-                <input type="number" id="t-min" value="45" style="width:60px;"> 分
-                <button onclick="setTimer()">開始</button>
+            <div class="only-teacher admin-controls">
+                <div style="display:flex; gap:5px;">
+                    <input type="number" id="t-min" value="45" style="width:60px;"> 分
+                    <button onclick="setTimer()" class="btn-primary" style="flex:1;">開始</button>
+                    <button onclick="send({action:'TIMER',endTime:0})" class="btn-danger">停止</button>
+                </div>
             </div>
         </div>
+
         <div class="panel" style="margin-top:15px; flex-grow:1;">
-            <h3>📢 掲示板</h3>
-            <div id="board" style="background:#fff9c4; padding:10px; border-radius:5px; flex-grow:1; overflow-y:auto; font-size:0.9rem;"></div>
-            <div class="only-teacher" style="margin-top:10px;">
-                <input type="text" id="msg-input" placeholder="連絡内容...">
-                <button onclick="sendMsg()" style="width:100%; margin-top:5px;">送信</button>
+            <h3>📢 全体掲示板</h3>
+            <div id="board" style="background:#fff9c4; padding:12px; border-radius:8px; flex-grow:1; overflow-y:auto; font-size:0.9rem; line-height:1.4;">
+                <div style="color:#888;">まだ連絡はありません。</div>
+            </div>
+            
+            <!-- 教員専用：メッセージ送信 -->
+            <div class="only-teacher admin-controls" style="margin-top:10px;">
+                <textarea id="msg-input" placeholder="クラス全員への連絡事項..." rows="2" style="font-size:0.8rem;"></textarea>
+                <button onclick="sendMsg()" class="btn-primary" style="width:100%; margin-top:5px;">全体送信</button>
             </div>
         </div>
-    </section>
+    </aside>
 </main>
 
 <script>
     let channel, role, room, myName;
-    let students = {}, hands = [], levels = {};
+    let students = {}, hands = [], levels = {}, surveyVotes = {};
     let timerInt;
 
     function join(r) {
-        room = document.getElementById('in-room').value;
-        myName = document.getElementById('in-name').value || '匿名';
-        if(!room) return alert("RoomID必須");
+        room = document.getElementById('in-room').value.trim();
+        myName = document.getElementById('in-name').value.trim() || '匿名';
+        if(!room) return alert("ルームIDを入力してください");
+        
         role = r;
         document.body.classList.add(role === 'teacher' ? 'is-teacher' : 'is-student');
         document.getElementById('header').className = role + '-mode';
-        document.getElementById('header-info').innerText = `Room: ${room} | Name: ${myName} (${role})`;
+        document.getElementById('header-info').innerText = `Room: ${room} | ${role === 'teacher' ? '教員' : '生徒'}: ${myName}`;
         
-        channel = new BroadcastChannel('dx_class_' + room);
+        channel = new BroadcastChannel('class_dx_' + room);
         channel.onmessage = handle;
 
         document.getElementById('setup-screen').style.display = 'none';
@@ -163,7 +194,7 @@
         // 入室通知
         send({ action: 'HELLO', name: myName, isTeacher: role==='teacher' });
         
-        // 生徒ならノート読み込み
+        // 生徒なら個別のメモをローカル保存から復元
         if(role==='student') {
             document.getElementById('my-note').value = localStorage.getItem('dx_note_'+room) || '';
             document.getElementById('my-note').oninput = (e) => localStorage.setItem('dx_note_'+room, e.target.value);
@@ -174,25 +205,38 @@
 
     function handle(e) {
         const d = e.data;
+        // 出席者管理
         if(d.action === 'HELLO') {
             if(!students[d.name]) {
                 students[d.name] = { isTeacher: d.isTeacher, level: 100 };
                 updateStudentList();
-                if(role === 'teacher') send({ action: 'SYNC_LIST', students }); // 教員がリストを同期
+                if(role === 'teacher') send({ action: 'SYNC_LIST', students });
             }
         }
-        if(d.action === 'SYNC_LIST') { students = d.students; updateStudentList(); }
-        if(d.action === 'REACT') showEmoji(d.emoji);
+        if(d.action === 'SYNC_LIST') { students = d.students; updateStudentList(); updateLevel(); }
+        
+        // 理解度・挙手
         if(d.action === 'LEVEL') { students[d.name].level = d.val; updateLevel(); }
         if(d.action === 'HAND') { handleHand(d.name, d.on); }
+        
+        // リアクション
+        if(d.action === 'REACT') showEmoji(d.emoji);
+        
+        // メッセージ掲示板
         if(d.action === 'MSG') {
             const b = document.getElementById('board');
-            b.innerHTML += `<div><b>${d.sender}:</b> ${d.text}</div>`;
+            if(b.innerText.includes("まだ連絡はありません")) b.innerHTML = "";
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            b.innerHTML += `<div style="margin-bottom:8px;"><strong>${d.sender}</strong> <small style="color:#888;">${time}</small><br>${d.text}</div>`;
             b.scrollTop = b.scrollHeight;
         }
+
+        // タイマー
         if(d.action === 'TIMER') startTimer(d.endTime);
+
+        // アンケート
         if(d.action === 'SURVEY') showSurvey(d);
-        if(d.action === 'SURVEY_RES') handleSurveyRes(d);
+        if(d.action === 'SURVEY_RES' && role === 'teacher') handleSurveyRes(d);
     }
 
     // --- 出席・理解度 ---
@@ -210,23 +254,27 @@
     }
 
     function sendLevel(val) { send({ action: 'LEVEL', name: myName, val }); }
+    
     function updateLevel() {
         let total = 0, count = 0;
         for(let s in students) {
             if(!students[s].isTeacher) {
-                total += students[s].level; count++;
+                total += (students[s].level || 0); count++;
             }
         }
         const avg = count ? Math.round(total/count) : 0;
         document.getElementById('avg-val').innerText = avg;
         document.getElementById('avg-fill').style.width = avg + '%';
+        if(avg < 40) document.getElementById('avg-fill').style.background = '#e74c3c';
+        else if(avg < 75) document.getElementById('avg-fill').style.background = '#f1c40f';
+        else document.getElementById('avg-fill').style.background = '#2ecc71';
     }
 
     // --- 挙手 ---
     function toggleHand() {
         const btn = document.getElementById('hand-btn');
         const isOn = btn.innerText.includes('下ろす');
-        btn.innerText = isOn ? "🖐 手を挙げる" : "✋ 手を下ろす";
+        btn.innerText = isOn ? "🖐 質問があります" : "✋ 手を下ろす";
         btn.style.background = isOn ? "#e67e22" : "#7f8c8d";
         send({ action: 'HAND', name: myName, on: !isOn });
     }
@@ -237,33 +285,37 @@
         list.innerHTML = hands.map(h => `<div class="list-item hand-on"><span>🙋 ${h}</span></div>`).join('');
     }
 
-    // --- リアクション ---
+    // --- リアクションアニメーション ---
     function sendReact(emoji) { send({ action: 'REACT', emoji }); showEmoji(emoji); }
     function showEmoji(emoji) {
         const el = document.createElement('div');
         el.className = 'floating-emoji';
         el.innerText = emoji;
-        el.style.left = Math.random() * 80 + '%';
+        el.style.left = (Math.random() * 70 + 15) + '%';
         document.getElementById('reaction-layer').appendChild(el);
-        setTimeout(() => el.remove(), 2000);
+        setTimeout(() => el.remove(), 3000);
     }
 
-    // --- 指名ルーレット ---
+    // --- 【教員専用】ランダム指名 ---
     function pickRandom() {
         const sList = Object.keys(students).filter(k => !students[k].isTeacher);
-        if(!sList.length) return;
+        if(!sList.length) return alert("生徒がまだ入室していません");
         const picked = sList[Math.floor(Math.random() * sList.length)];
-        send({ action: 'MSG', sender: 'SYSTEM', text: `🎯 指名: <b>${picked}</b> さん、お願いします！` });
+        const text = `🎯 指名ルーレット: <strong>${picked}</strong> さん、回答をお願いします！`;
+        send({ action: 'MSG', sender: 'SYSTEM', text: text });
+        handle({ data: { action: 'MSG', sender: 'SYSTEM', text: text } });
     }
 
-    // --- その他基本機能 ---
+    // --- 【教員専用】掲示板送信 ---
     function sendMsg() {
-        const text = document.getElementById('msg-input').value;
-        send({ action: 'MSG', sender: myName, text });
+        const text = document.getElementById('msg-input').value.trim();
+        if(!text) return;
+        send({ action: 'MSG', sender: myName + "（先生）", text });
+        handle({ data: { action: 'MSG', sender: myName + "（先生）", text } });
         document.getElementById('msg-input').value = '';
-        handle({ data: { action: 'MSG', sender: myName, text } }); // 自分にも表示
     }
 
+    // --- 【教員専用】タイマー ---
     function setTimer() {
         const end = Date.now() + (document.getElementById('t-min').value * 60000);
         send({ action: 'TIMER', endTime: end });
@@ -271,6 +323,7 @@
     }
     function startTimer(end) {
         clearInterval(timerInt);
+        if(end === 0) { document.getElementById('timer-display').innerText = "00:00"; return; }
         timerInt = setInterval(() => {
             const diff = end - Date.now();
             if(diff <= 0) { clearInterval(timerInt); document.getElementById('timer-display').innerText = "00:00"; return; }
@@ -279,34 +332,36 @@
         }, 1000);
     }
 
-    // アンケート簡易版
-    let surveyVotes = {};
+    // --- 【教員専用】アンケート ---
     function startSurvey() {
-        const q = document.getElementById('q-input').value;
-        const opts = document.getElementById('o-input').value.split(/[,、\n]/).filter(v=>v);
+        const q = document.getElementById('q-input').value.trim();
+        const opts = document.getElementById('o-input').value.split(/[,、]/).map(s => s.trim()).filter(v=>v);
+        if(!q || !opts.length) return alert("質問と選択肢を入力してください");
         surveyVotes = {};
         opts.forEach(o => surveyVotes[o] = 0);
         send({ action: 'SURVEY', q, opts });
+        showSurvey({ q, opts }); // 自分にも表示
     }
     function showSurvey(d) {
         document.getElementById('survey-area').style.display = 'block';
         document.getElementById('q-title').innerText = "📊 " + d.q;
         const optDiv = document.getElementById('q-options');
-        optDiv.innerHTML = d.opts.map(o => `<button onclick="vote('${o}')">${o}</button>`).join(' ');
-        document.getElementById('q-res').innerHTML = '';
+        optDiv.innerHTML = d.opts.map(o => `<button class="btn-primary" onclick="vote('${o}')">${o}</button>`).join('');
+        document.getElementById('q-res').innerHTML = role === 'teacher' ? '回答をお待ちください...' : '';
     }
     function vote(o) {
         send({ action: 'SURVEY_RES', opt: o });
-        document.getElementById('q-options').innerHTML = "回答送信済み";
+        document.getElementById('q-options').innerHTML = `<span style="color:var(--s-color); font-weight:bold;">回答を送信しました (${o})</span>`;
     }
     function handleSurveyRes(d) {
-        if(!surveyVotes[d.opt]) surveyVotes[d.opt] = 0;
-        surveyVotes[d.opt]++;
+        if(surveyVotes[d.opt] !== undefined) surveyVotes[d.opt]++;
         const resDiv = document.getElementById('q-res');
-        resDiv.innerHTML = Object.entries(surveyVotes).map(([k,v]) => `<div>${k}: ${v}票</div>`).join('');
+        resDiv.innerHTML = "<strong>現在の集計:</strong> " + Object.entries(surveyVotes).map(([k,v]) => `${k}:${v}票`).join(' / ');
     }
 
-    setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    }, 1000);
 </script>
 </body>
 </html>
