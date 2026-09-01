@@ -2,14 +2,14 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>授業支援DX - マルチアンケート版</title>
+    <title>授業支援DX - 結果公開制御版</title>
     <style>
         :root {
             --t-color: #2c3e50; --s-color: #27ae60; --bg: #f0f2f5; --accent: #3498db; --danger: #e74c3c;
         }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; background: var(--bg); color: #333; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* 共通スタイル */
+        /* 共通レイアウト */
         #setup-screen { position: fixed; inset: 0; background: var(--t-color); color: white; display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .setup-box { background: white; color: #333; padding: 40px; border-radius: 20px; width: 350px; text-align: center; }
         header { padding: 10px 25px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -23,24 +23,24 @@
         body.is-student .only-student { display: block !important; }
 
         /* アンケートエリア */
-        #survey-area { background: #fff; border: 2px solid var(--accent); padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2); }
+        #survey-area { background: #fff; border: 2px solid var(--accent); padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         .survey-option-btn { display: block; width: 100%; text-align: left; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; }
-        .survey-option-btn:hover { background: #f0f7ff; }
-        .survey-option-btn.selected { background: var(--accent); color: white; border-color: var(--accent); }
         
-        /* 集計グラフ */
+        /* 集計結果表示 */
+        #survey-results { margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc; }
         .res-bar-container { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin: 4px 0 12px 0; }
         .res-bar-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.8s ease; }
-        .res-text-list { background: #f9f9f9; padding: 10px; border-radius: 6px; max-height: 150px; overflow-y: auto; font-size: 0.9rem; }
+        .hidden-msg { background: #f8f9fa; color: #888; padding: 20px; text-align: center; border-radius: 8px; font-size: 0.9rem; }
 
         /* UI要素 */
         button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 15px; font-weight: bold; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; }
+        .btn-toggle { background: #9b59b6; color: white; }
+        .btn-danger { background: var(--danger); color: white; }
         input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        
         #timer-display { font-size: 3rem; text-align: center; font-weight: bold; color: var(--danger); font-family: monospace; }
         #my-note { flex-grow: 1; resize: none; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
-
-        /* リアクション */
         #reaction-layer { position: fixed; inset: 0; pointer-events: none; z-index: 1000; }
         .floating-emoji { position: absolute; bottom: 0; animation: floatUp 3s forwards; font-size: 2.5rem; }
         @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-80vh); opacity: 0; } }
@@ -50,7 +50,7 @@
 
 <div id="setup-screen">
     <div class="setup-box">
-        <h1 style="color:var(--t-color)">授業支援DXシステム</h1>
+        <h1 style="color:var(--t-color)">授業支援DX v4</h1>
         <input type="text" id="in-room" placeholder="ルームID">
         <input type="text" id="in-name" placeholder="お名前">
         <div style="display:flex; gap:10px; margin-top:10px;">
@@ -96,7 +96,7 @@
         </div>
     </aside>
 
-    <!-- 中：メイン・アンケート -->
+    <!-- 中：ノート・アンケート -->
     <section class="panel">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h3>📝 授業メイン</h3>
@@ -107,22 +107,32 @@
             </div>
         </div>
 
-        <!-- 動的アンケートエリア -->
+        <!-- アンケートエリア -->
         <div id="survey-area" style="display:none;">
-            <h4 id="survey-q-title" style="margin:0 0 10px 0;"></h4>
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+                <h4 id="survey-q-title" style="margin:0 0 10px 0;"></h4>
+                <!-- 教員専用：公開スイッチ -->
+                <div class="only-teacher">
+                    <button id="btn-toggle-results" class="btn-toggle" onclick="toggleResults()" style="font-size:0.7rem;">結果を公開中</button>
+                </div>
+            </div>
+            
             <div id="survey-ui"></div>
             <button id="survey-submit-btn" class="btn-primary" style="width:100%; margin-top:10px;">回答を送信</button>
             
-            <!-- 集計結果（全員に共有） -->
-            <div id="survey-results" style="margin-top:15px; padding-top:10px; border-top:1px dashed #ccc;">
-                <strong style="font-size:0.8rem; color:var(--accent);">📊 クラスの回答状況 (計<span id="total-votes">0</span>票)</strong>
-                <div id="results-display" style="margin-top:5px;"></div>
+            <!-- 集計結果エリア -->
+            <div id="survey-results">
+                <div id="survey-results-header" style="font-size:0.8rem; color:var(--accent); font-weight:bold; margin-bottom:5px;">📊 クラスの回答状況</div>
+                <!-- 非公開時に生徒に表示されるメッセージ -->
+                <div id="results-hidden-msg" class="hidden-msg" style="display:none;">先生が結果を集計中です...</div>
+                <!-- 実際のグラフエリア -->
+                <div id="results-display"></div>
             </div>
         </div>
 
         <textarea id="my-note" placeholder="自分用のメモ帳です..."></textarea>
 
-        <!-- 教員用アンケート作成 -->
+        <!-- 教員用：アンケート作成 -->
         <div class="only-teacher" style="margin-top:10px; padding:10px; background:#f8f9fa; border-radius:8px;">
             <h4 style="margin:0 0 10px 0;">📊 アンケート配信 (教員専用)</h4>
             <select id="survey-type-select" onchange="toggleSurveyInputs()">
@@ -131,9 +141,9 @@
                 <option value="text">自由記述</option>
                 <option value="scale">5段階評価</option>
             </select>
-            <input type="text" id="survey-q-input" placeholder="質問文を入力">
-            <input type="text" id="survey-o-input" placeholder="選択肢 (カンマ区切り) ※記述/5段階時は不要">
-            <button onclick="startSurvey()" class="btn-primary" style="width:100%;">配信開始</button>
+            <input type="text" id="survey-q-input" placeholder="質問文">
+            <input type="text" id="survey-o-input" placeholder="選択肢 (カンマ区切り)">
+            <button onclick="startSurvey()" class="btn-primary" style="width:100%;">アンケートを配信</button>
         </div>
     </section>
 
@@ -169,8 +179,8 @@
         if(!room) return alert("ルームIDを入力してください");
         role = r;
         document.body.classList.add(role === 'teacher' ? 'is-teacher' : 'is-student');
-        document.getElementById('header-info').innerText = `Room: ${room} | ${role==='teacher'?'先生':'生徒'}: ${myName}`;
-        channel = new BroadcastChannel('class_dx_v3_' + room);
+        document.getElementById('header-info').innerText = `Room: ${room} | ${role==='teacher'?'教員':'生徒'}: ${myName}`;
+        channel = new BroadcastChannel('class_dx_v4_' + room);
         channel.onmessage = handle;
         document.getElementById('setup-screen').style.display = 'none';
         send({ action: 'HELLO', name: myName, isTeacher: role==='teacher' });
@@ -198,13 +208,13 @@
         }
         if(d.action === 'TIMER') startTimer(d.endTime);
         
-        // アンケート関連
+        // アンケート同期
         if(d.action === 'SURVEY_START') showSurveyUI(d.data);
         if(d.action === 'SURVEY_VOTE' && role === 'teacher') collectVote(d);
         if(d.action === 'SURVEY_SYNC') syncSurveyResults(d.data);
     }
 
-    // --- アンケートロジック ---
+    // --- アンケート機能 ---
     function toggleSurveyInputs() {
         const type = document.getElementById('survey-type-select').value;
         document.getElementById('survey-o-input').style.display = (type==='text'||type==='scale') ? 'none' : 'block';
@@ -215,37 +225,47 @@
         const question = document.getElementById('survey-q-input').value;
         let options = document.getElementById('survey-o-input').value.split(',').map(s=>s.trim()).filter(v=>v);
         
-        if(type === 'scale') options = ["1:悪い", "2", "3", "4", "5:非常に良い"];
-        if(type === 'text') options = [];
-
-        currentSurvey = { type, question, options, votes: {}, total: 0 };
+        if(type === 'scale') options = ["1", "2", "3", "4", "5"];
+        
+        currentSurvey = { type, question, options, votes: {}, total: 0, showResults: true }; // デフォルトは公開
         if(type !== 'text') options.forEach(o => currentSurvey.votes[o] = 0);
-        else currentSurvey.votes = []; // テキストの場合は配列
+        else currentSurvey.votes = [];
 
         send({ action: 'SURVEY_START', data: currentSurvey });
         showSurveyUI(currentSurvey);
     }
 
+    // 結果の公開・非公開切り替え (教員専用)
+    function toggleResults() {
+        if(!currentSurvey) return;
+        currentSurvey.showResults = !currentSurvey.showResults;
+        document.getElementById('btn-toggle-results').innerText = currentSurvey.showResults ? "結果を公開中" : "結果は非公開";
+        document.getElementById('btn-toggle-results').style.background = currentSurvey.showResults ? "#9b59b6" : "#7f8c8d";
+        send({ action: 'SURVEY_SYNC', data: currentSurvey });
+        syncSurveyResults(currentSurvey);
+    }
+
     function showSurveyUI(data) {
         currentSurvey = data;
-        const area = document.getElementById('survey-area');
-        area.style.display = 'block';
+        document.getElementById('survey-area').style.display = 'block';
         document.getElementById('survey-q-title').innerText = "📊 " + data.question;
+        
+        // 公開スイッチの状態を更新
+        if(role === 'teacher') {
+            document.getElementById('btn-toggle-results').innerText = data.showResults ? "結果を公開中" : "結果は非公開";
+            document.getElementById('btn-toggle-results').style.background = data.showResults ? "#9b59b6" : "#7f8c8d";
+        }
+
         const ui = document.getElementById('survey-ui');
         ui.innerHTML = '';
-        
         if(role === 'student') {
-            document.getElementById('survey-submit-btn').style.display = 'block';
-            document.getElementById('survey-submit-btn').disabled = false;
-            if(data.type === 'text') {
-                ui.innerHTML = `<textarea id="survey-ans-text" placeholder="回答を入力..."></textarea>`;
-            } else if(data.type === 'single' || data.type === 'scale') {
+            const btn = document.getElementById('survey-submit-btn');
+            btn.style.display = 'block'; btn.disabled = false; btn.innerText = "回答を送信";
+            if(data.type === 'text') ui.innerHTML = `<textarea id="survey-ans-text" placeholder="回答を入力..."></textarea>`;
+            else {
+                const itype = (data.type === 'multi') ? 'checkbox' : 'radio';
                 data.options.forEach(o => {
-                    ui.innerHTML += `<label class="survey-option-btn"><input type="radio" name="sv-opt" value="${o}"> ${o}</label>`;
-                });
-            } else if(data.type === 'multi') {
-                data.options.forEach(o => {
-                    ui.innerHTML += `<label class="survey-option-btn"><input type="checkbox" name="sv-opt" value="${o}"> ${o}</label>`;
+                    ui.innerHTML += `<label class="survey-option-btn"><input type="${itype}" name="sv-opt" value="${o}"> ${o}</label>`;
                 });
             }
         } else {
@@ -254,60 +274,63 @@
         syncSurveyResults(data);
     }
 
-    document.getElementById('survey-submit-btn').onclick = function() {
-        const data = currentSurvey;
-        let val;
-        if(data.type === 'text') {
-            val = document.getElementById('survey-ans-text').value;
-        } else {
-            const checked = Array.from(document.querySelectorAll('input[name="sv-opt"]:checked')).map(i=>i.value);
-            if(!checked.length) return;
-            val = (data.type === 'multi') ? checked : checked[0];
-        }
-        send({ action: 'SURVEY_VOTE', value: val });
-        this.disabled = true;
-        this.innerText = "送信済み";
-    };
-
     function collectVote(d) {
         if(!currentSurvey) return;
         currentSurvey.total++;
-        if(currentSurvey.type === 'text') {
-            currentSurvey.votes.push(d.value);
-        } else if(Array.isArray(d.value)) {
-            d.value.forEach(v => currentSurvey.votes[v]++);
-        } else {
-            currentSurvey.votes[d.value]++;
-        }
+        if(currentSurvey.type === 'text') currentSurvey.votes.push(d.value);
+        else if(Array.isArray(d.value)) d.value.forEach(v => currentSurvey.votes[v]++);
+        else currentSurvey.votes[d.value]++;
+        
         send({ action: 'SURVEY_SYNC', data: currentSurvey });
         syncSurveyResults(currentSurvey);
     }
 
     function syncSurveyResults(data) {
         currentSurvey = data;
-        document.getElementById('total-votes').innerText = data.total;
         const resDiv = document.getElementById('results-display');
-        resDiv.innerHTML = '';
+        const msgDiv = document.getElementById('results-hidden-msg');
         
+        // 表示・非表示のロジック
+        if(role === 'student' && !data.showResults) {
+            resDiv.style.display = 'none';
+            msgDiv.style.display = 'block';
+            return;
+        } else {
+            resDiv.style.display = 'block';
+            msgDiv.style.display = 'none';
+        }
+
+        resDiv.innerHTML = `<div style="margin-bottom:5px;">計 ${data.total} 票</div>`;
         if(data.type === 'text') {
-            resDiv.innerHTML = `<div class="res-text-list">${data.votes.map(v => `<div>・${v}</div>`).reverse().join('')}</div>`;
+            resDiv.innerHTML += `<div class="res-text-list">${data.votes.map(v => `<div>・${v}</div>`).reverse().join('')}</div>`;
         } else {
             for(let opt in data.votes) {
                 const count = data.votes[opt];
                 const pct = data.total === 0 ? 0 : Math.round((count / data.total) * 100);
                 resDiv.innerHTML += `
                     <div style="font-size:0.8rem; display:flex; justify-content:space-between;"><span>${opt}</span><span>${count}票</span></div>
-                    <div class="res-bar-container"><div class="res-bar-fill" style="width:${pct}%"></div></div>
-                `;
+                    <div class="res-bar-container"><div class="res-bar-fill" style="width:${pct}%"></div></div>`;
             }
         }
     }
 
-    // --- その他基本機能 (タイマー/理解度等) ---
+    // --- その他基本機能 ---
+    document.getElementById('survey-submit-btn').onclick = function() {
+        const data = currentSurvey; let val;
+        if(data.type === 'text') val = document.getElementById('survey-ans-text').value;
+        else {
+            const checked = Array.from(document.querySelectorAll('input[name="sv-opt"]:checked')).map(i=>i.value);
+            if(!checked.length) return; val = (data.type === 'multi') ? checked : checked[0];
+        }
+        send({ action: 'SURVEY_VOTE', value: val });
+        this.disabled = true; this.innerText = "送信済み";
+    };
+
     function updateList() {
         const l = document.getElementById('student-list'); l.innerHTML = '';
-        for(let s in students) if(!students[s].isTeacher) l.innerHTML += `<div style="padding:5px; border-bottom:1px solid #eee;">👤 ${s}</div>`;
-        document.getElementById('count-p').innerText = Object.keys(students).filter(k=>!students[k].isTeacher).length;
+        const list = Object.keys(students).filter(k=>!students[k].isTeacher);
+        list.forEach(s => l.innerHTML += `<div style="padding:5px; border-bottom:1px solid #eee;">👤 ${s}</div>`);
+        document.getElementById('count-p').innerText = list.length;
     }
     function updateLevel() {
         let t=0, c=0; for(let s in students) if(!students[s].isTeacher){ t+=students[s].level; c++; }
@@ -338,10 +361,9 @@
     function sendMsg(){ const t=document.getElementById('msg-input').value; send({action:'MSG', sender:myName, text:t}); document.getElementById('msg-input').value=''; }
     function pickRandom(){
         const s=Object.keys(students).filter(k=>!students[k].isTeacher); if(!s.length) return;
-        const p=s[Math.floor(Math.random()*s.length)]; send({action:'MSG', sender:'SYSTEM', text:`🎯 <b>${p}</b> さん、指名されました！`});
+        const p=s[Math.floor(Math.random()*s.length)]; send({action:'MSG', sender:'SYSTEM', text:`🎯 指名: <b>${p}</b> さん`});
     }
-    function updateClock(){ document.getElementById('clock').innerText=new Date().toLocaleTimeString(); }
-    setInterval(updateClock,1000);
+    setInterval(()=>document.getElementById('clock').innerText=new Date().toLocaleTimeString(), 1000);
 </script>
 </body>
 </html>
