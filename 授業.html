@@ -2,308 +2,230 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>授業支援システム - アンケート形式選択版</title>
+    <title>リアルタイム授業システム + アンケート機能</title>
     <style>
         :root {
             --teacher-color: #2c3e50;
             --student-color: #27ae60;
             --bg: #f4f7f6;
-            --accent: #3498db;
+            --accent: #e67e22;
         }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; background: var(--bg); color: #333; display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
         
-        header { padding: 12px 20px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        header { padding: 15px 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
         .teacher-mode { background: var(--teacher-color); }
         .student-mode { background: var(--student-color); }
 
-        .container { display: grid; grid-template-columns: 1fr 320px; gap: 20px; padding: 20px; flex-grow: 1; overflow-y: auto; }
-        .panel { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .container { display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px; flex-grow: 1; overflow-y: auto; }
+
+        .panel { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
         .only-teacher, .only-student { display: none; }
         body.is-teacher .only-teacher { display: block; }
         body.is-student .only-student { display: block; }
 
-        /* アンケート設定エリア */
-        .config-row { margin-bottom: 15px; }
-        label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9rem; }
-        select, input[type="text"], textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        /* アンケート表示エリア */
+        .survey-container { background: #ebf5fb; border: 2px solid #3498db; border-radius: 10px; padding: 15px; margin-top: 10px; }
+        .survey-option-btn { display: block; width: 100%; padding: 10px; margin: 5px 0; background: white; border: 1px solid #3498db; border-radius: 5px; cursor: pointer; text-align: left; }
+        .survey-option-btn:hover { background: #d4e6f1; }
         
-        /* グラフと回答リスト */
-        .result-item { margin-bottom: 10px; }
-        .bar-container { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; }
-        .bar-fill { background: var(--accent); height: 100%; width: 0%; transition: width 0.4s; }
-        #text-responses { background: #f9f9f9; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto; list-style: none; padding: 0; }
-        #text-responses li { padding: 8px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        /* グラフ表示 */
+        .result-bar-bg { background: #eee; height: 20px; border-radius: 10px; margin: 5px 0 15px 0; overflow: hidden; }
+        .result-bar-fill { background: #3498db; height: 100%; width: 0%; transition: width 0.5s; }
 
-        /* 生徒回答エリア */
-        .survey-card { border: 2px solid var(--accent); padding: 15px; border-radius: 10px; background: #f0f8ff; }
-        .option-label { display: block; padding: 10px; background: white; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 5px; cursor: pointer; }
-        .option-label:hover { background: #eef; }
-
-        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; background: var(--accent); }
-        button:hover { opacity: 0.9; }
-        .btn-green { background: #27ae60; }
-        .btn-red { background: #e74c3c; }
-
-        #timer-display { font-size: 2.5rem; font-weight: bold; text-align: center; color: #e74c3c; margin: 10px 0; }
+        #timer-display { font-size: 2.5rem; font-weight: bold; text-align: center; color: #e74c3c; }
+        textarea { width: 100%; height: 150px; font-size: 16px; margin-top: 10px; padding: 10px; box-sizing: border-box; }
+        button { padding: 8px 15px; cursor: pointer; border: none; border-radius: 4px; background: #3498db; color: white; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body id="main-body">
 
 <header id="header">
     <div>
-        <strong id="role-label">Mode</strong>
-        <button class="only-teacher" onclick="copyStudentURL()" style="margin-left:15px; background:rgba(255,255,255,0.2); font-size: 0.8rem;">生徒用URLをコピー</button>
+        <span id="role-label">モード確認中...</span>
+        <button class="only-teacher" onclick="copyStudentURL()" style="background: #f39c12; margin-left: 10px;">🔗 生徒用URLをコピー</button>
     </div>
     <div id="clock">00:00:00</div>
 </header>
 
 <main class="container">
-    <div class="main-content">
-        <!-- アンケート機能パネル -->
+    <div>
+        <!-- 連絡事項 -->
         <div class="panel">
-            <h2 style="margin-top:0;">📊 アンケート</h2>
+            <strong>📢 先生からの連絡:</strong>
+            <div id="current-msg" style="font-size: 1.2rem; margin-top:10px; color: #2c3e50;">まだ連絡はありません。</div>
+        </div>
+
+        <!-- アンケートエリア -->
+        <div class="panel">
+            <h3>📊 リアルタイム・アンケート</h3>
             
-            <!-- 教員用：アンケート作成 -->
+            <!-- 教員用：作成画面 -->
             <div class="only-teacher">
-                <div class="config-row">
-                    <label>形式を選択</label>
-                    <select id="survey-type" onchange="toggleSurveyInputs()">
-                        <option value="single">単一選択（ラジオボタン）</option>
-                        <option value="multiple">複数選択（チェックボックス）</option>
-                        <option value="text">自由記述（テキスト入力）</option>
-                    </select>
+                <input type="text" id="survey-q" placeholder="質問文を入力" style="width: 100%; margin-bottom: 10px; padding: 5px;">
+                <div id="survey-options-input">
+                    <input type="text" class="opt-in" placeholder="選択肢1" style="width: 45%;">
+                    <input type="text" class="opt-in" placeholder="選択肢2" style="width: 45%;">
+                    <input type="text" class="opt-in" placeholder="選択肢3" style="width: 45%;">
+                    <input type="text" class="opt-in" placeholder="選択肢4" style="width: 45%;">
                 </div>
-                <div class="config-row">
-                    <label>質問</label>
-                    <input type="text" id="survey-q" placeholder="例：この問題の答えはわかりますか？">
-                </div>
-                <div id="options-config-area">
-                    <label>選択肢（カンマ区切り、または各行に入力）</label>
-                    <textarea id="survey-options" placeholder="はい&#13;&#10;いいえ&#13;&#10;どちらでもない" rows="3"></textarea>
-                </div>
-                <button onclick="broadcastSurvey()" class="btn-green">アンケートを配信する</button>
-                <button onclick="resetSurvey()" class="btn-red">終了・リセット</button>
+                <button onclick="startSurvey()" style="margin-top: 10px; background: #27ae60;">アンケート開始</button>
+                <button onclick="resetSurvey()" style="margin-top: 10px; background: #95a5a6;">リセット</button>
 
-                <div id="result-area" style="margin-top:20px; display:none;">
-                    <strong>集計結果 (<span id="vote-count">0</span>件):</strong>
-                    <div id="choices-results" class="only-choice"></div>
-                    <ul id="text-responses" class="only-text" style="display:none;"></ul>
+                <div id="teacher-results" style="margin-top: 20px; display: none;">
+                    <strong>集計結果:</strong> <span id="total-votes">0</span> 票
+                    <div id="results-display"></div>
                 </div>
             </div>
 
-            <!-- 生徒用：アンケート回答 -->
-            <div class="only-student" id="student-survey-container">
-                <p id="wait-msg">現在、アンケートは実施されていません。</p>
-                <div id="survey-ui" class="survey-card" style="display:none;">
-                    <h3 id="display-q">質問内容</h3>
-                    <div id="display-options"></div>
-                    <button id="submit-survey-btn" onclick="submitAnswer()" style="margin-top:10px; width:100%;">回答を送信する</button>
-                </div>
+            <!-- 生徒用：回答画面 -->
+            <div class="only-student" id="student-survey-area">
+                <p id="student-survey-q">現在、アンケートは実施されていません。</p>
+                <div id="student-survey-options"></div>
             </div>
         </div>
 
-        <div class="panel only-student">
-            <h3>📝 授業ノート</h3>
-            <textarea id="student-note" style="height: 200px;" placeholder="自分だけのメモ帳です..."></textarea>
-        </div>
-
+        <!-- 教員用コントロール -->
         <div class="panel only-teacher">
-            <h3>📢 クラス全体へのメッセージ送信</h3>
-            <input type="text" id="teacher-msg" placeholder="例：教科書120ページを開いてください">
-            <button onclick="sendGlobalMsg()" style="margin-top:10px;">送信</button>
+            <h3>🛠 授業操作</h3>
+            <input type="text" id="msg-input" placeholder="連絡事項を入力..." style="width: 70%;">
+            <button onclick="sendMessage()">送信</button>
+            <hr>
+            タイマー：<input type="number" id="timer-min" value="45" style="width: 50px;"> 分
+            <button onclick="syncTimer()">開始</button>
+        </div>
+
+        <!-- 生徒用ノート -->
+        <div class="panel only-student">
+            <h3>📝 自分用メモ (自動保存)</h3>
+            <textarea id="student-note" placeholder="メモを入力..."></textarea>
         </div>
     </div>
 
-    <!-- サイドバー -->
+    <!-- 右サイドバー -->
     <aside>
         <div class="panel">
-            <h3>⏰ 残り時間</h3>
+            <h3>残り時間</h3>
             <div id="timer-display">45:00</div>
-            <div class="only-teacher">
-                <input type="number" id="timer-min" value="45" style="width:60px;"> 分
-                <button onclick="startTimerSync()">開始</button>
-            </div>
         </div>
         <div class="panel">
-            <div id="announcement" style="background:#fff9c4; padding:10px; border-left:4px solid #f1c40f; font-weight:bold;">
-                連絡: なし
+            <h3>ToDo / 質問リスト</h3>
+            <ul id="todo-list" style="padding-left: 20px;"></ul>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="todo-input" style="width: 100%;">
+                <button onclick="addTodo()">+</button>
             </div>
         </div>
     </aside>
 </main>
 
 <script>
-    const channel = new BroadcastChannel('mega_class_channel');
-    const params = new URLSearchParams(window.location.search);
-    const isStudent = params.get('role') === 'student';
+    const channel = new BroadcastChannel('advanced_class_room');
+    const urlParams = new URLSearchParams(window.location.search);
+    const isStudent = urlParams.get('role') === 'student';
     
-    // UI初期化
+    // 初期設定
     if (isStudent) {
         document.body.classList.add('is-student');
         document.getElementById('header').classList.add('student-mode');
-        document.getElementById('role-label').innerText = "👨‍🎓 生徒用画面";
+        document.getElementById('role-label').innerText = "生徒モード";
         const note = document.getElementById('student-note');
-        note.value = localStorage.getItem('class_note_cache') || '';
-        note.oninput = () => localStorage.setItem('class_note_cache', note.value);
+        note.value = localStorage.getItem('my_class_note') || '';
+        note.oninput = () => localStorage.setItem('my_class_note', note.value);
     } else {
         document.body.classList.add('is-teacher');
         document.getElementById('header').classList.add('teacher-mode');
-        document.getElementById('role-label').innerText = "👨‍🏫 教員用画面";
+        document.getElementById('role-label').innerText = "教員モード";
     }
 
-    // 教員：入力欄の出し分け
-    function toggleSurveyInputs() {
-        const type = document.getElementById('survey-type').value;
-        document.getElementById('options-config-area').style.display = (type === 'text') ? 'none' : 'block';
-    }
+    // --- アンケートロジック ---
+    let voteCounts = [0, 0, 0, 0];
+    let surveyOptions = [];
 
-    // 教員：アンケート配信
-    let currentSurveyData = { type: '', options: [], votes: [], texts: [] };
-
-    function broadcastSurvey() {
-        const type = document.getElementById('survey-type').value;
+    function startSurvey() {
         const question = document.getElementById('survey-q').value;
-        const optionsRaw = document.getElementById('survey-options').value.split(/\n|,/).filter(s => s.trim() !== "");
+        const inputs = document.querySelectorAll('.opt-in');
+        surveyOptions = Array.from(inputs).map(i => i.value).filter(v => v !== "");
         
-        if (!question) return alert("質問を入力してください");
+        if (!question || surveyOptions.length < 2) {
+            alert("質問と2つ以上の選択肢を入力してください。");
+            return;
+        }
 
-        currentSurveyData = { type, question, options: optionsRaw, votes: new Array(optionsRaw.length).fill(0), texts: [], count: 0 };
-        channel.postMessage({ action: 'SURVEY_START', data: currentSurveyData });
+        voteCounts = new Array(surveyOptions.length).fill(0);
+        channel.postMessage({ type: 'SURVEY_START', question, options: surveyOptions });
         
-        showResultsUI();
+        showTeacherResults();
+        alert("アンケートを配信しました。");
     }
 
     function resetSurvey() {
-        if(!confirm("アンケートを終了してリセットしますか？")) return;
-        channel.postMessage({ action: 'SURVEY_RESET' });
-        location.reload();
+        channel.postMessage({ type: 'SURVEY_RESET' });
+        location.reload(); // 簡易的にリセット
     }
 
-    // 教員：結果表示の更新
-    function showResultsUI() {
-        const resArea = document.getElementById('result-area');
-        resArea.style.display = 'block';
-        document.getElementById('vote-count').innerText = currentSurveyData.count;
+    function showTeacherResults() {
+        document.getElementById('teacher-results').style.display = 'block';
+        const display = document.getElementById('results-display');
+        display.innerHTML = '';
+        const total = voteCounts.reduce((a, b) => a + b, 0);
+        document.getElementById('total-votes').innerText = total;
 
-        if (currentSurveyData.type === 'text') {
-            document.querySelector('.only-choice').style.display = 'none';
-            document.querySelector('.only-text').style.display = 'block';
-        } else {
-            document.querySelector('.only-choice').style.display = 'block';
-            document.querySelector('.only-text').style.display = 'none';
-            
-            const container = document.getElementById('choices-results');
+        surveyOptions.forEach((opt, i) => {
+            const percent = total === 0 ? 0 : Math.round((voteCounts[i] / total) * 100);
+            display.innerHTML += `
+                <div>${opt} (${voteCounts[i]}票)</div>
+                <div class="result-bar-bg"><div class="result-bar-fill" style="width:${percent}%"></div></div>
+            `;
+        });
+    }
+
+    // --- 通信受信処理 ---
+    channel.onmessage = (e) => {
+        const { type, question, options, endTime, data, optionIndex } = e.data;
+
+        if (type === 'SURVEY_START' && isStudent) {
+            document.getElementById('student-survey-q').innerText = "❓ " + question;
+            const container = document.getElementById('student-survey-options');
             container.innerHTML = '';
-            currentSurveyData.options.forEach((opt, i) => {
-                const count = currentSurveyData.votes[i];
-                const percent = currentSurveyData.count === 0 ? 0 : Math.round((count / currentSurveyData.count) * 100);
-                container.innerHTML += `
-                    <div class="result-item">
-                        <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                            <span>${opt}</span><span>${count}票 (${percent}%)</span>
-                        </div>
-                        <div class="bar-container"><div class="bar-fill" style="width:${percent}%"></div></div>
-                    </div>
-                `;
+            options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'survey-option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    channel.postMessage({ type: 'SURVEY_VOTE', optionIndex: i });
+                    container.innerHTML = '<p style="color:green;">✅ 回答を送信しました。集計を待ってください。</p>';
+                };
+                container.appendChild(btn);
             });
         }
-    }
 
-    // --- 通信ハンドラ ---
-    channel.onmessage = (e) => {
-        const { action, data, index, text, endTime } = e.data;
-
-        // 生徒側：アンケート開始を受信
-        if (action === 'SURVEY_START' && isStudent) {
-            document.getElementById('wait-msg').style.display = 'none';
-            const ui = document.getElementById('survey-ui');
-            ui.style.display = 'block';
-            document.getElementById('display-q').innerText = data.question;
-            const optContainer = document.getElementById('display-options');
-            optContainer.innerHTML = '';
-
-            if (data.type === 'text') {
-                optContainer.innerHTML = `<textarea id="answer-text" rows="3" placeholder="回答を入力してください"></textarea>`;
-            } else {
-                data.options.forEach((opt, i) => {
-                    const inputType = (data.type === 'single') ? 'radio' : 'checkbox';
-                    optContainer.innerHTML += `
-                        <label class="option-label">
-                            <input type="${inputType}" name="student-ans" value="${i}"> ${opt}
-                        </label>
-                    `;
-                });
-            }
-            document.getElementById('submit-survey-btn').disabled = false;
-            document.getElementById('submit-survey-btn').innerText = "回答を送信する";
+        if (type === 'SURVEY_VOTE' && !isStudent) {
+            voteCounts[optionIndex]++;
+            showTeacherResults();
         }
 
-        // 教員側：生徒からの回答を受信
-        if (action === 'SURVEY_SUBMIT' && !isStudent) {
-            currentSurveyData.count++;
-            if (currentSurveyData.type === 'text') {
-                const li = document.createElement('li');
-                li.innerText = text;
-                document.getElementById('text-responses').prepend(li);
-            } else {
-                // indexは単一なら数値、複数なら配列で届く
-                if (Array.isArray(index)) {
-                    index.forEach(i => currentSurveyData.votes[i]++);
-                } else {
-                    currentSurveyData.votes[index]++;
-                }
-            }
-            showResultsUI();
+        if (type === 'SURVEY_RESET' && isStudent) {
+            document.getElementById('student-survey-q').innerText = "アンケートは終了しました。";
+            document.getElementById('student-survey-options').innerHTML = '';
         }
 
-        if (action === 'SURVEY_RESET') {
-            if (isStudent) {
-                document.getElementById('survey-ui').style.display = 'none';
-                document.getElementById('wait-msg').style.display = 'block';
-                document.getElementById('wait-msg').innerText = "アンケートは終了しました。";
-            }
-        }
-
-        if (action === 'MSG') document.getElementById('announcement').innerText = "連絡: " + data;
-        if (action === 'TIMER') startTimer(endTime);
+        if (type === 'MESSAGE') document.getElementById('current-msg').innerText = data;
+        if (type === 'TIMER') startTimer(endTime);
     };
 
-    // 生徒：回答送信
-    function submitAnswer() {
-        const type = document.getElementById('survey-type') ? 'teacher_ignore' : 'detect_from_ui';
-        // 生徒側で現在の形式を判別（UIの状態から）
-        const textInput = document.getElementById('answer-text');
-        const checkedInputs = document.querySelectorAll('input[name="student-ans"]:checked');
-
-        let payload = { action: 'SURVEY_SUBMIT' };
-
-        if (textInput) {
-            payload.text = textInput.value;
-        } else if (checkedInputs.length > 0) {
-            const indices = Array.from(checkedInputs).map(i => parseInt(i.value));
-            // 単一選択なら数値、複数なら配列
-            payload.index = (indices.length === 1 && document.querySelector('input[type="radio"]')) ? indices[0] : indices;
-        } else {
-            return alert("回答を選択・入力してください");
-        }
-
-        channel.postMessage(payload);
-        document.getElementById('submit-survey-btn').disabled = true;
-        document.getElementById('submit-survey-btn').innerText = "送信済み";
+    // --- その他基本機能 ---
+    function sendMessage() {
+        const msg = document.getElementById('msg-input').value;
+        channel.postMessage({ type: 'MESSAGE', data: msg });
+        document.getElementById('current-msg').innerText = msg;
     }
 
-    // 共通：その他機能
-    function sendGlobalMsg() {
-        const msg = document.getElementById('teacher-msg').value;
-        channel.postMessage({ action: 'MSG', data: msg });
-        document.getElementById('announcement').innerText = "連絡: " + msg;
-    }
-
-    function startTimerSync() {
+    function syncTimer() {
         const mins = document.getElementById('timer-min').value;
         const endTime = Date.now() + mins * 60000;
-        channel.postMessage({ action: 'TIMER', endTime });
+        channel.postMessage({ type: 'TIMER', endTime });
         startTimer(endTime);
     }
 
@@ -326,13 +248,22 @@
     function copyStudentURL() {
         const url = window.location.origin + window.location.pathname + "?role=student";
         navigator.clipboard.writeText(url);
-        alert("生徒用URLをコピーしました。");
+        alert("生徒用URLをコピーしました。新しいタブで開いてください。");
     }
 
-    setInterval(() => {
+    function updateClock() {
         document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-    }, 1000);
-</script>
+    }
+    setInterval(updateClock, 1000);
 
+    function addTodo() {
+        const input = document.getElementById('todo-input');
+        if (!input.value) return;
+        const li = document.createElement('li');
+        li.innerHTML = `<input type="checkbox"> ${input.value}`;
+        document.getElementById('todo-list').appendChild(li);
+        input.value = '';
+    }
+</script>
 </body>
 </html>
