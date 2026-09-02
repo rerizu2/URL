@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lecture DX v25.0 | Ultimate Sovereign OS</title>
+    <title>Lecture DX Ultimate v24.0 | Sovereign Command OS</title>
     
-    <!-- PeerJS: クロスデバイス・リアルタイムP2P通信 -->
+    <!-- PeerJS: クロスデバイス・リアルタイム通信用 -->
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     
     <style>
         /* 
            =============================================================
-           1. CORE DESIGN SYSTEM (Enterprise SaaS Interface)
+           1. DESIGN SYSTEM (Premium SaaS Dark UI)
            ============================================================= 
         */
         :root {
@@ -23,8 +23,8 @@
             --bg-sidebar: #0f121d;
             --bg-panel: #161b2c;
             --bg-card: #202638;
-            --bg-input: #0a0c14;
             --bg-hover: #2d3654;
+            --bg-input: #0a0c14;
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --text-dim: #475569;
@@ -41,9 +41,9 @@
         }
 
         * { box-sizing: border-box; -webkit-font-smoothing: antialiased; margin: 0; padding: 0; outline: none; border: none; }
-        html, body { height: 100%; overflow: hidden; background: var(--bg-base); color: var(--text-main); font-family: 'Inter', -apple-system, sans-serif; }
+        html, body { height: 100%; overflow: hidden; background: var(--bg-deep); color: var(--text-main); font-family: 'Inter', -apple-system, system-ui, sans-serif; }
 
-        /* スクロールバー */
+        /* スクロールバー美化 */
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--text-dim); border-radius: 10px; }
@@ -51,7 +51,7 @@
 
         /* 
            =============================================================
-           2. AUTHENTICATION GATEWAY
+           2. AUTHENTICATION (Ephemeral Gateway)
            ============================================================= 
         */
         #auth-overlay {
@@ -80,7 +80,7 @@
 
         /* 
            =============================================================
-           3. SHELL & SOVEREIGN NAVIGATION (REBUILT)
+           3. SHELL & NAVIGATION (Role-Based Access)
            ============================================================= 
         */
         .app-shell { display: none; height: 100vh; grid-template-columns: 96px 1fr; opacity: 0; transition: 1.2s; }
@@ -89,15 +89,17 @@
         /* サイドバー */
         nav.sidebar {
             background: var(--bg-sidebar); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; align-items: center; padding: 40px 0; gap: 32px;
+            display: flex; flex-direction: column; align-items: center; padding: 40px 0; gap: 24px;
             z-index: 1000;
         }
         .sidebar-logo { color: var(--primary); margin-bottom: 20px; font-weight: 900; font-size: 1.6rem; cursor: pointer; }
+        
+        /* 教員ボタン専用アニメーション */
         .nav-item {
             width: 62px; height: 62px; border-radius: 22px; display: flex; align-items: center; justify-content: center;
-            color: var(--text-sub); cursor: pointer; transition: 0.3s; position: relative;
+            color: var(--text-sub); cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;
         }
-        .nav-item:hover { background: var(--bg-hover); color: white; transform: translateY(-3px); }
+        .nav-item:hover { background: var(--bg-hover); color: white; transform: scale(1.1); }
         .nav-item.active { background: var(--primary); color: white; box-shadow: 0 10px 30px var(--primary-glow); }
         .nav-item::after {
             content: attr(data-label); position: absolute; left: 85px; background: var(--bg-card); color: white;
@@ -114,24 +116,27 @@
             border-bottom: 1px solid var(--border); background: rgba(12, 15, 26, 0.7); backdrop-filter: blur(25px); z-index: 50;
         }
         .header-left { display: flex; align-items: center; gap: 20px; }
-        .badge { padding: 6px 16px; border-radius: 8px; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; border: 1px solid var(--border); }
+        .role-badge { padding: 6px 16px; border-radius: 8px; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; border: 1px solid var(--border); }
         .badge-teacher { background: var(--primary-glow); color: var(--primary-light); border-color: var(--primary); }
         .badge-student { background: rgba(16, 185, 129, 0.1); color: var(--secondary); border-color: var(--secondary); }
 
-        /* ワークスペース */
-        .workspace { flex: 1; position: relative; padding: 25px; overflow: hidden; display: grid; grid-template-columns: 1fr 360px; gap: 25px; }
-        @media (max-width: 1200px) { .workspace { grid-template-columns: 1fr; } .side-panel { display: none; } }
+        /* 
+           =============================================================
+           4. VIEWPORT SYSTEM (Multi-Pane)
+           ============================================================= 
+        */
+        .workspace { flex: 1; position: relative; padding: 25px; overflow: hidden; display: flex; flex-direction: column; gap: 20px; }
 
         .pane-stage { flex: 1; position: relative; overflow: hidden; }
         .pane {
             position: absolute; inset: 0; display: none; flex-direction: column;
-            animation: paneIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            animation: paneIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
         .pane.active { display: flex; }
         @keyframes paneIn { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        /* カードデザイン */
-        .glass-card {
+        /* Component Cards */
+        .glass-panel {
             background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-xl);
             display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-xl); height: 100%;
         }
@@ -140,24 +145,25 @@
 
         /* 
            =============================================================
-           4. SHARED SYSTEM (STREAM & SURVEY)
+           5. SYSTEM OVERLAYS (SCREEN, SURVEY, PUSH)
            ============================================================= 
         */
-        #video-streaming-module {
+        /* 画面共有 */
+        #video-streaming-box {
             background: #000; border-radius: var(--radius-lg); margin-bottom: 25px;
             display: none; position: relative; overflow: hidden; aspect-ratio: 16/9;
             max-height: 48vh; box-shadow: 0 40px 100px rgba(0,0,0,0.7);
         }
         #shared-video-element { width: 100%; height: 100%; object-fit: contain; }
-        .live-tag {
+        .live-label {
             position: absolute; top: 20px; left: 20px; background: var(--danger);
             color: white; padding: 8px 18px; border-radius: 8px; font-size: 0.8rem; font-weight: 900;
             display: flex; align-items: center; gap: 10px; z-index: 10;
         }
-        .live-tag::before { content: ''; width: 10px; height: 10px; background: white; border-radius: 50%; animation: livePulse 1.2s infinite; }
-        @keyframes livePulse { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
+        .live-label::before { content: ''; width: 10px; height: 10px; background: white; border-radius: 50%; animation: livePulse 1.2s infinite; }
+        @keyframes livePulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.2; transform: scale(1.4); } 100% { opacity: 1; transform: scale(1); } }
 
-        /* アンケート (ポップアップ) */
+        /* アンケート割り込みオーバーレイ */
         #survey-push-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(25px);
             display: none; align-items: center; justify-content: center; z-index: 10000;
@@ -167,46 +173,40 @@
             width: min(90vw, 650px); padding: 50px; box-shadow: var(--shadow-xl); animation: surveyPop 0.6s cubic-bezier(0.17, 0.84, 0.44, 1);
         }
         .sv-push-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 35px; line-height: 1.3; color: white; text-align: center; }
-        .sv-push-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
-        .sv-push-btn {
+        .push-opt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
+        .push-opt-btn {
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
             color: white; padding: 22px; text-align: left; cursor: pointer; transition: var(--transition);
             font-weight: 700; font-size: 1.15rem;
         }
-        .sv-push-btn:hover { background: var(--primary); transform: translateY(-5px); box-shadow: 0 15px 30px var(--primary-glow); }
+        .push-opt-btn:hover { background: var(--primary); transform: translateY(-5px); box-shadow: 0 15px 30px var(--primary-glow); }
 
         /* 
            =============================================================
-           5. NOTE & MASTER SYNC SYSTEM
+           6. TOOLS (SKETCH, NOTE, SYNC)
            ============================================================= 
         */
-        .note-tabs { display: flex; background: var(--bg-base); padding: 4px; border-radius: var(--radius-md); margin-bottom: 20px; }
-        .note-tab-btn {
-            flex: 1; padding: 12px; border: none; background: transparent; color: var(--text-sub);
-            font-size: 0.8rem; font-weight: 800; cursor: pointer; border-radius: 8px; transition: 0.2s;
-        }
-        .note-tab-btn.active { background: var(--bg-panel); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-
-        #note-editor-master { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 1.1rem; line-height: 1.9; resize: none; outline: none; padding: 10px; }
-        #note-editor-personal { flex: 1; background: transparent; border: none; color: var(--text-main); font-size: 1.1rem; line-height: 1.9; resize: none; outline: none; padding: 10px; }
-        
-        .sync-badge { font-size: 0.65rem; color: var(--secondary); font-weight: 800; border: 1px solid var(--secondary); padding: 2px 6px; border-radius: 4px; }
-
-        /* 
-           =============================================================
-           6. SKETCH ENGINE
-           ============================================================= 
-        */
-        #sketch-engine-box { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        #sketch-engine-container { flex: 1; display: flex; flex-direction: column; gap: 20px; }
         #canvas-board { background: #ffffff; border-radius: var(--radius-md); flex: 1; cursor: crosshair; touch-action: none; }
         .canvas-toolbar {
             padding: 20px 30px; background: var(--bg-sidebar); display: flex; align-items: center; gap: 30px;
             border-bottom: 1px solid var(--border); border-radius: var(--radius-lg); flex-wrap: wrap;
         }
 
+        .note-editor {
+            flex: 1; background: transparent; border: none; color: var(--text-main);
+            font-size: 1.1rem; line-height: 1.9; resize: none; outline: none; padding: 0;
+        }
+
+        /* 集計グラフ */
+        .stat-row { margin-bottom: 20px; }
+        .stat-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px; font-weight: 700; color: var(--text-sub); }
+        .stat-bar-track { height: 12px; background: var(--bg-deep); border-radius: 6px; overflow: hidden; }
+        .stat-bar-fill { height: 100%; background: var(--primary); width: 0; transition: width 1.5s cubic-bezier(0.19, 1, 0.22, 1); }
+
         /* 
            =============================================================
-           7. BUTTONS & UI MODULES
+           7. INTERACTION & UTILS
            ============================================================= 
         */
         .btn {
@@ -221,12 +221,13 @@
         .btn-ghost:hover { background: var(--bg-hover); color: white; }
         .btn-danger { background: var(--danger); }
         .btn-warning { background: var(--warning); }
+        .btn-sm { padding: 8px 18px; font-size: 0.8rem; }
 
         input, select, textarea {
             width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md);
             padding: 18px; color: white; font-size: 1rem; outline: none; transition: var(--transition);
         }
-        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
 
         .only-teacher, .only-student { display: none !important; }
         body.is-teacher .only-teacher { display: flex !important; }
@@ -234,8 +235,8 @@
         body.is-student .only-student { display: flex !important; }
 
         #reaction-layer { position: fixed; inset: 0; pointer-events: none; z-index: 15000; overflow: hidden; }
-        .floating-emoji {
-            position: absolute; bottom: -100px; font-size: 5.5rem; 
+        .emoji-fly {
+            position: absolute; bottom: -100px; font-size: 5rem; 
             animation: riseFade 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
         @keyframes riseFade {
@@ -244,160 +245,153 @@
             100% { transform: translateY(-95vh) scale(1.1); opacity: 0; }
         }
 
-        .timer-huge { font-size: 13rem; font-weight: 900; font-family: var(--font-mono); color: var(--danger); text-shadow: 0 0 60px rgba(244, 63, 94, 0.4); margin: 40px 0; }
+        .timer-huge { font-size: 14rem; font-weight: 900; font-family: var(--font-mono); color: var(--danger); text-shadow: 0 0 60px rgba(244, 63, 94, 0.4); margin: 40px 0; }
         .student-chip {
             background: var(--bg-card); padding: 15px 20px; border-radius: 14px;
             display: flex; justify-content: space-between; align-items: center;
             border: 1px solid transparent; transition: 0.4s; margin-bottom: 12px;
         }
-        .student-chip.is-hand-raised { border-color: var(--warning); background: rgba(245, 158, 11, 0.15); box-shadow: 0 0 25px rgba(245, 158, 11, 0.2); }
+        .student-chip.hand-alert { border-color: var(--warning); background: rgba(245, 158, 11, 0.1); box-shadow: 0 0 25px rgba(245, 158, 11, 0.2); }
     </style>
 </head>
 <body>
 
-<!-- [SYSTEM] 認証画面 -->
+<!-- [GAWAY] 入室ゲートウェイ -->
 <div id="auth-overlay">
     <div class="auth-card">
         <div class="auth-logo">LECTURE DX</div>
-        <div class="auth-desc">Ultimate Sovereign OS v25.0</div>
+        <div class="auth-desc">Universal Learning Orchestrator v24.0</div>
         
-        <div class="input-box" id="auth-room-box">
+        <div class="input-box" id="auth-room-id-box">
             <label>6-DIGIT ROOM NUMBER</label>
             <input type="text" id="init-room-id" class="text-input" placeholder="000000" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
         </div>
         <div class="input-box">
             <label>DISPLAY NAME</label>
-            <input type="text" id="init-user-name" class="text-input" placeholder="あなたの名前を入力">
+            <input type="text" id="init-user-name" class="text-input" placeholder="表示名を入力してください">
         </div>
         
         <div class="auth-btn-grid">
-            <button class="btn btn-ghost" id="ignite-stud-btn" onclick="app.ignition('student')">生徒として入室</button>
-            <button class="btn btn-primary" id="ignite-teach-btn" onclick="app.ignition('teacher')">教員として開始</button>
+            <button class="btn btn-ghost" id="btn-ignition-student" onclick="app.ignition('student')">生徒として入室</button>
+            <button class="btn btn-primary" id="btn-ignition-teacher" onclick="app.ignition('teacher')">教員として開始</button>
         </div>
-        <p id="auth-log-msg" style="margin-top:30px; font-size:0.75rem; color:var(--text-dim); font-weight:800; text-transform:uppercase;"></p>
+        <p id="auth-status-log" style="margin-top:30px; font-size:0.75rem; color:var(--text-dim); font-weight:800; text-transform:uppercase;"></p>
     </div>
 </div>
 
 <div id="reaction-layer"></div>
 
-<!-- [SYSTEM] アンケートプッシュ -->
+<!-- [PUSH] アンケート割り込みオーバーレイ (生徒) -->
 <div id="survey-push-overlay">
     <div class="survey-push-card">
-        <div id="sv-push-q-label" class="sv-push-title">QUESTION RECEIVED</div>
-        <div id="sv-push-options-area" class="sv-push-grid"></div>
-        <p style="margin-top:30px; text-align:center; color:var(--text-dim); font-size:0.85rem;">※回答を選択すると自動的にこの画面は閉じられます。</p>
+        <div id="sv-push-q-title" class="push-q-title">QUESTION RECEIVED</div>
+        <div id="sv-push-options-render" class="push-options-grid"></div>
+        <p style="margin-top:30px; text-align:center; color:var(--text-dim); font-size:0.85rem;">※回答を選択すると自動的に元のツール画面に戻ります。</p>
     </div>
 </div>
 
-<!-- [MAIN OS SHELL] -->
+<!-- [MAIN SHELL] アプリケーション本体 -->
 <div class="app-shell" id="app-shell">
     
-    <!-- サイドバー：教員・生徒の役割に応じて表示・機能を制御 -->
+    <!-- サイドバー・ナビゲーション -->
     <nav class="sidebar">
         <div class="sidebar-logo">LDX</div>
         
-        <!-- 【全ロール共通】 -->
+        <!-- [1] 授業ノート -->
         <div class="nav-item active" id="nav-note" data-label="授業ノート" onclick="app.switchPane('note')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
         </div>
         
+        <!-- [2] スケッチボード -->
         <div class="nav-item" id="nav-sketch" data-label="スケッチボード" onclick="app.switchPane('sketch')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 5 5"/></svg>
         </div>
 
-        <!-- 【教員専用メニュー】 -->
+        <!-- [3] アンケート管理 (教員のみ) -->
         <div class="nav-item only-teacher" id="nav-survey" data-label="アンケート管理" onclick="app.switchPane('survey')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
         </div>
         
+        <!-- [4] 精密タイマー (教員のみ) -->
         <div class="nav-item only-teacher" id="nav-timer" data-label="精密タイマー" onclick="app.switchPane('timer')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
         </div>
         
-        <div class="nav-item only-teacher" id="nav-admin" data-label="管理パネル" onclick="app.switchPane('admin')">
+        <!-- [5] 出席・共有設定 (教員のみ) -->
+        <div class="nav-item only-teacher" id="nav-admin" data-label="クラス管理・統計" onclick="app.switchPane('admin')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
 
-        <div style="margin-top:auto" class="nav-item" data-label="サウンド有効化" onclick="app.unlockAudio()">
+        <div style="margin-top:auto" class="nav-item" data-label="サウンドON" onclick="app.unlockAudio()">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
         </div>
     </nav>
 
     <div class="content-container">
-        <!-- ヘッダー -->
+        <!-- 固定ヘッダー -->
         <header>
             <div class="header-left">
                 <span id="role-badge" class="badge">---</span>
                 <span id="room-display-id" style="font-size:0.9rem; font-weight:900; color:var(--text-sub); font-family:var(--font-mono); letter-spacing:2px;">#------</span>
-                <div id="p2p-dot" style="width:12px; height:12px; border-radius:50%; background:var(--secondary); box-shadow: 0 0 15px var(--secondary);"></div>
+                <div id="p2p-indicator" style="width:12px; height:12px; border-radius:50%; background:var(--secondary); box-shadow: 0 0 15px var(--secondary);"></div>
             </div>
             <div style="display:flex; gap:15px; align-items:center;">
-                <button class="only-teacher btn btn-ghost btn-sm" onclick="app.copyInviteUrl()">🔗 生徒を招待 (URLコピー)</button>
-                <button class="only-teacher btn btn-primary btn-sm" id="btn-share-trigger" onclick="app.toggleScreenShare()">🖥 画面共有開始</button>
+                <button class="only-teacher btn btn-ghost btn-sm" onclick="app.copyInviteUrl()">🔗 招待URLコピー</button>
+                <button class="only-teacher btn btn-primary btn-sm" id="btn-master-share" onclick="app.toggleScreenShare()">🖥 画面共有開始</button>
                 <div style="border-left: 1px solid var(--border); height:35px; margin:0 10px;"></div>
-                <span id="digital-clock-live" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight:bold; color:var(--primary-light);">00:00:00</span>
+                <span id="clock-digital-live" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight:bold; color:var(--primary-light);">00:00:00</span>
             </div>
         </header>
 
-        <!-- メインステージ -->
+        <!-- メインツールステージ -->
         <main class="workspace">
             
             <section class="pane-stage">
                 
-                <!-- 【共通】画面共有ビデオ配信 -->
+                <!-- 【共通オーバーレイ】教員ビデオ配信 -->
                 <div id="video-streaming-box">
-                    <div class="live-tag">TEACHER'S SCREEN LIVE</div>
+                    <div class="live-label">TEACHER'S SCREEN LIVE</div>
                     <video id="shared-video-element" autoplay playsinline></video>
                 </div>
 
-                <!-- ペイン 1: 授業ノート (教員＝マスター入力 / 生徒＝個人＋マスター同期) -->
+                <!-- [1] 授業ノート (教員専用/生徒共有) -->
                 <div id="pane-note" class="pane active">
                     <div class="glass-card">
                         <div class="pane-head">
-                            <span id="note-pane-title">📝 授業板書システム</span>
-                            <div style="display:flex; gap:15px; align-items:center;">
-                                <span class="sync-badge">REAL-TIME SYNC</span>
-                                <button class="btn btn-ghost btn-sm" onclick="app.exportNote()">TXT保存</button>
+                            <span id="note-label">ノート管理</span>
+                            <div style="display:flex; gap:10px;">
+                                <span class="only-teacher" style="font-size:0.6rem; color:var(--primary-light);">教員ノートは非公開です</span>
+                                <button class="btn btn-ghost btn-sm" onclick="app.exportNoteFile()">Export .txt</button>
                             </div>
                         </div>
                         <div class="pane-body" style="padding:0;">
-                            <!-- 生徒用タブ -->
-                            <div class="only-student note-tabs">
-                                <button id="tab-note-personal" class="note-tab-btn active" onclick="app.setNoteTab('personal')">自分専用メモ</button>
-                                <button id="tab-note-master" class="note-tab-btn" onclick="app.setNoteTab('master')">先生の板書ノート</button>
-                            </div>
-                            
-                            <!-- 教員：マスター入力 -->
-                            <textarea id="note-editor-master" class="only-teacher-block" spellcheck="false" placeholder="ここに書いた内容は全生徒にリアルタイムで共有されます..."></textarea>
-                            
-                            <!-- 生徒：個人用 -->
-                            <textarea id="note-editor-personal" class="only-student-block" spellcheck="false" placeholder="自分だけのメモを残しましょう（先生には見えません）..."></textarea>
-                            
-                            <!-- 生徒：教員ノート閲覧用 -->
-                            <div id="note-viewer-master" class="only-student-block" style="display:none; padding:30px; font-size:1.1rem; line-height:1.9; white-space:pre-wrap; color:var(--text-main); overflow-y:auto;">板書がまだありません。</div>
+                            <!-- 教員のみが表示されるプライベートノート、または生徒が見れる共有ノート -->
+                            <textarea id="main-note-editor" class="note-editor" spellcheck="false" placeholder="ここに授業の内容を記録してください..."></textarea>
                         </div>
                     </div>
                 </div>
 
-                <!-- ペイン 2: スケッチボード -->
+                <!-- [2] スケッチボード (教員専用/生徒プライベート) -->
                 <div id="pane-sketch" class="pane">
                     <div class="glass-card">
-                        <div class="pane-head"><span>🎨 クリエイティブ・スケッチボード</span></div>
-                        <div class="pane-body" style="padding:15px; display:flex; flex-direction:column;">
+                        <div class="pane-head">
+                            <span id="sketch-label">スケッチボード</span>
+                        </div>
+                        <div class="pane-body" style="padding:15px;">
                             <div id="sketch-engine-box">
                                 <div class="canvas-toolbar">
                                     <div style="display:flex; align-items:center; gap:10px;">
                                         <label style="font-size:0.65rem; font-weight:900;">COLOR</label>
-                                        <input type="color" id="sk-color-in" value="#6366f1" style="width:45px; height:45px; border:none; background:none; cursor:pointer;">
+                                        <input type="color" id="sk-color-picker" value="#6366f1" style="width:45px; height:45px; border:none; background:none; cursor:pointer;">
                                     </div>
                                     <div style="display:flex; align-items:center; gap:10px;">
-                                        <label style="font-size:0.65rem; font-weight:900;">PEN SIZE</label>
-                                        <input type="range" id="sk-size-in" min="1" max="150" value="8" style="width:150px;">
+                                        <label style="font-size:0.65rem; font-weight:900;">SIZE</label>
+                                        <input type="range" id="sk-size-slider" min="1" max="150" value="8" style="width:150px;">
                                     </div>
                                     <div style="flex:1"></div>
                                     <button class="btn btn-ghost btn-sm" onclick="app.canvasUndo()">UNDO</button>
                                     <button class="btn btn-ghost btn-sm" onclick="app.canvasClear()">CLEAR</button>
-                                    <button class="btn btn-primary btn-sm" onclick="app.saveCanvas()">PNG出力</button>
+                                    <button class="btn btn-primary btn-sm" onclick="app.saveCanvasImg()">SAVE PNG</button>
                                 </div>
                                 <canvas id="canvas-board"></canvas>
                             </div>
@@ -405,47 +399,47 @@
                     </div>
                 </div>
 
-                <!-- ペイン 3: 【教員】アンケート管理 -->
+                <!-- [3] 【教員】アンケート管理 -->
                 <div id="pane-survey" class="pane only-teacher-block">
                     <div class="glass-card">
                         <div class="pane-head">
-                            <span>📊 アンケート・マスター・コントロール</span>
+                            <span>📊 アンケート・集中配信センター</span>
                             <div style="display:flex; gap:10px;">
-                                <button class="btn btn-ghost btn-sm" id="sv-vis-btn" onclick="app.toggleSurveyVis()">結果を非公開にする</button>
+                                <button class="btn btn-ghost btn-sm" id="sv-vis-toggle-btn" onclick="app.toggleSurveyVis()">結果を非公開にする</button>
                                 <button class="btn btn-danger btn-sm" onclick="app.terminateSurvey()">終了</button>
                             </div>
                         </div>
                         <div class="pane-body" style="display:grid; grid-template-columns: 1fr 1fr; gap:40px;">
                             <div>
                                 <h4 style="margin-bottom:25px; color:var(--primary-light);">1. 新規配信設定</h4>
-                                <div class="input-box"><label>質問形式</label>
+                                <div class="input-box"><label>タイプ</label>
                                     <select id="adm-sv-type-in" onchange="app.onSurveyTypeChange()">
                                         <option value="single">単一選択</option><option value="multi">複数選択</option>
                                         <option value="scale">5段階評価</option><option value="text">記述式</option>
                                     </select>
                                 </div>
-                                <div class="input-box"><label>質問文</label><input type="text" id="adm-sv-q-in" placeholder="質問を入力..."></div>
+                                <div class="input-box"><label>質問文</label><input type="text" id="adm-sv-q-in" placeholder="例: 答えは何番ですか？"></div>
                                 <div class="input-box" id="adm-sv-opt-wrapper"><label>選択肢 (カンマ区切り)</label><input type="text" id="adm-sv-opt-in" placeholder="A, B, C, D"></div>
-                                <button class="btn btn-primary" style="width:100%; height:70px; font-size:1.2rem;" onclick="app.igniteSurvey()">配信開始</button>
+                                <button class="btn btn-primary" style="width:100%; height:70px; font-size:1.2rem;" onclick="app.igniteSurvey()">配信開始（全員プッシュ）</button>
                             </div>
                             <div style="background:var(--bg-card); padding:35px; border-radius:28px; border:1px solid var(--border);">
                                 <h4 style="color:var(--secondary); margin-bottom:20px;">2. リアルタイム・アナリティクス</h4>
-                                <div id="sv-votes-count-disp" style="font-weight:900; color:var(--primary); font-size:1.5rem; margin-bottom:25px;">0 VOTES RECEIVED</div>
+                                <div id="sv-votes-count-disp" style="font-weight:900; color:var(--primary); font-size:1.5rem; margin-bottom:25px;">0 VOTES</div>
                                 <div id="sv-results-render-area"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ペイン 4: 【教員】精密タイマー -->
+                <!-- [4] 【教員】精密タイマー -->
                 <div id="pane-timer" class="pane only-teacher-block">
                     <div class="glass-card">
                         <div class="pane-head"><span>⏰ 精密同期タイマー・コントロール</span></div>
                         <div class="pane-body" style="text-align:center; justify-content: center;">
-                            <div id="timer-huge-disp" class="timer-huge">00:00</div>
+                            <div id="timer-huge-display" class="timer-huge">00:00</div>
                             <div style="max-width:550px; margin:0 auto; display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
-                                <div class="input-box"><label>MINUTES</label><input type="number" id="t-min-in" value="45" class="text-input" style="font-size:3.5rem; text-align:center; height:120px;"></div>
-                                <div class="input-box"><label>SECONDS</label><input type="number" id="t-sec-in" value="0" class="text-input" style="font-size:3.5rem; text-align:center; height:120px;"></div>
+                                <div class="input-box"><label>MINUTES</label><input type="number" id="t-min-in" value="45" class="text-input" style="font-size:4rem; text-align:center; height:130px;"></div>
+                                <div class="input-box"><label>SECONDS</label><input type="number" id="t-sec-in" value="0" class="text-input" style="font-size:4rem; text-align:center; height:130px;"></div>
                             </div>
                             <div style="display:flex; gap:25px; max-width:550px; margin:40px auto 0;">
                                 <button class="btn btn-primary" style="flex:2; height:90px; font-size:1.8rem;" onclick="app.broadcastTimer()">SYNC START</button>
@@ -455,21 +449,30 @@
                     </div>
                 </div>
 
-                <!-- ペイン 5: 【教員】管理・統計 -->
+                <!-- [5] 【教員】出席簿・共有設定 -->
                 <div id="pane-admin" class="pane only-teacher-block">
                     <div class="glass-card">
-                        <div class="pane-head"><span>👥 管理・インテリジェンス統計</span></div>
+                        <div class="pane-head"><span>👥 出席管理・共有ノート・インテリジェンス</span></div>
                         <div class="pane-body">
                             <div style="display:grid; grid-template-columns: 1fr 400px; gap:40px;">
+                                <!-- 出席者リスト -->
                                 <div>
                                     <h4 style="margin-bottom:20px; color:var(--text-sub);">参加中メンバー (<span id="attendee-count">0</span>)</h4>
-                                    <div id="roster-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;"></div>
+                                    <div id="roster-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:15px;"></div>
+                                    
+                                    <div style="margin-top:40px;">
+                                        <h4 style="margin-bottom:15px;">🔗 共有ノートの配信設定</h4>
+                                        <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom:15px;">ここに書いた内容は生徒側の「共有ノート」タブに即座に送信されます。</p>
+                                        <textarea id="shared-note-editor" style="background:var(--bg-base); height:250px;" placeholder="生徒全員に共有するテキストを入力..."></textarea>
+                                        <button class="btn btn-primary btn-sm" style="margin-top:10px; width:100%" onclick="app.pushSharedNote()">共有内容を更新</button>
+                                    </div>
                                 </div>
-                                <div style="background:var(--bg-elevated); padding:40px; border-radius:32px; border:1px solid var(--border); height:fit-content;">
-                                    <h4 style="margin-bottom:30px; text-align:center; font-weight:900;">UNDERSTANDING RATIO</h4>
+                                <!-- クラス統計 -->
+                                <div style="background:var(--bg-elevated); padding:40px; border-radius:32px; border:1px solid var(--border); height:fit-content; position: sticky; top: 0;">
+                                    <h4 style="margin-bottom:30px; text-align:center; font-weight:900;">CLASS UNDERSTANDING</h4>
                                     <div id="avg-pct-huge" style="font-size:7rem; font-weight:900; color:var(--secondary); text-align:center; margin-bottom:20px;">100%</div>
-                                    <div style="height:20px; background:var(--bg-base); border-radius:10px; overflow:hidden;"><div id="avg-bar-final" style="width:100%; height:100%; background:var(--secondary); transition:1.2s ease;"></div></div>
-                                    <button class="btn btn-primary" style="width:100%; margin-top:40px; height:70px; font-size:1.3rem;" onclick="app.pickRoulette()">🎲 指名ルーレット</button>
+                                    <div class="stat-bar-track" style="height:25px; margin-bottom:30px;"><div id="avg-bar-final" class="stat-bar-fill" style="width:100%; background:var(--secondary);"></div></div>
+                                    <button class="btn btn-primary" style="width:100%; height:70px; font-size:1.3rem;" onclick="app.pickRoulette()">🎲 指名ルーレット</button>
                                 </div>
                             </div>
                         </div>
@@ -481,27 +484,29 @@
             <!-- 右サイド: 掲示板 & 学生アクション -->
             <aside class="side-panel">
                 <div class="panel" style="height: 100%;">
-                    <div class="panel-header">Interaction Board</div>
+                    <div class="panel-header">Interaction HUB</div>
                     <div class="panel-body">
-                        <div id="msg-bulletin-log" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding-right:10px;"></div>
+                        <div id="bulletin-log" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding-right:10px;"></div>
                         
                         <div style="margin-top:25px; border-top:1px solid var(--border); padding-top:25px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                                <span style="font-size:0.8rem; font-weight:900; color:var(--text-dim);">REACTIONS</span>
-                                <div style="display:flex; gap:12px;">
+                                <span style="font-size:0.8rem; font-weight:900; color:var(--text-dim); letter-spacing:1px;">REACTIONS</span>
+                                <div style="display:flex; gap:10px;">
                                     <button class="btn btn-ghost btn-sm" style="padding:8px 12px; font-size:1.5rem;" onclick="app.emitEmoji('👏')">👏</button>
                                     <button class="btn btn-ghost btn-sm" style="padding:8px 12px; font-size:1.5rem;" onclick="app.emitEmoji('🔥')">🔥</button>
                                     <button class="btn btn-ghost btn-sm" style="padding:8px 12px; font-size:1.5rem;" onclick="app.emitEmoji('❓')">❓</button>
                                 </div>
                             </div>
-                            <!-- 【教員専用】 -->
+                            
+                            <!-- 教員専用：掲示板 -->
                             <div class="only-teacher">
                                 <textarea id="teacher-msg-input" style="padding:15px; font-size:1rem;" rows="3" placeholder="全員に通知を送信..."></textarea>
-                                <button class="btn btn-primary btn-sm" style="width:100%; margin-top:15px; height:55px;" onclick="app.postBulletin()">掲示板送信</button>
+                                <button class="btn btn-primary btn-sm" style="width:100%; margin-top:15px; height:55px;" onclick="app.postBulletin()">掲示板へ投稿</button>
                             </div>
-                            <!-- 【生徒専用】 -->
+                            
+                            <!-- 生徒専用：ステータス管理 -->
                             <div class="only-student" style="background:var(--bg-elevated); padding:30px; border-radius:28px; border: 1px solid var(--primary-glow);">
-                                <p style="font-size:0.9rem; font-weight:900; color:var(--text-main); margin-bottom:20px; text-align:center;">今の状況を伝える</p>
+                                <p style="font-size:0.9rem; font-weight:900; color:var(--text-main); margin-bottom:20px; text-align:center;">理解度を伝える</p>
                                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                                     <button class="btn btn-ghost btn-sm" style="height:60px; font-size:1.6rem;" onclick="app.updateLv(100)">😊</button>
                                     <button class="btn btn-ghost btn-sm" style="height:60px; font-size:1.6rem;" onclick="app.updateLv(50)">🤔</button>
@@ -519,42 +524,43 @@
 
 <script>
 /**
- * LECTURE DX ULTIMATE v25.0
- * ENGINE: FULL ORCHESTRATION P2P OS
+ * LECTURE DX ULTIMATE v24.0
+ * CORE ENGINE: SOVEREIGN COMMAND ARCHITECTURE
  */
 
-class LectureSovereign {
+class LectureSovereignOS {
     constructor() {
         this.peer = null;
         this.conns = new Map(); // Teacher context
         this.hostConn = null;   // Student context
         this.role = '';
         this.roomId = '';
-        this.name = '';
+        this.userName = '';
         this.roster = new Map();
-        this.surveyCtx = null;
+        this.svCtx = null;
         this.timer = null;
         this.stream = null;
         this.handActive = false;
         this.canvasHistory = [];
-        this.svVoted = false;
+        this.surveyVoted = false;
         
+        // 音響合成
         this.audioCtx = null;
     }
 
     /* -------------------------------------------------------------
-       1. INITIALIZATION & NETWORK BOOT
+       1. BOOTSTRAP & NETWORK
     ------------------------------------------------------------- */
     async ignition(role) {
         this.roomId = document.getElementById('init-room-id').value.trim();
-        this.name = document.getElementById('init-user-name').value.trim() || 'Anonymous';
+        this.userName = document.getElementById('init-user-name').value.trim() || 'Anonymous';
 
-        if (!/^\d{6}$/.test(this.roomId)) return alert('ルームIDは6桁の数字で入力してください。');
+        if (!/^\d{6}$/.test(this.roomId)) return alert('ルームIDは「6桁の数字」で設定してください。');
 
         this.role = role;
-        document.getElementById('auth-log-msg').innerText = 'SYNCHRONIZING SECURE COMMAND NODE...';
+        document.getElementById('auth-status-log').innerText = 'SYCHRONIZING P2P NODES...';
 
-        const pid = role === 'teacher' ? `ldx-v25-${this.roomId}-host` : `ldx-v25-${this.roomId}-cl-${Math.random().toString(36).substr(2,6)}`;
+        const pid = role === 'teacher' ? `ldx-v24-${this.roomId}-host` : `ldx-v24-${this.roomId}-cl-${Math.random().toString(36).substr(2,6)}`;
         this.peer = new Peer(pid);
 
         this.peer.on('open', () => {
@@ -564,7 +570,7 @@ class LectureSovereign {
         });
 
         this.peer.on('error', (err) => {
-            alert('接続失敗: そのルームは既に教員が存在します。');
+            alert('接続失敗: ' + err.type + '\n教員が既に開始しているか、IDが重複しています。');
             location.reload();
         });
 
@@ -585,24 +591,15 @@ class LectureSovereign {
         document.getElementById('role-badge').className = `badge badge-${this.role}`;
         document.getElementById('room-display-id').innerText = `#${this.roomId}`;
         
-        this.initCanvasEngine();
-        // 個人ノート復元
-        const savedPersonal = localStorage.getItem('ldx_v25_personal_'+this.roomId);
-        if(savedPersonal) document.getElementById('note-editor-personal').value = savedPersonal;
-        document.getElementById('note-editor-personal').oninput = (e) => localStorage.setItem('ldx_v25_personal_'+this.roomId, e.target.value);
-
-        // 教員マスターノート送信設定
-        if(this.role === 'teacher') {
-            document.getElementById('note-editor-master').oninput = (e) => {
-                this.broadcast({ type: 'NOTE_SYNC', payload: e.target.value });
-            };
-        }
+        this.initCanvas();
+        this.initStorage();
     }
 
     /* -------------------------------------------------------------
-       2. NAVIGATION SYSTEM
+       2. SOVEREIGN NAVIGATION (REFIXED)
     ------------------------------------------------------------- */
     switchPane(id) {
+        // 教員モードでの全メニュー切り替え許可、生徒モードではnote/sketchのみ許可
         if(this.role === 'student' && !['note', 'sketch'].includes(id)) return;
 
         document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
@@ -611,18 +608,17 @@ class LectureSovereign {
         document.getElementById('pane-' + id).classList.add('active');
         document.getElementById('nav-' + id).classList.add('active');
 
+        // ラベルの更新
+        if(this.role === 'teacher') {
+            const labels = { 'note':'教員専用メモ', 'sketch':'教員専用キャンバス', 'survey':'アンケート管理', 'timer':'精密タイマー', 'admin':'クラス管理・統計' };
+            document.getElementById('note-label').innerText = labels[id] || 'ノート';
+        }
+
         if (id === 'sketch') this.resizeCanvas();
     }
 
-    setNoteTab(tab) {
-        document.getElementById('tab-note-personal').classList.toggle('active', tab === 'personal');
-        document.getElementById('tab-note-master').classList.toggle('active', tab === 'master');
-        document.getElementById('note-editor-personal').style.display = (tab === 'personal' ? 'block' : 'none');
-        document.getElementById('note-viewer-master').style.display = (tab === 'master' ? 'block' : 'none');
-    }
-
     /* -------------------------------------------------------------
-       3. P2P SYNC ENGINE
+       3. COMMUNICATION ENGINE
     ------------------------------------------------------------- */
     bootHost() {
         this.peer.on('connection', (conn) => {
@@ -630,24 +626,29 @@ class LectureSovereign {
                 this.conns.set(conn.peer, conn);
                 conn.on('data', (d) => this.onPacket(d, conn));
                 if (this.surveyCtx) conn.send({ type: 'SV_SYNC', payload: this.surveyCtx });
-                // 現在の板書も同期
-                conn.send({ type: 'NOTE_SYNC', payload: document.getElementById('note-editor-master').value });
             });
-            conn.on('close', () => { this.conns.delete(conn.peer); this.roster.delete(conn.peer); this.syncState(); });
+            conn.on('close', () => {
+                this.conns.delete(conn.peer);
+                this.roster.delete(conn.peer);
+                this.syncState();
+            });
         });
     }
 
     bootClient() {
-        const hostId = `ldx-v25-${this.roomId}-host`;
+        const hostId = `ldx-v24-${this.roomId}-host`;
         this.hostConn = this.peer.connect(hostId, { reliable: true });
         this.hostConn.on('open', () => {
-            this.hostConn.send({ type: 'HELLO', name: this.name });
-            document.getElementById('p2p-dot').style.background = 'var(--secondary)';
+            this.hostConn.send({ type: 'HELLO', name: this.userName });
+            document.getElementById('p2p-indicator').style.background = 'var(--secondary)';
         });
         this.hostConn.on('data', (d) => this.onPacket(d));
+        this.hostConn.on('close', () => { alert('切断されました'); location.reload(); });
     }
 
-    broadcast(data) { this.conns.forEach(c => { if (c.open) c.send(data); }); }
+    broadcast(data) {
+        this.conns.forEach(c => { if (c.open) c.send(data); });
+    }
 
     onPacket(d, sender = null) {
         switch (d.type) {
@@ -657,47 +658,69 @@ class LectureSovereign {
             case 'ROSTER_SYNC':
                 this.renderRoster(d.payload); break;
             case 'LV_CHANGE':
-                if (this.role === 'teacher') { this.roster.get(sender.peer).level = d.val; this.syncState(); } break;
+                if (this.role === 'teacher') {
+                    const s = this.roster.get(sender.peer);
+                    if (s) s.level = d.val;
+                    this.syncState();
+                } break;
             case 'HAND_SIGNAL':
-                if (this.role === 'teacher') { this.roster.get(sender.peer).hand = d.val; if (d.val) this.beep(587.33); this.syncState(); } break;
-            case 'NOTE_SYNC':
-                document.getElementById('note-viewer-master').innerText = d.payload; break;
+                if (this.role === 'teacher') {
+                    const s = this.roster.get(sender.peer);
+                    if (s) { s.hand = d.val; if (d.val) this.beep(523.25); }
+                    this.syncState();
+                } break;
             case 'SV_IGNITE':
             case 'SV_SYNC':
-                this.surveyCtx = d.payload; this.renderSurveyUI(d.payload); break;
-            case 'SV_VOTE_RECV':
+                this.surveyCtx = d.payload;
+                this.renderSurveyUI(d.payload); break;
+            case 'SV_VOTE':
                 if (this.role === 'teacher') this.tallyVote(d.val); break;
             case 'SV_KILL':
-                this.surveyCtx = null; this.surveyVoted = false; document.getElementById('survey-push-overlay').style.display = 'none'; this.renderSurveyUI({ total: 0, options: [] }); break;
+                this.surveyCtx = null;
+                this.surveyVoted = false;
+                document.getElementById('survey-push-overlay').style.display = 'none';
+                this.renderSurveyUI({ total: 0, options: [], visible: true }); break;
             case 'TIMER_TICK':
                 this.updateTimerUI(d.end); break;
             case 'TIMER_KILL':
-                clearInterval(this.timer); document.querySelectorAll('.timer-huge, #clock-digital-live').forEach(el => el.innerText = '00:00'); break;
+                clearInterval(this.timer);
+                document.querySelectorAll('.timer-huge, #clock-digital-live').forEach(el => el.innerText = '00:00'); break;
             case 'ANN':
-                this.drawBulletin(d.sender, d.msg); if (this.role === 'teacher') this.broadcast(d); break;
+                this.drawAnnouncement(d.sender, d.msg);
+                if (this.role === 'teacher') this.broadcast(d); break;
             case 'REACT':
-                this.popEmoji(d.emoji); if (this.role === 'teacher') this.broadcast(d); break;
+                this.spawnEmoji(d.emoji);
+                if (this.role === 'teacher') this.broadcast(d); break;
             case 'SHARE_OFF':
                 document.getElementById('video-streaming-box').style.display = 'none'; break;
+            case 'NOTE_SYNC':
+                if(this.role === 'student') document.getElementById('main-note-editor').value = d.val;
+                break;
         }
     }
 
     /* -------------------------------------------------------------
-       4. COMMAND CENTERS (Survey, Timer, etc.)
+       4. SURVEY ENGINE
     ------------------------------------------------------------- */
     onSurveyTypeChange() {
         const t = document.getElementById('adm-sv-type-in').value;
         const w = document.getElementById('adm-sv-opt-wrapper');
         w.style.opacity = (t === 'text' || t === 'scale') ? '0.2' : '1';
+        w.style.pointerEvents = (t === 'text' || t === 'scale') ? 'none' : 'auto';
     }
 
     igniteSurvey() {
         const q = document.getElementById('adm-sv-q-in').value.trim();
         const t = document.getElementById('adm-sv-type-in').value;
         let o = document.getElementById('adm-sv-opt-in').value.split(',').map(s=>s.trim()).filter(Boolean);
-        if (!q) return alert('Enter question');
+        if (!q) return alert('質問を入力してください。');
         if (t === 'scale') o = ['1: Bad', '2', '3', '4', '5: Good'];
-        this.surveyCtx = { type: t, question: q, options: o, votes: t === 'text' ? [] : Object.fromEntries(o.map(v => [v, 0])), total: 0, visible: true };
+
+        this.surveyCtx = {
+            type: t, question: q, options: o,
+            votes: t === 'text' ? [] : Object.fromEntries(o.map(v => [v, 0])),
+            total: 0, visible: true
+        };
         this.broadcast({ type: 'SV_IGNITE', payload: this.surveyCtx });
         this.renderSurveyUI(this.surveyCtx);
         this.switchPane('survey');
@@ -706,112 +729,341 @@ class LectureSovereign {
     tallyVote(val) {
         if (!this.surveyCtx) return;
         this.surveyCtx.total++;
-        if (this.surveyCtx.type === 'text') this.surveyCtx.votes.push(val);
-        else if (Array.isArray(val)) val.forEach(v => { if (this.surveyCtx.votes[v] !== undefined) this.surveyCtx.votes[v]++; });
-        else if (this.surveyCtx.votes[val] !== undefined) this.surveyCtx.votes[val]++;
+        if (this.surveyCtx.type === 'text') {
+            this.surveyCtx.votes.push(val);
+        } else if (Array.isArray(val)) {
+            val.forEach(v => { if (this.surveyCtx.votes[v] !== undefined) this.surveyCtx.votes[v]++; });
+        } else {
+            if (this.surveyCtx.votes[val] !== undefined) this.surveyCtx.votes[val]++;
+        }
         this.broadcast({ type: 'SV_SYNC', payload: this.surveyCtx });
         this.renderSurveyUI(this.surveyCtx);
     }
 
     renderSurveyUI(data) {
         const popup = document.getElementById('survey-push-overlay');
-        const resArea = document.getElementById('sv-results-render-area');
+        const resultsArea = document.getElementById('sv-results-render-area');
+
         if (this.role === 'student' && !this.surveyVoted && data.total === 0 && data.options.length > 0) {
             popup.style.display = 'flex';
-            document.getElementById('sv-push-q-label').innerText = "📊 " + data.question;
-            const ui = document.getElementById('sv-push-options-area');
+            document.getElementById('sv-push-q-title').innerText = "📊 " + data.question;
+            const ui = document.getElementById('sv-push-options-render');
             ui.innerHTML = '';
             if (data.type === 'text') {
-                ui.innerHTML = `<input type="text" id="sv-push-inp" class="text-input" placeholder="回答を入力..."><button class="btn btn-primary" style="margin-top:20px; width:100%" onclick="app.submitPushVote()">送信</button>`;
+                ui.innerHTML = `<input type="text" id="sv-inp-text-push" class="text-input" placeholder="回答を入力...">
+                                <button class="btn btn-primary" style="margin-top:20px; width:100%" onclick="app.submitPushVote()">送信する</button>`;
             } else {
                 data.options.forEach(opt => {
-                    const b = document.createElement('button'); b.className = 'sv-push-btn'; b.innerText = opt;
-                    b.onclick = () => { app.submitPushVote(opt); popup.style.display = 'none'; }; ui.appendChild(b);
+                    const b = document.createElement('button');
+                    b.className = 'push-opt-btn';
+                    b.innerText = opt;
+                    b.onclick = () => { app.submitPushVote(opt); popup.style.display = 'none'; };
+                    ui.appendChild(b);
                 });
             }
         }
-        document.getElementById('sv-votes-count-disp').innerText = `${data.total} VOTES`;
-        resArea.innerHTML = '';
-        if (this.role === 'student' && !data.visible) { resArea.innerHTML = '<div style="text-align:center; padding:40px; opacity:0.4;">先生が集計中です...</div>'; }
-        else {
-            if (data.type === 'text') data.votes.slice().reverse().forEach(v => resArea.innerHTML += `<div class="student-chip">${v}</div>`);
-            else data.options.forEach(o => {
-                const pct = data.total ? Math.round(data.votes[o] / data.total * 100) : 0;
-                resArea.innerHTML += `<div style="margin-bottom:15px;"><div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:800; margin-bottom:5px;"><span>${o}</span><span>${pct}%</span></div><div style="height:8px; background:var(--bg-base); border-radius:4px; overflow:hidden;"><div style="width:${pct}%; height:100%; background:var(--primary); transition:1s;"></div></div></div>`;
-            });
+
+        document.getElementById('sv-votes-count-disp').innerText = `${data.total} VOTES RECEIVED`;
+        resultsArea.innerHTML = '';
+        if (this.role === 'student' && !data.visible) {
+            resultsArea.innerHTML = '<div style="text-align:center; padding:40px; opacity:0.5;">結果は先生が公開するまで非表示です</div>';
+        } else {
+            if (data.type === 'text') {
+                data.votes.slice().reverse().forEach(v => {
+                    resultsArea.innerHTML += `<div class="student-chip" style="font-size:0.9rem;">${v}</div>`;
+                });
+            } else {
+                data.options.forEach(o => {
+                    const count = data.votes[o];
+                    const pct = data.total ? Math.round(count / data.total * 100) : 0;
+                    resultsArea.innerHTML += `
+                        <div class="stat-row">
+                            <div class="stat-label"><span>${o}</span><span>${count} (${pct}%)</span></div>
+                            <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct}%"></div></div>
+                        </div>`;
+                });
+            }
         }
-        if (this.role === 'teacher') { const b = document.getElementById('sv-vis-toggle-btn'); b.innerText = data.visible ? '結果を非公開にする' : '結果を公開する'; b.style.background = data.visible ? 'var(--bg-hover)' : 'var(--accent)'; }
+
+        if (this.role === 'teacher') {
+            const btn = document.getElementById('sv-vis-toggle-btn');
+            btn.innerText = data.visible ? '結果を非公開にする' : '結果を公開する';
+            btn.style.background = data.visible ? 'var(--bg-hover)' : 'var(--accent)';
+        }
     }
 
-    submitPushVote(v = null) { const val = v || document.getElementById('sv-push-inp').value.trim(); if (this.hostConn) this.hostConn.send({ type: 'SV_VOTE_RECV', val: val }); this.surveyVoted = true; }
-    toggleSurveyVis() { if (!this.surveyCtx) return; this.surveyCtx.visible = !this.surveyCtx.visible; this.broadcast({ type: 'SV_SYNC', payload: this.surveyCtx }); this.renderSurveyUI(this.surveyCtx); }
-    terminateSurvey() { this.surveyCtx = null; this.surveyVoted = false; this.broadcast({ type: 'SV_KILL' }); document.getElementById('survey-push-overlay').style.display = 'none'; this.renderSurveyUI({ total: 0, options: [] }); }
+    submitPushVote(v = null) {
+        const val = v || document.getElementById('sv-inp-text-push').value.trim();
+        if (this.hostConn) this.hostConn.send({ type: 'SV_VOTE_RECV', val: val });
+        this.surveyVoted = true;
+    }
 
+    toggleSurveyVis() {
+        if (!this.surveyCtx) return;
+        this.surveyCtx.visible = !this.surveyCtx.visible;
+        this.broadcast({ type: 'SV_SYNC', payload: this.surveyCtx });
+        this.renderSurveyUI(this.surveyCtx);
+    }
+
+    terminateSurvey() {
+        this.surveyCtx = null;
+        this.surveyVoted = false;
+        this.broadcast({ type: 'SV_KILL' });
+        document.getElementById('survey-push-overlay').style.display = 'none';
+        this.renderSurveyUI({ total: 0, options: [], visible: true });
+    }
+
+    /* -------------------------------------------------------------
+       5. MASTER SYNC TIMER
+    ------------------------------------------------------------- */
     broadcastTimer() {
         const m = parseInt(document.getElementById('t-min-in').value) || 0;
         const s = parseInt(document.getElementById('t-sec-in').value) || 0;
         const end = Date.now() + (m * 60 + s) * 1000;
-        this.broadcast({ type: 'TIMER_TICK', end: end }); this.updateTimerUI(end);
+        this.broadcast({ type: 'TIMER_TICK', end: end });
+        this.updateTimerUI(end);
     }
+
     updateTimerUI(endTime) {
-        clearInterval(this.timer); const huge = document.getElementById('timer-huge-disp'); const head = document.getElementById('clock-digital-live');
-        const upd = () => { const diff = endTime - Date.now(); if (diff <= 0) { clearInterval(this.timer); huge.innerText = head.innerText = '00:00'; if (this.role === 'teacher') this.beep(880, 'square', 1.0); return; } const min = Math.floor(diff / 60000); const sec = Math.floor((diff % 60000) / 1000); const str = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; huge.innerText = head.innerText = str; };
-        upd(); this.timer = setInterval(upd, 1000);
+        clearInterval(this.timer);
+        const huge = document.getElementById('timer-huge-display');
+        const head = document.getElementById('clock-digital-live');
+        const update = () => {
+            const diff = endTime - Date.now();
+            if (diff <= 0) {
+                clearInterval(this.timer);
+                huge.innerText = head.innerText = '00:00';
+                if (this.role === 'teacher') this.beep(880, 'square', 1.0);
+                return;
+            }
+            const min = Math.floor(diff / 60000);
+            const sec = Math.floor((diff % 60000) / 1000);
+            const str = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+            huge.innerText = head.innerText = str;
+        };
+        update();
+        this.timer = setInterval(update, 1000);
     }
-    resetTimer() { clearInterval(this.timer); document.querySelectorAll('.timer-huge, #digital-clock-live').forEach(el => el.innerText = '00:00'); this.broadcast({ type: 'TIMER_KILL' }); }
 
+    resetTimer() {
+        clearInterval(this.timer);
+        document.querySelectorAll('.timer-huge, #clock-digital-live').forEach(el => el.innerText = '00:00');
+        this.broadcast({ type: 'TIMER_KILL' });
+    }
+
+    /* -------------------------------------------------------------
+       6. SCREEN SHARING (WebRTC STREAM)
+    ------------------------------------------------------------- */
     async toggleScreenShare() {
-        const btn = document.getElementById('btn-share-trigger');
-        if (this.stream) { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; btn.innerText = '🖥 画面共有開始'; document.getElementById('video-streaming-box').style.display = 'none'; this.broadcast({ type: 'SHARE_OFF' }); return; }
-        try { this.stream = await navigator.mediaDevices.getDisplayMedia({ video: true }); document.getElementById('video-streaming-box').style.display = 'block'; document.getElementById('shared-video-element').srcObject = this.stream; btn.innerText = '共有停止'; this.connections.forEach(c => this.peer.call(c.peer, this.stream)); this.stream.getVideoTracks()[0].onended = () => this.toggleScreenShare(); } catch (e) {}
+        const btn = document.getElementById('btn-master-share');
+        if (this.stream) {
+            this.stream.getTracks().forEach(t => t.stop());
+            this.stream = null;
+            btn.innerText = '🖥 画面共有開始';
+            document.getElementById('video-streaming-box').style.display = 'none';
+            this.broadcast({ type: 'SHARE_OFF' });
+            return;
+        }
+        try {
+            this.stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" }, audio: false });
+            document.getElementById('video-streaming-box').style.display = 'block';
+            document.getElementById('shared-video-element').srcObject = this.stream;
+            btn.innerText = '共有停止';
+            this.conns.forEach(c => this.peer.call(c.peer, this.stream));
+            this.stream.getVideoTracks()[0].onended = () => this.toggleScreenShare();
+        } catch (e) { console.error(e); }
     }
 
-    syncState() { const d = Array.from(this.roster.values()); this.broadcast({ type: 'ROSTER_SYNC', payload: d }); this.renderRoster(d); }
+    /* -------------------------------------------------------------
+       7. CLASSROOM COMMANDS & STATUS
+    ------------------------------------------------------------- */
+    syncState() {
+        const d = Array.from(this.roster.values());
+        this.broadcast({ type: 'ROSTER_SYNC', payload: d });
+        this.renderRoster(d);
+    }
+
     renderRoster(list) {
-        const grid = document.getElementById('roster-grid'); grid.innerHTML = ''; document.getElementById('attendee-count').innerText = list.length;
-        let lvSum = 0; list.forEach(u => { lvSum += u.level; const card = document.createElement('div'); card.className = `student-chip ${u.hand ? 'is-hand-raised' : ''}`; card.innerHTML = `<span>👤 ${u.name}</span><span>${u.hand ? '🖐 Question' : ''}</span>`; grid.appendChild(card); });
-        const avg = list.length ? Math.round(lvSum / list.length) : 100; document.getElementById('avg-pct-huge').innerText = `${avg}%`; document.getElementById('avg-bar-final').style.width = `${avg}%`;
+        const grid = document.getElementById('roster-grid');
+        grid.innerHTML = '';
+        document.getElementById('attendee-count').innerText = list.length;
+        let lvSum = 0;
+        list.forEach(u => {
+            lvSum += u.level;
+            const chip = document.createElement('div');
+            chip.className = `student-chip ${u.hand ? 'hand-alert' : ''}`;
+            chip.innerHTML = `<span>👤 ${u.name}</span><span>${u.hand ? '🖐 Question' : ''}</span>`;
+            grid.appendChild(chip);
+        });
+        const avg = list.length ? Math.round(lvSum / list.length) : 100;
+        document.getElementById('avg-pct-huge').innerText = `${avg}%`;
+        document.getElementById('avg-bar-final').style.width = `${avg}%`;
+        document.getElementById('avg-bar-final').style.background = avg > 70 ? 'var(--secondary)' : (avg > 40 ? 'var(--accent)' : 'var(--danger)');
     }
 
     updateLv(val) { if (this.hostConn) this.hostConn.send({ type: 'LV_CHANGE', val: val }); }
-    toggleHand() { this.handActive = !this.handActive; const btn = document.getElementById('hand-trigger-btn'); btn.innerText = this.handActive ? '✋ 下ろす' : '🖐 挙手 / 質問する'; btn.style.background = this.handActive ? 'var(--warning)' : 'transparent'; btn.style.color = this.handActive ? 'white' : 'var(--warning)'; if (this.hostConn) this.hostConn.send({ type: 'HAND_SIGNAL', val: this.handActive }); }
-    postBulletin() { const msg = document.getElementById('teacher-msg-input').value.trim(); if (!msg) return; const s = this.name + ' (Teacher)'; this.drawBulletin(s, msg); this.broadcast({ type: 'ANN', sender: s, msg: msg }); document.getElementById('teacher-msg-input').value = ''; }
-    drawBulletin(s, m) { const b = document.getElementById('msg-bulletin-log'); const d = document.createElement('div'); d.className = 'student-chip'; d.style.flexDirection = 'column'; d.style.alignItems = 'flex-start'; d.innerHTML = `<strong style="color:var(--primary); font-size:0.7rem;">${s}</strong><div style="margin-top:8px; line-height:1.6; font-size:0.95rem;">${m}</div>`; b.appendChild(d); b.scrollTop = b.scrollHeight; }
-    emitEmoji(emoji) { this.popEmoji(emoji); if (this.role === 'teacher') this.broadcast({ type: 'REACT', emoji: emoji }); else if (this.hostConn) this.hostConn.send({ type: 'REACT', emoji: emoji }); }
-    popEmoji(emoji) { const stage = document.getElementById('reaction-layer'); const div = document.createElement('div'); div.className = 'floating-emoji'; div.innerText = emoji; div.style.left = `${Math.random() * 80 + 10}%`; stage.appendChild(div); setTimeout(() => div.remove(), 4000); }
-    pickRoulette() { const users = Array.from(this.roster.values()); if (!users.length) return alert('生徒がいません。'); const win = users[Math.floor(Math.random() * users.length)]; const m = `🎯 指名ルーレット: 【${win.name}】さん、お願いします！`; this.drawBulletin('SYSTEM-AI', m); this.broadcast({ type: 'ANN', sender: 'SYSTEM-AI', msg: m }); this.playSfx(440, 'triangle', 0.2); }
-
-    /* -------------------------------------------------------------
-       5. INTERACTIVE TOOLS ENGINE
-    ------------------------------------------------------------- */
-    initCanvasEngine() {
-        const cv = document.getElementById('canvas-board'); const ctx = cv.getContext('2d'); let drawing = false;
-        this.resizeCanvas = () => { const dpr = window.devicePixelRatio || 1; const b = cv.getBoundingClientRect(); cv.width = b.width * dpr; cv.height = b.height * dpr; ctx.scale(dpr, dpr); };
-        window.addEventListener('resize', this.resizeCanvas);
-        const getPos = (e) => { const r = cv.getBoundingClientRect(); const x = (e.clientX || e.touches[0].clientX) - r.left; const y = (e.clientY || e.touches[0].clientY) - r.top; return [x, y]; };
-        const start = (e) => { drawing = true; ctx.beginPath(); const [x, y] = getPos(e); ctx.moveTo(x, y); this.canvasHistory.push(ctx.getImageData(0,0,cv.width,cv.height)); if (this.canvasHistory.length > 50) this.canvasHistory.shift(); };
-        const move = (e) => { if (!drawing) return; const [x, y] = getPos(e); ctx.lineWidth = document.getElementById('sk-size-in').value; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = document.getElementById('sk-color-in').value; ctx.lineTo(x, y); ctx.stroke(); };
-        cv.addEventListener('mousedown', start); cv.addEventListener('mousemove', move); window.addEventListener('mouseup', () => drawing = false);
-        cv.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); }); cv.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); });
-        this.canvasClear = () => ctx.clearRect(0, 0, cv.width, cv.height);
-        this.canvasUndo = () => { if(this.canvasHistory.length) ctx.putImageData(this.canvasHistory.pop(), 0, 0); };
-        this.saveCanvas = () => { const a = document.createElement('a'); a.download=`sketch.png`; a.href=cv.toDataURL(); a.click(); };
+    toggleHand() {
+        this.handActive = !this.handActive;
+        const btn = document.getElementById('hand-trigger-btn');
+        btn.innerText = this.handActive ? '✋ 挙手を下ろす' : '🖐 先生に質問する';
+        btn.style.background = this.handActive ? 'var(--warning)' : 'transparent';
+        btn.style.color = this.handActive ? 'white' : 'var(--warning)';
+        if (this.hostConn) this.hostConn.send({ type: 'HAND_SIGNAL', val: this.handActive });
     }
 
-    unlockAudio() { if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (this.audioCtx.state === 'suspended') this.audioCtx.resume(); this.playSfx(440, 'sine', 0.1); alert('Audio Ready.'); }
-    playSfx(freq, type = 'sine', dur = 0.5) { if (!this.audioCtx) return; const osc = this.audioCtx.createOscillator(); const gain = this.audioCtx.createGain(); osc.type = type; osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime); gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + dur); osc.connect(gain); gain.connect(this.audioCtx.destination); osc.start(); osc.stop(this.audioCtx.currentTime + dur); }
-    beep(f) { this.playSfx(f, 'sine', 0.5); }
-    exportNote() { const val = this.role === 'teacher' ? document.getElementById('note-editor-master').value : document.getElementById('note-editor-personal').value; const b = new Blob([val], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `Lecture_Note.txt`; a.click(); }
-    copyInviteUrl() { const u = `${window.location.origin}${window.location.pathname}?room=${this.roomId}&role=student`; navigator.clipboard.writeText(u); alert('Invitation URL Copied.'); }
+    pushSharedNote() {
+        const val = document.getElementById('shared-note-editor').value;
+        this.broadcast({ type: 'NOTE_SYNC', val: val });
+        this.beep(440);
+    }
+
+    postBulletin() {
+        const msg = document.getElementById('teacher-msg-input').value.trim();
+        if (!msg) return;
+        const s = this.userName + ' (Teacher)';
+        this.drawAnnouncement(s, msg);
+        this.broadcast({ type: 'ANN', sender: s, msg: msg });
+        document.getElementById('teacher-msg-input').value = '';
+    }
+
+    drawAnnouncement(s, m) {
+        const b = document.getElementById('bulletin-log');
+        const d = document.createElement('div');
+        d.className = 'student-chip'; d.style.flexDirection = 'column'; d.style.alignItems = 'flex-start';
+        d.innerHTML = `<strong style="color:var(--primary); font-size:0.7rem; text-transform:uppercase;">${s}</strong><div style="margin-top:6px; line-height:1.6; font-size:1rem;">${m}</div>`;
+        b.appendChild(d); b.scrollTop = b.scrollHeight;
+    }
+
+    emitEmoji(emoji) {
+        this.spawnEmoji(emoji);
+        if (this.role === 'teacher') this.broadcast({ type: 'REACT', emoji: emoji });
+        else if (this.hostConn) this.hostConn.send({ type: 'REACT', emoji: emoji });
+    }
+
+    spawnEmoji(emoji) {
+        const stage = document.getElementById('reaction-layer');
+        const div = document.createElement('div');
+        div.className = 'emoji-fly'; div.innerText = emoji;
+        div.style.left = `${Math.random() * 80 + 10}%`;
+        stage.appendChild(div);
+        setTimeout(() => div.remove(), 4000);
+    }
+
+    pickRoulette() {
+        const users = Array.from(this.roster.values());
+        if (!users.length) return alert('生徒がいません。');
+        const win = users[Math.floor(Math.random() * users.length)];
+        const m = `🎯 指名ルーレット: 【${win.name}】さん、お願いします！`;
+        this.drawAnnouncement('SYSTEM-AI', m);
+        this.broadcast({ type: 'ANN', sender: 'SYSTEM-AI', msg: m });
+        this.playSfx(440, 'triangle', 0.2);
+    }
+
+    /* -------------------------------------------------------------
+       8. TOOL MODULES (NOTE & SKETCH)
+    ------------------------------------------------------------- */
+    initStorage() {
+        const ed = document.getElementById('main-note-editor');
+        const key = `ldx_v24_note_${this.roomId}`;
+        ed.value = localStorage.getItem(key) || '';
+        ed.oninput = () => { localStorage.setItem(key, ed.value); };
+    }
+
+    initCanvas() {
+        const cv = document.getElementById('canvas-board');
+        const ctx = cv.getContext('2d');
+        let drawing = false;
+
+        this.resizeCanvas = () => {
+            const dpr = window.devicePixelRatio || 1;
+            const b = cv.getBoundingClientRect();
+            cv.width = b.width * dpr; cv.height = b.height * dpr;
+            ctx.scale(dpr, dpr);
+        };
+        window.addEventListener('resize', this.resizeCanvas);
+
+        const getPos = (e) => {
+            const r = cv.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - r.left;
+            const y = (e.clientY || e.touches[0].clientY) - r.top;
+            return [x, y];
+        };
+
+        const start = (e) => { 
+            drawing = true; ctx.beginPath();
+            const [x, y] = getPos(e); ctx.moveTo(x, y);
+            this.canvasHistory.push(ctx.getImageData(0,0,cv.width,cv.height));
+            if (this.canvasHistory.length > 50) this.canvasHistory.shift();
+        };
+        const move = (e) => {
+            if (!drawing) return;
+            const [x, y] = getPos(e);
+            ctx.lineWidth = document.getElementById('sk-size-slider').value;
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.strokeStyle = document.getElementById('sk-color-picker').value;
+            ctx.lineTo(x, y); ctx.stroke();
+        };
+        cv.addEventListener('mousedown', start); cv.addEventListener('mousemove', move); window.addEventListener('mouseup', () => drawing = false);
+        cv.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); }); 
+        cv.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); }); 
+        window.addEventListener('touchend', () => drawing = false);
+
+        this.canvasClear = () => ctx.clearRect(0, 0, cv.width, cv.height);
+        this.canvasUndo = () => { if(this.canvasHistory.length) ctx.putImageData(this.canvasHistory.pop(), 0, 0); };
+        this.saveCanvasImg = () => { const a = document.createElement('a'); a.download=`sketch.png`; a.href=cv.toDataURL(); a.click(); };
+    }
+
+    /* -------------------------------------------------------------
+       9. SYSTEM UTILS & AUDIO
+    ------------------------------------------------------------- */
+    unlockAudio() {
+        if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+        this.playSfx(440, 'sine', 0.1);
+        alert('AUDIO ENGINE ENABLED');
+    }
+
+    playSfx(freq, type = 'sine', dur = 0.5) {
+        if (!this.audioCtx) return;
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + dur);
+        osc.connect(gain); gain.connect(this.audioCtx.destination);
+        osc.start(); osc.stop(this.audioCtx.currentTime + dur);
+    }
+    beep(freq) { this.playSfx(freq, 'sine', 0.5); }
+
+    exportNoteFile() {
+        const b = new Blob([document.getElementById('main-note-editor').value], { type: 'text/plain' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `LectureNote.txt`; a.click();
+    }
+    copyInviteUrl() {
+        const u = `${window.location.origin}${window.location.pathname}?room=${this.roomId}&role=student`;
+        navigator.clipboard.writeText(u); alert('INVITATION LINK COPIED');
+    }
 }
 
-const app = new LectureSovereign();
-setInterval(() => { document.getElementById('digital-clock-live').innerText = new Date().toLocaleTimeString(); }, 1000);
+// OS Bootstrap
+const app = new LectureSovereignOS();
+
+// UI Lifecycle
+setInterval(() => {
+    document.getElementById('clock-digital-live').innerText = new Date().toLocaleTimeString();
+}, 1000);
+
+// Automation: Ephemeral Role Detection via URL
 window.addEventListener('load', () => {
     const p = new URLSearchParams(window.location.search);
-    if (p.get('room')) {
-        document.getElementById('init-room-id').value = p.get('room');
-        if (p.get('role') === 'student') { document.getElementById('ignite-teach-btn').style.display = 'none'; document.getElementById('auth-room-box').style.display = 'none'; document.getElementById('auth-log-msg').innerText = 'STUDENT MODE DETECTED (VIA INVITE)'; }
+    const r = p.get('room');
+    if (r) {
+        document.getElementById('init-room-id').value = r;
+        if (p.get('role') === 'student') {
+            document.getElementById('btn-ignition-teacher').style.display = 'none';
+            document.getElementById('auth-room-id-box').style.display = 'none';
+            document.getElementById('auth-status-log').innerText = 'STUDENT MODE (EPHEMERAL)';
+        }
     }
 });
 </script>
