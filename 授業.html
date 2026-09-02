@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lecture DX v22.0 | Ephemeral Orchestrator</title>
+    <title>Lecture DX Ultimate v22.1 | Sovereign OS</title>
     
     <!-- External Dependency: PeerJS (Real-time P2P) -->
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -11,7 +11,7 @@
     <style>
         /* 
            =============================================================
-           1. CORE DESIGN SYSTEM (Enterprise Dark UI)
+           1. DESIGN SYSTEM - LUXURY DARK THEME
            ============================================================= 
         */
         :root {
@@ -41,7 +41,7 @@
         }
 
         * { box-sizing: border-box; -webkit-font-smoothing: antialiased; margin: 0; padding: 0; outline: none; border: none; }
-        html, body { height: 100%; overflow: hidden; background: var(--bg-deep); color: var(--text-main); font-family: 'Inter', -apple-system, sans-serif; }
+        html, body { height: 100%; overflow: hidden; background: var(--bg-base); color: var(--text-main); font-family: 'Inter', -apple-system, sans-serif; }
 
         /* スクロールバー */
         ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -51,21 +51,21 @@
 
         /* 
            =============================================================
-           2. AUTHENTICATION (Ephemeral Gateway)
+           2. AUTHENTICATION (GATEWAY)
            ============================================================= 
         */
         #auth-overlay {
-            position: fixed; inset: 0; background: radial-gradient(circle at top right, #1e1b4b, var(--bg-deep));
+            position: fixed; inset: 0; background: radial-gradient(circle at top right, #1e1b4b, var(--bg-base));
             display: flex; align-items: center; justify-content: center; z-index: 20000; transition: var(--transition);
         }
         .auth-card {
             background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-xl);
-            width: min(95vw, 480px); padding: 50px; box-shadow: var(--shadow-xl); text-align: center;
+            width: min(95vw, 480px); padding: 55px; box-shadow: var(--shadow-xl); text-align: center;
             animation: appEntry 0.8s ease;
         }
         @keyframes appEntry { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .auth-logo { font-size: 3rem; font-weight: 900; letter-spacing: -4px; margin-bottom: 10px; color: var(--primary); text-shadow: 0 0 35px var(--primary-glow); }
-        .auth-desc { color: var(--text-sub); font-size: 0.85rem; margin-bottom: 40px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; }
+        .auth-desc { color: var(--text-sub); font-size: 0.85rem; margin-bottom: 45px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; }
         
         .input-box { margin-bottom: 25px; text-align: left; }
         .input-box label { display: block; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; }
@@ -80,20 +80,20 @@
 
         /* 
            =============================================================
-           3. MASTER OS SHELL & NAVIGATION
+           3. SHELL & NAVIGATION SYSTEM
            ============================================================= 
         */
         .app-shell { display: none; height: 100vh; grid-template-columns: 96px 1fr; opacity: 0; transition: 1.2s; }
         .app-shell.active { display: grid; opacity: 1; }
 
-        /* 垂直ナビゲーション */
+        /* サイドバー */
         nav.sidebar {
             background: var(--bg-sidebar); border-right: 1px solid var(--border);
             display: flex; flex-direction: column; align-items: center; padding: 40px 0; gap: 32px;
         }
         .sidebar-logo { color: var(--primary); margin-bottom: 20px; font-weight: 900; font-size: 1.6rem; cursor: pointer; }
         .nav-item {
-            width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center;
+            width: 62px; height: 62px; border-radius: 22px; display: flex; align-items: center; justify-content: center;
             color: var(--text-sub); cursor: pointer; transition: var(--transition); position: relative;
         }
         .nav-item:hover { background: var(--bg-hover); color: white; transform: translateY(-3px); }
@@ -105,11 +105,11 @@
         }
         .nav-item:hover::after { opacity: 1; left: 100px; }
 
-        /* メインステージ */
+        /* メインビューポート */
         .content-container { display: flex; flex-direction: column; overflow: hidden; background: var(--bg-main); }
         
         header {
-            height: 80px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between;
+            height: 84px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between;
             border-bottom: 1px solid var(--border); background: rgba(12, 15, 26, 0.7); backdrop-filter: blur(25px); z-index: 50;
         }
         .header-left { display: flex; align-items: center; gap: 20px; }
@@ -119,7 +119,7 @@
 
         /* マルチペイン・グリッド */
         .workspace { flex: 1; position: relative; padding: 25px; overflow: hidden; display: grid; grid-template-columns: 1fr 360px; gap: 25px; }
-        @media (max-width: 1200px) { .workspace { grid-template-columns: 1fr; } .side-intelligence { display: none; } }
+        @media (max-width: 1200px) { .workspace { grid-template-columns: 1fr; } .side-panel { display: none; } }
 
         .pane-stage { flex: 1; position: relative; overflow: hidden; }
         .pane {
@@ -134,12 +134,12 @@
             background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-xl);
             display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-xl); height: 100%;
         }
-        .pane-head { padding: 20px 30px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.01); display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; }
+        .pane-head { padding: 22px 30px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.01); display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; }
         .pane-body { padding: 30px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
 
         /* 
            =============================================================
-           4. SHARED SYSTEM MODULES
+           4. MODULE SYSTEM (VIDEO, SURVEY, ETC)
            ============================================================= 
         */
         /* 画面共有ビデオ */
@@ -148,7 +148,7 @@
             display: none; position: relative; overflow: hidden; aspect-ratio: 16/9;
             max-height: 48vh; box-shadow: 0 40px 100px rgba(0,0,0,0.7);
         }
-        #shared-video-element { width: 100%; height: 100%; object-fit: contain; }
+        #shared-video-node { width: 100%; height: 100%; object-fit: contain; }
         .live-label {
             position: absolute; top: 20px; left: 20px; background: var(--danger);
             color: white; padding: 8px 18px; border-radius: 8px; font-size: 0.8rem; font-weight: 900;
@@ -157,16 +157,15 @@
         .live-label::before { content: ''; width: 10px; height: 10px; background: white; border-radius: 50%; animation: livePulse 1.2s infinite; }
         @keyframes livePulse { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
 
-        /* アンケート割り込みオーバーレイ */
+        /* アンケート割り込み (生徒) */
         #survey-push-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(25px);
             display: none; align-items: center; justify-content: center; z-index: 10000;
         }
         .survey-push-card {
             background: var(--bg-panel); border: 2px solid var(--primary); border-radius: var(--radius-xl);
             width: min(90vw, 650px); padding: 50px; box-shadow: var(--shadow-xl); animation: surveyPop 0.6s cubic-bezier(0.17, 0.84, 0.44, 1);
         }
-        @keyframes surveyPop { from { transform: scale(0.7) translateY(80px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
         .push-q-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 35px; line-height: 1.3; color: white; text-align: center; }
         .push-options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
         .push-opt-btn {
@@ -176,17 +175,9 @@
         }
         .push-opt-btn:hover { background: var(--primary); transform: translateY(-5px); box-shadow: 0 15px 30px var(--primary-glow); }
 
-        /* 
-           =============================================================
-           5. INTERACTIVE WORKSPACE TOOLS
-           ============================================================= 
-        */
-        #note-canvas-editor {
-            flex: 1; background: transparent; border: none; color: var(--text-main);
-            font-size: 1.1rem; line-height: 1.9; resize: none; outline: none; padding: 0 10px;
-        }
+        /* スケッチボード */
         #sketch-engine-box { flex: 1; display: flex; flex-direction: column; gap: 20px; }
-        #canvas-board { background: #ffffff; border-radius: var(--radius-md); flex: 1; cursor: crosshair; touch-action: none; }
+        #main-canvas-board { background: #ffffff; border-radius: var(--radius-md); flex: 1; cursor: crosshair; touch-action: none; }
         .canvas-toolbar {
             padding: 20px 30px; background: var(--bg-sidebar); display: flex; align-items: center; gap: 30px;
             border-bottom: 1px solid var(--border); border-radius: var(--radius-lg); flex-wrap: wrap;
@@ -194,7 +185,7 @@
 
         /* 
            =============================================================
-           6. BUTTONS & CONTROLS
+           5. BUTTONS & UI MODULES
            ============================================================= 
         */
         .btn {
@@ -204,7 +195,7 @@
             white-space: nowrap;
         }
         .btn-primary { background: var(--primary); box-shadow: 0 8px 20px var(--primary-glow); }
-        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px var(--primary-glow); background: var(--primary-light); }
+        .btn-primary:hover { transform: translateY(-4px); box-shadow: 0 15px 35px var(--primary-glow); background: var(--primary-light); }
         .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-sub); }
         .btn-ghost:hover { background: var(--bg-hover); color: white; }
         .btn-danger { background: var(--danger); }
@@ -222,60 +213,60 @@
         body.is-teacher .only-teacher-block { display: block !important; }
         body.is-student .only-student { display: flex !important; }
 
-        /* リアクションレイヤー */
+        /* リアクション */
         #reaction-layer { position: fixed; inset: 0; pointer-events: none; z-index: 15000; overflow: hidden; }
-        .reaction-emoji {
-            position: absolute; bottom: -100px; font-size: 6rem; 
-            animation: riseAnimate 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        .floating-reaction {
+            position: absolute; bottom: -80px; font-size: 5rem; 
+            animation: riseFade 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
-        @keyframes riseAnimate {
+        @keyframes riseFade {
             0% { transform: translateY(0) scale(0.5); opacity: 0; }
-            15% { transform: translateY(-60px) scale(1.3); opacity: 1; }
+            15% { transform: translateY(-50px) scale(1.3); opacity: 1; }
             100% { transform: translateY(-98vh) scale(1.1); opacity: 0; }
         }
 
         .timer-huge { font-size: 13rem; font-weight: 900; font-family: var(--font-mono); color: var(--danger); text-shadow: 0 0 60px rgba(244, 63, 94, 0.4); margin: 40px 0; }
-        .user-chip {
+        .student-chip {
             background: var(--bg-card); padding: 15px 20px; border-radius: 14px;
             display: flex; justify-content: space-between; align-items: center;
             border: 1px solid transparent; transition: 0.4s; margin-bottom: 12px;
         }
-        .user-chip.is-hand-raised { border-color: var(--warning); background: rgba(245, 158, 11, 0.15); box-shadow: 0 0 25px rgba(245, 158, 11, 0.2); }
+        .student-chip.is-hand-raised { border-color: var(--warning); background: rgba(245, 158, 11, 0.15); box-shadow: 0 0 25px rgba(245, 158, 11, 0.2); }
     </style>
 </head>
 <body>
 
-<!-- [SYSTEM] 認証ゲートウェイ -->
+<!-- [SYSTEM] 認証・初期画面 -->
 <div id="auth-overlay">
     <div class="auth-card">
         <div class="auth-logo">LECTURE DX</div>
-        <div class="auth-desc">Unified Orchestration Suite v22.0</div>
+        <div class="auth-desc">Universal Sovereign Edition v22.1</div>
         
-        <div class="input-box" id="room-input-container">
+        <div class="input-box" id="auth-room-id-box">
             <label>6-DIGIT ROOM NUMBER</label>
             <input type="text" id="init-room-id" class="text-input" placeholder="000000" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
         </div>
         <div class="input-box">
             <label>DISPLAY NAME</label>
-            <input type="text" id="init-user-name" class="text-input" placeholder="表示名を入力してください">
+            <input type="text" id="init-user-name" class="text-input" placeholder="あなたの表示名を入力">
         </div>
         
         <div class="auth-btn-grid">
-            <button class="btn btn-ghost btn-auth" onclick="app.ignition('student')">STUDENT</button>
-            <button class="btn btn-primary btn-auth" id="btn-host-start" onclick="app.ignition('teacher')">TEACHER</button>
+            <button class="btn btn-ghost btn-auth" id="btn-ignition-student" onclick="app.ignition('student')">STUDENT</button>
+            <button class="btn btn-primary btn-auth" id="btn-ignition-teacher" onclick="app.ignition('teacher')">TEACHER</button>
         </div>
-        <p id="auth-status-log" style="margin-top:30px; font-size:0.75rem; color:var(--text-dim); font-weight:800; text-transform:uppercase;"></p>
+        <p id="auth-status-log" style="margin-top:30px; font-size:0.75rem; color:var(--text-mute); font-weight:800; text-transform:uppercase;"></p>
     </div>
 </div>
 
 <div id="reaction-layer"></div>
 
-<!-- [SYSTEM] 生徒専用アンケート割り込みポップアップ -->
+<!-- [SYSTEM] 生徒専用プッシュアンケートオーバーレイ -->
 <div id="survey-push-overlay">
     <div class="survey-push-card">
         <div id="sv-push-q-title" class="push-q-title">QUESTION RECEIVED</div>
         <div id="sv-push-render-area" class="push-options-grid"></div>
-        <p style="margin-top:30px; text-align:center; color:var(--text-dim); font-size:0.85rem;">※回答を選択すると自動的に元のツール画面に戻ります。</p>
+        <p style="margin-top:30px; text-align:center; color:var(--text-dim); font-size:0.85rem;">※回答を選択すると自動的にこの画面は閉じられます。</p>
     </div>
 </div>
 
@@ -286,7 +277,7 @@
     <nav class="sidebar">
         <div class="sidebar-logo">LDX</div>
         
-        <!-- 生徒・教員共通 -->
+        <!-- 全ロール共通メニュー -->
         <div class="nav-item active" id="nav-note" data-label="授業ノート" onclick="app.switchPane('note')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
         </div>
@@ -295,8 +286,8 @@
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 5 5"/></svg>
         </div>
 
-        <!-- 教員専用メニュー -->
-        <div class="nav-item only-teacher" id="nav-survey" data-label="アンケート配信" onclick="app.switchPane('survey')">
+        <!-- 【教員専用メニュー】（生徒には表示されず、タップできないように制限） -->
+        <div class="nav-item only-teacher" id="nav-survey" data-label="アンケート管理" onclick="app.switchPane('survey')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
         </div>
         
@@ -304,17 +295,17 @@
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
         </div>
         
-        <div class="nav-item only-teacher" id="nav-admin" data-label="クラス管理" onclick="app.switchPane('admin')">
+        <div class="nav-item only-teacher" id="nav-admin" data-label="管理ダッシュボード" onclick="app.switchPane('admin')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
 
-        <div style="margin-top:auto" class="nav-item" data-label="サウンド設定" onclick="app.unlockAudio()">
+        <div style="margin-top:auto" class="nav-item" data-label="音響設定を解除" onclick="app.unlockAudio()">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
         </div>
     </nav>
 
     <div class="content-container">
-        <!-- 固定ヘッダー -->
+        <!-- 固定グローバルヘッダー -->
         <header>
             <div class="header-left">
                 <span id="role-badge" class="badge">---</span>
@@ -322,15 +313,16 @@
                 <div id="p2p-indicator" style="width:12px; height:12px; border-radius:50%; background:var(--secondary); box-shadow: 0 0 15px var(--secondary);"></div>
             </div>
             <div style="display:flex; gap:15px; align-items:center;">
-                <button class="only-teacher btn btn-ghost btn-sm" onclick="app.copyInviteUrl()">🔗 生徒招待用URLコピー</button>
+                <button class="only-teacher btn btn-ghost btn-sm" onclick="app.copyInviteUrl()">🔗 招待URLコピー</button>
                 <button class="only-teacher btn btn-primary btn-sm" id="btn-master-share" onclick="app.toggleScreenShare()">🖥 画面共有開始</button>
                 <div style="border-left: 1px solid var(--border); height:35px; margin:0 10px;"></div>
                 <span id="clock-digital" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight:bold; color:var(--primary-light);">00:00:00</span>
             </div>
         </header>
 
+        <!-- メインビューポート -->
         <main class="workspace">
-            <!-- 中央メインステージ -->
+            
             <section class="pane-stage">
                 
                 <!-- 【共通】教員ビデオ配信レイヤー -->
@@ -339,20 +331,20 @@
                     <video id="shared-video-element" autoplay playsinline></video>
                 </div>
 
-                <!-- ペイン 1: 授業ノート -->
+                <!-- ペイン 1: 授業ノート（共通） -->
                 <div id="pane-note" class="pane active">
                     <div class="glass-card">
                         <div class="pane-head">
                             <span>📝 学習ノート (Persistence Mode)</span>
-                            <button class="btn btn-ghost btn-sm" onclick="app.exportNoteFile()">Export .txt</button>
+                            <button class="btn btn-ghost btn-sm" onclick="app.exportNoteFile()">TXTとして保存</button>
                         </div>
                         <div class="pane-body" style="padding:0;">
-                            <textarea id="note-editor-node" spellcheck="false" placeholder="ここに授業の内容を記録してください..."></textarea>
+                            <textarea id="note-editor-node" spellcheck="false" placeholder="ここに授業の内容を記録してください...（ Markdown形式対応 ）"></textarea>
                         </div>
                     </div>
                 </div>
 
-                <!-- ペイン 2: スケッチボード -->
+                <!-- ペイン 2: スケッチボード（共通） -->
                 <div id="pane-sketch" class="pane">
                     <div class="glass-card">
                         <div class="pane-head"><span>🎨 インタラクティブ・スケッチボード</span></div>
@@ -370,9 +362,9 @@
                                     <div style="flex:1"></div>
                                     <button class="btn btn-ghost btn-sm" onclick="app.canvasUndo()">UNDO</button>
                                     <button class="btn btn-ghost btn-sm" onclick="app.canvasClear()">全消去</button>
-                                    <button class="btn btn-primary btn-sm" onclick="app.saveCanvasImg()">PNG保存</button>
+                                    <button class="btn btn-primary btn-sm" onclick="app.saveCanvasImg()">PNGとして出力</button>
                                 </div>
-                                <canvas id="canvas-board"></canvas>
+                                <canvas id="main-canvas-board"></canvas>
                             </div>
                         </div>
                     </div>
@@ -384,25 +376,25 @@
                         <div class="pane-head">
                             <span>📊 アンケート・マスター・コントロール</span>
                             <div style="display:flex; gap:10px;">
-                                <button class="btn btn-ghost btn-sm" id="sv-vis-btn" onclick="app.toggleSurveyVis()">結果を非公開にする</button>
-                                <button class="btn btn-danger btn-sm" onclick="app.terminateSurvey()">終了</button>
+                                <button class="btn btn-ghost btn-sm" id="sv-vis-toggle-btn" onclick="app.toggleSurveyVis()">結果を非公開にする</button>
+                                <button class="btn btn-danger btn-sm" onclick="app.terminateSurvey()">回答を終了</button>
                             </div>
                         </div>
                         <div class="pane-body" style="display:grid; grid-template-columns: 1fr 1fr; gap:40px;">
                             <div>
-                                <h4 style="margin-bottom:25px; color:var(--primary-light);">1. 新規配信設定</h4>
+                                <h4 style="margin-bottom:25px; color:var(--primary-light);">1. アンケート新規作成</h4>
                                 <div class="input-box"><label>質問形式</label>
                                     <select id="adm-sv-type-in" onchange="app.onSurveyTypeChange()">
-                                        <option value="single">単一選択</option><option value="multi">複数選択</option>
-                                        <option value="scale">5段階評価</option><option value="text">記述式</option>
+                                        <option value="single">単一選択（ラジオ）</option><option value="multi">複数選択（チェック）</option>
+                                        <option value="scale">5段階評価（1〜5）</option><option value="text">記述式（テキスト）</option>
                                     </select>
                                 </div>
-                                <div class="input-box"><label>質問文</label><input type="text" id="adm-sv-q-in" placeholder="質問を入力..."></div>
+                                <div class="input-box"><label>質問の内容</label><input type="text" id="adm-sv-q-in" placeholder="質問文を入力..."></div>
                                 <div class="input-box" id="adm-sv-opt-wrapper"><label>選択肢 (カンマ区切り)</label><input type="text" id="adm-sv-opt-in" placeholder="A, B, C, D"></div>
-                                <button class="btn btn-primary" style="width:100%; height:70px; font-size:1.2rem;" onclick="app.igniteSurvey()">配信開始（全員PUSH）</button>
+                                <button class="btn btn-primary" style="width:100%; height:70px; font-size:1.2rem;" onclick="app.igniteSurvey()">配信開始（全員プッシュ）</button>
                             </div>
                             <div style="background:var(--bg-card); padding:35px; border-radius:28px; border:1px solid var(--border);">
-                                <h4 style="color:var(--secondary); margin-bottom:20px;">2. リアルタイム集計状況</h4>
+                                <h4 style="color:var(--secondary); margin-bottom:20px;">2. リアルタイム・アナリティクス</h4>
                                 <div id="sv-votes-count-disp" style="font-weight:900; color:var(--primary); font-size:1.5rem; margin-bottom:25px;">0 VOTES RECEIVED</div>
                                 <div id="sv-results-render-area" style="display:flex; flex-direction:column; gap:12px;"></div>
                             </div>
@@ -416,13 +408,13 @@
                         <div class="pane-head"><span>⏰ 精密同期タイマー・コントロール</span></div>
                         <div class="pane-body" style="text-align:center; justify-content: center;">
                             <div id="timer-huge-disp" class="timer-huge">00:00</div>
-                            <div style="max-width:550px; margin:0 auto; display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                            <div style="max-width:550px; margin:0 auto; display:grid; grid-template-columns: 1fr 1fr; gap:25px;">
                                 <div class="input-box"><label>MINUTES</label><input type="number" id="t-min-in" value="45" class="text-input" style="font-size:3.5rem; text-align:center; height:120px;"></div>
                                 <div class="input-box"><label>SECONDS</label><input type="number" id="t-sec-in" value="0" class="text-input" style="font-size:3.5rem; text-align:center; height:120px;"></div>
                             </div>
                             <div style="display:flex; gap:20px; max-width:550px; margin:40px auto 0;">
-                                <button class="btn btn-primary" style="flex:2; height:80px; font-size:1.8rem;" onclick="app.broadcastTimer()">開始</button>
-                                <button class="btn btn-danger" style="flex:1; height:80px; font-size:1.8rem;" onclick="app.resetTimer()">リセット</button>
+                                <button class="btn btn-primary" style="flex:2; height:80px; font-size:1.6rem;" onclick="app.broadcastTimer()">SYNC START</button>
+                                <button class="btn btn-danger" style="flex:1; height:80px; font-size:1.6rem;" onclick="app.resetTimer()">RESET</button>
                             </div>
                         </div>
                     </div>
@@ -431,7 +423,7 @@
                 <!-- ペイン 5: 【教員】クラス統計・出席簿 -->
                 <div id="pane-admin" class="pane only-teacher-block">
                     <div class="glass-card">
-                        <div class="pane-head"><span>👥 クラス・管理ダッシュボード</span></div>
+                        <div class="pane-head"><span>👥 出席管理・システム統計・ログ</span></div>
                         <div class="pane-body">
                             <div style="display:grid; grid-template-columns: 1fr 400px; gap:40px;">
                                 <div>
@@ -440,8 +432,8 @@
                                 </div>
                                 <div style="background:var(--bg-elevated); padding:40px; border-radius:32px; border:1px solid var(--border); height:fit-content;">
                                     <h4 style="margin-bottom:30px; text-align:center; font-weight:900;">CLASS UNDERSTANDING</h4>
-                                    <div id="avg-pct-huge" style="font-size:7rem; font-weight:900; color:var(--secondary); text-align:center; margin-bottom:15px;">100%</div>
-                                    <div style="height:25px; background:var(--bg-base); border-radius:10px; overflow:hidden;"><div id="avg-bar-final" style="width:100%; height:100%; background:var(--secondary); transition:1.2s ease;"></div></div>
+                                    <div id="avg-pct-huge" style="font-size:7rem; font-weight:900; color:var(--secondary); text-align:center; margin-bottom:20px;">100%</div>
+                                    <div style="height:20px; background:var(--bg-base); border-radius:10px; overflow:hidden;"><div id="avg-bar-final" style="width:100%; height:100%; background:var(--secondary); transition:1.2s ease;"></div></div>
                                     <button class="btn btn-primary" style="width:100%; margin-top:40px; height:70px; font-size:1.3rem;" onclick="app.pickRoulette()">🎲 指名ルーレット</button>
                                 </div>
                             </div>
@@ -451,18 +443,18 @@
 
             </section>
 
-            <!-- 右サイド: インタラクション & 掲示板 -->
-            <aside class="side-intelligence">
+            <!-- 右サイド: 掲示板 & 学生アクション -->
+            <aside class="side-panel">
                 <div class="panel" style="height: 100%;">
                     <div class="panel-header">Interaction HUB</div>
                     <div class="panel-body">
                         <!-- 掲示板ログ -->
-                        <div id="msg-bulletin-log" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding-right:10px;"></div>
+                        <div id="bulletin-log" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding-right:10px;"></div>
                         
                         <div style="margin-top:25px; border-top:1px solid var(--border); padding-top:25px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                                 <span style="font-size:0.8rem; font-weight:900; color:var(--text-dim); letter-spacing:1px;">REACTIONS</span>
-                                <div style="display:flex; gap:12px;">
+                                <div style="display:flex; gap:10px;">
                                     <button class="btn btn-ghost btn-sm" style="padding:8px 12px; font-size:1.5rem;" onclick="app.emitEmoji('👏')">👏</button>
                                     <button class="btn btn-ghost btn-sm" style="padding:8px 12px; font-size:1.5rem;" onclick="app.emitEmoji('🔥')">🔥</button>
                                     <button class="btn btn-ghost btn-sm" style="padding:8px 12px; font-size:1.5rem;" onclick="app.emitEmoji('❓')">❓</button>
@@ -472,12 +464,12 @@
                             <!-- 教員専用：掲示板投稿 -->
                             <div class="only-teacher">
                                 <textarea id="teacher-msg-input" style="padding:15px; font-size:1rem;" rows="3" placeholder="全員に通知を送信..."></textarea>
-                                <button class="btn btn-primary btn-sm" style="width:100%; margin-top:15px; height:55px;" onclick="app.postBulletin()">全員に送信</button>
+                                <button class="btn btn-primary btn-sm" style="width:100%; margin-top:15px; height:55px;" onclick="app.postBulletin()">掲示板に送信</button>
                             </div>
                             
-                            <!-- 生徒専用：理解度・挙手ステータス -->
+                            <!-- 生徒専用：状況報告 -->
                             <div class="only-student" style="background:var(--bg-elevated); padding:30px; border-radius:28px; border: 1px solid var(--primary-glow);">
-                                <p style="font-size:0.9rem; font-weight:900; color:var(--text-main); margin-bottom:20px; text-align:center;">今の状況を伝える</p>
+                                <p style="font-size:0.9rem; font-weight:900; color:var(--text-main); margin-bottom:20px; text-align:center;">理解度を伝える</p>
                                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                                     <button class="btn btn-ghost btn-sm" style="height:60px; font-size:1.6rem;" onclick="app.updateLv(100)">😊</button>
                                     <button class="btn btn-ghost btn-sm" style="height:60px; font-size:1.6rem;" onclick="app.updateLv(50)">🤔</button>
@@ -495,18 +487,18 @@
 
 <script>
 /**
- * LECTURE DX ULTIMATE v22.0
- * CORE ENGINE: EPHEMERAL PEER PROTOCOL
+ * LECTURE DX ULTIMATE v22.1
+ * ARCHITECTURE: PERSISTENT SYNC P2P
  */
 
 class LectureEphemeralOS {
     constructor() {
         this.peer = null;
-        this.conns = new Map(); // Host context
-        this.hostConn = null;   // Client context
+        this.conns = new Map(); // Teacher context
+        this.hostConn = null;   // Student context
         this.role = '';
         this.roomId = '';
-        this.name = '';
+        this.userName = '';
         this.roster = new Map();
         this.surveyCtx = null;
         this.timer = null;
@@ -520,19 +512,18 @@ class LectureEphemeralOS {
     }
 
     /* -------------------------------------------------------------
-       1. INITIALIZATION & EPHEMERAL LOGIC
+       1. INITIALIZATION & GATEWAY
     ------------------------------------------------------------- */
     async ignition(role) {
         this.roomId = document.getElementById('init-room-id').value.trim();
-        this.name = document.getElementById('init-user-name').value.trim() || 'Anonymous';
+        this.userName = document.getElementById('init-user-name').value.trim() || 'Anonymous';
 
-        // 6桁数字チェック
+        // ルームID 6桁制限
         if (!/^\d{6}$/.test(this.roomId)) return alert('ルームIDは「6桁の数字」で設定してください。');
 
         this.role = role;
-        document.getElementById('auth-status-log').innerText = 'INITIALIZING EPHEMERAL PEER...';
+        document.getElementById('auth-status-log').innerText = 'SYCHRONIZING P2P NODES...';
 
-        // Peer ID 生成（リロードで破棄されるよう永続化しない）
         const pid = role === 'teacher' ? `ldx-v22-${this.roomId}-host` : `ldx-v22-${this.roomId}-cl-${Math.random().toString(36).substr(2,6)}`;
         this.peer = new Peer(pid);
 
@@ -543,11 +534,11 @@ class LectureEphemeralOS {
         });
 
         this.peer.on('error', (err) => {
-            alert('接続エラー: ' + err.type + '\nリロードしてもう一度お試しください。');
+            alert('接続エラー: ' + err.type + '\n教員が既に開始しているか、ルーム番号が不正です。');
             location.reload();
         });
 
-        // WebRTC ビデオ受信リスナー
+        // WebRTC ビデオ受信
         this.peer.on('call', (call) => {
             call.answer();
             call.on('stream', (st) => {
@@ -566,31 +557,34 @@ class LectureEphemeralOS {
         document.getElementById('room-display-id').innerText = `#${this.roomId}`;
         
         this.initCanvasEngine();
-        // ノートの読み込み（リロード時もセッション継続なら引き継ぎ可とするが、RoomID自体は保存しない）
         const savedNote = localStorage.getItem('ldx_v22_cache_note');
         if(savedNote) document.getElementById('note-editor-node').value = savedNote;
         document.getElementById('note-editor-node').oninput = (e) => localStorage.setItem('ldx_v22_cache_note', e.target.value);
     }
 
     /* -------------------------------------------------------------
-       2. NAVIGATION SYSTEM
+       2. NAVIGATION SYSTEM (PRO MULTI-TASK)
     ------------------------------------------------------------- */
     switchPane(id) {
+        // 全ペイン非表示
         document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        
+        // ターゲット表示
         document.getElementById('pane-' + id).classList.add('active');
         document.getElementById('nav-' + id).classList.add('active');
+
         if (id === 'sketch') this.resizeCanvas();
     }
 
     /* -------------------------------------------------------------
-       3. P2P SYNC ENGINE
+       3. COMMUNICATION P2P ENGINE
     ------------------------------------------------------------- */
     bootHost() {
         this.peer.on('connection', (conn) => {
             conn.on('open', () => {
                 this.conns.set(conn.peer, conn);
-                conn.on('data', (d) => this.onPacket(d, conn));
+                conn.on('data', (d) => this.onData(d, conn));
                 if (this.surveyCtx) conn.send({ type: 'SV_SYNC', payload: this.surveyCtx });
             });
             conn.on('close', () => {
@@ -605,18 +599,21 @@ class LectureEphemeralOS {
         const hostId = `ldx-v22-${this.roomId}-host`;
         this.hostConn = this.peer.connect(hostId, { reliable: true });
         this.hostConn.on('open', () => {
-            this.hostConn.send({ type: 'HELLO', name: this.name });
+            this.hostConn.send({ type: 'HELLO', name: this.userName });
             document.getElementById('p2p-indicator').style.background = 'var(--secondary)';
         });
-        this.hostConn.on('data', (d) => this.onPacket(d));
-        this.hostConn.on('close', () => { alert('先生が退室しました'); location.reload(); });
+        this.hostConn.on('data', (d) => this.onData(d));
+        this.hostConn.on('close', () => { alert('切断されました'); location.reload(); });
     }
 
     broadcast(data) {
         this.conns.forEach(c => { if (c.open) c.send(data); });
     }
 
-    onPacket(d, sender = null) {
+    onData(d, sender = null) {
+        switch (d) {
+            case null: return;
+        }
         switch (d.type) {
             case 'HELLO':
                 this.roster.set(sender.peer, { name: d.name, level: 100, hand: false });
@@ -647,7 +644,7 @@ class LectureEphemeralOS {
                 document.getElementById('survey-push-overlay').style.display = 'none';
                 this.renderSurveyUI({ total: 0, options: [], visible: true }); break;
             case 'TIMER_TICK':
-                this.updateTimerUI(d.end); break;
+                this.runTimerEngine(d.end); break;
             case 'TIMER_KILL':
                 clearInterval(this.timer);
                 document.querySelectorAll('#timer-huge-disp, #clock-digital').forEach(el => el.innerText = '00:00'); break;
@@ -663,13 +660,12 @@ class LectureEphemeralOS {
     }
 
     /* -------------------------------------------------------------
-       4. SURVEY ENGINE (The Sovereign Polling)
+       4. SURVEY ENGINE (PRO CONTROL)
     ------------------------------------------------------------- */
     onSurveyTypeChange() {
         const t = document.getElementById('adm-sv-type-in').value;
         const w = document.getElementById('adm-sv-opt-wrapper');
         w.style.opacity = (t === 'text' || t === 'scale') ? '0.2' : '1';
-        w.style.pointerEvents = (t === 'text' || t === 'scale') ? 'none' : 'auto';
     }
 
     igniteSurvey() {
@@ -710,11 +706,11 @@ class LectureEphemeralOS {
         // 生徒へのプッシュ回答
         if (this.role === 'student' && !this.surveyVoted && data.total === 0 && data.options.length > 0) {
             popup.style.display = 'flex';
-            document.getElementById('sv-push-q-title').innerText = "❓ " + data.question;
-            const ui = document.getElementById('sv-push-render-area');
+            document.getElementById('sv-push-q-title').innerText = "📊 " + data.question;
+            const ui = document.getElementById('sv-push-options-render');
             ui.innerHTML = '';
             if (data.type === 'text') {
-                ui.innerHTML = `<input type="text" id="sv-inp-text-push" class="text-input" placeholder="回答を入力...">
+                ui.innerHTML = `<input type="text" id="sv-inp-push-txt" class="text-input" placeholder="回答を入力...">
                                 <button class="btn btn-primary" style="margin-top:20px; width:100%" onclick="app.submitPushVote()">送信する</button>`;
             } else {
                 data.options.forEach(opt => {
@@ -735,7 +731,7 @@ class LectureEphemeralOS {
         } else {
             if (data.type === 'text') {
                 data.votes.slice().reverse().forEach(v => {
-                    resultsArea.innerHTML += `<div class="user-chip" style="font-size:0.9rem;">${v}</div>`;
+                    resultsArea.innerHTML += `<div class="student-chip" style="font-size:0.9rem;">${v}</div>`;
                 });
             } else {
                 data.options.forEach(o => {
@@ -751,14 +747,14 @@ class LectureEphemeralOS {
         }
 
         if (this.role === 'teacher') {
-            const btn = document.getElementById('sv-vis-btn');
+            const btn = document.getElementById('sv-vis-toggle-btn');
             btn.innerText = data.visible ? '結果を非公開にする' : '結果を公開する';
             btn.style.background = data.visible ? 'var(--bg-hover)' : 'var(--accent)';
         }
     }
 
     submitPushVote(v = null) {
-        const val = v || document.getElementById('sv-inp-text-push').value.trim();
+        const val = v || document.getElementById('sv-inp-push-txt').value.trim();
         if (this.hostConn) this.hostConn.send({ type: 'SV_VOTE_RECV', val: val });
         this.surveyVoted = true;
     }
@@ -787,6 +783,7 @@ class LectureEphemeralOS {
         const end = Date.now() + (m * 60 + s) * 1000;
         this.broadcast({ type: 'TIMER_TICK', end: end });
         this.runTimerEngine(end);
+        this.switchPane('timer');
     }
 
     runTimerEngine(endTime) {
@@ -812,7 +809,7 @@ class LectureEphemeralOS {
 
     resetTimer() {
         clearInterval(this.timer);
-        document.querySelectorAll('#timer-huge-disp, #clock-digital').forEach(el => el.innerText = '00:00');
+        document.querySelectorAll('.timer-huge, #clock-digital').forEach(el => el.innerText = '00:00');
         this.broadcast({ type: 'TIMER_KILL' });
     }
 
@@ -834,7 +831,7 @@ class LectureEphemeralOS {
             document.getElementById('video-streaming-box').style.display = 'block';
             document.getElementById('shared-video-element').srcObject = this.stream;
             btn.innerText = '共有停止';
-            this.connections.forEach(c => this.peer.call(c.peer, this.stream));
+            this.conns.forEach(c => this.peer.call(c.peer, this.stream));
             this.stream.getVideoTracks()[0].onended = () => this.toggleScreenShare();
         } catch (e) { console.error(e); }
     }
@@ -856,14 +853,14 @@ class LectureEphemeralOS {
         list.forEach(u => {
             lvSum += u.level;
             const chip = document.createElement('div');
-            chip.className = `user-chip ${u.hand ? 'is-hand-raised' : ''}`;
+            chip.className = `student-chip ${u.hand ? 'is-hand-raised' : ''}`;
             chip.innerHTML = `<span>👤 ${u.name}</span><span>${u.hand ? '🖐 Raising' : ''}</span>`;
             grid.appendChild(chip);
         });
         const avg = list.length ? Math.round(lvSum / list.length) : 100;
         document.getElementById('avg-pct-huge').innerText = `${avg}%`;
         document.getElementById('avg-bar-final').style.width = `${avg}%`;
-        document.getElementById('avg-bar-final').style.background = avg > 70 ? 'var(--secondary)' : (avg > 40 ? 'var(--warning)' : 'var(--danger)');
+        document.getElementById('avg-bar-final').style.background = avg > 70 ? 'var(--secondary)' : (avg > 40 ? 'var(--accent)' : 'var(--danger)');
     }
 
     updateLv(val) { if (this.hostConn) this.hostConn.send({ type: 'LV_CHANGE', val: val }); }
@@ -886,7 +883,7 @@ class LectureEphemeralOS {
     }
 
     drawAnnouncement(s, m) {
-        const b = document.getElementById('msg-bulletin-log');
+        const b = document.getElementById('bulletin-log');
         const d = document.createElement('div');
         d.style.background = 'var(--bg-card)'; d.style.padding = '12px'; d.style.borderRadius = '14px';
         d.innerHTML = `<strong style="color:var(--primary); font-size:0.7rem; text-transform:uppercase;">${s}</strong><div style="margin-top:6px; line-height:1.5; font-size:1rem;">${m}</div>`;
@@ -902,7 +899,7 @@ class LectureEphemeralOS {
     spawnEmoji(emoji) {
         const stage = document.getElementById('reaction-layer');
         const div = document.createElement('div');
-        div.className = 'reaction-emoji'; div.innerText = emoji;
+        div.className = 'floating-reaction'; div.innerText = emoji;
         div.style.left = `${Math.random() * 80 + 10}%`;
         stage.appendChild(div);
         setTimeout(() => div.remove(), 4000);
@@ -997,7 +994,7 @@ class LectureEphemeralOS {
     }
 }
 
-// Global OS Launch
+// OS Bootstrap
 const app = new LectureEphemeralOS();
 
 // UI Lifecycle
@@ -1005,15 +1002,14 @@ setInterval(() => {
     document.getElementById('clock-digital').innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-// Automation: Ephemeral Role Detection via URL
 window.addEventListener('load', () => {
     const p = new URLSearchParams(window.location.search);
     const r = p.get('room');
     if (r) {
         document.getElementById('init-room-id').value = r;
         if (p.get('role') === 'student') {
-            document.getElementById('btn-host-start').style.display = 'none';
-            document.getElementById('room-input-container').style.display = 'none';
+            document.getElementById('btn-ignition-teacher').style.display = 'none';
+            document.getElementById('room-id-box').style.display = 'none';
             document.getElementById('auth-status-log').innerText = 'STUDENT MODE (EPHEMERAL)';
         }
     }
