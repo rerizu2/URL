@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lecture DX v21.0 | Hex-Code Protocol</title>
+    <title>Lecture DX v22.0 | Ephemeral Orchestrator</title>
     
-    <!-- PeerJS: クロスデバイス・リアルタイム通信用 -->
+    <!-- External Dependency: PeerJS (Real-time P2P) -->
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     
     <style>
         /* 
            =============================================================
-           1. PREMIUM DESIGN SYSTEM
+           1. CORE DESIGN SYSTEM (Enterprise Dark UI)
            ============================================================= 
         */
         :root {
             --primary: #6366f1;
-            --primary-glow: rgba(99, 102, 241, 0.5);
-            --bg-deep: #05070a;
+            --primary-light: #818cf8;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --bg-base: #05070a;
             --bg-main: #0c0f18;
             --bg-sidebar: #0f121d;
             --bg-panel: #161b2c;
             --bg-card: #1f2738;
+            --bg-hover: #2d364f;
             --bg-input: #0a0c14;
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
@@ -34,67 +36,67 @@
             --radius-lg: 18px;
             --radius-md: 12px;
             --shadow-xl: 0 25px 60px -12px rgba(0, 0, 0, 0.8);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
         }
 
         * { box-sizing: border-box; -webkit-font-smoothing: antialiased; margin: 0; padding: 0; outline: none; border: none; }
-        html, body { height: 100%; overflow: hidden; background: var(--bg-deep); color: var(--text-main); font-family: 'Inter', -apple-system, system-ui, sans-serif; }
+        html, body { height: 100%; overflow: hidden; background: var(--bg-deep); color: var(--text-main); font-family: 'Inter', -apple-system, sans-serif; }
 
-        /* スクロールバー美化 */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        /* スクロールバー */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--text-dim); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-sub); }
 
         /* 
            =============================================================
-           2. AUTHENTICATION (GATEWAY)
+           2. AUTHENTICATION (Ephemeral Gateway)
            ============================================================= 
         */
         #auth-overlay {
             position: fixed; inset: 0; background: radial-gradient(circle at top right, #1e1b4b, var(--bg-deep));
-            display: flex; align-items: center; justify-content: center; z-index: 20000; transition: 0.5s;
+            display: flex; align-items: center; justify-content: center; z-index: 20000; transition: var(--transition);
         }
         .auth-card {
             background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-xl);
             width: min(95vw, 480px); padding: 50px; box-shadow: var(--shadow-xl); text-align: center;
+            animation: appEntry 0.8s ease;
         }
+        @keyframes appEntry { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .auth-logo { font-size: 3rem; font-weight: 900; letter-spacing: -4px; margin-bottom: 10px; color: var(--primary); text-shadow: 0 0 35px var(--primary-glow); }
-        .auth-desc { color: var(--text-sub); font-size: 0.8rem; margin-bottom: 40px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; }
+        .auth-desc { color: var(--text-sub); font-size: 0.85rem; margin-bottom: 40px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; }
         
         .input-box { margin-bottom: 25px; text-align: left; }
-        .input-box label { display: block; font-size: 0.7rem; color: var(--text-sub); margin-bottom: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; }
+        .input-box label { display: block; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; }
         .text-input {
             width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md);
-            padding: 18px 24px; color: white; font-size: 1.1rem; transition: 0.3s; display: block; text-align: center;
+            padding: 18px 24px; color: white; font-size: 1.2rem; transition: var(--transition); display: block; text-align: center;
         }
-        .text-input:focus { border-color: var(--primary); box-shadow: 0 0 0 5px var(--primary-glow); }
-        .text-input::placeholder { color: var(--text-dim); }
+        .text-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
+        #init-room-id { font-family: var(--font-mono); letter-spacing: 10px; font-size: 1.8rem; }
 
-        #room-id-input { font-family: var(--font-mono); letter-spacing: 5px; font-size: 1.5rem; }
-
-        .auth-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 40px; }
-        .btn-auth { padding: 18px; border-radius: var(--radius-md); font-weight: 900; cursor: pointer; transition: 0.3s; font-size: 1rem; }
-        #btn-join-student { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border); }
-        #btn-join-teacher { background: var(--primary); color: white; box-shadow: 0 10px 20px var(--primary-glow); }
+        .auth-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 35px; }
 
         /* 
            =============================================================
-           3. MAIN INTERFACE SHELL
+           3. MASTER OS SHELL & NAVIGATION
            ============================================================= 
         */
         .app-shell { display: none; height: 100vh; grid-template-columns: 96px 1fr; opacity: 0; transition: 1.2s; }
         .app-shell.active { display: grid; opacity: 1; }
 
-        /* ナビゲーションサイドバー */
+        /* 垂直ナビゲーション */
         nav.sidebar {
             background: var(--bg-sidebar); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; align-items: center; padding: 40px 0; gap: 30px;
+            display: flex; flex-direction: column; align-items: center; padding: 40px 0; gap: 32px;
         }
         .sidebar-logo { color: var(--primary); margin-bottom: 20px; font-weight: 900; font-size: 1.6rem; cursor: pointer; }
         .nav-item {
             width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center;
-            color: var(--text-sub); cursor: pointer; transition: 0.3s; position: relative;
+            color: var(--text-sub); cursor: pointer; transition: var(--transition); position: relative;
         }
-        .nav-item:hover { background: var(--bg-hover); color: white; transform: scale(1.05); }
+        .nav-item:hover { background: var(--bg-hover); color: white; transform: translateY(-3px); }
         .nav-item.active { background: var(--primary); color: white; box-shadow: 0 10px 30px var(--primary-glow); }
         .nav-item::after {
             content: attr(data-label); position: absolute; left: 85px; background: var(--bg-card); color: white;
@@ -103,32 +105,32 @@
         }
         .nav-item:hover::after { opacity: 1; left: 100px; }
 
-        /* メインビューエリア */
+        /* メインステージ */
         .content-container { display: flex; flex-direction: column; overflow: hidden; background: var(--bg-main); }
         
         header {
             height: 80px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between;
             border-bottom: 1px solid var(--border); background: rgba(12, 15, 26, 0.7); backdrop-filter: blur(25px); z-index: 50;
         }
-        .header-left { display: flex; align-items: center; gap: 25px; }
-        .role-tag { padding: 6px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 900; text-transform: uppercase; border: 1px solid var(--border); }
-        .role-teacher { background: var(--primary-glow); color: var(--primary-light); border-color: var(--primary); }
-        .role-student { background: rgba(16, 185, 129, 0.1); color: var(--secondary); border-color: var(--secondary); }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .badge { padding: 6px 16px; border-radius: 8px; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; border: 1px solid var(--border); }
+        .badge-teacher { background: var(--primary-glow); color: var(--primary-light); border-color: var(--primary); }
+        .badge-student { background: rgba(16, 185, 129, 0.1); color: var(--secondary); border-color: var(--secondary); }
 
-        /* マルチツール・ビューポート */
+        /* マルチペイン・グリッド */
         .workspace { flex: 1; position: relative; padding: 25px; overflow: hidden; display: grid; grid-template-columns: 1fr 360px; gap: 25px; }
-        @media (max-width: 1200px) { .workspace { grid-template-columns: 1fr; } .side-panel { display: none; } }
+        @media (max-width: 1200px) { .workspace { grid-template-columns: 1fr; } .side-intelligence { display: none; } }
 
-        .stage { flex: 1; position: relative; overflow: hidden; }
+        .pane-stage { flex: 1; position: relative; overflow: hidden; }
         .pane {
             position: absolute; inset: 0; display: none; flex-direction: column;
-            animation: paneEntry 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            animation: paneIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
         .pane.active { display: flex; }
-        @keyframes paneEntry { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes paneIn { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        /* Glass Components */
-        .glass-panel {
+        /* Glass Cards */
+        .glass-card {
             background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-xl);
             display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-xl); height: 100%;
         }
@@ -137,22 +139,23 @@
 
         /* 
            =============================================================
-           4. SHARED SYSTEM (VIDEO, SURVEY)
+           4. SHARED SYSTEM MODULES
            ============================================================= 
         */
-        #stream-container {
+        /* 画面共有ビデオ */
+        #video-streaming-module {
             background: #000; border-radius: var(--radius-lg); margin-bottom: 25px;
             display: none; position: relative; overflow: hidden; aspect-ratio: 16/9;
             max-height: 48vh; box-shadow: 0 40px 100px rgba(0,0,0,0.7);
         }
-        #shared-video-node { width: 100%; height: 100%; object-fit: contain; }
-        .live-indicator {
+        #shared-video-element { width: 100%; height: 100%; object-fit: contain; }
+        .live-label {
             position: absolute; top: 20px; left: 20px; background: var(--danger);
             color: white; padding: 8px 18px; border-radius: 8px; font-size: 0.8rem; font-weight: 900;
-            display: flex; align-items: center; gap: 12px; z-index: 10;
+            display: flex; align-items: center; gap: 10px; z-index: 10;
         }
-        .live-indicator::before { content: ''; width: 10px; height: 10px; background: white; border-radius: 50%; animation: liveBlink 1s infinite; }
-        @keyframes liveBlink { 0% { opacity: 1; scale: 1; } 50% { opacity: 0.2; scale: 1.4; } 100% { opacity: 1; scale: 1; } }
+        .live-label::before { content: ''; width: 10px; height: 10px; background: white; border-radius: 50%; animation: livePulse 1.2s infinite; }
+        @keyframes livePulse { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
 
         /* アンケート割り込みオーバーレイ */
         #survey-push-overlay {
@@ -164,26 +167,34 @@
             width: min(90vw, 650px); padding: 50px; box-shadow: var(--shadow-xl); animation: surveyPop 0.6s cubic-bezier(0.17, 0.84, 0.44, 1);
         }
         @keyframes surveyPop { from { transform: scale(0.7) translateY(80px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
-        .sv-push-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 35px; line-height: 1.3; color: white; text-align: center; }
-        .sv-push-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
-        .sv-choice-btn {
+        .push-q-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 35px; line-height: 1.3; color: white; text-align: center; }
+        .push-options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
+        .push-opt-btn {
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
-            color: white; padding: 22px; text-align: left; cursor: pointer; transition: 0.2s;
-            font-weight: 700; font-size: 1.1rem;
+            color: white; padding: 22px; text-align: left; cursor: pointer; transition: var(--transition);
+            font-weight: 700; font-size: 1.15rem;
         }
-        .sv-choice-btn:hover { background: var(--primary); transform: translateY(-5px); box-shadow: 0 15px 30px var(--primary-glow); }
+        .push-opt-btn:hover { background: var(--primary); transform: translateY(-5px); box-shadow: 0 15px 30px var(--primary-glow); }
 
-        /* スケッチエンジン */
-        #sketch-container { flex: 1; display: flex; flex-direction: column; gap: 20px; }
-        #canvas-element { background: #ffffff; border-radius: var(--radius-md); flex: 1; cursor: crosshair; touch-action: none; }
-        .canvas-controls {
+        /* 
+           =============================================================
+           5. INTERACTIVE WORKSPACE TOOLS
+           ============================================================= 
+        */
+        #note-canvas-editor {
+            flex: 1; background: transparent; border: none; color: var(--text-main);
+            font-size: 1.1rem; line-height: 1.9; resize: none; outline: none; padding: 0 10px;
+        }
+        #sketch-engine-box { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        #canvas-board { background: #ffffff; border-radius: var(--radius-md); flex: 1; cursor: crosshair; touch-action: none; }
+        .canvas-toolbar {
             padding: 20px 30px; background: var(--bg-sidebar); display: flex; align-items: center; gap: 30px;
             border-bottom: 1px solid var(--border); border-radius: var(--radius-lg); flex-wrap: wrap;
         }
 
         /* 
            =============================================================
-           5. BUTTONS & UI COMPONENTS
+           6. BUTTONS & CONTROLS
            ============================================================= 
         */
         .btn {
@@ -192,8 +203,8 @@
             font-weight: 800; font-size: 1rem; transition: var(--transition); color: white;
             white-space: nowrap;
         }
-        .btn-primary { background: var(--primary); box-shadow: 0 10px 25px var(--primary-glow); }
-        .btn-primary:hover { transform: translateY(-4px); box-shadow: 0 20px 40px var(--primary-glow); background: var(--primary-light); }
+        .btn-primary { background: var(--primary); box-shadow: 0 8px 20px var(--primary-glow); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px var(--primary-glow); background: var(--primary-light); }
         .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-sub); }
         .btn-ghost:hover { background: var(--bg-hover); color: white; }
         .btn-danger { background: var(--danger); }
@@ -202,9 +213,9 @@
 
         input, select, textarea {
             width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md);
-            padding: 18px; color: white; font-size: 1rem; outline: none; transition: 0.3s;
+            padding: 18px; color: white; font-size: 1rem; outline: none; transition: var(--transition);
         }
-        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
 
         .only-teacher, .only-student { display: none !important; }
         body.is-teacher .only-teacher { display: flex !important; }
@@ -212,7 +223,7 @@
         body.is-student .only-student { display: flex !important; }
 
         /* リアクションレイヤー */
-        #reaction-stage { position: fixed; inset: 0; pointer-events: none; z-index: 15000; overflow: hidden; }
+        #reaction-layer { position: fixed; inset: 0; pointer-events: none; z-index: 15000; overflow: hidden; }
         .reaction-emoji {
             position: absolute; bottom: -100px; font-size: 6rem; 
             animation: riseAnimate 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
@@ -224,53 +235,58 @@
         }
 
         .timer-huge { font-size: 13rem; font-weight: 900; font-family: var(--font-mono); color: var(--danger); text-shadow: 0 0 60px rgba(244, 63, 94, 0.4); margin: 40px 0; }
-        .stat-bar-track { height: 12px; background: var(--bg-deep); border-radius: 6px; overflow: hidden; margin-top: 10px; }
-        .stat-bar-fill { height: 100%; background: var(--primary); transition: 1.5s ease; }
+        .user-chip {
+            background: var(--bg-card); padding: 15px 20px; border-radius: 14px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid transparent; transition: 0.4s; margin-bottom: 12px;
+        }
+        .user-chip.is-hand-raised { border-color: var(--warning); background: rgba(245, 158, 11, 0.15); box-shadow: 0 0 25px rgba(245, 158, 11, 0.2); }
     </style>
 </head>
 <body>
 
-<!-- [SYSTEM] 認証・6桁ルームIDゲートウェイ -->
+<!-- [SYSTEM] 認証ゲートウェイ -->
 <div id="auth-overlay">
     <div class="auth-card">
         <div class="auth-logo">LECTURE DX</div>
-        <div class="auth-desc">Secure Hex-Code Protocol Edition v21.0</div>
+        <div class="auth-desc">Unified Orchestration Suite v22.0</div>
         
-        <div class="input-box" id="room-input-container-auth">
+        <div class="input-box" id="room-input-container">
             <label>6-DIGIT ROOM NUMBER</label>
-            <input type="text" id="room-id-input" class="text-input" placeholder="000000" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <input type="text" id="init-room-id" class="text-input" placeholder="000000" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
         </div>
         <div class="input-box">
-            <label>YOUR DISPLAY NAME</label>
-            <input type="text" id="user-name-input" class="text-input" placeholder="あなたの名前を入力">
+            <label>DISPLAY NAME</label>
+            <input type="text" id="init-user-name" class="text-input" placeholder="表示名を入力してください">
         </div>
         
-        <div class="auth-actions">
-            <button class="btn-auth" id="btn-join-student" onclick="app.ignition('student')">STUDENT</button>
-            <button class="btn-auth" id="btn-join-teacher" onclick="app.ignition('teacher')">TEACHER</button>
+        <div class="auth-btn-grid">
+            <button class="btn btn-ghost btn-auth" onclick="app.ignition('student')">STUDENT</button>
+            <button class="btn btn-primary btn-auth" id="btn-host-start" onclick="app.ignition('teacher')">TEACHER</button>
         </div>
-        <p id="connection-status-msg" style="margin-top:30px; font-size:0.75rem; color:var(--text-mute); font-weight:800; letter-spacing:1px;"></p>
+        <p id="auth-status-log" style="margin-top:30px; font-size:0.75rem; color:var(--text-dim); font-weight:800; text-transform:uppercase;"></p>
     </div>
 </div>
 
-<div id="reaction-stage"></div>
+<div id="reaction-layer"></div>
 
-<!-- [SYSTEM] 生徒専用プッシュアンケートオーバーレイ -->
+<!-- [SYSTEM] 生徒専用アンケート割り込みポップアップ -->
 <div id="survey-push-overlay">
     <div class="survey-push-card">
-        <div id="sv-push-q-title" class="sv-push-title">RECEIVED QUESTION</div>
-        <div id="sv-push-render-area" class="sv-push-grid"></div>
-        <p style="margin-top:30px; text-align:center; color:var(--text-dim); font-size:0.85rem;">※回答を選ぶとこの画面は自動的に消去されます。</p>
+        <div id="sv-push-q-title" class="push-q-title">QUESTION RECEIVED</div>
+        <div id="sv-push-render-area" class="push-options-grid"></div>
+        <p style="margin-top:30px; text-align:center; color:var(--text-dim); font-size:0.85rem;">※回答を選択すると自動的に元のツール画面に戻ります。</p>
     </div>
 </div>
 
-<!-- [SYSTEM] アプリケーション・メインシェル -->
+<!-- [MAIN OS SHELL] -->
 <div class="app-shell" id="app-shell">
     
-    <!-- ナビゲーションメニュー -->
+    <!-- サイド・グローバルナビゲーション -->
     <nav class="sidebar">
         <div class="sidebar-logo">LDX</div>
         
+        <!-- 生徒・教員共通 -->
         <div class="nav-item active" id="nav-note" data-label="授業ノート" onclick="app.switchPane('note')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
         </div>
@@ -279,8 +295,8 @@
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 5 5"/></svg>
         </div>
 
-        <!-- 教員専用 -->
-        <div class="nav-item only-teacher" id="nav-survey" data-label="アンケート管理" onclick="app.switchPane('survey')">
+        <!-- 教員専用メニュー -->
+        <div class="nav-item only-teacher" id="nav-survey" data-label="アンケート配信" onclick="app.switchPane('survey')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
         </div>
         
@@ -288,7 +304,7 @@
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
         </div>
         
-        <div class="nav-item only-teacher" id="nav-admin" data-label="管理ダッシュボード" onclick="app.switchPane('admin')">
+        <div class="nav-item only-teacher" id="nav-admin" data-label="クラス管理" onclick="app.switchPane('admin')">
             <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
 
@@ -301,56 +317,62 @@
         <!-- 固定ヘッダー -->
         <header>
             <div class="header-left">
-                <span id="role-tag-display" class="role-tag">---</span>
-                <span id="room-id-display-text" style="font-size:0.9rem; font-weight:900; color:var(--text-sub); font-family:var(--font-mono); letter-spacing:2px;">#------</span>
-                <div id="network-dot" style="width:12px; height:12px; border-radius:50%; background:var(--secondary); box-shadow: 0 0 15px var(--secondary);"></div>
+                <span id="role-badge" class="badge">---</span>
+                <span id="room-display-id" style="font-size:0.9rem; font-weight:900; color:var(--text-sub); font-family:var(--font-mono); letter-spacing:2px;">#------</span>
+                <div id="p2p-indicator" style="width:12px; height:12px; border-radius:50%; background:var(--secondary); box-shadow: 0 0 15px var(--secondary);"></div>
             </div>
-            <div style="display:flex; gap:20px; align-items:center;">
+            <div style="display:flex; gap:15px; align-items:center;">
                 <button class="only-teacher btn btn-ghost btn-sm" onclick="app.copyInviteUrl()">🔗 生徒招待用URLコピー</button>
-                <button class="only-teacher btn btn-primary btn-sm" id="btn-master-share-trigger" onclick="app.toggleScreenShare()">🖥 画面共有開始</button>
-                <div style="border-left: 1px solid var(--border); height:35px; margin:0 5px;"></div>
-                <span id="clock-digital-live" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight:bold; color:var(--primary-light);">00:00:00</span>
+                <button class="only-teacher btn btn-primary btn-sm" id="btn-master-share" onclick="app.toggleScreenShare()">🖥 画面共有開始</button>
+                <div style="border-left: 1px solid var(--border); height:35px; margin:0 10px;"></div>
+                <span id="clock-digital" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight:bold; color:var(--primary-light);">00:00:00</span>
             </div>
         </header>
 
-        <main class="main-viewport">
-            
-            <section class="stage">
+        <main class="workspace">
+            <!-- 中央メインステージ -->
+            <section class="pane-stage">
                 
                 <!-- 【共通】教員ビデオ配信レイヤー -->
                 <div id="video-streaming-box">
-                    <div class="live-badge">TEACHER'S SCREEN LIVE</div>
-                    <video id="shared-video-node" autoplay playsinline></video>
+                    <div class="live-label">TEACHER'S SCREEN LIVE</div>
+                    <video id="shared-video-element" autoplay playsinline></video>
                 </div>
 
-                <!-- ペイン 1: ノート -->
+                <!-- ペイン 1: 授業ノート -->
                 <div id="pane-note" class="pane active">
-                    <div class="glass-panel">
+                    <div class="glass-card">
                         <div class="pane-head">
-                            <span>📝 学習ノートシステム</span>
-                            <button class="btn btn-ghost btn-sm" onclick="app.exportNoteFile()">TXT保存</button>
+                            <span>📝 学習ノート (Persistence Mode)</span>
+                            <button class="btn btn-ghost btn-sm" onclick="app.exportNoteFile()">Export .txt</button>
                         </div>
                         <div class="pane-body" style="padding:0;">
-                            <textarea id="main-note-editor" spellcheck="false" placeholder="ここに授業内容をメモしてください（Markdown対応 / 自動保存）"></textarea>
+                            <textarea id="note-editor-node" spellcheck="false" placeholder="ここに授業の内容を記録してください..."></textarea>
                         </div>
                     </div>
                 </div>
 
-                <!-- ペイン 2: スケッチ -->
+                <!-- ペイン 2: スケッチボード -->
                 <div id="pane-sketch" class="pane">
-                    <div class="glass-panel">
+                    <div class="glass-card">
                         <div class="pane-head"><span>🎨 インタラクティブ・スケッチボード</span></div>
                         <div class="pane-body" style="padding:15px; display:flex; flex-direction:column;">
-                            <div id="sketch-container">
-                                <div class="canvas-controls">
-                                    <input type="color" id="canvas-color-in" value="#6366f1" style="width:50px; height:50px; border:none; background:none; cursor:pointer;">
-                                    <input type="range" id="canvas-size-in" min="1" max="150" value="8" style="width:180px;">
+                            <div id="sketch-engine-box">
+                                <div class="canvas-toolbar">
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <label style="font-size:0.65rem; font-weight:900;">COLOR</label>
+                                        <input type="color" id="sk-color-picker" value="#6366f1" style="width:45px; height:45px; border:none; background:none; cursor:pointer;">
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <label style="font-size:0.65rem; font-weight:900;">PEN SIZE</label>
+                                        <input type="range" id="sk-size-slider" min="1" max="150" value="8" style="width:150px;">
+                                    </div>
                                     <div style="flex:1"></div>
                                     <button class="btn btn-ghost btn-sm" onclick="app.canvasUndo()">UNDO</button>
                                     <button class="btn btn-ghost btn-sm" onclick="app.canvasClear()">全消去</button>
-                                    <button class="btn btn-primary btn-sm" onclick="app.saveCanvasImg()">PNG出力</button>
+                                    <button class="btn btn-primary btn-sm" onclick="app.saveCanvasImg()">PNG保存</button>
                                 </div>
-                                <canvas id="canvas-element"></canvas>
+                                <canvas id="canvas-board"></canvas>
                             </div>
                         </div>
                     </div>
@@ -358,12 +380,12 @@
 
                 <!-- ペイン 3: 【教員】アンケート管理 -->
                 <div id="pane-survey" class="pane only-teacher-block">
-                    <div class="glass-panel">
+                    <div class="glass-card">
                         <div class="pane-head">
-                            <span>📊 アンケート・集中管理システム</span>
+                            <span>📊 アンケート・マスター・コントロール</span>
                             <div style="display:flex; gap:10px;">
                                 <button class="btn btn-ghost btn-sm" id="sv-vis-btn" onclick="app.toggleSurveyVis()">結果を非公開にする</button>
-                                <button class="btn btn-danger btn-sm" onclick="app.terminateSurvey()">回答を終了</button>
+                                <button class="btn btn-danger btn-sm" onclick="app.terminateSurvey()">終了</button>
                             </div>
                         </div>
                         <div class="pane-body" style="display:grid; grid-template-columns: 1fr 1fr; gap:40px;">
@@ -371,18 +393,18 @@
                                 <h4 style="margin-bottom:25px; color:var(--primary-light);">1. 新規配信設定</h4>
                                 <div class="input-box"><label>質問形式</label>
                                     <select id="adm-sv-type-in" onchange="app.onSurveyTypeChange()">
-                                        <option value="single">単一選択（ラジオ）</option><option value="multi">複数選択（チェック）</option>
-                                        <option value="scale">5段階評価（1〜5）</option><option value="text">記述式（テキスト入力）</option>
+                                        <option value="single">単一選択</option><option value="multi">複数選択</option>
+                                        <option value="scale">5段階評価</option><option value="text">記述式</option>
                                     </select>
                                 </div>
-                                <div class="input-box"><label>質問の内容</label><input type="text" id="adm-sv-q-in" placeholder="例: 正解だと思うものを1つ選んで！"></div>
-                                <div class="input-box" id="adm-sv-opt-wrap"><label>選択肢 (カンマ区切り)</label><input type="text" id="adm-sv-opt-in" placeholder="A, B, C, D"></div>
-                                <button class="btn btn-primary" style="width:100%; height:70px; font-size:1.2rem;" onclick="app.igniteSurvey()">アンケート全員配信開始</button>
+                                <div class="input-box"><label>質問文</label><input type="text" id="adm-sv-q-in" placeholder="質問を入力..."></div>
+                                <div class="input-box" id="adm-sv-opt-wrapper"><label>選択肢 (カンマ区切り)</label><input type="text" id="adm-sv-opt-in" placeholder="A, B, C, D"></div>
+                                <button class="btn btn-primary" style="width:100%; height:70px; font-size:1.2rem;" onclick="app.igniteSurvey()">配信開始（全員PUSH）</button>
                             </div>
                             <div style="background:var(--bg-card); padding:35px; border-radius:28px; border:1px solid var(--border);">
-                                <h4 style="color:var(--secondary); margin-bottom:20px;">2. リアルタイム集計グラフ</h4>
+                                <h4 style="color:var(--secondary); margin-bottom:20px;">2. リアルタイム集計状況</h4>
                                 <div id="sv-votes-count-disp" style="font-weight:900; color:var(--primary); font-size:1.5rem; margin-bottom:25px;">0 VOTES RECEIVED</div>
-                                <div id="sv-results-render-area"></div>
+                                <div id="sv-results-render-area" style="display:flex; flex-direction:column; gap:12px;"></div>
                             </div>
                         </div>
                     </div>
@@ -390,37 +412,37 @@
 
                 <!-- ペイン 4: 【教員】精密タイマー -->
                 <div id="pane-timer" class="pane only-teacher-block">
-                    <div class="glass-panel">
+                    <div class="glass-card">
                         <div class="pane-head"><span>⏰ 精密同期タイマー・コントロール</span></div>
                         <div class="pane-body" style="text-align:center; justify-content: center;">
-                            <div id="timer-huge-display" class="timer-huge">00:00</div>
-                            <div style="max-width:600px; margin:0 auto; display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
-                                <div class="input-box"><label>MINUTES</label><input type="number" id="t-min-in" value="45" class="text-input" style="font-size:4rem; text-align:center; height:130px;"></div>
-                                <div class="input-box"><label>SECONDS</label><input type="number" id="t-sec-in" value="0" class="text-input" style="font-size:4rem; text-align:center; height:130px;"></div>
+                            <div id="timer-huge-disp" class="timer-huge">00:00</div>
+                            <div style="max-width:550px; margin:0 auto; display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+                                <div class="input-box"><label>MINUTES</label><input type="number" id="t-min-in" value="45" class="text-input" style="font-size:3.5rem; text-align:center; height:120px;"></div>
+                                <div class="input-box"><label>SECONDS</label><input type="number" id="t-sec-in" value="0" class="text-input" style="font-size:3.5rem; text-align:center; height:120px;"></div>
                             </div>
-                            <div style="display:flex; gap:25px; max-width:600px; margin:40px auto 0;">
-                                <button class="btn btn-primary" style="flex:2; height:90px; font-size:1.8rem;" onclick="app.broadcastTimer()">SYNC START</button>
-                                <button class="btn btn-danger" style="flex:1; height:90px; font-size:1.8rem;" onclick="app.resetTimer()">RESET</button>
+                            <div style="display:flex; gap:20px; max-width:550px; margin:40px auto 0;">
+                                <button class="btn btn-primary" style="flex:2; height:80px; font-size:1.8rem;" onclick="app.broadcastTimer()">開始</button>
+                                <button class="btn btn-danger" style="flex:1; height:80px; font-size:1.8rem;" onclick="app.resetTimer()">リセット</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ペイン 5: 【教員】管理ダッシュボード -->
+                <!-- ペイン 5: 【教員】クラス統計・出席簿 -->
                 <div id="pane-admin" class="pane only-teacher-block">
-                    <div class="glass-panel">
-                        <div class="pane-head"><span>👥 出席者管理 & インテリジェンス統計</span></div>
+                    <div class="glass-card">
+                        <div class="pane-head"><span>👥 クラス・管理ダッシュボード</span></div>
                         <div class="pane-body">
                             <div style="display:grid; grid-template-columns: 1fr 400px; gap:40px;">
                                 <div>
-                                    <h4 style="margin-bottom:25px; color:var(--text-sub);">参加中メンバー (<span id="attendee-count">0</span>)</h4>
+                                    <h4 style="margin-bottom:20px; color:var(--text-sub);">参加中メンバー (<span id="attendee-count">0</span>)</h4>
                                     <div id="roster-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:15px;"></div>
                                 </div>
                                 <div style="background:var(--bg-elevated); padding:40px; border-radius:32px; border:1px solid var(--border); height:fit-content;">
                                     <h4 style="margin-bottom:30px; text-align:center; font-weight:900;">CLASS UNDERSTANDING</h4>
-                                    <div id="avg-pct-huge" style="font-size:7rem; font-weight:900; color:var(--secondary); text-align:center; margin-bottom:20px;">100%</div>
-                                    <div class="stat-bar-track" style="height:25px; margin-bottom:30px;"><div id="avg-bar-final" class="stat-bar-fill" style="width:100%; background:var(--secondary);"></div></div>
-                                    <button class="btn btn-primary" style="width:100%; height:70px; font-size:1.3rem;" onclick="app.pickRoulette()">🎲 指名ルーレット</button>
+                                    <div id="avg-pct-huge" style="font-size:7rem; font-weight:900; color:var(--secondary); text-align:center; margin-bottom:15px;">100%</div>
+                                    <div style="height:25px; background:var(--bg-base); border-radius:10px; overflow:hidden;"><div id="avg-bar-final" style="width:100%; height:100%; background:var(--secondary); transition:1.2s ease;"></div></div>
+                                    <button class="btn btn-primary" style="width:100%; margin-top:40px; height:70px; font-size:1.3rem;" onclick="app.pickRoulette()">🎲 指名ルーレット</button>
                                 </div>
                             </div>
                         </div>
@@ -429,17 +451,17 @@
 
             </section>
 
-            <!-- 右サイド: 掲示板 & 学生レスポンス -->
-            <aside class="side-panel">
+            <!-- 右サイド: インタラクション & 掲示板 -->
+            <aside class="side-intelligence">
                 <div class="panel" style="height: 100%;">
                     <div class="panel-header">Interaction HUB</div>
                     <div class="panel-body">
-                        <!-- メッセージログ -->
-                        <div id="msg-bulletin-log" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:15px; padding-right:10px;"></div>
+                        <!-- 掲示板ログ -->
+                        <div id="msg-bulletin-log" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding-right:10px;"></div>
                         
-                        <div style="margin-top:30px; border-top:1px solid var(--border); padding-top:30px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
-                                <span style="font-size:0.8rem; font-weight:900; color:var(--text-dim);">REACTIONS</span>
+                        <div style="margin-top:25px; border-top:1px solid var(--border); padding-top:25px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                <span style="font-size:0.8rem; font-weight:900; color:var(--text-dim); letter-spacing:1px;">REACTIONS</span>
                                 <div style="display:flex; gap:12px;">
                                     <button class="btn btn-ghost btn-sm" style="padding:8px 12px; font-size:1.5rem;" onclick="app.emitEmoji('👏')">👏</button>
                                     <button class="btn btn-ghost btn-sm" style="padding:8px 12px; font-size:1.5rem;" onclick="app.emitEmoji('🔥')">🔥</button>
@@ -447,15 +469,15 @@
                                 </div>
                             </div>
                             
-                            <!-- 教員：掲示板 -->
+                            <!-- 教員専用：掲示板投稿 -->
                             <div class="only-teacher">
-                                <textarea id="teacher-msg-input" class="text-input" style="padding:20px; font-size:1rem;" rows="3" placeholder="全員への指示を投稿..."></textarea>
-                                <button class="btn btn-primary btn-sm" style="width:100%; margin-top:15px; height:55px;" onclick="app.postBulletin()">全員に送信（PUSH）</button>
+                                <textarea id="teacher-msg-input" style="padding:15px; font-size:1rem;" rows="3" placeholder="全員に通知を送信..."></textarea>
+                                <button class="btn btn-primary btn-sm" style="width:100%; margin-top:15px; height:55px;" onclick="app.postBulletin()">全員に送信</button>
                             </div>
                             
-                            <!-- 生徒：理解度・挙手（フローティング・ウィジェット化） -->
+                            <!-- 生徒専用：理解度・挙手ステータス -->
                             <div class="only-student" style="background:var(--bg-elevated); padding:30px; border-radius:28px; border: 1px solid var(--primary-glow);">
-                                <p style="font-size:0.9rem; font-weight:900; color:var(--text-main); margin-bottom:20px; text-align:center;">今のあなたの状況は？</p>
+                                <p style="font-size:0.9rem; font-weight:900; color:var(--text-main); margin-bottom:20px; text-align:center;">今の状況を伝える</p>
                                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                                     <button class="btn btn-ghost btn-sm" style="height:60px; font-size:1.6rem;" onclick="app.updateLv(100)">😊</button>
                                     <button class="btn btn-ghost btn-sm" style="height:60px; font-size:1.6rem;" onclick="app.updateLv(50)">🤔</button>
@@ -473,23 +495,23 @@
 
 <script>
 /**
- * LECTURE DX ULTIMATE v21.0
- * ENGINE: 6-DIGIT HEX-CODE PROTOCOL
+ * LECTURE DX ULTIMATE v22.0
+ * CORE ENGINE: EPHEMERAL PEER PROTOCOL
  */
 
-class LectureDXv21 {
+class LectureEphemeralOS {
     constructor() {
         this.peer = null;
-        this.conns = new Map(); // Teacher context
-        this.hostConn = null;   // Student context
+        this.conns = new Map(); // Host context
+        this.hostConn = null;   // Client context
         this.role = '';
         this.roomId = '';
         this.name = '';
         this.roster = new Map();
-        this.svCtx = null;
+        this.surveyCtx = null;
         this.timer = null;
         this.stream = null;
-        this.handOn = false;
+        this.handActive = false;
         this.canvasHistory = [];
         this.surveyVoted = false;
         
@@ -498,100 +520,96 @@ class LectureDXv21 {
     }
 
     /* -------------------------------------------------------------
-       1. INITIALIZATION & P2P BOOT (6-DIGIT SYNC)
+       1. INITIALIZATION & EPHEMERAL LOGIC
     ------------------------------------------------------------- */
     async ignition(role) {
-        this.roomId = document.getElementById('room-id-input').value.trim();
-        this.name = document.getElementById('user-name-input').value.trim() || 'Guest User';
+        this.roomId = document.getElementById('init-room-id').value.trim();
+        this.name = document.getElementById('init-user-name').value.trim() || 'Anonymous';
 
-        // 6桁数字バリデーション
-        if (!/^\d{6}$/.test(this.roomId)) return alert('ルームIDは「6桁の数字」で入力してください。');
+        // 6桁数字チェック
+        if (!/^\d{6}$/.test(this.roomId)) return alert('ルームIDは「6桁の数字」で設定してください。');
 
         this.role = role;
-        document.getElementById('connection-status-msg').innerText = 'SYNCHRONIZING WITH PEER NETWORK...';
+        document.getElementById('auth-status-log').innerText = 'INITIALIZING EPHEMERAL PEER...';
 
-        // PeerID生成 (6桁数字をベースにする)
-        const pid = role === 'teacher' ? `ldx-room6d-${this.roomId}-host` : `ldx-room6d-${this.roomId}-cl-${Math.random().toString(36).substr(2,6)}`;
+        // Peer ID 生成（リロードで破棄されるよう永続化しない）
+        const pid = role === 'teacher' ? `ldx-v22-${this.roomId}-host` : `ldx-v22-${this.roomId}-cl-${Math.random().toString(36).substr(2,6)}`;
         this.peer = new Peer(pid);
 
-        this.peer.on('open', (id) => {
-            this.buildUI();
+        this.peer.on('open', () => {
+            this.buildAppUI();
             if (role === 'teacher') this.bootHost();
             else this.bootClient();
         });
 
         this.peer.on('error', (err) => {
-            if(err.type === 'unavailable-id') {
-                alert('エラー: そのルームID（' + this.roomId + '）は既に教員が存在します。');
-            } else {
-                alert('通信エラー: ' + err.type);
-            }
+            alert('接続エラー: ' + err.type + '\nリロードしてもう一度お試しください。');
             location.reload();
         });
 
-        // WebRTC ビデオ受信
+        // WebRTC ビデオ受信リスナー
         this.peer.on('call', (call) => {
             call.answer();
             call.on('stream', (st) => {
                 document.getElementById('video-streaming-box').style.display = 'block';
-                document.getElementById('shared-video-node').srcObject = st;
+                document.getElementById('shared-video-element').srcObject = st;
             });
         });
     }
 
-    buildUI() {
+    buildAppUI() {
         document.getElementById('auth-overlay').style.display = 'none';
         document.getElementById('app-shell').classList.add('active');
         document.body.classList.add(this.role === 'teacher' ? 'is-teacher' : 'is-student');
-        document.getElementById('role-tag-display').innerText = this.role.toUpperCase();
-        document.getElementById('role-tag-display').className = `role-tag role-${this.role}`;
-        document.getElementById('room-id-display-text').innerText = `#${this.roomId}`;
+        document.getElementById('role-badge').innerText = this.role.toUpperCase();
+        document.getElementById('role-badge').className = `badge badge-${this.role}`;
+        document.getElementById('room-display-id').innerText = `#${this.roomId}`;
         
-        this.initStorage();
         this.initCanvasEngine();
+        // ノートの読み込み（リロード時もセッション継続なら引き継ぎ可とするが、RoomID自体は保存しない）
+        const savedNote = localStorage.getItem('ldx_v22_cache_note');
+        if(savedNote) document.getElementById('note-editor-node').value = savedNote;
+        document.getElementById('note-editor-node').oninput = (e) => localStorage.setItem('ldx_v22_cache_note', e.target.value);
     }
 
     /* -------------------------------------------------------------
-       2. NETWORK LAYER (RELIABLE P2P)
+       2. NAVIGATION SYSTEM
+    ------------------------------------------------------------- */
+    switchPane(id) {
+        document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('pane-' + id).classList.add('active');
+        document.getElementById('nav-' + id).classList.add('active');
+        if (id === 'sketch') this.resizeCanvas();
+    }
+
+    /* -------------------------------------------------------------
+       3. P2P SYNC ENGINE
     ------------------------------------------------------------- */
     bootHost() {
         this.peer.on('connection', (conn) => {
             conn.on('open', () => {
                 this.conns.set(conn.peer, conn);
                 conn.on('data', (d) => this.onPacket(d, conn));
-                if (this.svCtx) conn.send({ type: 'SV_SYNC', payload: this.svCtx });
+                if (this.surveyCtx) conn.send({ type: 'SV_SYNC', payload: this.surveyCtx });
             });
             conn.on('close', () => {
                 this.conns.delete(conn.peer);
                 this.roster.delete(conn.peer);
-                this.syncRoster();
+                this.syncState();
             });
         });
     }
 
     bootClient() {
-        const hostId = `ldx-room6d-${this.roomId}-host`;
+        const hostId = `ldx-v22-${this.roomId}-host`;
         this.hostConn = this.peer.connect(hostId, { reliable: true });
-        
-        // 接続リトライロジック
-        let attempts = 0;
-        const tryConnect = () => {
-            if (attempts > 5) {
-                alert('教員が見つかりません。番号が正しいか確認してください。');
-                location.reload();
-                return;
-            }
-            if (this.hostConn.open) return;
-            attempts++;
-            this.hostConn = this.peer.connect(hostId, { reliable: true });
-        };
-
         this.hostConn.on('open', () => {
             this.hostConn.send({ type: 'HELLO', name: this.name });
-            document.getElementById('network-dot').style.background = 'var(--secondary)';
+            document.getElementById('p2p-indicator').style.background = 'var(--secondary)';
         });
         this.hostConn.on('data', (d) => this.onPacket(d));
-        this.hostConn.on('close', () => { alert('切断されました。教員が退出した可能性があります。'); location.reload(); });
+        this.hostConn.on('close', () => { alert('先生が退室しました'); location.reload(); });
     }
 
     broadcast(data) {
@@ -602,40 +620,37 @@ class LectureDXv21 {
         switch (d.type) {
             case 'HELLO':
                 this.roster.set(sender.peer, { name: d.name, level: 100, hand: false });
-                this.syncRoster(); break;
+                this.syncState(); break;
             case 'ROSTER_SYNC':
                 this.renderRosterUI(d.payload); break;
             case 'LV_CHANGE':
                 if (this.role === 'teacher') {
                     const s = this.roster.get(sender.peer);
                     if (s) s.level = d.val;
-                    this.syncRoster();
+                    this.syncState();
                 } break;
             case 'HAND_SIGNAL':
                 if (this.role === 'teacher') {
                     const s = this.roster.get(sender.peer);
-                    if (s) {
-                        s.hand = d.val;
-                        if (d.val) { this.beep(587.33); } //通知音
-                    }
-                    this.syncRoster();
+                    if (s) { s.hand = d.val; if (d.val) this.beep(587.33); }
+                    this.syncState();
                 } break;
             case 'SV_IGNITE':
             case 'SV_SYNC':
-                this.svCtx = d.payload;
+                this.surveyCtx = d.payload;
                 this.renderSurveyUI(d.payload); break;
             case 'SV_VOTE_RECV':
                 if (this.role === 'teacher') this.tallyVote(d.val); break;
             case 'SV_KILL':
-                this.svCtx = null;
+                this.surveyCtx = null;
                 this.surveyVoted = false;
                 document.getElementById('survey-push-overlay').style.display = 'none';
                 this.renderSurveyUI({ total: 0, options: [], visible: true }); break;
-            case 'TIMER_SYNC':
-                this.runTimerEngine(d.end); break;
+            case 'TIMER_TICK':
+                this.updateTimerUI(d.end); break;
             case 'TIMER_KILL':
                 clearInterval(this.timer);
-                document.querySelectorAll('.timer-huge, #clock-digital-live').forEach(el => el.innerText = '00:00'); break;
+                document.querySelectorAll('#timer-huge-disp, #clock-digital').forEach(el => el.innerText = '00:00'); break;
             case 'ANN':
                 this.drawAnnouncement(d.sender, d.msg);
                 if (this.role === 'teacher') this.broadcast(d); break;
@@ -648,24 +663,11 @@ class LectureDXv21 {
     }
 
     /* -------------------------------------------------------------
-       3. NAVIGATION SYSTEM (SPA)
-    ------------------------------------------------------------- */
-    switchPane(id) {
-        document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        
-        document.getElementById('pane-' + id).classList.add('active');
-        document.getElementById('nav-' + id).classList.add('active');
-
-        if (id === 'sketch') this.resizeCanvas();
-    }
-
-    /* -------------------------------------------------------------
-       4. SURVEY ENGINE (PRO MODE)
+       4. SURVEY ENGINE (The Sovereign Polling)
     ------------------------------------------------------------- */
     onSurveyTypeChange() {
         const t = document.getElementById('adm-sv-type-in').value;
-        const w = document.getElementById('adm-sv-opt-wrap');
+        const w = document.getElementById('adm-sv-opt-wrapper');
         w.style.opacity = (t === 'text' || t === 'scale') ? '0.2' : '1';
         w.style.pointerEvents = (t === 'text' || t === 'scale') ? 'none' : 'auto';
     }
@@ -677,33 +679,33 @@ class LectureDXv21 {
         if (!q) return alert('質問を入力してください。');
         if (t === 'scale') o = ['1: Bad', '2', '3', '4', '5: Good'];
 
-        this.svCtx = {
+        this.surveyCtx = {
             type: t, question: q, options: o,
             votes: t === 'text' ? [] : Object.fromEntries(o.map(v => [v, 0])),
             total: 0, visible: true
         };
-        this.broadcast({ type: 'SV_IGNITE', payload: this.svCtx });
+        this.broadcast({ type: 'SV_IGNITE', payload: this.surveyCtx });
         this.renderSurveyUI(this.surveyCtx);
         this.switchPane('survey');
     }
 
     tallyVote(val) {
-        if (!this.svCtx) return;
-        this.svCtx.total++;
-        if (this.svCtx.type === 'text') {
-            this.svCtx.votes.push(val);
+        if (!this.surveyCtx) return;
+        this.surveyCtx.total++;
+        if (this.surveyCtx.type === 'text') {
+            this.surveyCtx.votes.push(val);
         } else if (Array.isArray(val)) {
-            val.forEach(v => { if (this.svCtx.votes[v] !== undefined) this.svCtx.votes[v]++; });
+            val.forEach(v => { if (this.surveyCtx.votes[v] !== undefined) this.surveyCtx.votes[v]++; });
         } else {
-            if (this.svCtx.votes[val] !== undefined) this.svCtx.votes[val]++;
+            if (this.surveyCtx.votes[val] !== undefined) this.surveyCtx.votes[val]++;
         }
-        this.broadcast({ type: 'SV_SYNC', payload: this.svCtx });
-        this.renderSurveyUI(this.svCtx);
+        this.broadcast({ type: 'SV_SYNC', payload: this.surveyCtx });
+        this.renderSurveyUI(this.surveyCtx);
     }
 
     renderSurveyUI(data) {
         const popup = document.getElementById('survey-push-overlay');
-        const renderList = document.getElementById('sv-results-render-area');
+        const resultsArea = document.getElementById('sv-results-render-area');
 
         // 生徒へのプッシュ回答
         if (this.role === 'student' && !this.surveyVoted && data.total === 0 && data.options.length > 0) {
@@ -712,12 +714,12 @@ class LectureDXv21 {
             const ui = document.getElementById('sv-push-render-area');
             ui.innerHTML = '';
             if (data.type === 'text') {
-                ui.innerHTML = `<input type="text" id="sv-inp-push-txt" class="text-input" placeholder="回答を入力...">
-                                <button class="btn btn-primary" style="margin-top:20px; width:100%" onclick="app.submitPushVote()">送信</button>`;
+                ui.innerHTML = `<input type="text" id="sv-inp-text-push" class="text-input" placeholder="回答を入力...">
+                                <button class="btn btn-primary" style="margin-top:20px; width:100%" onclick="app.submitPushVote()">送信する</button>`;
             } else {
                 data.options.forEach(opt => {
                     const b = document.createElement('button');
-                    b.className = 'sv-choice-btn';
+                    b.className = 'push-opt-btn';
                     b.innerText = opt;
                     b.onclick = () => { app.submitPushVote(opt); popup.style.display = 'none'; };
                     ui.appendChild(b);
@@ -725,24 +727,24 @@ class LectureDXv21 {
             }
         }
 
-        // 結果描画
+        // 集計結果描画
         document.getElementById('sv-votes-count-disp').innerText = `${data.total} VOTES RECEIVED`;
-        renderList.innerHTML = '';
+        resultsArea.innerHTML = '';
         if (this.role === 'student' && !data.visible) {
-            renderList.innerHTML = '<div style="text-align:center; padding:40px; opacity:0.5;">集計中です...</div>';
+            resultsArea.innerHTML = '<div style="text-align:center; padding:40px; opacity:0.5;">結果は先生が公開するまで非表示です</div>';
         } else {
             if (data.type === 'text') {
                 data.votes.slice().reverse().forEach(v => {
-                    renderList.innerHTML += `<div class="student-chip" style="font-size:0.9rem;">${v}</div>`;
+                    resultsArea.innerHTML += `<div class="user-chip" style="font-size:0.9rem;">${v}</div>`;
                 });
             } else {
                 data.options.forEach(o => {
                     const count = data.votes[o];
                     const pct = data.total ? Math.round(count / data.total * 100) : 0;
-                    renderList.innerHTML += `
+                    resultsArea.innerHTML += `
                         <div style="margin-bottom:15px;">
                             <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:800; margin-bottom:5px;"><span>${o}</span><span>${count} (${pct}%)</span></div>
-                            <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${pct}%"></div></div>
+                            <div style="height:8px; background:var(--bg-base); border-radius:4px; overflow:hidden;"><div style="width:${pct}%; height:100%; background:var(--primary); transition:1s;"></div></div>
                         </div>`;
                 });
             }
@@ -756,20 +758,20 @@ class LectureDXv21 {
     }
 
     submitPushVote(v = null) {
-        const val = v || document.getElementById('sv-inp-push-txt').value.trim();
+        const val = v || document.getElementById('sv-inp-text-push').value.trim();
         if (this.hostConn) this.hostConn.send({ type: 'SV_VOTE_RECV', val: val });
         this.surveyVoted = true;
     }
 
     toggleSurveyVis() {
-        if (!this.svCtx) return;
-        this.svCtx.visible = !this.svCtx.visible;
-        this.broadcast({ type: 'SV_SYNC', payload: this.svCtx });
-        this.renderSurveyUI(this.svCtx);
+        if (!this.surveyCtx) return;
+        this.surveyCtx.visible = !this.surveyCtx.visible;
+        this.broadcast({ type: 'SV_SYNC', payload: this.surveyCtx });
+        this.renderSurveyUI(this.surveyCtx);
     }
 
     terminateSurvey() {
-        this.svCtx = null;
+        this.surveyCtx = null;
         this.surveyVoted = false;
         this.broadcast({ type: 'SV_KILL' });
         document.getElementById('survey-push-overlay').style.display = 'none';
@@ -789,14 +791,14 @@ class LectureDXv21 {
 
     runTimerEngine(endTime) {
         clearInterval(this.timer);
-        const huge = document.getElementById('timer-huge-display');
-        const head = document.getElementById('clock-digital-live');
+        const huge = document.getElementById('timer-huge-disp');
+        const head = document.getElementById('clock-digital');
         const update = () => {
             const diff = endTime - Date.now();
             if (diff <= 0) {
                 clearInterval(this.timer);
                 huge.innerText = head.innerText = '00:00';
-                if (this.role === 'teacher') this.beep(880, 'square', 1.0);
+                if (this.role === 'teacher') this.playSfx(880, 'square', 1.0);
                 return;
             }
             const min = Math.floor(diff / 60000);
@@ -810,15 +812,15 @@ class LectureDXv21 {
 
     resetTimer() {
         clearInterval(this.timer);
-        document.querySelectorAll('.timer-huge, #clock-digital-live').forEach(el => el.innerText = '00:00');
+        document.querySelectorAll('#timer-huge-disp, #clock-digital').forEach(el => el.innerText = '00:00');
         this.broadcast({ type: 'TIMER_KILL' });
     }
 
     /* -------------------------------------------------------------
-       6. SCREEN STREAMING (WebRTC)
+       6. SCREEN SHARING (WebRTC STREAM)
     ------------------------------------------------------------- */
     async toggleScreenShare() {
-        const btn = document.getElementById('btn-master-share-trigger');
+        const btn = document.getElementById('btn-master-share');
         if (this.stream) {
             this.stream.getTracks().forEach(t => t.stop());
             this.stream = null;
@@ -830,9 +832,9 @@ class LectureDXv21 {
         try {
             this.stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" }, audio: false });
             document.getElementById('video-streaming-box').style.display = 'block';
-            document.getElementById('shared-video-node').srcObject = this.stream;
+            document.getElementById('shared-video-element').srcObject = this.stream;
             btn.innerText = '共有停止';
-            this.conns.forEach(c => this.peer.call(c.peer, this.stream));
+            this.connections.forEach(c => this.peer.call(c.peer, this.stream));
             this.stream.getVideoTracks()[0].onended = () => this.toggleScreenShare();
         } catch (e) { console.error(e); }
     }
@@ -840,7 +842,7 @@ class LectureDXv21 {
     /* -------------------------------------------------------------
        7. CLASSROOM COMMANDS
     ------------------------------------------------------------- */
-    syncRoster() {
+    syncState() {
         const d = Array.from(this.roster.values());
         this.broadcast({ type: 'ROSTER_SYNC', payload: d });
         this.renderRosterUI(d);
@@ -854,24 +856,24 @@ class LectureDXv21 {
         list.forEach(u => {
             lvSum += u.level;
             const chip = document.createElement('div');
-            chip.className = `student-chip ${u.hand ? 'is-hand-raised' : ''}`;
+            chip.className = `user-chip ${u.hand ? 'is-hand-raised' : ''}`;
             chip.innerHTML = `<span>👤 ${u.name}</span><span>${u.hand ? '🖐 Raising' : ''}</span>`;
             grid.appendChild(chip);
         });
         const avg = list.length ? Math.round(lvSum / list.length) : 100;
         document.getElementById('avg-pct-huge').innerText = `${avg}%`;
         document.getElementById('avg-bar-final').style.width = `${avg}%`;
-        document.getElementById('avg-bar-final').style.background = avg > 70 ? 'var(--secondary)' : (avg > 40 ? 'var(--accent)' : 'var(--danger)');
+        document.getElementById('avg-bar-final').style.background = avg > 70 ? 'var(--secondary)' : (avg > 40 ? 'var(--warning)' : 'var(--danger)');
     }
 
     updateLv(val) { if (this.hostConn) this.hostConn.send({ type: 'LV_CHANGE', val: val }); }
     toggleHand() {
-        this.handOn = !this.handOn;
+        this.handActive = !this.handActive;
         const btn = document.getElementById('hand-trigger-btn');
-        btn.innerText = this.handOn ? '✋ 挙手を下ろす' : '🖐 先生に質問する';
-        btn.style.background = this.handOn ? 'var(--warning)' : 'transparent';
-        btn.style.color = this.handOn ? 'white' : 'var(--warning)';
-        if (this.hostConn) this.hostConn.send({ type: 'HAND_SIGNAL', val: this.handOn });
+        btn.innerText = this.handActive ? '✋ 挙手を下ろす' : '🖐 先生に質問する';
+        btn.style.background = this.handActive ? 'var(--warning)' : 'transparent';
+        btn.style.color = this.handActive ? 'white' : 'var(--warning)';
+        if (this.hostConn) this.hostConn.send({ type: 'HAND_SIGNAL', val: this.handActive });
     }
 
     postBulletin() {
@@ -886,7 +888,7 @@ class LectureDXv21 {
     drawAnnouncement(s, m) {
         const b = document.getElementById('msg-bulletin-log');
         const d = document.createElement('div');
-        d.style.background = 'var(--bg-card)'; d.style.padding = '15px'; d.style.borderRadius = '14px';
+        d.style.background = 'var(--bg-card)'; d.style.padding = '12px'; d.style.borderRadius = '14px';
         d.innerHTML = `<strong style="color:var(--primary); font-size:0.7rem; text-transform:uppercase;">${s}</strong><div style="margin-top:6px; line-height:1.5; font-size:1rem;">${m}</div>`;
         b.appendChild(d); b.scrollTop = b.scrollHeight;
     }
@@ -898,7 +900,7 @@ class LectureDXv21 {
     }
 
     spawnEmoji(emoji) {
-        const stage = document.getElementById('reaction-stage');
+        const stage = document.getElementById('reaction-layer');
         const div = document.createElement('div');
         div.className = 'reaction-emoji'; div.innerText = emoji;
         div.style.left = `${Math.random() * 80 + 10}%`;
@@ -908,26 +910,19 @@ class LectureDXv21 {
 
     pickRoulette() {
         const users = Array.from(this.roster.values());
-        if (!users.length) return alert('生徒が一人もいません。');
+        if (!users.length) return alert('生徒がいません。');
         const win = users[Math.floor(Math.random() * users.length)];
         const m = `🎯 指名ルーレット: 【${win.name}】さん、お願いします！`;
         this.drawAnnouncement('SYSTEM-AI', m);
         this.broadcast({ type: 'ANN', sender: 'SYSTEM-AI', msg: m });
-        this.beep(440, 'triangle', 0.2);
+        this.playSfx(440, 'triangle', 0.2);
     }
 
     /* -------------------------------------------------------------
-       8. TOOL MODULES (Note & Sketch)
+       8. TOOL ENGINE (Note & Canvas)
     ------------------------------------------------------------- */
-    initStorage() {
-        const ed = document.getElementById('main-note-editor');
-        const key = `ldx_v21_note_${this.roomId}`;
-        ed.value = localStorage.getItem(key) || '';
-        ed.oninput = () => { localStorage.setItem(key, ed.value); };
-    }
-
     initCanvasEngine() {
-        const cv = document.getElementById('canvas-element');
+        const cv = document.getElementById('canvas-board');
         const ctx = cv.getContext('2d');
         let drawing = false;
 
@@ -939,7 +934,7 @@ class LectureDXv21 {
         };
         window.addEventListener('resize', this.resizeCanvas);
 
-        const getXY = (e) => {
+        const getPos = (e) => {
             const r = cv.getBoundingClientRect();
             const x = (e.clientX || e.touches[0].clientX) - r.left;
             const y = (e.clientY || e.touches[0].clientY) - r.top;
@@ -948,16 +943,16 @@ class LectureDXv21 {
 
         const start = (e) => { 
             drawing = true; ctx.beginPath();
-            const [x, y] = getXY(e); ctx.moveTo(x, y);
+            const [x, y] = getPos(e); ctx.moveTo(x, y);
             this.canvasHistory.push(ctx.getImageData(0,0,cv.width,cv.height));
             if (this.canvasHistory.length > 50) this.canvasHistory.shift();
         };
         const move = (e) => {
             if (!drawing) return;
-            const [x, y] = getXY(e);
-            ctx.lineWidth = document.getElementById('canvas-size-in').value;
+            const [x, y] = getPos(e);
+            ctx.lineWidth = document.getElementById('sk-size-slider').value;
             ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-            ctx.strokeStyle = document.getElementById('canvas-color-in').value;
+            ctx.strokeStyle = document.getElementById('sk-color-picker').value;
             ctx.lineTo(x, y); ctx.stroke();
         };
         cv.addEventListener('mousedown', start); cv.addEventListener('mousemove', move); window.addEventListener('mouseup', () => drawing = false);
@@ -967,20 +962,20 @@ class LectureDXv21 {
 
         this.canvasClear = () => ctx.clearRect(0, 0, cv.width, cv.height);
         this.canvasUndo = () => { if(this.canvasHistory.length) ctx.putImageData(this.canvasHistory.pop(), 0, 0); };
-        this.saveCanvasImg = () => { const a = document.createElement('a'); a.download=`sketch-${this.roomId}.png`; a.href=cv.toDataURL(); a.click(); };
+        this.saveCanvasImg = () => { const a = document.createElement('a'); a.download=`sketch.png`; a.href=cv.toDataURL(); a.click(); };
     }
 
     /* -------------------------------------------------------------
-       9. SYSTEM UTILS
+       9. SYSTEM UTILS & AUDIO
     ------------------------------------------------------------- */
     unlockAudio() {
         if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-        this.beep(440, 'sine', 0.1);
+        this.playSfx(440, 'sine', 0.1);
         alert('AUDIO ENGINE ENABLED');
     }
 
-    beep(freq, type = 'sine', dur = 0.5) {
+    playSfx(freq, type = 'sine', dur = 0.5) {
         if (!this.audioCtx) return;
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
@@ -990,34 +985,36 @@ class LectureDXv21 {
         osc.connect(gain); gain.connect(this.audioCtx.destination);
         osc.start(); osc.stop(this.audioCtx.currentTime + dur);
     }
+    beep(freq) { this.playSfx(freq, 'sine', 0.5); }
 
     exportNoteFile() {
-        const b = new Blob([document.getElementById('main-note-editor').value], { type: 'text/plain' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `LDX_Hex_${this.roomId}.txt`; a.click();
+        const b = new Blob([document.getElementById('note-editor-node').value], { type: 'text/plain' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `Note.txt`; a.click();
     }
     copyInviteUrl() {
         const u = `${window.location.origin}${window.location.pathname}?room=${this.roomId}&role=student`;
-        navigator.clipboard.writeText(u); alert('INVITE URL COPIED');
+        navigator.clipboard.writeText(u); alert('INVITATION LINK COPIED');
     }
 }
 
-// OS Bootstrap
-const app = new LectureDXv21();
+// Global OS Launch
+const app = new LectureEphemeralOS();
 
 // UI Lifecycle
 setInterval(() => {
-    document.getElementById('clock-digital-live').innerText = new Date().toLocaleTimeString();
+    document.getElementById('clock-digital').innerText = new Date().toLocaleTimeString();
 }, 1000);
 
+// Automation: Ephemeral Role Detection via URL
 window.addEventListener('load', () => {
     const p = new URLSearchParams(window.location.search);
     const r = p.get('room');
     if (r) {
-        document.getElementById('room-id-input').value = r;
+        document.getElementById('init-room-id').value = r;
         if (p.get('role') === 'student') {
-            document.getElementById('btn-join-teacher').style.display = 'none';
-            document.getElementById('room-input-container-auth').style.display = 'none';
-            document.getElementById('connection-status-msg').innerText = 'STUDENT MODE DETECTED BY INVITE';
+            document.getElementById('btn-host-start').style.display = 'none';
+            document.getElementById('room-input-container').style.display = 'none';
+            document.getElementById('auth-status-log').innerText = 'STUDENT MODE (EPHEMERAL)';
         }
     }
 });
