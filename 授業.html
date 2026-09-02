@@ -3,956 +3,544 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lecture DX Ultimate - 次世代型リアルタイム授業環境</title>
-    <!-- PeerJS CDN -->
+    <title>Lecture DX Ultimate v8.1 - Survey Enhanced</title>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <style>
         :root {
-            --bg-main: #0f172a;
-            --bg-panel: #1e293b;
-            --bg-card: #334155;
-            --bg-hover: #475569;
-            --border: rgba(255, 255, 255, 0.08);
-            --border-active: #6366f1;
-            
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #06b6d4;
+            --bg-main: #0f172a; --bg-panel: #1e293b; --bg-card: #334155; --bg-hover: #475569;
+            --border: rgba(255, 255, 255, 0.08); --border-active: #6366f1;
+            --primary: #6366f1; --primary-hover: #4f46e5; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --text-main: #f8fafc; --text-sub: #94a3b8; --radius-md: 10px; --radius-lg: 16px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-            --text-main: #f8fafc;
-            --text-sub: #94a3b8;
-            --text-dim: #64748b;
-
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 16px;
-            --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "BIZ UDPGothic", Meiryo, sans-serif;
-            background: var(--bg-main);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* ログイン画面 */
-        #auth-modal {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
-            display: flex; align-items: center; justify-content: center; z-index: 10000;
-        }
-        .auth-card {
-            background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-lg);
-            width: min(90vw, 420px); padding: 32px; box-shadow: var(--shadow-card); text-align: center;
-        }
-        .auth-card h1 { font-size: 1.5rem; margin-bottom: 8px; letter-spacing: -0.5px; }
-        .auth-card p { color: var(--text-sub); font-size: 0.875rem; margin-bottom: 24px; }
-        .input-group { margin-bottom: 16px; text-align: left; }
-        .input-group label { display: block; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .input-field {
-            width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
-            padding: 10px 14px; font-size: 0.95rem; color: var(--text-main); outline: none; transition: 0.2s;
-        }
-        .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+        /* ログイン */
+        #auth-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .auth-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-lg); width: min(90vw, 400px); padding: 30px; text-align: center; }
+        .input-field { width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 10px; color: white; margin-bottom: 15px; outline: none; }
+        .input-field:focus { border-color: var(--primary); }
 
         /* ヘッダー */
-        header {
-            height: 56px; background: var(--bg-panel); border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
-            flex-shrink: 0; z-index: 50;
-        }
-        .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1rem; }
-        .nav-meta { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-sub); }
-        .badge {
-            padding: 3px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.7rem;
-            text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .badge-teacher { background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid #6366f1; }
-        .badge-student { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+        header { height: 60px; background: var(--bg-panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; border: 1px solid; }
+        .badge-teacher { background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: #6366f1; }
+        .badge-student { background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: #10b981; }
 
-        /* メインワークスペース */
-        .workspace {
-            flex: 1; display: grid; grid-template-columns: 280px 1fr 320px;
-            gap: 12px; padding: 12px; overflow: hidden;
-        }
-        @media (max-width: 1024px) {
-            .workspace { grid-template-columns: 240px 1fr; }
-            .col-tools { display: none; }
-        }
-        @media (max-width: 768px) {
-            .workspace { grid-template-columns: 1fr; }
-            .col-side { display: none; }
-        }
+        /* レイアウト */
+        .workspace { flex: 1; display: grid; grid-template-columns: 260px 1fr 300px; gap: 12px; padding: 12px; overflow: hidden; }
+        @media (max-width: 1000px) { .workspace { grid-template-columns: 1fr; } .side { display: none; } }
+        .panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; overflow: hidden; }
+        .panel-header { padding: 10px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; color: var(--text-sub); }
+        .panel-body { padding: 12px; overflow-y: auto; flex: 1; }
 
-        /* 共通パネル */
-        .panel {
-            background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-md);
-            display: flex; flex-direction: column; overflow: hidden; position: relative;
-        }
-        .panel-header {
-            padding: 12px 14px; border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.85rem; font-weight: 600; color: var(--text-sub);
-        }
-        .panel-body { padding: 12px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 10px; }
-
-        /* ビデオコンテナ */
-        #screen-module {
-            background: #000; border-radius: var(--radius-md); border: 1px solid var(--border);
-            position: relative; overflow: hidden; aspect-ratio: 16/9; max-height: 40vh;
-            display: none; align-items: center; justify-content: center;
-        }
+        /* スクリーン共有 */
+        #screen-module { background: #000; border-radius: var(--radius-md); margin-bottom: 12px; aspect-ratio: 16/9; display: none; overflow: hidden; }
         #shared-video { width: 100%; height: 100%; object-fit: contain; }
-        .screen-badge {
-            position: absolute; top: 10px; left: 10px; background: rgba(239, 68, 68, 0.9);
-            color: white; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
-            display: flex; align-items: center; gap: 4px; z-index: 10;
-        }
-        .screen-badge::before { content: ''; width: 6px; height: 6px; background: white; border-radius: 50%; animation: pulse 1s infinite; }
 
-        /* ノート・エディタ */
-        .tab-bar { display: flex; gap: 4px; background: var(--bg-card); padding: 3px; border-radius: var(--radius-sm); }
-        .tab-btn {
-            flex: 1; background: transparent; border: none; color: var(--text-sub);
-            padding: 6px; font-size: 0.75rem; font-weight: 600; border-radius: 4px; cursor: pointer;
-        }
-        .tab-btn.active { background: var(--bg-panel); color: var(--text-main); }
-        .note-editor {
-            flex: 1; width: 100%; background: transparent; border: none; resize: none;
-            color: var(--text-main); font-size: 0.95rem; line-height: 1.6; outline: none;
-        }
+        /* アンケート */
+        #survey-module { background: rgba(99, 102, 241, 0.1); border: 1px solid var(--primary); border-radius: var(--radius-md); padding: 15px; margin-bottom: 12px; display: none; }
+        .survey-opt { background: var(--bg-card); border: 1px solid var(--border); padding: 10px; border-radius: 6px; width: 100%; text-align: left; color: white; cursor: pointer; margin-top: 6px; }
+        .survey-opt:hover { border-color: var(--primary); }
+        .track { background: var(--bg-card); height: 8px; border-radius: 4px; margin: 4px 0 10px; }
+        .fill { background: var(--primary); height: 100%; transition: width 0.6s ease; }
 
-        /* キャンバスツール */
-        #canvas-module { display: none; flex-direction: column; flex: 1; gap: 8px; }
-        .canvas-container { flex: 1; background: #ffffff; border-radius: var(--radius-sm); overflow: hidden; position: relative; cursor: crosshair; }
-        #paint-canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
-        .canvas-tools { display: flex; gap: 6px; align-items: center; }
-
-        /* アンケートカード */
-        #survey-module {
-            background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, rgba(30, 41, 59, 0) 100%);
-            border: 1px solid var(--border-active); border-radius: var(--radius-md); padding: 14px; display: none;
-        }
-        .survey-btn-option {
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
-            color: var(--text-main); padding: 10px; width: 100%; text-align: left; font-size: 0.85rem;
-            cursor: pointer; transition: 0.2s; margin-top: 6px;
-        }
-        .survey-btn-option:hover { border-color: var(--primary); background: var(--bg-hover); }
-        .survey-bar-track { background: var(--bg-card); height: 8px; border-radius: 4px; overflow: hidden; margin: 4px 0 10px; }
-        .survey-bar-fill { background: var(--primary); height: 100%; width: 0; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        /* タイマーディスプレイ */
-        .timer-numeric {
-            font-size: 3.5rem; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            text-align: center; color: var(--danger); letter-spacing: -2px; margin: 6px 0;
-            text-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
-        }
-
-        /* 挙手・理解度リスト */
-        .user-chip {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 6px 10px; background: var(--bg-card); border-radius: var(--radius-sm); font-size: 0.8rem;
-        }
-        .hand-raise-alert { border-left: 3px solid var(--warning); background: rgba(245, 158, 11, 0.1); }
-
-        /* ボタン群 */
-        .btn {
-            background: var(--primary); color: white; border: none; border-radius: var(--radius-sm);
-            padding: 8px 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer;
-            display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s;
-        }
-        .btn:hover { background: var(--primary-hover); }
+        /* ツール・ボタン */
+        .btn { background: var(--primary); color: white; border: none; border-radius: 6px; padding: 8px 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-sub); }
-        .btn-outline:hover { background: var(--bg-card); color: var(--text-main); border-color: var(--text-sub); }
-        .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
         .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: #dc2626; }
+        .btn-warning { background: var(--warning); }
+        #timer-val { font-size: 3rem; font-weight: 800; text-align: center; color: var(--danger); font-family: monospace; }
+        textarea { width: 100%; flex: 1; background: transparent; border: none; color: white; resize: none; outline: none; line-height: 1.6; }
 
-        /* リアクション浮遊 */
+        /* リアクション */
         #reaction-stage { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
-        .floating-reaction {
-            position: absolute; bottom: -50px; font-size: 2.5rem; user-select: none;
-            animation: float-rise 3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-        }
-        @keyframes float-rise {
-            0% { transform: translateY(0) scale(0.6); opacity: 0; }
-            10% { opacity: 1; transform: translateY(-20px) scale(1.1); }
-            80% { opacity: 0.8; }
-            100% { transform: translateY(-80vh) scale(1.4); opacity: 0; }
-        }
-        @keyframes pulse { 50% { opacity: 0.5; } }
-
-        .only-teacher, .only-student { display: none !important; }
-        body.is-teacher .only-teacher { display: flex !important; }
-        body.is-teacher .only-teacher-block { display: block !important; }
-        body.is-student .only-student { display: flex !important; }
-        body.is-student .only-student-block { display: block !important; }
+        .floating { position: absolute; bottom: -50px; font-size: 2.5rem; animation: float 3s forwards; }
+        @keyframes float { 0% { opacity:0; transform: translateY(0); } 10% { opacity:1; } 100% { opacity:0; transform: translateY(-80vh); } }
     </style>
 </head>
 <body>
 
-<!-- 入室設定モーダル -->
 <div id="auth-modal">
     <div class="auth-card">
-        <h1>Lecture DX <span style="color:var(--primary)">Ultimate</span></h1>
-        <p>クロスデバイス対応・双方向授業システム</p>
-        <div class="input-group" id="room-input-container">
-            <label>Room ID</label>
-            <input type="text" id="init-room" class="input-field" placeholder="例: math-101" spellcheck="false">
+        <h2>Lecture DX <span style="color:var(--primary)">Ultimate</span></h2>
+        <div style="text-align:left; margin-top:20px;">
+            <label style="font-size:0.7rem; color:var(--text-sub)">Room ID</label>
+            <input type="text" id="init-room" class="input-field" placeholder="math-101">
+            <label style="font-size:0.7rem; color:var(--text-sub)">User Name</label>
+            <input type="text" id="init-name" class="input-field" placeholder="お名前">
         </div>
-        <div class="input-group">
-            <label>User Name</label>
-            <input type="text" id="init-name" class="input-field" placeholder="お名前を入力">
-        </div>
-        <div style="display:flex; gap:10px; margin-top:24px;">
-            <button class="btn btn-outline" style="flex:1;" onclick="app.initSession('student')">生徒として入室</button>
-            <button class="btn" style="flex:1;" id="btn-init-host" onclick="app.initSession('teacher')">教員として開始</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-outline" style="flex:1" onclick="app.join('student')">生徒として入室</button>
+            <button class="btn" style="flex:1" onclick="app.join('teacher')">教員として開始</button>
         </div>
     </div>
 </div>
 
-<!-- ヘッダー -->
 <header>
-    <div class="nav-brand">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-        <span>Lecture DX</span>
-        <span id="display-role" class="badge">Checking...</span>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-weight:900;">LDX</span>
+        <span id="role-badge" class="badge">---</span>
+        <span id="room-id-display" style="font-size:0.8rem; opacity:0.6;"></span>
     </div>
-    <div class="nav-meta">
-        <span id="display-room">Room: ---</span>
-        <span style="opacity:0.3">|</span>
-        <span id="ping-indicator">● P2P Ready</span>
-        <span style="opacity:0.3">|</span>
-        <span id="clock" style="font-family: monospace;">00:00:00</span>
-    </div>
-    <div style="display:flex; gap:8px;">
-        <button class="btn btn-sm btn-outline only-teacher" onclick="app.copyInviteUrl()">🔗 生徒用URL</button>
-        <button class="btn btn-sm only-teacher" id="btn-screenshare" onclick="app.toggleScreenShare()">🖥 画面共有</button>
-        <button class="btn btn-sm btn-danger" onclick="location.reload()">退室</button>
+    <div style="display:flex; gap:10px;">
+        <button class="btn btn-outline only-teacher" onclick="app.copyInviteUrl()">🔗 招待URL</button>
+        <button class="btn only-teacher" id="btn-share" onclick="app.toggleShare()">🖥 画面共有</button>
+        <button class="btn btn-danger" onclick="location.reload()">退室</button>
     </div>
 </header>
 
-<!-- メインワークスペース -->
 <div class="workspace">
-
-    <!-- 左カラム: インタラクション & 出席 -->
-    <aside class="panel col-side">
-        <div class="panel-header">
-            <span>クラス参加者 (<span id="user-count">0</span>)</span>
-            <button class="btn btn-sm btn-outline only-teacher" onclick="app.randomPick()">🎲 指名</button>
-        </div>
+    <!-- 左: 出席者・挙手 -->
+    <div class="panel side">
+        <div class="panel-header">出席者 (<span id="user-count">0</span>)</div>
         <div class="panel-body">
-            <div id="attendee-list" style="display:flex; flex-direction:column; gap:4px;"></div>
-            
-            <div style="margin-top:auto; display:flex; flex-direction:column; gap:8px;">
-                <div style="font-size:0.75rem; color:var(--text-sub); display:flex; justify-content:space-between;">
-                    <span>理解度アベレージ</span>
-                    <span id="avg-level-text">100%</span>
+            <div id="attendee-list" style="display:flex; flex-direction:column; gap:5px;"></div>
+            <div style="margin-top:auto;">
+                <div style="font-size:0.7rem; margin-bottom:5px;">理解度平均: <span id="avg-text">100</span>%</div>
+                <div class="track"><div id="avg-bar" class="fill" style="width:100%; background:var(--success)"></div></div>
+                <div class="only-student" style="display:flex; gap:3px; margin-top:5px;">
+                    <button class="btn btn-outline" style="flex:1; font-size:0.6rem;" onclick="app.sendLv(100)">😊</button>
+                    <button class="btn btn-outline" style="flex:1; font-size:0.6rem;" onclick="app.sendLv(50)">🤔</button>
+                    <button class="btn btn-outline" style="flex:1; font-size:0.6rem;" onclick="app.sendLv(0)">🚨</button>
                 </div>
-                <div class="survey-bar-track" style="height:6px; margin:0;">
-                    <div id="avg-level-bar" class="survey-bar-fill" style="width:100%; background:var(--success)"></div>
-                </div>
-                <div class="only-student" style="display:flex; gap:4px;">
-                    <button class="btn btn-outline" style="flex:1; padding:6px 0;" onclick="app.sendUnderstanding(100)">😊 快調</button>
-                    <button class="btn btn-outline" style="flex:1; padding:6px 0;" onclick="app.sendUnderstanding(50)">🤔 微妙</button>
-                    <button class="btn btn-outline" style="flex:1; padding:6px 0;" onclick="app.sendUnderstanding(0)">🚨 SOS</button>
-                </div>
-                <button class="btn btn-outline only-student" id="btn-hand" onclick="app.toggleHandRaise()">🖐 挙手 / 質問する</button>
+                <button id="btn-hand" class="btn btn-warning only-student" style="width:100%; margin-top:8px;" onclick="app.toggleHand()">🖐 挙手 / 質問</button>
             </div>
         </div>
-    </aside>
+    </div>
 
-    <!-- 中央カラム: ビデオ・ノート・ボード -->
-    <main class="panel" style="background:var(--bg-main); border:none; gap:12px;">
-        
-        <!-- スクリーン共有ウィンドウ -->
+    <!-- 中: ビデオ・ノート・アンケート -->
+    <div style="display:flex; flex-direction:column; gap:12px; overflow:hidden;">
         <div id="screen-module">
-            <div class="screen-badge">SCREEN STREAM</div>
             <video id="shared-video" autoplay playsinline></video>
         </div>
 
-        <!-- リアルタイムアンケート -->
+        <!-- 改良版アンケートパネル -->
         <div id="survey-module">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span id="survey-title" style="font-weight:700; font-size:0.95rem;">アンケート</span>
-                <button class="btn btn-sm btn-outline only-teacher" id="btn-survey-lock" onclick="app.toggleSurveyVisibility()">非公開にする</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span id="sv-title" style="font-weight:bold;"></span>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn btn-outline only-teacher" style="padding:2px 8px; font-size:0.65rem;" onclick="app.toggleSvVisibility()" id="btn-sv-lock">結果を隠す</button>
+                    <button class="btn btn-danger only-teacher" style="padding:2px 8px; font-size:0.65rem;" onclick="app.endSurvey()">終了</button>
+                </div>
             </div>
-            <div id="survey-interaction"></div>
-            <div id="survey-results" style="margin-top:10px; font-size:0.8rem;"></div>
+            <div id="sv-interaction"></div>
+            <div id="sv-results" style="margin-top:10px; font-size:0.8rem;"></div>
         </div>
 
-        <!-- ワークスペースパネル (ノート & キャンバス) -->
         <div class="panel" style="flex:1;">
-            <div class="panel-header" style="padding:6px 12px;">
-                <div class="tab-bar">
-                    <button class="tab-btn active" id="tab-note" onclick="app.setTab('note')">授業ノート</button>
-                    <button class="tab-btn" id="tab-draw" onclick="app.setTab('draw')">キャンバス</button>
-                </div>
-                <div style="display:flex; gap:6px; align-items:center;">
-                    <span id="note-save-status" style="font-size:0.7rem; color:var(--text-dim);">Auto-saved</span>
-                    <button class="btn btn-sm btn-outline" onclick="app.exportNote()">💾 保存</button>
-                </div>
-            </div>
+            <div class="panel-header">授業ノート <span id="save-status" style="font-weight:normal; opacity:0.5;"></span></div>
             <div class="panel-body">
-                <!-- ノート -->
-                <textarea id="note-input" class="note-editor" placeholder="ここに授業メモを入力...（端末内に完全自動保存されます）"></textarea>
-                
-                <!-- スケッチボード -->
-                <div id="canvas-module">
-                    <div class="canvas-tools">
-                        <input type="color" id="brush-color" value="#4f46e5" style="border:none; width:24px; height:24px; cursor:pointer; background:none;">
-                        <input type="range" id="brush-size" min="1" max="20" value="3" style="width:80px">
-                        <button class="btn btn-sm btn-outline" onclick="app.clearCanvas()">クリア</button>
-                    </div>
-                    <div class="canvas-container">
-                        <canvas id="paint-canvas"></canvas>
-                    </div>
-                </div>
+                <textarea id="note-area" placeholder="ここにメモを入力..."></textarea>
             </div>
         </div>
 
-        <!-- 教員専用: 授業コントロール -->
-        <div class="panel only-teacher-block" style="flex-shrink:0;">
-            <div class="panel-header">授業管理パネル</div>
-            <div class="panel-body" style="display:flex; flex-direction:row; gap:12px; align-items:flex-end;">
+        <!-- 教員専用: アンケート作成 -->
+        <div class="panel only-teacher">
+            <div class="panel-header">アンケート配信コントロール</div>
+            <div class="panel-body" style="display:flex; gap:10px; align-items:flex-end;">
+                <div style="flex:1;">
+                    <label style="font-size:0.6rem;">形式</label>
+                    <select id="adm-sv-type" class="input-field" style="margin-bottom:0;" onchange="app.onSurveyTypeChange()">
+                        <option value="single">単一選択</option>
+                        <option value="multi">複数選択</option>
+                        <option value="scale">5段階評価</option>
+                        <option value="text">自由記述</option>
+                    </select>
+                </div>
                 <div style="flex:2;">
-                    <label style="font-size:0.7rem; color:var(--text-sub)">アンケート作成</label>
-                    <div style="display:flex; gap:6px; margin-top:4px;">
-                        <select id="adm-sv-type" class="input-field" style="width:110px;">
-                            <option value="single">単一選択</option>
-                            <option value="multi">複数選択</option>
-                            <option value="scale">5段階評価</option>
-                            <option value="text">自由記述</option>
-                        </select>
-                        <input type="text" id="adm-sv-q" class="input-field" placeholder="質問内容を入力">
-                    </div>
+                    <label style="font-size:0.6rem;">質問内容</label>
+                    <input type="text" id="adm-sv-q" class="input-field" style="margin-bottom:0;" placeholder="例: 理解できましたか？">
                 </div>
-                <div style="flex:2;" id="adm-sv-opt-wrapper">
-                    <label style="font-size:0.7rem; color:var(--text-sub)">選択肢 (カンマ区切り)</label>
-                    <input type="text" id="adm-sv-opt" class="input-field" placeholder="理解した, 普通, 難しい" style="margin-top:4px;">
+                <div style="flex:2;" id="adm-sv-opt-box">
+                    <label style="font-size:0.6rem;">選択肢 (カンマ区切り)</label>
+                    <input type="text" id="adm-sv-opt" class="input-field" style="margin-bottom:0;" placeholder="はい, いいえ">
                 </div>
-                <button class="btn" style="height:40px;" onclick="app.publishSurvey()">配信</button>
+                <button class="btn" onclick="app.publishSurvey()">配信</button>
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- 右カラム: タイマー & 連絡掲示板 -->
-    <aside class="panel col-tools">
-        <!-- タイマー -->
-        <div style="padding:16px; text-align:center; border-bottom:1px solid var(--border);">
-            <div style="font-size:0.75rem; color:var(--text-sub); text-transform:uppercase; font-weight:700;">Remaining Time</div>
-            <div id="timer-val" class="timer-numeric">45:00</div>
-            <div class="only-teacher" style="display:flex; gap:6px; justify-content:center;">
-                <button class="btn btn-sm btn-outline" onclick="app.setTimerDuration(15)">15分</button>
-                <button class="btn btn-sm btn-outline" onclick="app.setTimerDuration(45)">45分</button>
-                <button class="btn btn-sm btn-outline" onclick="app.setTimerDuration(60)">60分</button>
-                <button class="btn btn-sm btn-danger" onclick="app.stopTimer()">停止</button>
-            </div>
-        </div>
-
-        <!-- 連絡掲示板 -->
-        <div class="panel-header">
-            <span>連絡掲示板</span>
-            <div style="display:flex; gap:4px;">
-                <button class="btn btn-sm btn-outline" onclick="app.sendReaction('👏')">👏</button>
-                <button class="btn btn-sm btn-outline" onclick="app.sendReaction('🔥')">🔥</button>
-            </div>
-        </div>
+    <!-- 右: タイマー・掲示板 -->
+    <div class="panel side">
+        <div class="panel-header">TIMER</div>
         <div class="panel-body">
-            <div id="board-messages" style="display:flex; flex-direction:column; gap:8px; flex:1;"></div>
-            <div class="only-teacher" style="display:flex; gap:6px; margin-top:8px;">
-                <input type="text" id="board-input" class="input-field" placeholder="連絡事項を送信...">
-                <button class="btn" onclick="app.postBoardMessage()">送信</button>
+            <div id="timer-val">00:00</div>
+            <div class="only-teacher" style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                <button class="btn btn-outline" onclick="app.setTimer(15)">15分</button>
+                <button class="btn btn-outline" onclick="app.setTimer(45)">45分</button>
+                <button class="btn btn-danger" style="grid-column: span 2;" onclick="app.stopTimer()">停止</button>
+            </div>
+            <hr style="margin:15px 0; border:none; border-top:1px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span style="font-size:0.7rem;">掲示板</span>
+                <div><button class="btn btn-outline" style="padding:2px 5px;" onclick="app.sendEmoji('👏')">👏</button></div>
+            </div>
+            <div id="board-msg" style="flex:1; overflow-y:auto; font-size:0.8rem; display:flex; flex-direction:column; gap:5px;"></div>
+            <div class="only-teacher" style="display:flex; gap:5px; margin-top:10px;">
+                <input type="text" id="board-in" class="input-field" style="margin-bottom:0;" placeholder="連絡...">
+                <button class="btn" onclick="app.postMsg()">送信</button>
             </div>
         </div>
-    </aside>
-
+    </div>
 </div>
 
 <div id="reaction-stage"></div>
 
 <script>
-/**
- * -------------------------------------------------------------
- * Lecture DX Ultimate - コアシステムエンジン
- * -------------------------------------------------------------
- */
-class LectureApp {
+class UltimateApp {
     constructor() {
         this.peer = null;
-        this.activeConnections = new Map();
-        this.hostConn = null;
-        
-        this.role = 'student';
+        this.conns = new Map(); // Host uses this
+        this.hostConn = null;   // Student uses this
+        this.role = '';
         this.room = '';
-        this.userName = '';
-        
-        this.localMediaStream = null;
-        this.activeCalls = new Map();
-        
-        this.timerContext = { interval: null, targetTimestamp: null };
+        this.name = '';
+        this.svCtx = null;
         this.roster = new Map();
-        this.surveyContext = null;
-
-        this.initAudioEngine();
+        this.timer = null;
+        this.localStream = null;
     }
 
-    /* Web Audio API 音源合成 (外部ファイル依存を完全排除) */
-    initAudioEngine() {
-        try {
-            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (e) {
-            console.warn('Audio Context init failed');
-        }
-    }
-
-    playChime(type = 'notice') {
-        if (!this.audioCtx) return;
-        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-
-        const osc = this.audioCtx.createOscillator();
-        const gain = this.audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(this.audioCtx.destination);
-
-        const now = this.audioCtx.currentTime;
-        if (type === 'hand') {
-            osc.frequency.setValueAtTime(440, now);
-            osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
-            gain.gain.setValueAtTime(0.2, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.3);
-            osc.start(now);
-            osc.stop(now + 0.3);
-        } else if (type === 'alarm') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(587.33, now);
-            osc.frequency.setValueAtTime(880, now + 0.15);
-            gain.gain.setValueAtTime(0.25, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.4);
-            osc.start(now);
-            osc.stop(now + 0.4);
-        }
-    }
-
-    /* アプリケーション初期化 */
-    initSession(role) {
+    join(role) {
         this.role = role;
         this.room = document.getElementById('init-room').value.trim();
-        this.userName = document.getElementById('init-name').value.trim() || 'ゲスト';
-
-        if (!this.room) return alert('Room IDを入力してください');
+        this.name = document.getElementById('init-name').value.trim() || 'Guest';
+        if (!this.room) return alert('Room ID required');
 
         document.getElementById('auth-modal').style.display = 'none';
-        document.body.classList.add(this.role === 'teacher' ? 'is-teacher' : 'is-student');
-        
-        const badge = document.getElementById('display-role');
-        badge.innerText = this.role === 'teacher' ? '教員 (Host)' : '生徒';
-        badge.className = `badge badge-${this.role}`;
-        document.getElementById('display-room').innerText = `Room: ${this.room}`;
+        document.body.classList.add(role === 'teacher' ? 'is-teacher' : 'is-student');
+        document.getElementById('role-badge').innerText = role;
+        document.getElementById('role-badge').className = `badge badge-${role}`;
+        document.getElementById('room-id-display').innerText = `Room: ${this.room}`;
 
-        this.initCanvasModule();
-        this.initStorageAndNotes();
-        this.connectP2PNetwork();
-    }
+        // Initialize Peer
+        const pid = role === 'teacher' ? `ldx-v81-${this.room}-host` : `ldx-v81-${this.room}-stud-${Math.random().toString(36).substr(2,6)}`;
+        this.peer = new Peer(pid);
 
-    /* P2P ネットワーク基盤 (PeerJS Star型メッシュ) */
-    connectP2PNetwork() {
-        const peerId = this.role === 'teacher' 
-            ? `ldx-v8-room-${this.room}-master` 
-            : `ldx-v8-room-${this.room}-client-${Math.random().toString(36).substring(2, 7)}`;
-
-        this.peer = new Peer(peerId);
-
-        this.peer.on('open', (id) => {
-            document.getElementById('ping-indicator').innerText = '● Connected';
-            document.getElementById('ping-indicator').style.color = 'var(--success)';
-            
-            if (this.role === 'student') {
-                this.connectToMasterHost();
-            } else {
-                this.setupHostListeners();
-            }
+        this.peer.on('open', () => {
+            if (role === 'teacher') this.setupHost();
+            else this.setupClient();
         });
 
         this.peer.on('call', (call) => {
             call.answer();
             call.on('stream', (stream) => {
-                const videoMod = document.getElementById('screen-module');
-                const video = document.getElementById('shared-video');
-                videoMod.style.display = 'flex';
-                video.srcObject = stream;
+                document.getElementById('screen-module').style.display = 'block';
+                document.getElementById('shared-video').srcObject = stream;
             });
         });
 
-        this.peer.on('error', (err) => {
-            console.error('Peer Error:', err);
-            if (err.type === 'unavailable-id' && this.role === 'teacher') {
-                alert('このルームIDは既に別の教員によって開かれています。');
-                location.reload();
-            }
-        });
+        this.initNotes();
     }
 
-    /* ホストリスナー (生徒の受信を統括) */
-    setupHostListeners() {
-        this.peer.on('connection', (conn) => {
-            conn.on('open', () => {
-                this.activeConnections.set(conn.peer, conn);
-                conn.on('data', (data) => this.routeNetworkPacket(data, conn));
-                
-                // 新規生徒へ即時同期
-                if (this.timerContext.targetTimestamp) {
-                    conn.send({ type: 'TIMER_SYNC', targetTimestamp: this.timerContext.targetTimestamp });
-                }
-                if (this.surveyContext) {
-                    conn.send({ type: 'SURVEY_SYNC', payload: this.surveyContext });
-                }
+    setupHost() {
+        this.peer.on('connection', (c) => {
+            c.on('open', () => {
+                this.conns.set(c.peer, c);
+                c.on('data', (d) => this.onData(d, c));
+                if (this.svCtx) c.send({ type: 'SV_SYNC', payload: this.svCtx });
             });
-
-            conn.on('close', () => {
-                this.activeConnections.delete(conn.peer);
-                this.roster.delete(conn.peer);
-                this.broadcast({ type: 'ROSTER_SYNC', payload: Array.from(this.roster.values()) });
+            c.on('close', () => {
+                this.conns.delete(c.peer);
+                this.roster.delete(c.peer);
+                this.syncRoster();
             });
         });
     }
 
-    /* 生徒クライアントのホスト接続 */
-    connectToMasterHost() {
-        const targetHostId = `ldx-v8-room-${this.room}-master`;
-        this.hostConn = this.peer.connect(targetHostId, { reliable: true });
-
+    setupClient() {
+        this.hostConn = this.peer.connect(`ldx-v81-${this.room}-host`);
         this.hostConn.on('open', () => {
-            this.hostConn.send({ type: 'JOIN', name: this.userName });
+            this.hostConn.send({ type: 'JOIN', name: this.name });
         });
-
-        this.hostConn.on('data', (data) => this.routeNetworkPacket(data));
-
-        this.hostConn.on('close', () => {
-            document.getElementById('ping-indicator').innerText = '○ Disconnected';
-            document.getElementById('ping-indicator').style.color = 'var(--danger)';
-        });
+        this.hostConn.on('data', (d) => this.onData(d));
     }
 
-    /* パケットルーター */
-    routeNetworkPacket(packet, sourceConn = null) {
-        switch (packet.type) {
+    onData(d, sender = null) {
+        switch (d.type) {
             case 'JOIN':
-                this.roster.set(sourceConn.peer, { name: packet.name, hand: false, level: 100 });
-                this.broadcast({ type: 'ROSTER_SYNC', payload: Array.from(this.roster.values()) });
+                this.roster.set(sender.peer, { name: d.name, level: 100, hand: false });
+                this.syncRoster();
                 break;
-            case 'ROSTER_SYNC':
-                this.renderRoster(packet.payload);
+            case 'ROSTER':
+                this.renderRoster(d.payload);
                 break;
-            case 'UNDERSTANDING':
+            case 'LV':
                 if (this.role === 'teacher') {
-                    const student = this.roster.get(sourceConn.peer);
-                    if (student) student.level = packet.level;
-                    this.broadcast({ type: 'ROSTER_SYNC', payload: Array.from(this.roster.values()) });
+                    const s = this.roster.get(sender.peer);
+                    if (s) s.level = d.val;
+                    this.syncRoster();
                 }
                 break;
-            case 'HAND_RAISE':
+            case 'HAND':
                 if (this.role === 'teacher') {
-                    const student = this.roster.get(sourceConn.peer);
-                    if (student) {
-                        student.hand = packet.state;
-                        if (packet.state) this.playChime('hand');
-                    }
-                    this.broadcast({ type: 'ROSTER_SYNC', payload: Array.from(this.roster.values()) });
+                    const s = this.roster.get(sender.peer);
+                    if (s) s.hand = d.val;
+                    this.syncRoster();
                 }
                 break;
-            case 'TIMER_SYNC':
-                this.syncTimer(packet.targetTimestamp);
+            case 'SV_PUB':
+                this.svCtx = d.payload;
+                this.renderSv();
                 break;
-            case 'TIMER_STOP':
-                this.clearTimer();
+            case 'SV_VOTE':
+                if (this.role === 'teacher') this.tallyVote(d.val);
                 break;
-            case 'REACTION':
-                this.renderFloatingReaction(packet.emoji);
-                if (this.role === 'teacher') this.broadcast(packet);
+            case 'SV_SYNC':
+                this.svCtx = d.payload;
+                this.renderSv();
                 break;
-            case 'BOARD_MSG':
-                this.renderBoardMessage(packet.sender, packet.message);
-                if (this.role === 'teacher') this.broadcast(packet);
+            case 'SV_END':
+                this.svCtx = null;
+                document.getElementById('survey-module').style.display = 'none';
                 break;
-            case 'SURVEY_PUBLISH':
-                this.surveyContext = packet.payload;
-                this.renderSurveyClient(packet.payload);
-                if (this.role === 'teacher') this.broadcast(packet);
+            case 'TIMER':
+                this.startTimerUI(d.val);
                 break;
-            case 'SURVEY_VOTE':
-                if (this.role === 'teacher' && this.surveyContext) {
-                    this.tallyVote(packet.vote);
-                }
+            case 'T_STOP':
+                clearInterval(this.timer);
+                document.getElementById('timer-val').innerText = '00:00';
                 break;
-            case 'SURVEY_SYNC':
-                this.surveyContext = packet.payload;
-                this.renderSurveyClient(packet.payload);
+            case 'MSG':
+                this.renderMsg(d.sender, d.msg);
+                if (this.role === 'teacher') this.broadcast(d);
                 break;
-            case 'SCREEN_STOPPED':
+            case 'REACT':
+                this.spawnReact(d.emoji);
+                if (this.role === 'teacher') this.broadcast(d);
+                break;
+            case 'SHARE_OFF':
                 document.getElementById('screen-module').style.display = 'none';
                 break;
         }
     }
 
     broadcast(data) {
-        for (const conn of this.activeConnections.values()) {
-            if (conn.open) conn.send(data);
-        }
-    }
-
-    /* リアルタイム画面共有エンジン */
-    async toggleScreenShare() {
-        const btn = document.getElementById('btn-screenshare');
-        if (this.localMediaStream) {
-            this.localMediaStream.getTracks().forEach(t => t.stop());
-            this.localMediaStream = null;
-            btn.innerText = '🖥 画面共有';
-            btn.classList.remove('btn-danger');
-            document.getElementById('screen-module').style.display = 'none';
-            this.broadcast({ type: 'SCREEN_STOPPED' });
-            return;
-        }
-
-        try {
-            this.localMediaStream = await navigator.mediaDevices.getDisplayMedia({
-                video: { frameRate: { ideal: 30, max: 60 } }, audio: false
-            });
-
-            const videoMod = document.getElementById('screen-module');
-            const video = document.getElementById('shared-video');
-            videoMod.style.display = 'flex';
-            video.srcObject = this.localMediaStream;
-
-            btn.innerText = '🛑 共有停止';
-            btn.classList.add('btn-danger');
-
-            for (const peerId of this.activeConnections.keys()) {
-                this.peer.call(peerId, this.localMediaStream);
-            }
-
-            this.localMediaStream.getVideoTracks()[0].onended = () => this.toggleScreenShare();
-        } catch (e) {
-            console.error('Display media canceled or failed', e);
-        }
-    }
-
-    /* タイマーシステム */
-    setTimerDuration(min) {
-        const target = Date.now() + min * 60 * 1000;
-        this.broadcast({ type: 'TIMER_SYNC', targetTimestamp: target });
-        this.syncTimer(target);
-    }
-
-    syncTimer(targetTimestamp) {
-        this.clearTimer();
-        this.timerContext.targetTimestamp = targetTimestamp;
-
-        const update = () => {
-            const diff = this.timerContext.targetTimestamp - Date.now();
-            if (diff <= 0) {
-                this.clearTimer();
-                document.getElementById('timer-val').innerText = '00:00';
-                this.playChime('alarm');
-                return;
-            }
-            const m = Math.floor(diff / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            document.getElementById('timer-val').innerText = 
-                `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        };
-        update();
-        this.timerContext.interval = setInterval(update, 1000);
-    }
-
-    stopTimer() {
-        this.clearTimer();
-        this.broadcast({ type: 'TIMER_STOP' });
-    }
-
-    clearTimer() {
-        if (this.timerContext.interval) clearInterval(this.timerContext.interval);
-        this.timerContext.targetTimestamp = null;
-        document.getElementById('timer-val').innerText = '00:00';
+        this.conns.forEach(c => { if (c.open) c.send(data); });
     }
 
     /* アンケートシステム */
+    onSurveyTypeChange() {
+        const t = document.getElementById('adm-sv-type').value;
+        document.getElementById('adm-sv-opt-box').style.visibility = (t === 'text' || t === 'scale') ? 'hidden' : 'visible';
+    }
+
     publishSurvey() {
         const type = document.getElementById('adm-sv-type').value;
         const q = document.getElementById('adm-sv-q').value.trim();
-        let options = document.getElementById('adm-sv-opt').value.split(',').map(s => s.trim()).filter(Boolean);
+        let opts = document.getElementById('adm-sv-opt').value.split(',').map(s => s.trim()).filter(Boolean);
 
         if (!q) return alert('質問を入力してください');
-        if (type === 'scale') options = ['1', '2', '3', '4', '5'];
+        if (type === 'scale') opts = ['1', '2', '3', '4', '5'];
 
-        this.surveyContext = {
-            id: Date.now(), type, question: q, options,
-            votes: type === 'text' ? [] : Object.fromEntries(options.map(o => [o, 0])),
+        this.svCtx = {
+            type, question: q, options: opts,
+            votes: type === 'text' ? [] : Object.fromEntries(opts.map(o => [o, 0])),
             total: 0, visible: true
         };
-
-        this.broadcast({ type: 'SURVEY_PUBLISH', payload: this.surveyContext });
-        this.renderSurveyClient(this.surveyContext);
+        this.broadcast({ type: 'SV_PUB', payload: this.svCtx });
+        this.renderSv();
     }
 
-    tallyVote(vote) {
-        this.surveyContext.total++;
-        if (this.surveyContext.type === 'text') {
-            this.surveyContext.votes.push(vote);
-        } else if (Array.isArray(vote)) {
-            vote.forEach(v => { if (this.surveyContext.votes[v] !== undefined) this.surveyContext.votes[v]++; });
-        } else {
-            if (this.surveyContext.votes[vote] !== undefined) this.surveyContext.votes[vote]++;
-        }
-        this.broadcast({ type: 'SURVEY_SYNC', payload: this.surveyContext });
-        this.renderSurveyClient(this.surveyContext);
-    }
-
-    renderSurveyClient(ctx) {
-        const module = document.getElementById('survey-module');
-        module.style.display = 'block';
-        document.getElementById('survey-title').innerText = `📊 ${ctx.question}`;
+    tallyVote(val) {
+        if (!this.svCtx) return;
+        this.svCtx.total++;
+        if (this.svCtx.type === 'text') this.svCtx.votes.push(val);
+        else if (Array.isArray(val)) val.forEach(v => { if (this.svCtx.votes[v] !== undefined) this.svCtx.votes[v]++; });
+        else if (this.svCtx.votes[val] !== undefined) this.svCtx.votes[val]++;
         
-        const interaction = document.getElementById('survey-interaction');
-        interaction.innerHTML = '';
+        this.broadcast({ type: 'SV_SYNC', payload: this.svCtx });
+        this.renderSv();
+    }
+
+    renderSv() {
+        const ctx = this.svCtx;
+        const mod = document.getElementById('survey-module');
+        if (!ctx) return mod.style.display = 'none';
+
+        mod.style.display = 'block';
+        document.getElementById('sv-title').innerText = `📊 ${ctx.question}`;
+        
+        const interact = document.getElementById('sv-interaction');
+        interact.innerHTML = '';
 
         if (this.role === 'student') {
             if (ctx.type === 'text') {
-                interaction.innerHTML = `<textarea id="sv-txt-in" class="input-field" placeholder="回答を入力..."></textarea>
-                    <button class="btn btn-sm" style="margin-top:6px;" onclick="app.submitSurveyResponse()">回答を送信</button>`;
+                interact.innerHTML = `<input type="text" id="sv-ans-txt" class="input-field" style="margin-bottom:5px;">
+                                      <button class="btn btn-sm" onclick="app.submitVote()">送信</button>`;
             } else {
-                ctx.options.forEach(opt => {
-                    const btn = document.createElement('button');
-                    btn.className = 'survey-btn-option';
-                    btn.innerText = opt;
-                    btn.onclick = () => {
-                        app.submitSurveyResponse(opt);
-                        interaction.innerHTML = `<div style="font-size:0.8rem; color:var(--success); padding:8px;">✓ 回答を送信しました</div>`;
-                    };
-                    interaction.appendChild(btn);
+                ctx.options.forEach(o => {
+                    const b = document.createElement('button');
+                    b.className = 'survey-opt';
+                    b.innerText = o;
+                    b.onclick = () => app.submitVote(o);
+                    interact.appendChild(b);
                 });
             }
         }
 
-        const results = document.getElementById('survey-results');
+        const res = document.getElementById('sv-results');
         if (!ctx.visible && this.role === 'student') {
-            results.innerHTML = `<div style="color:var(--text-dim); text-align:center; padding:10px;">結果は非公開に設定されています</div>`;
+            res.innerHTML = `<div style="text-align:center; padding:10px; opacity:0.5;">集計中です...</div>`;
             return;
         }
 
-        results.innerHTML = `<div style="margin-bottom:6px; font-weight:600;">集計 (${ctx.total}票)</div>`;
+        res.innerHTML = `<div style="font-size:0.7rem; margin-bottom:5px;">合計: ${ctx.total}票</div>`;
         if (ctx.type === 'text') {
-            results.innerHTML += `<div style="max-height:100px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;">
-                ${ctx.votes.map(v => `<div class="user-chip">${v}</div>`).reverse().join('')}
-            </div>`;
+            res.innerHTML += ctx.votes.map(v => `<div style="background:var(--bg-card); padding:5px; border-radius:4px; margin-bottom:3px;">${v}</div>`).reverse().join('');
         } else {
-            for (const [opt, count] of Object.entries(ctx.votes)) {
-                const pct = ctx.total ? Math.round((count / ctx.total) * 100) : 0;
-                results.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; font-size:0.75rem;"><span>${opt}</span><span>${count} (${pct}%)</span></div>
-                    <div class="survey-bar-track"><div class="survey-bar-fill" style="width:${pct}%"></div></div>
-                `;
+            for (const [o, count] of Object.entries(ctx.votes)) {
+                const pct = ctx.total ? Math.round(count / ctx.total * 100) : 0;
+                res.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.7rem;"><span>${o}</span><span>${pct}%</span></div>
+                                  <div class="track"><div class="fill" style="width:${pct}%"></div></div>`;
             }
         }
     }
 
-    submitSurveyResponse(directVal = null) {
-        const val = directVal || document.getElementById('sv-txt-in')?.value.trim();
+    submitVote(direct = null) {
+        const val = direct || document.getElementById('sv-ans-txt').value;
         if (!val) return;
-        if (this.role === 'student') {
-            this.hostConn.send({ type: 'SURVEY_VOTE', vote: val });
-        }
+        this.hostConn.send({ type: 'SV_VOTE', val });
+        document.getElementById('sv-interaction').innerHTML = '✓ 送信しました';
     }
 
-    toggleSurveyVisibility() {
-        if (!this.surveyContext) return;
-        this.surveyContext.visible = !this.surveyContext.visible;
-        document.getElementById('btn-survey-lock').innerText = this.surveyContext.visible ? '非公開にする' : '公開する';
-        this.broadcast({ type: 'SURVEY_SYNC', payload: this.surveyContext });
-        this.renderSurveyClient(this.surveyContext);
+    endSurvey() {
+        this.svCtx = null;
+        this.broadcast({ type: 'SV_END' });
+        document.getElementById('survey-module').style.display = 'none';
     }
 
-    /* ロスター・リアクション・理解度描画 */
+    toggleSvVisibility() {
+        if (!this.svCtx) return;
+        this.svCtx.visible = !this.svCtx.visible;
+        document.getElementById('btn-sv-lock').innerText = this.svCtx.visible ? '結果を隠す' : '結果を表示中';
+        this.broadcast({ type: 'SV_SYNC', payload: this.svCtx });
+        this.renderSv();
+    }
+
+    /* その他機能 */
+    syncRoster() {
+        const data = Array.from(this.roster.values());
+        this.broadcast({ type: 'ROSTER', payload: data });
+        this.renderRoster(data);
+    }
+
     renderRoster(list) {
+        document.getElementById('user-count').innerText = list.length;
         const container = document.getElementById('attendee-list');
         container.innerHTML = '';
-        document.getElementById('user-count').innerText = list.length;
-
-        let totalLevel = 0;
+        let totalLv = 0;
         list.forEach(u => {
-            totalLevel += u.level;
-            const chip = document.createElement('div');
-            chip.className = `user-chip ${u.hand ? 'hand-raise-alert' : ''}`;
-            chip.innerHTML = `<span>${u.name}</span><span>${u.hand ? '🖐 挙手' : ''}</span>`;
-            container.appendChild(chip);
+            totalLv += u.level;
+            const el = document.createElement('div');
+            el.style.fontSize = '0.75rem';
+            el.style.padding = '5px';
+            el.style.background = u.hand ? 'rgba(245,158,11,0.2)' : 'var(--bg-card)';
+            el.style.borderRadius = '4px';
+            el.innerHTML = `<span>${u.name}</span> <span style="float:right;">${u.hand ? '🖐' : ''}</span>`;
+            container.appendChild(el);
         });
-
-        const avg = list.length ? Math.round(totalLevel / list.length) : 100;
-        document.getElementById('avg-level-text').innerText = `${avg}%`;
-        const bar = document.getElementById('avg-level-bar');
-        bar.style.width = `${avg}%`;
-        bar.style.background = avg > 70 ? 'var(--success)' : avg > 40 ? 'var(--warning)' : 'var(--danger)';
+        const avg = list.length ? Math.round(totalLv / list.length) : 100;
+        document.getElementById('avg-text').innerText = avg;
+        document.getElementById('avg-bar').style.width = avg + '%';
     }
 
-    sendUnderstanding(level) {
-        if (this.role === 'student') {
-            this.hostConn.send({ type: 'UNDERSTANDING', level });
-        }
+    toggleHand() {
+        this.hand = !this.hand;
+        document.getElementById('btn-hand').innerText = this.hand ? '✋ 下ろす' : '🖐 挙手 / 質問';
+        this.hostConn.send({ type: 'HAND', val: this.hand });
     }
 
-    toggleHandRaise() {
-        const btn = document.getElementById('btn-hand');
-        this.handState = !this.handState;
-        btn.innerText = this.handState ? '✋ 挙手を下ろす' : '🖐 挙手 / 質問する';
-        btn.classList.toggle('btn-outline', !this.handState);
-        this.hostConn.send({ type: 'HAND_RAISE', state: this.handState });
+    sendLv(val) { if (this.hostConn) this.hostConn.send({ type: 'LV', val }); }
+
+    setTimer(m) {
+        const end = Date.now() + m * 60000;
+        this.broadcast({ type: 'TIMER', val: end });
+        this.startTimerUI(end);
     }
 
-    sendReaction(emoji) {
-        if (this.role === 'student') this.hostConn.send({ type: 'REACTION', emoji });
-        else this.broadcast({ type: 'REACTION', emoji });
-        this.renderFloatingReaction(emoji);
+    startTimerUI(end) {
+        clearInterval(this.timer);
+        this.timer = setInterval(() => {
+            const diff = end - Date.now();
+            if (diff <= 0) {
+                clearInterval(this.timer);
+                document.getElementById('timer-val').innerText = '00:00';
+                return;
+            }
+            const m = Math.floor(diff / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            document.getElementById('timer-val').innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }, 1000);
     }
 
-    renderFloatingReaction(emoji) {
-        const stage = document.getElementById('reaction-stage');
-        const span = document.createElement('span');
-        span.className = 'floating-reaction';
-        span.innerText = emoji;
-        span.style.left = `${Math.random() * 80 + 10}%`;
-        stage.appendChild(span);
-        setTimeout(() => span.remove(), 3000);
+    stopTimer() { clearInterval(this.timer); this.broadcast({ type: 'T_STOP' }); document.getElementById('timer-val').innerText = '00:00'; }
+
+    postMsg() {
+        const msg = document.getElementById('board-in').value;
+        if (!msg) return;
+        this.renderMsg(this.name, msg);
+        this.broadcast({ type: 'MSG', sender: this.name, msg });
+        document.getElementById('board-in').value = '';
     }
 
-    postBoardMessage() {
-        const input = document.getElementById('board-input');
-        const text = input.value.trim();
-        if (!text) return;
-        this.renderBoardMessage(this.userName, text);
-        this.broadcast({ type: 'BOARD_MSG', sender: this.userName, message: text });
-        input.value = '';
-    }
-
-    renderBoardMessage(sender, msg) {
-        const container = document.getElementById('board-messages');
+    renderMsg(s, m) {
         const el = document.createElement('div');
-        el.className = 'user-chip';
-        el.style.flexDirection = 'column';
-        el.style.alignItems = 'flex-start';
-        el.innerHTML = `<span style="color:var(--primary); font-size:0.7rem; font-weight:700;">${sender}</span>
-                        <span style="font-size:0.85rem; margin-top:2px;">${msg}</span>`;
-        container.appendChild(el);
-        container.scrollTop = container.scrollHeight;
+        el.innerHTML = `<b style="color:var(--primary)">${s}:</b> ${m}`;
+        document.getElementById('board-msg').appendChild(el);
     }
 
-    randomPick() {
-        const students = Array.from(this.roster.values());
-        if (!students.length) return alert('生徒がまだ入室していません');
-        const pick = students[Math.floor(Math.random() * students.length)];
-        this.renderBoardMessage('SYSTEM', `🎯 指名ルーレット: 【${pick.name}】さん`);
-        this.broadcast({ type: 'BOARD_MSG', sender: 'SYSTEM', message: `🎯 指名ルーレット: 【${pick.name}】さん` });
+    sendEmoji(emoji) {
+        this.spawnReact(emoji);
+        if (this.role === 'teacher') this.broadcast({ type: 'REACT', emoji });
+        else this.hostConn.send({ type: 'REACT', emoji });
     }
 
-    /* ノート & スケッチブックモジュール */
-    initStorageAndNotes() {
-        const note = document.getElementById('note-input');
-        const key = `ldx_note_${this.room}`;
-        note.value = localStorage.getItem(key) || '';
-        note.oninput = () => {
-            localStorage.setItem(key, note.value);
-            document.getElementById('note-save-status').innerText = 'Saving...';
-            setTimeout(() => { document.getElementById('note-save-status').innerText = 'Auto-saved'; }, 600);
+    spawnReact(emoji) {
+        const el = document.createElement('div');
+        el.className = 'floating'; el.innerText = emoji; el.style.left = Math.random() * 80 + '%';
+        document.getElementById('reaction-stage').appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+    }
+
+    async toggleShare() {
+        if (this.localStream) {
+            this.localStream.getTracks().forEach(t => t.stop());
+            this.localStream = null;
+            document.getElementById('screen-module').style.display = 'none';
+            this.broadcast({ type: 'SHARE_OFF' });
+            return;
+        }
+        this.localStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        document.getElementById('screen-module').style.display = 'block';
+        document.getElementById('shared-video').srcObject = this.localStream;
+        this.conns.forEach(c => this.peer.call(c.peer, this.localStream));
+    }
+
+    initNotes() {
+        const area = document.getElementById('note-area');
+        area.value = localStorage.getItem(`note_${this.room}`) || '';
+        area.oninput = () => {
+            localStorage.setItem(`note_${this.room}`, area.value);
+            document.getElementById('save-status').innerText = 'Saving...';
+            setTimeout(() => document.getElementById('save-status').innerText = 'Saved', 500);
         };
-    }
-
-    exportNote() {
-        const text = document.getElementById('note-input').value;
-        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `LectureNote_${this.room}_${new Date().toISOString().slice(0,10)}.txt`;
-        a.click();
-    }
-
-    initCanvasModule() {
-        const cv = document.getElementById('paint-canvas');
-        const ctx = cv.getContext('2d');
-        let painting = false;
-
-        const resize = () => {
-            const rect = cv.parentElement.getBoundingClientRect();
-            cv.width = rect.width;
-            cv.height = rect.height;
-        };
-        resize();
-        window.addEventListener('resize', resize);
-
-        const start = (e) => { painting = true; draw(e); };
-        const end = () => { painting = false; ctx.beginPath(); };
-        const draw = (e) => {
-            if (!painting) return;
-            const rect = cv.getBoundingClientRect();
-            const clientX = e.clientX || e.touches[0].clientX;
-            const clientY = e.clientY || e.touches[0].clientY;
-            ctx.lineWidth = document.getElementById('brush-size').value;
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = document.getElementById('brush-color').value;
-
-            ctx.lineTo(clientX - rect.left, clientY - rect.top);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(clientX - rect.left, clientY - rect.top);
-        };
-
-        cv.addEventListener('mousedown', start);
-        cv.addEventListener('mousemove', draw);
-        window.addEventListener('mouseup', end);
-
-        cv.addEventListener('touchstart', start, { passive: false });
-        cv.addEventListener('touchmove', draw, { passive: false });
-        window.addEventListener('touchend', end);
-
-        this.clearCanvas = () => ctx.clearRect(0, 0, cv.width, cv.height);
-    }
-
-    setTab(tab) {
-        document.getElementById('tab-note').classList.toggle('active', tab === 'note');
-        document.getElementById('tab-draw').classList.toggle('active', tab === 'draw');
-        document.getElementById('note-input').style.display = tab === 'note' ? 'block' : 'none';
-        document.getElementById('canvas-module').style.display = tab === 'draw' ? 'flex' : 'none';
     }
 
     copyInviteUrl() {
         const url = `${window.location.origin}${window.location.pathname}?room=${this.room}&role=student`;
-        navigator.clipboard.writeText(url);
-        alert('招待用リンクをクリップボードにコピーしました');
+        navigator.clipboard.writeText(url); alert('招待リンクをコピーしました');
     }
 }
 
-// アプリケーション起動
-const app = new LectureApp();
-
-// 時計更新
-setInterval(() => {
-    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-}, 1000);
-
-// URLパラメータによる自動ルーティング
+const app = new UltimateApp();
+setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
 window.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(window.location.search);
-    const room = params.get('room');
-    if (room) {
-        document.getElementById('init-room').value = room;
-        document.getElementById('room-input-container').style.display = 'none';
-        document.getElementById('btn-init-host').style.display = 'none';
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('room')) {
+        document.getElementById('init-room').value = p.get('room');
+        if (p.get('role') === 'student') document.getElementById('btn-init-host').style.display = 'none';
     }
 });
 </script>
