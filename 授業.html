@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lecture DX OS v32.0 | Resilience & Intelligence Suite</title>
+    <title>Lecture DX OS v33.0 | Resilient Autonomous Suite</title>
     
     <!-- 
        =============================================================
@@ -40,18 +40,17 @@
             --radius-xl: 24px;
             --radius-lg: 16px;
             --radius-md: 10px;
-            --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             --font-main: 'Inter', sans-serif;
             --font-code: 'JetBrains Mono', monospace;
-            --shadow-xl: 0 30px 60px rgba(0,0,0,0.8);
         }
 
         /* 
            =============================================================
-           2. GLOBAL RESET & BASE STYLES
+           2. GLOBAL RESET & BASE
            ============================================================= 
         */
-        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
         html, body { height: 100%; width: 100%; background-color: var(--bg-base); color: var(--text-main); font-family: var(--font-main); overflow: hidden; display: flex; }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -61,173 +60,123 @@
 
         /* 
            =============================================================
-           3. BOOT LOADER & AUTHENTICATION UI
+           3. AUTHENTICATION & BOOT UI
            ============================================================= 
         */
         #os-boot-loader {
             position: fixed; inset: 0; z-index: 99999;
             background: radial-gradient(circle at center, #1a1c2e 0%, var(--bg-base) 100%);
-            display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth);
+            display: flex; align-items: center; justify-content: center;
         }
         .boot-card {
             width: min(90vw, 520px); background: var(--bg-panel); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 40px; padding: 70px; box-shadow: var(--shadow-xl); text-align: center; backdrop-filter: blur(30px);
-            animation: cardEntrance 1s ease-out;
+            border-radius: 40px; padding: 70px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); text-align: center; backdrop-filter: blur(30px);
+            animation: dx-entry 0.8s ease;
         }
-        @keyframes cardEntrance { from { opacity:0; transform:scale(0.9) translateY(30px); } to { opacity:1; transform:scale(1) translateY(0); } }
-        
+        @keyframes dx-entry { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         .boot-logo { 
             font-size: 3.5rem; font-weight: 900; letter-spacing: -3px; margin-bottom: 10px; 
             background: linear-gradient(135deg, #fff, var(--p-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-            text-shadow: 0 10px 40px var(--p-glow);
         }
-        .boot-version { font-family: var(--font-code); font-size: 0.8rem; color: var(--text-dim); margin-bottom: 50px; opacity: 0.7; }
+        .boot-version { font-family: var(--font-code); font-size: 0.8rem; color: var(--text-dim); margin-bottom: 50px; opacity: 0.6; }
         
-        .input-group { text-align: left; margin-bottom: 30px; }
-        .input-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-dim); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        .dx-input, .dx-select { 
-            width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; 
-            padding: 18px 25px; color: white; font-size: 1rem; transition: var(--transition-smooth);
-        }
-        .dx-input:focus, .dx-select:focus { border-color: var(--p-color); box-shadow: 0 0 0 5px var(--p-glow); background: #000; }
+        .input-group { text-align: left; margin-bottom: 25px; }
+        .input-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; }
+        .dx-input, .dx-select { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 18px 25px; color: white; font-size: 1rem; transition: var(--transition); }
+        .dx-input:focus, .dx-select:focus { border-color: var(--p-color); box-shadow: 0 0 0 4px var(--p-glow); }
 
-        .btn-boot { width: 100%; padding: 20px; border-radius: 16px; font-weight: 900; cursor: pointer; transition: var(--transition-smooth); border: none; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; }
-        .btn-p { background: var(--p-color); color: white; margin-bottom: 15px; box-shadow: 0 15px 35px var(--p-glow); }
-        .btn-p:hover { background: var(--p-light); transform: translateY(-3px); box-shadow: 0 20px 45px var(--p-glow); }
+        .btn-boot { width: 100%; padding: 20px; border-radius: 16px; font-weight: 900; cursor: pointer; transition: var(--transition); border: none; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-p { background: var(--p-color); color: white; margin-bottom: 15px; }
+        .btn-p:hover { background: var(--p-light); transform: translateY(-2px); }
         .btn-s { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
-        .btn-s:hover { color: white; border-color: #fff; background: rgba(255,255,255,0.05); }
+        .btn-s:hover { color: white; border-color: white; }
 
         /* 
            =============================================================
-           4. MAIN APPLICATION SHELL
+           4. MAIN APP SHELL
            ============================================================= 
         */
-        #app-shell { display: none; width: 100%; height: 100%; grid-template-columns: 100px 1fr 360px; }
+        #app-shell { display: none; width: 100%; height: 100%; grid-template-columns: 90px 1fr 350px; }
         #app-shell.active { display: grid; }
 
-        /* SIDEBAR */
-        .sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 40px 0; gap: 25px; }
-        .sidebar-brand { font-weight: 900; font-size: 1.8rem; color: var(--p-color); margin-bottom: 40px; cursor: pointer; transition: 0.3s; }
-        
-        .nav-tool { 
-            width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; 
-            color: var(--text-dim); cursor: pointer; transition: var(--transition-smooth); position: relative; 
-            font-size: 1.2rem; border: 1px solid transparent;
-        }
+        .sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 35px 0; gap: 20px; }
+        .sidebar-brand { font-weight: 900; font-size: 1.6rem; color: var(--p-color); margin-bottom: 30px; cursor: pointer; }
+        .nav-tool { width: 55px; height: 55px; border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); cursor: pointer; transition: var(--transition); position: relative; }
         .nav-tool:hover { background: var(--bg-card); color: white; transform: translateX(5px); }
-        .nav-tool.active { background: var(--p-color); color: white; box-shadow: 0 10px 30px var(--p-glow); border-color: var(--p-light); }
+        .nav-tool.active { background: var(--p-color); color: white; box-shadow: 0 10px 25px var(--p-glow); }
         
-        /* 動的アンケートメニュー表示制御 */
+        /* 動的アンケートメニュー */
         body.is-student .nav-tool.nav-survey { display: none; opacity: 0; }
-        body.is-student .nav-tool.nav-survey.active-survey { 
-            display: flex; opacity: 1; 
-            animation: menuReveal 0.6s cubic-bezier(0.17, 0.84, 0.44, 1) forwards; 
-        }
-        @keyframes menuReveal { from { opacity:0; transform:scale(0.5) translateX(-20px); } to { opacity:1; transform:scale(1) translateX(0); } }
+        body.is-student .nav-tool.nav-survey.active-survey { display: flex; opacity: 1; animation: menu-reveal 0.5s forwards; }
+        @keyframes menu-reveal { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
 
-        .nav-tool::after { 
-            content: attr(data-tip); position: absolute; left: 95px; background: #000; color: #fff; 
-            padding: 10px 18px; border-radius: 10px; font-size: 0.8rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 1000; 
-            border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .nav-tool:hover::after { opacity: 1; left: 105px; }
-        .nav-tool[data-badge]::before { 
-            content: ''; position: absolute; top: 12px; right: 12px; width: 12px; height: 12px; 
-            background: var(--accent-error); border-radius: 50%; border: 2.5px solid var(--bg-sidebar); 
-        }
+        .nav-tool::after { content: attr(data-tip); position: absolute; left: 85px; background: #000; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 0.8rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 1000; }
+        .nav-tool:hover::after { opacity: 1; left: 95px; }
+        .nav-tool[data-badge]::before { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; background: var(--accent-error); border-radius: 50%; border: 2px solid var(--bg-sidebar); }
+
+        .viewport { display: flex; flex-direction: column; background: var(--bg-base); border-right: 1px solid var(--border); overflow: hidden; position: relative; }
+        .top-bar { height: 80px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; background: rgba(13, 17, 23, 0.7); backdrop-filter: blur(25px); border-bottom: 1px solid #30363d; z-index: 100; }
+        
+        /* ステータスバッジ */
+        .status-pill { padding: 6px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: 900; border: 1.5px solid var(--border); text-transform: uppercase; }
+        .status-teacher { background: rgba(248, 81, 73, 0.1); color: #f85149; border-color: #f85149; }
+        .status-student { background: rgba(63, 185, 80, 0.1); color: #3fb950; border-color: #3fb950; }
+        .status-offline { background: #333; color: #777; border-color: #444; animation: offlinePulse 2s infinite; }
+        @keyframes offlinePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         /* 
            =============================================================
-           5. VIEWPORT & PERSISTENT VIDEO LAYER
+           5. PERSISTENT VIDEO & PANE SYSTEM
            ============================================================= 
         */
-        .viewport { display: flex; flex-direction: column; background: var(--bg-base); border-right: 1px solid var(--border); overflow: hidden; position: relative; }
-        .top-bar { 
-            height: 90px; padding: 0 45px; display: flex; align-items: center; justify-content: space-between; 
-            background: rgba(13, 17, 23, 0.8); backdrop-filter: blur(30px); border-bottom: 1px solid var(--border); z-index: 100; 
-        }
-        .status-pill { padding: 8px 18px; border-radius: 25px; font-size: 0.75rem; font-weight: 900; border: 1.5px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
-        .status-teacher { background: rgba(248, 81, 73, 0.1); color: #f85149; border-color: #f85149; box-shadow: 0 0 15px rgba(248, 81, 73, 0.2); }
-        .status-student { background: rgba(63, 185, 80, 0.1); color: #3fb950; border-color: #3fb950; }
-
-        /* [教員復帰待機中のオーバーレイ] */
-        #reconnect-overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
-            z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-        }
-        .loader-ring { width: 80px; height: 80px; border: 8px solid var(--bg-card); border-top: 8px solid var(--p-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 30px; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        /* [PERSISTENT VIDEO] ALWAYS VISIBLE WHEN SHARING */
         #persistent-stream-container {
             width: 100%; max-height: 45vh; background: #000; border-bottom: 2px solid var(--p-color);
             display: none; flex-direction: column; position: relative; overflow: hidden; flex-shrink: 0;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 90;
         }
         #remote-video { width: 100%; height: 100%; max-height: 45vh; object-fit: contain; }
-        .stream-status-overlay { 
-            position: absolute; top: 20px; left: 30px; background: rgba(218, 54, 51, 0.9); color: white; 
-            padding: 6px 16px; border-radius: 8px; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; 
-            letter-spacing: 1.5px; animation: streamPulse 2s infinite; 
-            display: flex; align-items: center; gap: 10px;
-        }
-        @keyframes streamPulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
+        .stream-status-overlay { position: absolute; top: 15px; left: 20px; background: rgba(218, 54, 51, 0.9); color: white; padding: 4px 12px; border-radius: 5px; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; }
 
-        /* 
-           =============================================================
-           6. PANE & CARD SYSTEM
-           ============================================================= 
-        */
-        .pane-container { flex: 1; position: relative; padding: 40px; overflow: hidden; }
-        .dx-pane { 
-            position: absolute; inset: 40px; visibility: hidden; opacity: 0; 
-            transform: translateY(30px); transition: var(--transition-smooth); overflow: hidden;
-        }
+        .pane-container { flex: 1; position: relative; padding: 35px; overflow: hidden; }
+        .dx-pane { position: absolute; inset: 35px; visibility: hidden; opacity: 0; transform: translateY(20px); transition: var(--transition); }
         .dx-pane.active { visibility: visible; opacity: 1; transform: translateY(0); z-index: 10; }
 
-        .dx-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-xl); display: flex; flex-direction: column; height: 100%; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
-        .dx-card-header { padding: 25px 35px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
-        .dx-card-title { font-size: 1rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; }
-        .dx-card-body { flex: 1; overflow-y: auto; padding: 35px; position: relative; }
+        .dx-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-xl); display: flex; flex-direction: column; height: 100%; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .dx-card-header { padding: 20px 30px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+        .dx-card-title { font-size: 0.9rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; }
+        .dx-card-body { flex: 1; overflow-y: auto; padding: 30px; }
 
-        /* SKETCH UI */
-        #canvas-wrapper { background: #fff; border-radius: var(--radius-md); flex: 1; position: relative; overflow: hidden; box-shadow: inset 0 0 30px rgba(0,0,0,0.1); }
+        /* ホワイトボード */
+        #canvas-wrapper { background: #fff; border-radius: 12px; flex: 1; position: relative; overflow: hidden; }
         #main-canvas { cursor: crosshair; touch-action: none; }
-        .canvas-toolbar { padding: 18px 35px; background: var(--bg-card); display: flex; gap: 25px; align-items: center; border-bottom: 1px solid var(--border); }
-        .tool-btn { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: transparent; color: var(--text-dim); border: 1px solid transparent; cursor: pointer; transition: 0.2s; font-size: 1.1rem; }
-        .tool-btn:hover { color: white; background: rgba(255,255,255,0.1); }
-        .tool-btn.active { color: var(--p-color); border-color: var(--p-color); background: rgba(99, 102, 241, 0.15); box-shadow: 0 0 15px var(--p-glow); }
+        .canvas-toolbar { padding: 15px 30px; background: var(--bg-card); display: flex; gap: 20px; align-items: center; border-bottom: 1px solid var(--border); }
+        .tool-btn { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: transparent; color: var(--text-dim); border: 1px solid transparent; cursor: pointer; transition: 0.2s; }
+        .tool-btn.active { color: var(--p-color); border-color: var(--p-color); background: rgba(99, 102, 241, 0.1); }
 
-        /* SURVEY UI */
-        .poll-box { background: var(--bg-card); border-radius: var(--radius-xl); padding: 40px; border: 1px solid var(--border); margin-bottom: 25px; }
-        .sv-option-label { background: var(--bg-panel); border: 1px solid #444; border-radius: 15px; padding: 22px; color: white; margin-top: 15px; cursor: pointer; display: flex; align-items: center; gap: 20px; font-weight: 700; transition: var(--transition-smooth); font-size: 1.1rem; }
-        .sv-option-label input { width: 24px; height: 24px; accent-color: var(--p-color); cursor: pointer; }
-        .progress-bar-bg { height: 16px; background: #30363d; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid rgba(255,255,255,0.05); }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--p-color), var(--p-light)); transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
-        .respondent-tag-list { font-size: 0.8rem; color: var(--text-dim); margin-top: 8px; font-style: italic; display: flex; flex-wrap: wrap; gap: 8px; }
-        .respondent-tag { background: rgba(255,255,255,0.05); padding: 2px 10px; border-radius: 5px; border: 1px solid var(--border); }
-        .free-answer-card { background: var(--bg-sidebar); padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 5px solid var(--p-color); }
-        .rating-star { font-size: 3.5rem; color: #222; cursor: pointer; transition: 0.3s; margin: 0 8px; }
-        .rating-star.active { color: var(--accent-warn); text-shadow: 0 0 25px rgba(210, 153, 34, 0.6); }
+        /* アンケート */
+        .poll-box { background: var(--bg-card); border-radius: 20px; padding: 35px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .sv-option-label { background: var(--bg-panel); border: 1px solid #444; border-radius: 12px; padding: 20px; color: white; margin-top: 10px; cursor: pointer; display: flex; align-items: center; gap: 15px; font-weight: 700; transition: 0.2s; }
+        .sv-option-label:hover { border-color: var(--p-color); }
+        .progress-bar-bg { height: 12px; background: #30363d; border-radius: 10px; overflow: hidden; margin-top: 8px; }
+        .progress-bar-fill { height: 100%; background: var(--p-color); transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .respondent-tag-list { font-size: 0.75rem; color: var(--text-dim); margin-top: 6px; font-style: italic; display: flex; flex-wrap: wrap; gap: 5px; }
 
         /* 
            =============================================================
-           7. RIGHT SIDEBAR (LOG & CHAT)
+           6. RIGHT SIDEBAR
            ============================================================= 
         */
-        .right-bar { background: var(--bg-sidebar); border-left: 1px solid var(--border); display: flex; flex-direction: column; width: 360px; }
-        .chat-log { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 18px; }
-        .chat-msg { background: var(--bg-card); padding: 20px; border-radius: 18px; border: 1px solid var(--border); animation: msgSlide 0.4s ease-out; }
-        @keyframes msgSlide { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
-        .msg-meta { font-size: 0.75rem; font-weight: 900; color: var(--p-light); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; }
-        .msg-content { font-size: 0.95rem; line-height: 1.5; color: var(--text-vivid); }
+        .right-bar { background: var(--bg-sidebar); border-left: 1px solid var(--border); display: flex; flex-direction: column; width: 350px; }
+        .chat-log { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
+        .chat-msg { background: var(--bg-card); padding: 15px 20px; border-radius: 15px; border: 1px solid var(--border); animation: msg-slide 0.4s ease-out; }
+        @keyframes msg-slide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .msg-meta { font-size: 0.7rem; font-weight: 900; color: var(--p-light); margin-bottom: 5px; text-transform: uppercase; }
 
-        .hand-btn { width: 100%; padding: 22px; border-radius: 20px; font-weight: 900; background: var(--accent-warn); color: #000; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 15px; transition: var(--transition-smooth); text-transform: uppercase; }
-        .hand-btn.active { background: var(--accent-error); color: white; box-shadow: 0 0 40px rgba(218, 54, 51, 0.5); }
+        .hand-btn { width: 100%; padding: 20px; border-radius: 18px; font-weight: 900; background: var(--accent-warn); color: #000; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: var(--transition); text-transform: uppercase; }
+        .hand-btn.active { background: var(--accent-error); color: white; box-shadow: 0 0 30px rgba(218, 54, 51, 0.4); }
 
         /* 
            =============================================================
-           8. PERMISSIONS & REACTION
+           7. UTILS & REACTION
            ============================================================= 
         */
         .teacher-only, .teacher-only-block { display: none !important; }
@@ -236,14 +185,12 @@
         .student-only { display: none !important; }
         body.is-student .student-only { display: flex !important; }
 
-        #timer-big { font-size: 10rem; font-weight: 900; font-family: var(--font-code); color: var(--accent-error); text-shadow: 0 0 60px rgba(218, 54, 51, 0.4); }
-        #clock { font-family: var(--font-code); font-weight: 800; color: var(--p-light); font-size: 1.2rem; }
-
+        #timer-big { font-size: 9rem; font-weight: 900; font-family: var(--font-code); color: var(--accent-error); text-shadow: 0 0 50px rgba(218, 54, 51, 0.3); }
         #reaction-layer { position: fixed; inset: 0; pointer-events: none; z-index: 100000; overflow: hidden; }
-        .floating-emoji { position: absolute; bottom: -120px; font-size: 5rem; animation: emojiFloat 4s forwards; }
-        @keyframes emojiFloat { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 15% { opacity: 1; transform: translateY(-50px) scale(1.2); } 100% { transform: translateY(-100vh) scale(1.8); opacity: 0; } }
+        .floating-emoji { position: absolute; bottom: -100px; font-size: 4.5rem; animation: emojiFloat 3.5s forwards; }
+        @keyframes emojiFloat { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-100vh) scale(1.5); opacity: 0; } }
 
-        .user-pill { background: var(--bg-card); padding: 18px 25px; border-radius: 18px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .user-pill { background: var(--bg-card); padding: 15px 20px; border-radius: 15px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .user-pill.hand-up { border-color: var(--accent-warn); background: #1f1b11; }
     </style>
 </head>
@@ -253,20 +200,20 @@
     <div id="os-boot-loader">
         <div class="boot-card">
             <div class="boot-logo">LECTURE DX</div>
-            <div class="boot-version">SYSTEM KERNEL v32.0 | RECOVERY-ENABLED ARCH</div>
+            <div class="boot-version">QUANTUM-CORE OS v33.0 | GHOST-SYNC ENABLED</div>
             
             <div class="input-group">
-                <label>Room Identifier</label>
-                <input type="text" id="boot-room-id" class="dx-input" placeholder="e.g. physics-lab-01">
+                <label>Room ID (Unique)</label>
+                <input type="text" id="boot-room-id" class="dx-input" placeholder="e.g. physics-pro-101">
             </div>
             <div class="input-group">
                 <label>Identifier Name</label>
-                <input type="text" id="boot-user-name" class="dx-input" placeholder="e.g. Prof. Einstein">
+                <input type="text" id="boot-user-name" class="dx-input" placeholder="e.g. Isaac Newton">
             </div>
             
             <div id="boot-actions">
-                <button class="btn-boot btn-p" id="btn-boot-teacher" onclick="core.ignition('teacher')">Initialize as Teacher</button>
-                <button class="btn-boot btn-s" onclick="core.ignition('student')">Join Classroom as Student</button>
+                <button class="btn-boot btn-p" id="btn-boot-teacher" onclick="core.ignition('teacher')">Launch as Teacher</button>
+                <button class="btn-boot btn-s" onclick="core.ignition('student')">Join as Student</button>
             </div>
             <p id="boot-status" style="margin-top:20px; font-size:0.7rem; color:var(--text-dim); font-weight:700;"></p>
         </div>
@@ -283,56 +230,40 @@
             <div class="sidebar-brand" onclick="location.reload()">LDX</div>
             <div class="nav-tool active" data-tip="Lecture Note" onclick="core.ui.switchPane('note')"><i class="fa-solid fa-file-signature"></i></div>
             <div class="nav-tool" data-tip="Sketch Board" onclick="core.ui.switchPane('sketch')"><i class="fa-solid fa-palette"></i></div>
-            
-            <!-- Dynamic Survey Menu -->
-            <div class="nav-tool nav-survey" id="nav-survey-link" data-tip="Live Survey" onclick="core.ui.switchPane('survey')">
-                <i class="fa-solid fa-square-poll-vertical"></i>
-            </div>
-            
+            <div class="nav-tool nav-survey" id="nav-survey-link" data-tip="Live Survey" onclick="core.ui.switchPane('survey')"><i class="fa-solid fa-square-poll-vertical"></i></div>
             <div class="nav-tool" data-tip="Sync Timer" onclick="core.ui.switchPane('timer')"><i class="fa-solid fa-stopwatch-20"></i></div>
             <div class="nav-tool teacher-only" data-tip="Administration" onclick="core.ui.switchPane('admin')"><i class="fa-solid fa-users-gear"></i></div>
         </aside>
 
         <!-- VIEWPORT -->
         <main class="viewport">
-            <!-- [再接続オーバーレイ] -->
-            <div id="reconnect-overlay">
-                <div class="loader-ring"></div>
-                <h1 style="color:#fff; font-weight:900;">TEACHER DISCONNECTED</h1>
-                <p style="color:var(--text-dim); margin-top:10px;">教員がルームを離れました。復帰を待機しています...</p>
-            </div>
-
             <header class="top-bar">
-                <div style="display:flex; align-items:center; gap:25px;">
+                <div style="display:flex; align-items:center; gap:20px;">
                     <span id="display-role" class="status-pill">---</span>
                     <span id="display-room" style="font-family:var(--font-code); font-weight:800; font-size:0.85rem; color:var(--text-dim);">ID: ----</span>
-                    <div id="mini-timer" style="font-family:var(--font-code); font-weight:900; color:var(--accent-warn); margin-left:35px; font-size:1.1rem;">00:00</div>
+                    <div id="mini-timer" style="font-family:var(--font-code); font-weight:900; color:var(--accent-warn); margin-left:30px; font-size:1.1rem;">00:00</div>
                 </div>
-                <div style="display:flex; gap:20px; align-items:center;">
-                    <div id="clock">00:00:00</div>
-                    <button class="btn-boot btn-s btn-sm teacher-only" style="padding:10px 22px;" onclick="core.net.copyInviteUrl()"><i class="fa-solid fa-link"></i> URL</button>
-                    <button id="btn-screen-share" class="btn-boot btn-p btn-sm teacher-only" style="padding:10px 22px;" onclick="core.media.toggleScreenShare()"><i class="fa-solid fa-display"></i> SCREEN</button>
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <div id="clock" style="font-family:var(--font-code); font-weight:800; color:var(--p-light);">00:00:00</div>
+                    <button class="btn-boot btn-s btn-sm teacher-only" onclick="core.net.copyInviteUrl()"><i class="fa-solid fa-link"></i> URL</button>
+                    <button id="btn-screen-share" class="btn-boot btn-p btn-sm teacher-only" onclick="core.media.toggleScreenShare()"><i class="fa-solid fa-display"></i> SCREEN</button>
                 </div>
             </header>
 
-            <!-- PERSISTENT SCREEN SHARE LAYER -->
+            <!-- 永続ビデオエリア（共有中のみ表示、メニューを変えても見れる） -->
             <div id="persistent-stream-container">
                 <div class="stream-status-overlay"><i class="fa-solid fa-tower-broadcast"></i> Live Streaming</div>
                 <video id="remote-video" autoplay playsinline></video>
             </div>
 
             <div class="pane-container">
-                
                 <!-- PANE: NOTE -->
                 <div id="pane-note" class="dx-pane active">
                     <div class="dx-card">
-                        <div class="dx-card-header">
-                            <span class="dx-card-title">Quantum Note Sync</span>
-                            <div class="teacher-only"><button class="btn-boot btn-s btn-sm" onclick="core.note.clear()">Clear All</button></div>
-                        </div>
+                        <div class="dx-card-header"><span class="dx-card-title">Quantum Note Sync</span><div class="teacher-only"><button class="btn-boot btn-s btn-sm" onclick="core.note.clear()">Clear All</button></div></div>
                         <div class="dx-card-body" style="padding:0;">
-                            <textarea id="note-editor" class="teacher-only-block" style="width:100%; height:100%; background:transparent; color:#fff; padding:45px; border:none; font-size:1.25rem; line-height:1.8; resize:none;" placeholder="Start writing..."></textarea>
-                            <div id="note-viewer" class="student-only" style="padding:45px; font-size:1.25rem; line-height:1.8; white-space:pre-wrap;">待機中...</div>
+                            <textarea id="note-editor" class="teacher-only-block" style="width:100%; height:100%; background:transparent; color:#fff; padding:40px; border:none; font-size:1.2rem; line-height:1.8; resize:none;" placeholder="Type here..."></textarea>
+                            <div id="note-viewer" class="student-only" style="padding:40px; font-size:1.2rem; line-height:1.8; white-space:pre-wrap;">待機中...</div>
                         </div>
                     </div>
                 </div>
@@ -340,27 +271,15 @@
                 <!-- PANE: SKETCH -->
                 <div id="pane-sketch" class="dx-pane">
                     <div class="dx-card">
-                        <div class="dx-card-header">
-                            <span class="dx-card-title">Collaborative Board</span>
-                            <div class="teacher-only"><button class="btn-boot btn-s btn-sm" id="btn-sk-lock" onclick="core.board.toggleLock()">LOCK BOARD</button></div>
-                        </div>
+                        <div class="dx-card-header"><span class="dx-card-title">DX Sketcher</span><div class="teacher-only"><button class="btn-boot btn-s btn-sm" id="btn-sk-lock" onclick="core.board.toggleLock()">LOCK BOARD</button></div></div>
                         <div class="canvas-toolbar teacher-only">
                             <input type="color" id="sk-color" value="#6366f1">
                             <input type="range" id="sk-size" min="1" max="50" value="5">
-                            <div style="width:1px; height:30px; background:var(--border); margin:0 15px;"></div>
                             <button class="tool-btn active" id="tool-pen" onclick="core.board.setTool('pen')"><i class="fa-solid fa-pen-nib"></i></button>
                             <button class="tool-btn" id="tool-eraser" onclick="core.board.setTool('eraser')"><i class="fa-solid fa-eraser"></i></button>
                             <button class="tool-btn" onclick="core.board.clear()"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
-                        <div class="dx-card-body" style="background:#080a0f; position:relative; padding:20px;">
-                            <div id="canvas-wrapper">
-                                <canvas id="main-canvas"></canvas>
-                                <div id="canvas-student-lock" class="student-only" style="position:absolute; inset:0; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                    <i class="fa-solid fa-lock" style="font-size:4.5rem; color:var(--text-dim); margin-bottom:25px;"></i>
-                                    <h2 style="color:var(--text-dim);">BOARD LOCKED</h2>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="dx-card-body" style="background:#080a0f; position:relative;"><canvas id="main-canvas"></canvas><div id="canvas-student-lock" class="student-only" style="position:absolute; inset:0; background:rgba(0,0,0,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center;"><i class="fa-solid fa-lock" style="font-size:4rem; color:var(--text-dim); margin-bottom:20px;"></i><h3 style="color:var(--text-dim);">BOARD LOCKED</h3></div></div>
                     </div>
                 </div>
 
@@ -369,36 +288,24 @@
                     <div class="dx-card">
                         <div class="dx-card-header"><span class="dx-card-title">Intelligent Polling</span></div>
                         <div class="dx-card-body">
-                            <!-- Teacher Side -->
-                            <div class="teacher-only-block" style="display:grid; grid-template-columns: 1.2fr 1fr; gap:50px;">
+                            <div class="teacher-only-block" style="display:grid; grid-template-columns: 1.2fr 1fr; gap:45px;">
                                 <div class="poll-box">
-                                    <h2 style="margin-bottom:25px;">Configuration</h2>
-                                    <div class="input-group">
-                                        <label>Format</label>
-                                        <select id="sv-type" class="dx-select" onchange="core.survey.toggleFields()">
-                                            <option value="choice">単一選択 (Radio)</option>
-                                            <option value="multi">複数選択 (Checkbox)</option>
-                                            <option value="text">自由記述 (Free Text)</option>
-                                            <option value="rating">5段階評価 (Rating)</option>
-                                        </select>
-                                    </div>
+                                    <h2 style="margin-bottom:25px;">Config Poll</h2>
+                                    <div class="input-group"><label>Format</label><select id="sv-type" class="dx-select" onchange="core.survey.toggleFields()"><option value="choice">単一選択 (Radio)</option><option value="multi">複数選択 (Checkbox)</option><option value="text">自由記述 (Free Text)</option><option value="rating">5段階評価 (Rating)</option></select></div>
                                     <div class="input-group"><label>Question</label><input type="text" id="sv-q" class="dx-input"></div>
-                                    <div id="sv-opts-group" class="input-group"><label>Options</label><input type="text" id="sv-opts" class="dx-input" placeholder="A, B, C"></div>
-                                    <div class="input-group" style="display:flex; align-items:center; gap:12px;">
-                                        <input type="checkbox" id="sv-auto-share" checked style="width:22px; height:22px;"><label style="margin-bottom:0;">結果を生徒にリアルタイム公開</label>
-                                    </div>
+                                    <div id="sv-opts-group" class="input-group"><label>Options (Comma Sep)</label><input type="text" id="sv-opts" class="dx-input" placeholder="A, B, C"></div>
+                                    <div class="input-group" style="display:flex; align-items:center; gap:10px;"><input type="checkbox" id="sv-auto-share" checked style="width:20px; height:20px;"><label>結果を生徒に公開する</label></div>
                                     <button class="btn-boot btn-p" onclick="core.survey.broadcast()">Broadcast Poll</button>
                                     <button class="btn-boot btn-s" style="margin-top:10px;" onclick="core.survey.reset()">Reset</button>
                                 </div>
-                                <div class="poll-box" style="border-color:var(--p-color);"><h2 style="margin-bottom:25px; color:var(--p-light);">Identity Results</h2><div id="sv-results-teacher-area"></div></div>
+                                <div class="poll-box" style="border-color:var(--p-color); background:rgba(99,102,241,0.03);"><h2 style="margin-bottom:25px; color:var(--p-light);">Live Aggregation</h2><div id="sv-results-teacher-area"></div></div>
                             </div>
-                            <!-- Student Side -->
                             <div class="student-only-block">
-                                <div id="sv-student-view" class="poll-box" style="max-width:800px; margin:0 auto; text-align:center;">
-                                    <h1 id="sv-student-q" style="margin-bottom:40px;">Question Content</h1>
+                                <div id="sv-student-view" class="poll-box" style="max-width:750px; margin:0 auto; text-align:center;">
+                                    <h1 id="sv-student-q" style="margin-bottom:40px; line-height:1.4;">Active Question</h1>
                                     <div id="sv-render-area"></div>
-                                    <div id="sv-thanks" style="display:none; margin-top:40px;"><h2 style="color:var(--accent-success); font-size:2rem;">Answer Received</h2></div>
-                                    <div id="sv-student-results-panel" style="display:none; margin-top:50px; border-top:1px solid #333; padding-top:40px; text-align:left;"><h3 style="margin-bottom:25px; color:var(--p-light);">全体の集計結果 (匿名)</h3><div id="sv-results-student-area"></div></div>
+                                    <div id="sv-thanks" style="display:none; margin-top:30px;"><h2 style="color:var(--accent-success);">✅ Answer Submitted</h2></div>
+                                    <div id="sv-student-results-panel" style="display:none; margin-top:40px; border-top:1px solid #333; padding-top:30px; text-align:left;"><h3 style="margin-bottom:20px; color:var(--p-light);">全体の集計結果 (匿名)</h3><div id="sv-results-student-area"></div></div>
                                 </div>
                             </div>
                         </div>
@@ -411,7 +318,7 @@
                         <div class="dx-card-header"><span class="dx-card-title">Session Timer</span></div>
                         <div class="dx-card-body" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
                             <div id="timer-big">00:00</div>
-                            <div class="teacher-only" style="margin-top:60px; display:flex; gap:25px; align-items:center;"><input type="number" id="timer-m" value="10" class="dx-input" style="width:140px; text-align:center; font-size:2rem;"><button class="btn-boot btn-p" style="width:220px;" onclick="core.timer.start()">START</button></div>
+                            <div class="teacher-only" style="margin-top:40px; display:flex; gap:20px; align-items:center;"><input type="number" id="timer-m" value="10" class="dx-input" style="width:130px; text-align:center; font-size:1.8rem;"><button class="btn-boot btn-p" style="width:200px;" onclick="core.timer.start()">START</button></div>
                         </div>
                     </div>
                 </div>
@@ -421,8 +328,8 @@
                     <div class="dx-card">
                         <div class="dx-card-header"><span class="dx-card-title">Class Monitor</span></div>
                         <div class="dx-card-body">
-                            <div style="font-size:1.8rem; font-weight:900; margin-bottom:40px;">Online: <span id="admin-user-count" style="color:var(--p-color);">0</span></div>
-                            <div id="admin-user-roster" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:25px;"></div>
+                            <div style="font-size:1.5rem; font-weight:900; margin-bottom:30px;">Online: <span id="admin-count" style="color:var(--p-color);">0</span></div>
+                            <div id="admin-roster" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;"></div>
                         </div>
                     </div>
                 </div>
@@ -430,10 +337,10 @@
         </main>
 
         <aside class="right-bar">
-            <div class="dx-card-header"><span class="dx-card-title">Bulletin & Reactions</span></div>
+            <div class="dx-card-header"><span class="dx-card-title">Intel Feed</span></div>
             <div id="chat-log" class="chat-log"></div>
-            <div style="padding:30px; border-top:1px solid var(--border);">
-                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:20px;"><button class="tool-btn" onclick="core.ui.emitEmoji('👏')">👏</button><button class="tool-btn" onclick="core.ui.emitEmoji('👍')">👍</button><button class="tool-btn" onclick="core.ui.emitEmoji('❓')">❓</button><button class="tool-btn" onclick="core.ui.emitEmoji('💡')">💡</button></div>
+            <div style="padding:25px; border-top:1px solid #30363d;">
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:15px;"><button class="tool-btn" onclick="core.ui.emitEmoji('👏')">👏</button><button class="tool-btn" onclick="core.ui.emitEmoji('👍')">👍</button><button class="tool-btn" onclick="core.ui.emitEmoji('❓')">❓</button><button class="tool-btn" onclick="core.ui.emitEmoji('💡')">💡</button></div>
                 <div class="student-only"><button id="btn-hand" class="hand-btn" onclick="core.ui.toggleHand()">Raise My Hand</button></div>
                 <div class="teacher-only"><button class="btn-boot btn-s" style="width:100%" onclick="core.ui.pickStudent()">Random Pick</button></div>
             </div>
@@ -442,7 +349,7 @@
 
 <script>
 /**
- * LECTURE DX KERNEL v32.0
+ * LECTURE DX KERNEL v33.0
  */
 
 class LectureDX {
@@ -450,7 +357,6 @@ class LectureDX {
         this.role = ''; this.room = ''; this.userName = '';
         this.peer = null; this.conns = new Map(); this.hostConn = null;
         this.participants = new Map();
-        this.reconnectTimer = null;
         
         // Modules
         this.ui = new DX_UI(this); this.net = new DX_Network(this);
@@ -464,22 +370,19 @@ class LectureDX {
         this.room = document.getElementById('boot-room-id').value.trim() || 'default';
         this.userName = document.getElementById('boot-user-name').value.trim() || 'Anonymous';
         
-        // 教員復帰チェック
         if(role === 'teacher') {
             const saved = this.recovery.getSnapshot(this.room);
             if(saved && (Date.now() - saved.ts < 300000)) {
-                if(confirm("前回のセッションが5分以内に中断されました。復元しますか？")) {
-                    this.recovery.shouldRestore = true;
-                }
+                if(confirm("前回のセッションから5分以内です。状態を復元して再開しますか？")) this.recovery.shouldRestore = true;
             }
         }
 
-        const pid = role === 'teacher' ? `ldx32-${this.room}-host` : `ldx32-${this.room}-${Math.random().toString(36).substr(2,8)}`;
+        const pid = role === 'teacher' ? `ldx33-${this.room}-host` : `ldx33-${this.room}-${Math.random().toString(36).substr(2,8)}`;
         this.peer = new Peer(pid);
         this.peer.on('open', () => this.boot());
         this.peer.on('error', (e) => { 
-            if(this.role === 'student') this.ui.showReconnect(true);
-            else { alert("接続エラー: ID重複か教員が既に存在します。"); location.reload(); }
+            if(this.role === 'student') this.ui.setStatus('offline');
+            else { alert("接続エラー: 教員が既に存在するか、IDが重複しています。"); location.reload(); }
         });
         this.peer.on('connection', c => this.net.onConn(c));
         this.peer.on('call', c => this.media.onCall(c));
@@ -491,44 +394,50 @@ class LectureDX {
         document.getElementById('os-boot-loader').style.display = 'none';
         document.getElementById('app-shell').classList.add('active');
         document.getElementById('display-role').innerText = this.role.toUpperCase();
-        document.getElementById('display-room').innerText = `ID: ${this.room}`;
         
         this.board.init(); this.note.init(); this.ui.init();
-        if(this.role === 'student') this.net.connect();
-        
-        // 教員復元の実行
-        if(this.role === 'teacher' && this.recovery.shouldRestore) {
-            this.recovery.executeRestore();
+        if(this.role === 'student') {
+            this.ui.setStatus('student');
+            this.net.connect();
+        } else {
+            this.ui.setStatus('teacher');
+            if(this.recovery.shouldRestore) this.recovery.executeRestore();
         }
+        document.getElementById('display-room').innerText = `ID: ${this.room}`;
     }
 }
 
 class DX_Network {
-    constructor(c) { this.core = c; }
+    constructor(c) { this.core = c; this.queue = []; }
     connect() {
         if(this.core.hostConn) this.core.hostConn.close();
-        this.core.hostConn = this.core.peer.connect(`ldx32-${this.core.room}-host`);
+        this.core.hostConn = this.core.peer.connect(`ldx33-${this.core.room}-host`, { reliable: true });
         this.core.hostConn.on('open', () => {
-            this.core.ui.showReconnect(false);
+            this.core.ui.setStatus('student');
             this.core.hostConn.send({ type:'JOIN', name:this.core.userName });
+            // 不在中に溜まったキューを送信
+            this.queue.forEach(p => this.core.hostConn.send(p));
+            this.queue = [];
         });
         this.core.hostConn.on('data', d => this.router(d));
-        this.core.hostConn.on('close', () => this.handleHostDisconnect());
-    }
-    handleHostDisconnect() {
-        this.core.ui.showReconnect(true);
-        setTimeout(() => this.connect(), 5000); // 5秒おきに再接続試行
+        this.core.hostConn.on('close', () => {
+            this.core.ui.setStatus('offline');
+            setTimeout(() => this.connect(), 3000);
+        });
     }
     onConn(c) {
         c.on('open', () => {
             this.core.conns.set(c.peer, c);
             c.on('data', d => this.router(d, c));
-            // 初期同期パケット
+            // 教員復帰時の同期（生徒を最新状態へ上書き）
             c.send({ type:'NOTE_SYNC', val: document.getElementById('note-editor').value });
             c.send({ type:'BOARD_LOCK', val: this.core.board.locked });
             c.send({ type:'BOARD_SYNC', val: this.core.board.canvas.toDataURL() });
             if(this.core.survey.active) {
                 c.send({ type:'SV_OPEN', q:this.core.survey.q, svType:this.core.survey.type, opts:this.core.survey.opts, isShared:this.core.survey.isShared });
+            }
+            if(this.core.timer.endTS > Date.now()) {
+                c.send({ type:'TIMER_SYNC', end: this.core.timer.endTS });
             }
         });
         c.on('close', () => { this.core.conns.delete(c.peer); this.core.participants.delete(c.peer); this.core.ui.updateAdmin(); });
@@ -545,9 +454,13 @@ class DX_Network {
             case 'SV_SYNC_RESULT': this.core.survey.receiveResults(d); break;
             case 'TIMER_SYNC': this.core.timer.receive(d.end); break;
             case 'EMOJI': this.core.ui.spawnEmoji(d.emoji); break;
-            case 'HAND': const p = this.core.participants.get(c.peer); if(p) { p.hand = d.val; this.core.ui.updateAdmin(); if(d.val) { this.core.ui.log('挙手', `${p.name} さんが挙手。`); this.core.ui.notify(); } } break;
+            case 'HAND': const p = this.core.participants.get(c.peer); if(p) { p.hand = d.val; this.core.ui.updateAdmin(); if(d.val) this.core.ui.notify(); } break;
             case 'SCREEN_OFF': document.getElementById('persistent-stream-container').style.display='none'; break;
         }
+    }
+    sendToHost(p) {
+        if(this.core.hostConn && this.core.hostConn.open) this.core.hostConn.send(p);
+        else this.queue.push(p); // オフライン中は送信待ちにする
     }
     broadcast(d) { this.core.conns.forEach(c => c.open && c.send(d)); if(this.core.role==='teacher') this.core.recovery.save(); }
     copyInviteUrl() { navigator.clipboard.writeText(`${location.origin}${location.pathname}?room=${this.core.room}`).then(()=>alert("Copied!")); }
@@ -607,7 +520,7 @@ class DX_Survey {
         else if(this.type === 'rating') { const w = document.createElement('div'); for(let i=1; i<=5; i++) { const s = document.createElement('span'); s.className = 'rating-star'; s.innerHTML = '★'; s.onclick = () => this.submit([i-1]); w.appendChild(s); } area.appendChild(w); }
         this.core.ui.switchPane('survey');
     }
-    submit(indices, val=null) { this.core.hostConn.send({ type:'SV_VOTE', idx:indices, val:val }); document.getElementById('sv-render-area').style.display = 'none'; document.getElementById('sv-thanks').style.display = 'block'; }
+    submit(indices, val=null) { this.core.net.sendToHost({ type:'SV_VOTE', idx:indices, val:val }); document.getElementById('sv-render-area').style.display = 'none'; document.getElementById('sv-thanks').style.display = 'block'; }
     tally(indices, val, conn) {
         const student = this.core.participants.get(conn.peer); const name = student ? student.name : "Unknown"; this.total++;
         if(['choice','multi','rating'].includes(this.type)) { indices.forEach(idx => { this.results[idx].count++; this.results[idx].users.push(name); }); } else { this.results.push({ val: val, user: name }); }
@@ -616,7 +529,7 @@ class DX_Survey {
     }
     receiveResults(d) {
         if(!this.isShared) return; document.getElementById('sv-student-results-panel').style.display = 'block';
-        const area = document.getElementById('sv-results-student-area'); area.innerHTML = `<h4>回答数: ${d.total}</h4><br>`;
+        const area = document.getElementById('sv-results-student-area'); area.innerHTML = `<h4>集計中 (合計: ${d.total})</h4><br>`;
         if(['choice','multi','rating'].includes(this.type)) { const labels = (this.type === 'rating') ? ['1★','2★','3★','4★','5★'] : this.opts; labels.forEach((o, i) => { const pct = d.total ? Math.round(d.results[i]/d.total*100) : 0; area.innerHTML += `<div>${o} (${d.results[i]})</div><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div><br>`; }); }
     }
     renderTeacher() {
@@ -629,10 +542,19 @@ class DX_Survey {
 }
 
 class DX_Timer {
-    constructor(c) { this.core = c; this.itv=null; this.end=0; }
+    constructor(c) { this.core = c; this.itv=null; this.endTS=0; }
     start() { const end = Date.now() + document.getElementById('timer-m').value * 60000; this.core.net.broadcast({ type:'TIMER_SYNC', end: end }); this.run(end); }
     receive(e) { this.run(e); }
-    run(e) { this.end = e; clearInterval(this.itv); this.itv = setInterval(() => { const diff = e - Date.now(); if(diff <= 0) { clearInterval(this.itv); document.getElementById('timer-big').innerText = "00:00"; if(this.core.role==='teacher') confetti(); return; } const m = Math.floor(diff/60000), s = Math.floor((diff%60000)/1000); const str = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; document.getElementById('timer-big').innerText = document.getElementById('mini-timer').innerText = str; }, 1000); }
+    run(e) { 
+        this.endTS = e; clearInterval(this.itv); 
+        this.itv = setInterval(() => { 
+            const diff = this.endTS - Date.now(); 
+            if(diff <= 0) { clearInterval(this.itv); document.getElementById('timer-big').innerText = "00:00"; document.getElementById('mini-timer').innerText = "00:00"; if(this.core.role==='teacher') confetti(); return; } 
+            const m = Math.floor(diff/60000), s = Math.floor((diff%60000)/1000); 
+            const str = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; 
+            document.getElementById('timer-big').innerText = document.getElementById('mini-timer').innerText = str; 
+        }, 1000); 
+    }
 }
 
 class DX_Media {
@@ -645,67 +567,39 @@ class DX_Recovery {
     constructor(c) { this.core = c; this.shouldRestore = false; }
     save() {
         if(this.core.role !== 'teacher') return;
-        const snapshot = {
-            note: document.getElementById('note-editor').value,
-            board: this.core.board.canvas.toDataURL(),
-            boardLocked: this.core.board.locked,
-            survey: {
-                active: this.core.survey.active,
-                q: this.core.survey.q,
-                type: this.core.survey.type,
-                opts: this.core.survey.opts,
-                results: this.core.survey.results,
-                total: this.core.survey.total,
-                isShared: this.core.survey.isShared
-            },
-            timerEnd: this.core.timer.end,
-            ts: Date.now()
-        };
-        localStorage.setItem(`ldx_recovery_${this.core.room}`, JSON.stringify(snapshot));
+        const snapshot = { note: document.getElementById('note-editor').value, board: this.core.board.canvas.toDataURL(), boardLocked: this.core.board.locked, survey: { active: this.core.survey.active, q: this.core.survey.q, type: this.core.survey.type, opts: this.core.survey.opts, results: this.core.survey.results, total: this.core.survey.total, isShared: this.core.survey.isShared }, timerEnd: this.core.timer.endTS, ts: Date.now() };
+        localStorage.setItem(`ldx33_recovery_${this.core.room}`, JSON.stringify(snapshot));
     }
-    getSnapshot(room) {
-        const data = localStorage.getItem(`ldx_recovery_${room}`);
-        return data ? JSON.parse(data) : null;
-    }
+    getSnapshot(room) { const d = localStorage.getItem(`ldx33_recovery_${room}`); return d ? JSON.parse(d) : null; }
     executeRestore() {
-        const data = this.getSnapshot(this.core.room);
-        if(!data) return;
-        // Restore Note
-        document.getElementById('note-editor').value = data.note;
-        this.core.note.receive(data.note);
-        // Restore Board
-        this.core.board.locked = data.boardLocked;
-        this.core.board.setLock(data.boardLocked);
-        this.core.board.receive(data.board);
-        // Restore Survey
-        this.core.survey.active = data.survey.active;
-        this.core.survey.q = data.survey.q;
-        this.core.survey.type = data.survey.type;
-        this.core.survey.opts = data.survey.opts;
-        this.core.survey.results = data.survey.results;
-        this.core.survey.total = data.survey.total;
-        this.core.survey.isShared = data.survey.isShared;
-        if(data.survey.active) this.core.survey.renderTeacher();
-        // Restore Timer
-        if(data.timerEnd > Date.now()) this.core.timer.run(data.timerEnd);
-        
-        this.core.ui.log('RECOVERY', 'セッションを正常に復元しました。');
+        const d = this.getSnapshot(this.core.room); if(!d) return;
+        document.getElementById('note-editor').value = d.note; this.core.note.receive(d.note);
+        this.core.board.locked = d.boardLocked; this.core.board.setLock(d.boardLocked); this.core.board.receive(d.board);
+        Object.assign(this.core.survey, d.survey); if(d.survey.active) this.core.survey.renderTeacher();
+        if(d.timerEnd > Date.now()) this.core.timer.run(d.timerEnd);
+        this.core.ui.log('RECOVERY', '教員の状態を正常に復元しました。');
     }
 }
 
 class DX_UI {
     constructor(c) { this.core = c; }
     init() { setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000); }
-    showReconnect(show) { document.getElementById('reconnect-overlay').style.display = show ? 'flex' : 'none'; }
+    setStatus(s) {
+        const p = document.getElementById('display-role');
+        p.classList.remove('status-teacher', 'status-student', 'status-offline');
+        if(s==='teacher') { p.innerText = 'TEACHER'; p.classList.add('status-teacher'); }
+        else if(s==='student') { p.innerText = 'STUDENT'; p.classList.add('status-student'); }
+        else { p.innerText = 'TEACHER OFFLINE'; p.classList.add('status-offline'); }
+    }
     switchPane(id) {
         document.querySelectorAll('.dx-pane').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-tool').forEach(t => t.classList.remove('active'));
         document.getElementById(`pane-${id}`).classList.add('active'); if(id === 'survey') document.getElementById('nav-survey-link').removeAttribute('data-badge');
         document.querySelectorAll('.nav-tool').forEach(t => { if(t.getAttribute('data-tip').toLowerCase().includes(id.substring(0,4))) t.classList.add('active'); }); if(id === 'sketch') this.core.board.resize();
     }
     log(s, t) { const l = document.getElementById('chat-log'); const m = document.createElement('div'); m.className='chat-msg'; m.innerHTML=`<div class="msg-meta">${s}</div><div>${t}</div>`; l.appendChild(m); l.scrollTop=l.scrollHeight; }
-    emitEmoji(e) { this.spawnEmoji(e); if(this.core.role==='teacher') this.core.net.broadcast({ type:'EMOJI', emoji:e }); else this.core.hostConn.send({ type:'EMOJI', emoji:e }); }
+    emitEmoji(e) { this.spawnEmoji(e); if(this.core.role==='teacher') this.core.net.broadcast({ type:'EMOJI', emoji:e }); else this.core.net.sendToHost({ type:'EMOJI', emoji:e }); }
     spawnEmoji(e) { const el = document.createElement('div'); el.className='floating-emoji'; el.innerText=e; el.style.left=`${Math.random()*80+10}%`; document.getElementById('reaction-layer').appendChild(el); setTimeout(()=>el.remove(),3500); }
-    toggleHand() { this.hand=!this.hand; const b=document.getElementById('btn-hand'); b.classList.toggle('active'); this.core.hostConn.send({ type:'HAND', val:this.hand }); }
+    toggleHand() { this.hand=!this.hand; const b=document.getElementById('btn-hand'); b.classList.toggle('active'); b.innerHTML = this.hand ? 'Lower Hand' : 'Raise Hand'; this.core.net.sendToHost({ type:'HAND', val:this.hand }); }
     updateAdmin() { document.getElementById('admin-count').innerText = this.core.participants.size; const r = document.getElementById('admin-roster'); r.innerHTML = ''; this.core.participants.forEach(p => { r.innerHTML += `<div class="chat-msg" style="border-color:${p.hand?'var(--accent-warn)':'#333'}"><strong>${p.name}</strong><br>${p.hand?'🖐 Hand Up':'Online'}</div>`; }); }
     pickStudent() { const ks = Array.from(this.core.participants.keys()); if(!ks.length) return; const w = this.core.participants.get(ks[Math.floor(Math.random()*ks.length)]); this.log('Dice', `🎯 選出: 【${w.name}】さん`); this.core.net.broadcast({ type:'EMOJI', emoji:'🎯' }); }
     notify() { const a=new AudioContext(); const o=a.createOscillator(); const g=a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value=600; g.gain.setValueAtTime(0.1, a.currentTime); g.gain.exponentialRampToValueAtTime(0.01, a.currentTime+0.3); o.start(); o.stop(a.currentTime+0.3); }
@@ -718,7 +612,7 @@ window.onload = () => {
         document.getElementById('boot-room-id').value = p.get('room');
         document.getElementById('boot-actions').innerHTML = `<button class="btn-boot btn-p" onclick="core.ignition('student')">Join Classroom</button>`;
         document.getElementById('btn-boot-teacher').style.display = 'none';
-        document.getElementById('boot-status').innerText = "招待リンクを検出しました。";
+        document.getElementById('boot-status').innerText = "招待リンクを検出しました。生徒としてログインします。";
     }
 };
 </script>
