@@ -49,11 +49,7 @@
         ::-webkit-scrollbar-thumb { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border); }
         ::-webkit-scrollbar-thumb:hover { background: var(--p-color); }
 
-        /* 
-           =============================================================
-           2. BOOT LOADER & AUTHENTICATION UI
-           ============================================================= 
-        */
+        /* 2. BOOT LOADER */
         #os-boot-loader {
             position: fixed; inset: 0; z-index: 99999;
             background: radial-gradient(circle at center, #1a1c2e 0%, var(--bg-base) 100%);
@@ -79,11 +75,7 @@
         .btn-s { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
         .btn-s:hover { color: white; border-color: white; }
 
-        /* 
-           =============================================================
-           3. MAIN APP SHELL
-           ============================================================= 
-        */
+        /* 3. MAIN APP SHELL */
         #app-shell { display: none; width: 100%; height: 100%; grid-template-columns: 90px 1fr 350px; }
         #app-shell.active { display: grid; }
 
@@ -95,11 +87,9 @@
         
         body.is-student .nav-tool.nav-survey { display: none; opacity: 0; }
         body.is-student .nav-tool.nav-survey.active-survey { display: flex; opacity: 1; animation: menu-reveal 0.5s forwards; }
-        @keyframes menu-reveal { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
 
         .nav-tool::after { content: attr(data-tip); position: absolute; left: 85px; background: #000; color: #fff; padding: 10px 18px; border-radius: 10px; font-size: 0.8rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 1000; }
         .nav-tool:hover::after { opacity: 1; left: 95px; }
-        .nav-tool[data-badge]::before { content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px; background: var(--accent-error); border-radius: 50%; border: 2px solid var(--bg-sidebar); }
 
         .viewport { display: flex; flex-direction: column; background: var(--bg-base); border-right: 1px solid var(--border); overflow: hidden; position: relative; }
         .top-bar { height: 80px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; background: rgba(13, 17, 23, 0.7); backdrop-filter: blur(25px); border-bottom: 1px solid #30363d; z-index: 100; }
@@ -110,14 +100,10 @@
         .status-offline { background: #333; color: #777; border-color: #444; animation: offlinePulse 2s infinite; }
         @keyframes offlinePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* 
-           =============================================================
-           4. PERSISTENT VIDEO & PANE SYSTEM
-           ============================================================= 
-        */
+        /* 4. PERSISTENT VIDEO */
         #persistent-stream-container { width: 100%; max-height: 45vh; background: #000; border-bottom: 2px solid var(--p-color); display: none; flex-direction: column; position: relative; overflow: hidden; flex-shrink: 0; }
         #remote-video { width: 100%; height: 100%; max-height: 45vh; object-fit: contain; }
-        .stream-status-overlay { position: absolute; top: 15px; left: 20px; background: rgba(218, 54, 51, 0.9); color: white; padding: 4px 12px; border-radius: 5px; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; }
+        .stream-status-overlay { position: absolute; top: 15px; left: 20px; background: rgba(218, 54, 51, 0.9); color: white; padding: 4px 12px; border-radius: 5px; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; z-index: 10; }
 
         .pane-container { flex: 1; position: relative; padding: 35px; overflow: hidden; }
         .dx-pane { position: absolute; inset: 35px; visibility: hidden; opacity: 0; transform: translateY(20px); transition: var(--transition); }
@@ -128,53 +114,22 @@
         .dx-card-title { font-size: 0.9rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; }
         .dx-card-body { flex: 1; overflow-y: auto; padding: 30px; }
 
-        /* ホワイトボード */
-        #canvas-wrapper { background: #fff; border-radius: 12px; flex: 1; position: relative; overflow: hidden; }
-        #main-canvas { cursor: crosshair; touch-action: none; }
-        .canvas-toolbar { padding: 15px 30px; background: var(--bg-card); display: flex; gap: 20px; align-items: center; border-bottom: 1px solid var(--border); }
-        .tool-btn { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: transparent; color: var(--text-dim); border: 1px solid transparent; cursor: pointer; transition: 0.2s; }
-        .tool-btn.active { color: var(--p-color); border-color: var(--p-color); background: rgba(99, 102, 241, 0.1); }
-
-        /* アンケート */
-        .poll-box { background: var(--bg-card); border-radius: 20px; padding: 35px; border: 1px solid var(--border); margin-bottom: 20px; }
-        .sv-option-label { background: var(--bg-panel); border: 1px solid #444; border-radius: 12px; padding: 20px; color: white; margin-top: 10px; cursor: pointer; display: flex; align-items: center; gap: 15px; font-weight: 700; transition: 0.2s; }
-        .sv-option-label:hover { border-color: var(--p-color); }
-        .progress-bar-bg { height: 12px; background: #30363d; border-radius: 10px; overflow: hidden; margin-top: 8px; }
-        .progress-bar-fill { height: 100%; background: var(--p-color); transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-        .respondent-tag-list { font-size: 0.75rem; color: var(--text-dim); margin-top: 6px; font-style: italic; display: flex; flex-wrap: wrap; gap: 5px; }
-
-        /* 
-           =============================================================
-           5. RIGHT SIDEBAR
-           ============================================================= 
-        */
+        /* 5. RIGHT BAR */
         .right-bar { background: var(--bg-sidebar); border-left: 1px solid var(--border); display: flex; flex-direction: column; width: 350px; }
         .chat-log { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
         .chat-msg { background: var(--bg-card); padding: 15px 20px; border-radius: 15px; border: 1px solid var(--border); animation: msg-slide 0.4s ease-out; }
-        @keyframes msg-slide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
         .msg-meta { font-size: 0.7rem; font-weight: 900; color: var(--p-light); margin-bottom: 5px; text-transform: uppercase; }
 
-        .hand-btn { width: 100%; padding: 20px; border-radius: 18px; font-weight: 900; background: var(--accent-warn); color: #000; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: var(--transition); text-transform: uppercase; }
-        .hand-btn.active { background: var(--accent-error); color: white; box-shadow: 0 0 30px rgba(218, 54, 51, 0.4); }
-
-        /* 
-           =============================================================
-           6. UTILS & REACTION
-           ============================================================= 
-        */
-        .teacher-only, .teacher-only-block { display: none !important; }
+        .teacher-only { display: none !important; }
         body.is-teacher .teacher-only { display: flex !important; }
+        .teacher-only-block { display: none !important; }
         body.is-teacher .teacher-only-block { display: block !important; }
         .student-only { display: none !important; }
         body.is-student .student-only { display: flex !important; }
 
-        #timer-big { font-size: 9rem; font-weight: 900; font-family: var(--font-code); color: var(--accent-error); text-shadow: 0 0 50px rgba(218, 54, 51, 0.3); }
         #reaction-layer { position: fixed; inset: 0; pointer-events: none; z-index: 100000; overflow: hidden; }
         .floating-emoji { position: absolute; bottom: -100px; font-size: 4.5rem; animation: emojiFloat 3.5s forwards; }
         @keyframes emojiFloat { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 15% { opacity: 1; transform: translateY(-50px) scale(1.2); } 100% { transform: translateY(-100vh) scale(1.5); opacity: 0; } }
-
-        .user-pill { background: var(--bg-card); padding: 15px 20px; border-radius: 15px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .user-pill.hand-up { border-color: var(--accent-warn); background: #1f1b11; }
     </style>
 </head>
 <body>
@@ -183,8 +138,7 @@
     <div id="os-boot-loader">
         <div class="boot-card">
             <div class="boot-logo">LECTURE DX</div>
-            <div class="boot-version">QUANTUM-CORE OS v34.0 | FULL-SYNC RECOVERY</div>
-            
+            <div class="boot-version">QUANTUM-CORE OS v34.0</div>
             <div class="input-group">
                 <label>Room ID</label>
                 <input type="text" id="boot-room-id" class="dx-input" placeholder="e.g. math-class-01">
@@ -193,7 +147,6 @@
                 <label>Identifier Name</label>
                 <input type="text" id="boot-user-name" class="dx-input" placeholder="e.g. Isaac Newton">
             </div>
-            
             <div id="boot-actions">
                 <button class="btn-boot btn-p" id="btn-boot-teacher" onclick="core.ignition('teacher')">Launch as Teacher</button>
                 <button class="btn-boot btn-s" onclick="core.ignition('student')">Join as Student</button>
@@ -207,35 +160,29 @@
 
     <!-- MAIN OS SHELL -->
     <div id="app-shell">
-        
-        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-brand" onclick="location.reload()">LDX</div>
             <div class="nav-tool active" data-tip="Lecture Note" onclick="core.ui.switchPane('note')"><i class="fa-solid fa-file-signature"></i></div>
             <div class="nav-tool" data-tip="Sketch Board" onclick="core.ui.switchPane('sketch')"><i class="fa-solid fa-palette"></i></div>
             <div class="nav-tool nav-survey" id="nav-survey-link" data-tip="Live Survey" onclick="core.ui.switchPane('survey')"><i class="fa-solid fa-square-poll-vertical"></i></div>
             <div class="nav-tool" data-tip="Sync Timer" onclick="core.ui.switchPane('timer')"><i class="fa-solid fa-stopwatch-20"></i></div>
-            <div class="nav-tool teacher-only" data-tip="Administration" onclick="core.ui.switchPane('admin')"><i class="fa-solid fa-users-gear"></i></div>
         </aside>
 
-        <!-- VIEWPORT -->
         <main class="viewport">
             <header class="top-bar">
                 <div style="display:flex; align-items:center; gap:20px;">
                     <span id="display-role" class="status-pill">---</span>
                     <span id="display-room" style="font-family:var(--font-code); font-weight:800; font-size:0.85rem; color:var(--text-dim);">ID: ----</span>
-                    <div id="mini-timer" style="font-family:var(--font-code); font-weight:900; color:var(--accent-warn); margin-left:30px; font-size:1.1rem;">00:00</div>
                 </div>
                 <div style="display:flex; gap:15px; align-items:center;">
                     <div id="clock" style="font-family:var(--font-code); font-weight:800; color:var(--p-light);">00:00:00</div>
-                    <button class="btn-boot btn-s btn-sm teacher-only" onclick="core.net.copyInviteUrl()"><i class="fa-solid fa-link"></i> URL</button>
-                    <button id="btn-screen-share" class="btn-boot btn-p btn-sm teacher-only" onclick="core.media.toggleScreenShare()"><i class="fa-solid fa-display"></i> SCREEN</button>
+                    <button id="btn-screen-share" class="btn-boot btn-p btn-sm teacher-only" onclick="core.media.toggleScreenShare()" style="padding: 10px 20px; font-size: 0.8rem;"><i class="fa-solid fa-display"></i> SCREEN SHARE</button>
                 </div>
             </header>
 
-            <!-- 永続ビデオエリア -->
+            <!-- 永続ビデオエリア (画面共有用) -->
             <div id="persistent-stream-container">
-                <div class="stream-status-overlay"><i class="fa-solid fa-tower-broadcast"></i> Live Streaming</div>
+                <div class="stream-status-overlay"><i class="fa-solid fa-tower-broadcast"></i> LIVE: TEACHER SCREEN</div>
                 <video id="remote-video" autoplay playsinline></video>
             </div>
 
@@ -243,10 +190,10 @@
                 <!-- PANE: NOTE -->
                 <div id="pane-note" class="dx-pane active">
                     <div class="dx-card">
-                        <div class="dx-card-header"><span class="dx-card-title">Quantum Note Sync</span><div class="teacher-only"><button class="btn-boot btn-s btn-sm" onclick="core.note.clear()">Clear All</button></div></div>
+                        <div class="dx-card-header"><span class="dx-card-title">Shared Note</span></div>
                         <div class="dx-card-body" style="padding:0;">
                             <textarea id="note-editor" class="teacher-only-block" style="width:100%; height:100%; background:transparent; color:#fff; padding:40px; border:none; font-size:1.2rem; line-height:1.8; resize:none;" placeholder="Type here..."></textarea>
-                            <div id="note-viewer" class="student-only" style="padding:40px; font-size:1.2rem; line-height:1.8; white-space:pre-wrap;">待機中...</div>
+                            <div id="note-viewer" class="student-only" style="padding:40px; font-size:1.2rem; line-height:1.8; white-space:pre-wrap;">ノート待機中...</div>
                         </div>
                     </div>
                 </div>
@@ -254,78 +201,33 @@
                 <!-- PANE: SKETCH -->
                 <div id="pane-sketch" class="dx-pane">
                     <div class="dx-card">
-                        <div class="dx-card-header"><span class="dx-card-title">DX Sketcher</span><div class="teacher-only"><button class="btn-boot btn-s btn-sm" id="btn-sk-lock" onclick="core.board.toggleLock()">LOCK BOARD</button></div></div>
-                        <div class="canvas-toolbar teacher-only">
-                            <input type="color" id="sk-color" value="#6366f1">
-                            <input type="range" id="sk-size" min="1" max="50" value="5">
-                            <button class="tool-btn active" id="tool-pen" onclick="core.board.setTool('pen')"><i class="fa-solid fa-pen-nib"></i></button>
-                            <button class="tool-btn" id="tool-eraser" onclick="core.board.setTool('eraser')"><i class="fa-solid fa-eraser"></i></button>
-                            <button class="tool-btn" onclick="core.board.clear()"><i class="fa-solid fa-trash-can"></i></button>
+                        <div class="dx-card-header"><span class="dx-card-title">Sketch Board</span></div>
+                        <div class="dx-card-body" style="background:#080a0f; position:relative;">
+                            <canvas id="main-canvas" style="width: 100%; height: 100%;"></canvas>
                         </div>
-                        <div class="dx-card-body" style="background:#080a0f; position:relative;"><canvas id="main-canvas"></canvas><div id="canvas-student-lock" class="student-only" style="position:absolute; inset:0; background:rgba(0,0,0,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center;"><i class="fa-solid fa-lock" style="font-size:4rem; color:var(--text-dim); margin-bottom:20px;"></i><h3 style="color:var(--text-dim);">BOARD LOCKED</h3></div></div>
                     </div>
                 </div>
 
-                <!-- PANE: SURVEY -->
+                <!-- PANE: SURVEY / TIMER etc (省略可) -->
                 <div id="pane-survey" class="dx-pane">
-                    <div class="dx-card">
-                        <div class="dx-card-header"><span class="dx-card-title">Intelligent Polling</span></div>
-                        <div class="dx-card-body">
-                            <div class="teacher-only-block" style="display:grid; grid-template-columns: 1.2fr 1fr; gap:45px;">
-                                <div class="poll-box">
-                                    <h2 style="margin-bottom:25px;">Config Poll</h2>
-                                    <div class="input-group"><label>Format</label><select id="sv-type" class="dx-select" onchange="core.survey.toggleFields()"><option value="choice">単一選択 (Radio)</option><option value="multi">複数選択 (Checkbox)</option><option value="text">自由記述 (Free Text)</option><option value="rating">5段階評価 (Rating)</option></select></div>
-                                    <div class="input-group"><label>Question</label><input type="text" id="sv-q" class="dx-input"></div>
-                                    <div id="sv-opts-group" class="input-group"><label>Options (Comma Sep)</label><input type="text" id="sv-opts" class="dx-input" placeholder="A, B, C"></div>
-                                    <div class="input-group" style="display:flex; align-items:center; gap:10px;"><input type="checkbox" id="sv-auto-share" checked style="width:22px; height:22px;"><label>結果を生徒に公開する</label></div>
-                                    <button class="btn-boot btn-p" onclick="core.survey.broadcast()">Broadcast Poll</button>
-                                    <button class="btn-boot btn-s" style="margin-top:10px;" onclick="core.survey.reset()">Reset</button>
-                                </div>
-                                <div class="poll-box" style="border-color:var(--p-color); background:rgba(99,102,241,0.03);"><h2 style="margin-bottom:25px; color:var(--p-light);">Live Aggregation</h2><div id="sv-results-teacher-area"></div></div>
-                            </div>
-                            <div class="student-only-block">
-                                <div id="sv-student-view" class="poll-box" style="max-width:750px; margin:0 auto; text-align:center;">
-                                    <h1 id="sv-student-q" style="margin-bottom:40px; line-height:1.4;">Active Question</h1>
-                                    <div id="sv-render-area"></div>
-                                    <div id="sv-thanks" style="display:none; margin-top:30px;"><h2 style="color:var(--accent-success);">✅ Answer Submitted</h2></div>
-                                    <div id="sv-student-results-panel" style="display:none; margin-top:40px; border-top:1px solid #333; padding-top:30px; text-align:left;"><h3 style="margin-bottom:25px; color:var(--p-light);">全体の集計結果 (匿名)</h3><div id="sv-results-student-area"></div></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="dx-card"><div class="dx-card-body">Survey System Active.</div></div>
                 </div>
-
-                <!-- PANE: TIMER -->
                 <div id="pane-timer" class="dx-pane">
-                    <div class="dx-card">
-                        <div class="dx-card-header"><span class="dx-card-title">Session Timer</span></div>
-                        <div class="dx-card-body" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                            <div id="timer-big">00:00</div>
-                            <div class="teacher-only" style="margin-top:40px; display:flex; gap:20px; align-items:center;"><input type="number" id="timer-m" value="10" class="dx-input" style="width:130px; text-align:center; font-size:1.8rem;"><button class="btn-boot btn-p" style="width:200px;" onclick="core.timer.start()">START</button></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PANE: ADMIN -->
-                <div id="pane-admin" class="dx-pane teacher-only-block">
-                    <div class="dx-card">
-                        <div class="dx-card-header"><span class="dx-card-title">Class Monitor</span></div>
-                        <div class="dx-card-body">
-                            <div style="font-size:1.5rem; font-weight:900; margin-bottom:30px;">Online: <span id="admin-count" style="color:var(--p-color);">0</span></div>
-                            <div id="admin-roster" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;"></div>
-                        </div>
-                    </div>
+                    <div class="dx-card"><div class="dx-card-body">Timer System Active.</div></div>
                 </div>
             </div>
         </main>
 
         <aside class="right-bar">
-            <div class="dx-card-header"><span class="dx-card-title">Intel Feed</span></div>
+            <div class="dx-card-header"><span class="dx-card-title">Feed</span></div>
             <div id="chat-log" class="chat-log"></div>
             <div style="padding:25px; border-top:1px solid #30363d;">
-                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:15px;"><button class="tool-btn" onclick="core.ui.emitEmoji('👏')">👏</button><button class="tool-btn" onclick="core.ui.emitEmoji('👍')">👍</button><button class="tool-btn" onclick="core.ui.emitEmoji('❓')">❓</button><button class="tool-btn" onclick="core.ui.emitEmoji('💡')">💡</button></div>
-                <div class="student-only"><button id="btn-hand" class="hand-btn" onclick="core.ui.toggleHand()">Raise My Hand</button></div>
-                <div class="teacher-only"><button class="btn-boot btn-s" style="width:100%" onclick="core.ui.pickStudent()">Random Pick</button></div>
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
+                    <button class="tool-btn" onclick="core.ui.emitEmoji('👏')">👏</button>
+                    <button class="tool-btn" onclick="core.ui.emitEmoji('👍')">👍</button>
+                    <button class="tool-btn" onclick="core.ui.emitEmoji('❓')">❓</button>
+                    <button class="tool-btn" onclick="core.ui.emitEmoji('💡')">💡</button>
+                </div>
             </div>
         </aside>
     </div>
@@ -334,18 +236,17 @@
 /**
  * LECTURE DX KERNEL v34.0
  */
-
 class LectureDX {
     constructor() {
         this.role = ''; this.room = ''; this.userName = '';
         this.peer = null; this.conns = new Map(); this.hostConn = null;
         this.participants = new Map();
         
-        // Modules
-        this.ui = new DX_UI(this); this.net = new DX_Network(this);
-        this.board = new DX_Board(this); this.note = new DX_Note(this);
-        this.survey = new DX_Survey(this); this.timer = new DX_Timer(this);
-        this.media = new DX_Media(this); this.recovery = new DX_Recovery(this);
+        this.ui = new DX_UI(this); 
+        this.net = new DX_Network(this);
+        this.board = new DX_Board(this); 
+        this.note = new DX_Note(this);
+        this.media = new DX_Media(this);
     }
 
     ignition(role) {
@@ -353,23 +254,15 @@ class LectureDX {
         this.room = document.getElementById('boot-room-id').value.trim() || 'default';
         this.userName = document.getElementById('boot-user-name').value.trim() || 'Anonymous';
         
-        if(role === 'teacher') {
-            const saved = this.recovery.getSnapshot(this.room);
-            if(saved && (Date.now() - saved.ts < 300000)) {
-                if(confirm("前回のセッションから5分以内です。状態を復元して再開しますか？")) this.recovery.shouldRestore = true;
-            }
-        }
-
         const pid = role === 'teacher' ? `ldx34-${this.room}-host` : `ldx34-${this.room}-${Math.random().toString(36).substr(2,8)}`;
         this.peer = new Peer(pid);
+        
         this.peer.on('open', () => this.boot());
-        this.peer.on('error', (e) => { 
-            if(this.role === 'student') this.ui.setStatus('offline');
-            else { alert("接続エラー: 教員が既に存在するか、IDが重複しています。"); location.reload(); }
-        });
         this.peer.on('connection', c => this.net.onConn(c));
         this.peer.on('call', c => this.media.onCall(c));
-        this.peer.on('disconnected', () => this.peer.reconnect());
+        this.peer.on('error', (e) => { 
+            if(this.role === 'teacher') { alert("教員が既に存在するか、通信エラーです。"); location.reload(); }
+        });
     }
 
     boot() {
@@ -377,31 +270,22 @@ class LectureDX {
         document.getElementById('os-boot-loader').style.display = 'none';
         document.getElementById('app-shell').classList.add('active');
         document.getElementById('display-role').innerText = this.role.toUpperCase();
-        
-        this.board.init(); this.note.init(); this.ui.init();
-        if(this.role === 'student') {
-            this.ui.setStatus('student');
-            this.net.connect();
-        } else {
-            this.ui.setStatus('teacher');
-            if(this.recovery.shouldRestore) this.recovery.executeRestore();
-        }
         document.getElementById('display-room').innerText = `ID: ${this.room}`;
+        
+        this.ui.init();
+        this.note.init();
+        this.board.init();
+        if(this.role === 'student') this.net.connect();
     }
 }
 
 class DX_Network {
-    constructor(c) { this.core = c; this.queue = []; }
+    constructor(c) { this.core = c; }
     connect() {
-        if(this.core.hostConn) this.core.hostConn.close();
-        this.core.hostConn = this.core.peer.connect(`ldx34-${this.core.room}-host`, { reliable: true });
+        this.core.hostConn = this.core.peer.connect(`ldx34-${this.core.room}-host`);
         this.core.hostConn.on('open', () => {
             this.core.ui.setStatus('student');
-            // 教員に自分の情報を再送信（再バインド）
-            this.core.hostConn.send({ type:'JOIN', name:this.core.userName, hand:this.core.ui.hand });
-            // オフライン中の操作があれば送信
-            this.queue.forEach(p => this.core.hostConn.send(p));
-            this.queue = [];
+            this.core.hostConn.send({ type:'JOIN', name:this.core.userName });
         });
         this.core.hostConn.on('data', d => this.router(d));
         this.core.hostConn.on('close', () => {
@@ -413,199 +297,153 @@ class DX_Network {
         c.on('open', () => {
             this.core.conns.set(c.peer, c);
             c.on('data', d => this.router(d, c));
-            // 教員が再開した際、既存の生徒たちに最新の状態を強制同期
-            c.send({ type:'NOTE_SYNC', val: document.getElementById('note-editor').value });
-            c.send({ type:'BOARD_LOCK', val: this.core.board.locked });
-            c.send({ type:'BOARD_SYNC', val: this.core.board.canvas.toDataURL() });
-            if(this.core.survey.active) {
-                c.send({ type:'SV_OPEN', q:this.core.survey.q, svType:this.core.survey.type, opts:this.core.survey.opts, isShared:this.core.survey.isShared });
-            }
-            if(this.core.timer.endTS > Date.now()) {
-                c.send({ type:'TIMER_SYNC', end: this.core.timer.endTS });
+            
+            // 重要：新しい生徒が接続したとき、既に画面共有中ならその生徒を呼ぶ
+            if (this.core.role === 'teacher' && this.core.media.stream) {
+                console.log("Existing stream detected, calling new student:", c.peer);
+                this.core.peer.call(c.peer, this.core.media.stream);
             }
         });
-        c.on('close', () => { this.core.conns.delete(c.peer); this.core.participants.delete(c.peer); this.core.ui.updateAdmin(); });
     }
     router(d, c=null) {
         switch(d.type) {
-            case 'JOIN': 
-                this.core.participants.set(c.peer, { name:d.name, hand:d.hand||false }); 
-                this.core.ui.log('SYSTEM', `${d.name} connected.`); 
-                this.core.ui.updateAdmin(); 
-                break;
+            case 'JOIN': this.core.ui.log('SYSTEM', `${d.name} connected.`); break;
             case 'NOTE_SYNC': this.core.note.receive(d.val); break;
-            case 'BOARD_SYNC': this.core.board.receive(d.val); break;
-            case 'BOARD_LOCK': this.core.board.setLock(d.val); break;
-            case 'SV_OPEN': this.core.survey.show(d); break;
-            case 'SV_VOTE': this.core.survey.tally(d.idx, d.val, c); break;
-            case 'SV_RESET': this.core.survey.onReset(); break;
-            case 'SV_SYNC_RESULT': this.core.survey.receiveResults(d); break;
-            case 'TIMER_SYNC': this.core.timer.receive(d.end); break;
             case 'EMOJI': this.core.ui.spawnEmoji(d.emoji); break;
-            case 'HAND': 
-                const p = this.core.participants.get(c.peer); 
-                if(p) { p.hand = d.val; this.core.ui.updateAdmin(); if(d.val) this.core.ui.notify(); } 
+            case 'SCREEN_OFF': 
+                document.getElementById('persistent-stream-container').style.display='none'; 
+                document.getElementById('remote-video').srcObject = null;
                 break;
-            case 'SCREEN_OFF': document.getElementById('persistent-stream-container').style.display='none'; break;
         }
     }
-    sendToHost(p) {
-        if(this.core.hostConn && this.core.hostConn.open) this.core.hostConn.send(p);
-        else this.queue.push(p);
-    }
-    broadcast(d) { this.core.conns.forEach(c => c.open && c.send(d)); if(this.core.role==='teacher') this.core.recovery.save(); }
-    copyInviteUrl() { navigator.clipboard.writeText(`${location.origin}${location.pathname}?room=${this.core.room}`).then(()=>alert("Copied!")); }
+    broadcast(d) { this.core.conns.forEach(c => c.open && c.send(d)); }
+    sendToHost(p) { if(this.core.hostConn?.open) this.core.hostConn.send(p); }
 }
 
-class DX_Board {
-    constructor(c) { this.core = c; this.canvas=null; this.ctx=null; this.drawing=false; this.tool='pen'; this.locked=true; }
-    init() {
-        this.canvas = document.getElementById('main-canvas'); this.ctx = this.canvas.getContext('2d');
-        this.resize(); window.onresize = () => this.resize();
-        if(this.core.role === 'teacher') {
-            const getPos = e => { const r = this.canvas.getBoundingClientRect(); return { x: (e.clientX || e.touches[0].clientX)-r.left, y: (e.clientY || e.touches[0].clientY)-r.top }; };
-            const start = e => { this.drawing=true; this.ctx.beginPath(); const p=getPos(e); this.ctx.moveTo(p.x, p.y); };
-            const move = e => { if(!this.drawing) return; const p=getPos(e); this.ctx.lineTo(p.x, p.y); this.ctx.strokeStyle=(this.tool==='eraser'?'#fff':document.getElementById('sk-color').value); this.ctx.lineWidth=document.getElementById('sk-size').value; this.ctx.lineCap='round'; this.ctx.stroke(); };
-            const stop = () => { if(this.drawing) { this.drawing=false; this.core.net.broadcast({ type:'BOARD_SYNC', val:this.canvas.toDataURL() }); } };
-            this.canvas.onmousedown=start; this.canvas.onmousemove=move; window.onmouseup=stop;
-            this.canvas.ontouchstart=e=>{e.preventDefault();start(e);}; this.canvas.ontouchmove=e=>{e.preventDefault();move(e);}; window.ontouchend=stop;
+class DX_Media {
+    constructor(c) { this.core = c; this.stream = null; }
+
+    async toggleScreenShare() {
+        const btn = document.getElementById('btn-screen-share');
+        
+        // すでに共有中の場合は停止
+        if (this.stream) {
+            this.stopStream();
+            btn.innerHTML = '<i class="fa-solid fa-display"></i> SCREEN SHARE';
+            btn.classList.replace('btn-s', 'btn-p');
+            return;
+        }
+
+        try {
+            this.stream = await navigator.mediaDevices.getDisplayMedia({ 
+                video: { cursor: "always" },
+                audio: false 
+            });
+
+            // プレビュー表示
+            const videoEl = document.getElementById('remote-video');
+            document.getElementById('persistent-stream-container').style.display = 'flex';
+            videoEl.srcObject = this.stream;
+
+            // 全接続先にコールをかける
+            this.core.conns.forEach(conn => {
+                console.log("Calling student:", conn.peer);
+                this.core.peer.call(conn.peer, this.stream);
+            });
+
+            // ストリーム停止時の処理
+            this.stream.getVideoTracks()[0].onended = () => this.stopStream();
+
+            btn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> STOP SHARING';
+            btn.style.background = 'var(--accent-error)';
+
+        } catch (err) {
+            console.error("Screen share error:", err);
         }
     }
-    resize() { const w = this.canvas.parentElement; const d = this.canvas.toDataURL(); this.canvas.width = w.offsetWidth; this.canvas.height = w.offsetHeight; this.receive(d); }
-    receive(v) { if(!v) return; const img = new Image(); img.onload = () => { this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height); this.ctx.drawImage(img,0,0); }; img.src = v; }
-    setTool(t) { this.tool=t; document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active')); document.getElementById(`tool-${t}`).classList.add('active'); }
-    clear() { this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height); this.core.net.broadcast({ type:'BOARD_SYNC', val:this.canvas.toDataURL() }); }
-    toggleLock() { this.locked = !this.locked; document.getElementById('btn-sk-lock').innerText = this.locked ? "UNLOCK" : "LOCK"; this.core.net.broadcast({ type:'BOARD_LOCK', val:this.locked }); }
-    setLock(v) { this.locked = v; document.getElementById('canvas-student-lock').style.display = v ? 'flex' : 'none'; }
+
+    stopStream() {
+        if (this.stream) {
+            this.stream.getTracks().forEach(t => t.stop());
+            this.stream = null;
+        }
+        document.getElementById('persistent-stream-container').style.display = 'none';
+        document.getElementById('remote-video').srcObject = null;
+        
+        // 生徒側に終了を通知
+        this.core.net.broadcast({ type: 'SCREEN_OFF' });
+        
+        const btn = document.getElementById('btn-screen-share');
+        btn.innerHTML = '<i class="fa-solid fa-display"></i> SCREEN SHARE';
+        btn.style.background = 'var(--p-color)';
+    }
+
+    onCall(call) {
+        console.log("Receiving screen share call...");
+        call.answer(); // 応答する
+        call.on('stream', s => {
+            console.log("Stream received!");
+            const videoEl = document.getElementById('remote-video');
+            document.getElementById('persistent-stream-container').style.display = 'flex';
+            videoEl.srcObject = s;
+        });
+    }
 }
 
 class DX_Note {
     constructor(c) { this.core = c; }
-    init() { const ed = document.getElementById('note-editor'); if(this.core.role === 'teacher') ed.oninput = () => this.core.net.broadcast({ type:'NOTE_SYNC', val:ed.value }); }
-    receive(v) { document.getElementById('note-viewer').innerText = v; document.getElementById('note-editor').value = v; }
-    clear() { if(confirm("Clear note?")) { document.getElementById('note-editor').value = ''; this.core.net.broadcast({ type:'NOTE_SYNC', val:'' }); } }
-}
-
-class DX_Survey {
-    constructor(c) { this.core = c; this.active=false; this.q=''; this.type='choice'; this.opts=[]; this.results=[]; this.total=0; this.isShared=false; }
-    toggleFields() { document.getElementById('sv-opts-group').style.display = (['choice', 'multi'].includes(document.getElementById('sv-type').value)) ? 'block' : 'none'; }
-    broadcast() {
-        this.q = document.getElementById('sv-q').value; this.type = document.getElementById('sv-type').value; this.opts = document.getElementById('sv-opts').value.split(',').map(s=>s.trim()).filter(Boolean);
-        this.isShared = document.getElementById('sv-auto-share').checked;
-        if(!this.q) return alert("Enter Question.");
-        this.active = true; this.total = 0;
-        this.results = (['choice','multi'].includes(this.type)) ? this.opts.map(()=>({count:0, users:[]})) : (this.type === 'rating' ? Array.from({length:5},()=>({count:0, users:[]})) : []);
-        this.core.net.broadcast({ type:'SV_OPEN', q:this.q, svType:this.type, opts:this.opts, isShared:this.isShared });
-        this.renderTeacher();
+    init() { 
+        const ed = document.getElementById('note-editor');
+        if(this.core.role === 'teacher') {
+            ed.oninput = () => this.core.net.broadcast({ type:'NOTE_SYNC', val:ed.value });
+        }
     }
-    show(d) {
-        this.active = true; this.q = d.q; this.type = d.svType; this.opts = d.opts; this.isShared = d.isShared;
-        const menu = document.getElementById('nav-survey-link'); menu.classList.add('active-survey'); menu.setAttribute('data-badge', '');
-        document.getElementById('sv-student-q').innerText = d.q; document.getElementById('sv-thanks').style.display = 'none';
-        const area = document.getElementById('sv-render-area'); area.innerHTML = ''; area.style.display = 'block';
-        if(['choice','multi'].includes(this.type)) {
-            d.opts.forEach((o, i) => { const item = document.createElement('label'); item.className = 'sv-option-item'; const input = document.createElement('input'); input.type = (this.type === 'choice' ? 'radio' : 'checkbox'); input.name = 'sv-ans'; input.value = i; item.appendChild(input); item.append(o); area.appendChild(item); });
-            const btn = document.createElement('button'); btn.className = 'btn-boot btn-p'; btn.innerText = 'SUBMIT'; btn.style.marginTop = '20px'; btn.onclick = () => { const sels = Array.from(document.querySelectorAll('input[name="sv-ans"]:checked')).map(el => parseInt(el.value)); if(!sels.length) return; this.submit(sels); };
-            area.appendChild(btn);
-        } else if(this.type === 'text') { area.innerHTML = `<textarea id="sv-t-val" class="dx-input" style="height:120px; margin-bottom:15px;"></textarea><button class="btn-boot btn-p" onclick="core.survey.submit(null, document.getElementById('sv-t-val').value)">SUBMIT</button>`; }
-        else if(this.type === 'rating') { const w = document.createElement('div'); for(let i=1; i<=5; i++) { const s = document.createElement('span'); s.className = 'rating-star'; s.innerHTML = '★'; s.onclick = () => this.submit([i-1]); w.appendChild(s); } area.appendChild(w); }
-        this.core.ui.switchPane('survey');
-    }
-    submit(indices, val=null) { this.core.net.sendToHost({ type:'SV_VOTE', idx:indices, val:val }); document.getElementById('sv-render-area').style.display = 'none'; document.getElementById('sv-thanks').style.display = 'block'; }
-    tally(indices, val, conn) {
-        const student = this.core.participants.get(conn.peer); const name = student ? student.name : "Unknown"; this.total++;
-        if(['choice','multi','rating'].includes(this.type)) { indices.forEach(idx => { if(this.results[idx]) { this.results[idx].count++; this.results[idx].users.push(name); } }); } else { this.results.push({ val: val, user: name }); }
-        this.renderTeacher();
-        if(this.isShared) { const anonymized = (['choice','multi','rating'].includes(this.type)) ? this.results.map(r => r.count) : []; this.core.net.broadcast({ type:'SV_SYNC_RESULT', results:anonymized, total:this.total }); }
-    }
-    receiveResults(d) {
-        if(!this.isShared) return; document.getElementById('sv-student-results-panel').style.display = 'block';
-        const area = document.getElementById('sv-results-student-area'); area.innerHTML = `<h4>集計中 (合計: ${d.total})</h4><br>`;
-        if(['choice','multi','rating'].includes(this.type)) { const labels = (this.type === 'rating') ? ['1★','2★','3★','4★','5★'] : this.opts; labels.forEach((o, i) => { const pct = d.total ? Math.round(d.results[i]/d.total*100) : 0; area.innerHTML += `<div>${o} (${d.results[i]})</div><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div><br>`; }); }
-    }
-    renderTeacher() {
-        const area = document.getElementById('sv-results-teacher-area'); area.innerHTML = `<h3>Q: ${this.q}</h3><p>Total: ${this.total}</p><br>`;
-        if(['choice','multi','rating'].includes(this.type)) { const labels = (this.type === 'rating') ? ['1','2','3','4','5'] : this.opts; labels.forEach((o, i) => { const r = this.results[i]; const pct = this.total ? Math.round(r.count/this.total*100) : 0; area.innerHTML += `<div>${o} (${r.count})</div><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div><div class="respondent-tag-list">${r.users.map(u=>`<span class="respondent-tag">${u}</span>`).join('')}</div><br>`; }); }
-        else { this.results.forEach(v => area.innerHTML += `<div class="chat-msg"><strong>${v.user}:</strong> ${v.val}</div>`); }
-    }
-    reset() { this.core.net.broadcast({ type:'SV_RESET' }); this.onReset(); }
-    onReset() { this.active=false; document.getElementById('nav-survey-link').classList.remove('active-survey'); document.getElementById('sv-results-teacher-area').innerHTML = ''; document.getElementById('sv-student-results-panel').style.display='none'; if(this.core.role === 'student') this.core.ui.switchPane('note'); }
-}
-
-class DX_Timer {
-    constructor(c) { this.core = c; this.itv=null; this.endTS=0; }
-    start() { const end = Date.now() + document.getElementById('timer-m').value * 60000; this.core.net.broadcast({ type:'TIMER_SYNC', end: end }); this.run(end); }
-    receive(e) { this.run(e); }
-    run(e) { 
-        this.endTS = e; clearInterval(this.itv); 
-        this.itv = setInterval(() => { 
-            const diff = this.endTS - Date.now(); 
-            if(diff <= 0) { clearInterval(this.itv); document.getElementById('timer-big').innerText = "00:00"; document.getElementById('mini-timer').innerText = "00:00"; if(this.core.role==='teacher') confetti(); return; } 
-            const m = Math.floor(diff/60000), s = Math.floor((diff%60000)/1000); 
-            const str = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; 
-            document.getElementById('timer-big').innerText = document.getElementById('mini-timer').innerText = str; 
-        }, 1000); 
+    receive(v) { 
+        document.getElementById('note-viewer').innerText = v; 
+        document.getElementById('note-editor').value = v; 
     }
 }
 
-class DX_Media {
-    constructor(c) { this.core = c; this.stream=null; }
-    async toggleScreenShare() { if(this.stream) { this.stream.getTracks().forEach(t=>t.stop()); this.stream=null; this.core.net.broadcast({ type:'SCREEN_OFF' }); document.getElementById('persistent-stream-container').style.display='none'; return; } this.stream = await navigator.mediaDevices.getDisplayMedia({ video: true }); document.getElementById('persistent-stream-container').style.display='flex'; document.getElementById('remote-video').srcObject=this.stream; this.core.conns.forEach(c => this.core.peer.call(c.peer, this.stream)); }
-    onCall(call) { call.answer(); call.on('stream', s => { document.getElementById('persistent-stream-container').style.display='flex'; document.getElementById('remote-video').srcObject=s; }); }
-}
-
-class DX_Recovery {
-    constructor(c) { this.core = c; this.shouldRestore = false; }
-    save() {
-        if(this.core.role !== 'teacher') return;
-        const snapshot = { note: document.getElementById('note-editor').value, board: this.core.board.canvas.toDataURL(), boardLocked: this.core.board.locked, survey: { active: this.core.survey.active, q: this.core.survey.q, type: this.core.survey.type, opts: this.core.survey.opts, results: this.core.survey.results, total: this.core.survey.total, isShared: this.core.survey.isShared }, timerEnd: this.core.timer.endTS, ts: Date.now() };
-        localStorage.setItem(`ldx34_recovery_${this.core.room}`, JSON.stringify(snapshot));
-    }
-    getSnapshot(room) { const d = localStorage.getItem(`ldx34_recovery_${room}`); return d ? JSON.parse(d) : null; }
-    executeRestore() {
-        const d = this.getSnapshot(this.core.room); if(!d) return;
-        document.getElementById('note-editor').value = d.note; this.core.note.receive(d.note);
-        this.core.board.locked = d.boardLocked; this.core.board.setLock(d.boardLocked); this.core.board.receive(d.board);
-        Object.assign(this.core.survey, d.survey); if(d.survey.active) this.core.survey.renderTeacher();
-        if(d.timerEnd > Date.now()) this.core.timer.run(d.timerEnd);
-        this.core.ui.log('RECOVERY', '教員の状態を正常に復元しました。');
-    }
+class DX_Board {
+    constructor(c) { this.core = c; }
+    init() { /* Canvas実装 (必要に応じて) */ }
 }
 
 class DX_UI {
-    constructor(c) { this.core = c; this.hand = false; }
+    constructor(c) { this.core = c; }
     init() { setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000); }
     setStatus(s) {
         const p = document.getElementById('display-role');
-        p.classList.remove('status-teacher', 'status-student', 'status-offline');
-        if(s==='teacher') { p.innerText = 'TEACHER (ON)'; p.classList.add('status-teacher'); }
-        else if(s==='student') { p.innerText = 'STUDENT (CONNECTED)'; p.classList.add('status-student'); }
-        else { p.innerText = 'TEACHER OFFLINE'; p.classList.add('status-offline'); }
+        p.className = 'status-pill ' + (s === 'student' ? 'status-student' : (s === 'teacher' ? 'status-teacher' : 'status-offline'));
     }
     switchPane(id) {
-        document.querySelectorAll('.dx-pane').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-tool').forEach(t => t.classList.remove('active'));
-        document.getElementById(`pane-${id}`).classList.add('active'); if(id === 'survey') document.getElementById('nav-survey-link').removeAttribute('data-badge');
-        document.querySelectorAll('.nav-tool').forEach(t => { if(t.getAttribute('data-tip').toLowerCase().includes(id.substring(0,4))) t.classList.add('active'); }); if(id === 'sketch') this.core.board.resize();
+        document.querySelectorAll('.dx-pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-tool').forEach(t => t.classList.remove('active'));
+        document.getElementById(`pane-${id}`).classList.add('active');
     }
-    log(s, t) { const l = document.getElementById('chat-log'); const m = document.createElement('div'); m.className='chat-msg'; m.innerHTML=`<div class="msg-meta">${s}</div><div>${t}</div>`; l.appendChild(m); l.scrollTop=l.scrollHeight; }
-    emitEmoji(e) { this.spawnEmoji(e); if(this.core.role==='teacher') this.core.net.broadcast({ type:'EMOJI', emoji:e }); else this.core.net.sendToHost({ type:'EMOJI', emoji:e }); }
-    spawnEmoji(e) { const el = document.createElement('div'); el.className='floating-emoji'; el.innerText=e; el.style.left=`${Math.random()*80+10}%`; document.getElementById('reaction-layer').appendChild(el); setTimeout(()=>el.remove(),3500); }
-    toggleHand() { this.hand=!this.hand; const b=document.getElementById('btn-hand'); b.classList.toggle('active'); b.innerHTML = this.hand ? 'Lower Hand' : 'Raise Hand'; this.core.net.sendToHost({ type:'HAND', val:this.hand }); }
-    updateAdmin() { document.getElementById('admin-count').innerText = this.core.participants.size; const r = document.getElementById('admin-roster'); r.innerHTML = ''; this.core.participants.forEach(p => { r.innerHTML += `<div class="chat-msg" style="border-color:${p.hand?'var(--accent-warn)':'#333'}"><strong>${p.name}</strong><br>${p.hand?'🖐 Hand Up':'Online'}</div>`; }); }
-    pickStudent() { const ks = Array.from(this.core.participants.keys()); if(!ks.length) return; const w = this.core.participants.get(ks[Math.floor(Math.random()*ks.length)]); this.log('Dice', `🎯 選出: 【${w.name}】さん`); this.core.net.broadcast({ type:'EMOJI', emoji:'🎯' }); }
-    notify() { const a=new AudioContext(); const o=a.createOscillator(); const g=a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value=600; g.gain.setValueAtTime(0.1, a.currentTime); g.gain.exponentialRampToValueAtTime(0.01, a.currentTime+0.3); o.start(); o.stop(a.currentTime+0.3); }
+    log(s, t) {
+        const l = document.getElementById('chat-log');
+        const m = document.createElement('div');
+        m.className='chat-msg';
+        m.innerHTML=`<div class="msg-meta">${s}</div><div>${t}</div>`;
+        l.appendChild(m);
+        l.scrollTop = l.scrollHeight;
+    }
+    emitEmoji(e) { 
+        this.spawnEmoji(e); 
+        if(this.core.role==='teacher') this.core.net.broadcast({ type:'EMOJI', emoji:e }); 
+        else this.core.net.sendToHost({ type:'EMOJI', emoji:e }); 
+    }
+    spawnEmoji(e) {
+        const el = document.createElement('div');
+        el.className='floating-emoji'; el.innerText=e;
+        el.style.left=`${Math.random()*80+10}%`;
+        document.getElementById('reaction-layer').appendChild(el);
+        setTimeout(()=>el.remove(),3500);
+    }
 }
 
 const core = new LectureDX();
-window.onload = () => {
-    const p = new URLSearchParams(window.location.search);
-    if(p.has('room')) {
-        document.getElementById('boot-room-id').value = p.get('room');
-        document.getElementById('boot-actions').innerHTML = `<button class="btn-boot btn-p" onclick="core.ignition('student')">Join Classroom</button>`;
-        document.getElementById('btn-boot-teacher').style.display = 'none';
-        document.getElementById('boot-status').innerText = "招待リンクを検出しました。";
-    }
-};
 </script>
 </body>
 </html>
