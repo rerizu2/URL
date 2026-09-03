@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lecture DX OS v26.0 | Professional Suite</title>
+    <title>Lecture DX OS v27.0 | Ultimate Unified Suite</title>
     
     <!-- External Libs -->
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -14,7 +14,7 @@
     <style>
         /* 
            =============================================================
-           DX-CORE DESIGN SYSTEM v26.0
+           DX-CORE GLOBAL DESIGN SYSTEM
            ============================================================= 
         */
         :root {
@@ -51,7 +51,7 @@
 
         /* 
            =============================================================
-           BOOT LOADER & AUTH
+           BOOT LOADER & AUTHENTICATION
            ============================================================= 
         */
         #os-boot-loader {
@@ -90,7 +90,7 @@
 
         /* 
            =============================================================
-           APP SHELL
+           APP SHELL ARCHITECTURE
            ============================================================= 
         */
         #app-shell { display: none; width: 100%; height: 100%; grid-template-columns: 90px 1fr 340px; }
@@ -105,10 +105,23 @@
         .nav-tool:hover { background: var(--bg-card); color: white; transform: translateX(5px); }
         .nav-tool.active { background: var(--p-color); color: white; box-shadow: 0 10px 25px var(--p-glow); }
         
-        /* [DYNAMIC] Survey Menu */
-        body.is-student .nav-tool.nav-survey { display: none; opacity: 0; }
-        body.is-student .nav-tool.nav-survey.active-survey { display: flex; opacity: 1; animation: menu-reveal 0.5s forwards; }
-        @keyframes menu-reveal { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        /* 動的アンケートメニュー表示制御 */
+        .nav-tool.nav-survey { display: flex; }
+        body.is-student .nav-tool.nav-survey { display: none; opacity: 0; transform: scale(0.5); }
+        body.is-student .nav-tool.nav-survey.active-survey { display: flex; opacity: 1; transform: scale(1); animation: menu-reveal 0.5s cubic-bezier(0.17, 0.84, 0.44, 1) forwards; }
+        @keyframes menu-reveal { from { opacity: 0; transform: scale(0.5) translateX(-20px); } to { opacity: 1; transform: scale(1) translateX(0); } }
+
+        .nav-tool::after {
+            content: attr(data-tip); position: absolute; left: 85px; background: #000; color: #fff;
+            padding: 8px 15px; border-radius: 8px; font-size: 0.8rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .nav-tool:hover::after { opacity: 1; left: 95px; }
+
+        /* 通知バッジ */
+        .nav-tool[data-badge]::before {
+            content: ''; position: absolute; top: 12px; right: 12px; width: 10px; height: 10px;
+            background: var(--accent-error); border-radius: 50%; border: 2px solid var(--bg-sidebar);
+        }
 
         .viewport { display: flex; flex-direction: column; background: var(--bg-base); border-right: 1px solid #30363d; overflow: hidden; position: relative; }
         .top-bar {
@@ -116,60 +129,86 @@
             background: rgba(13, 17, 23, 0.7); backdrop-filter: blur(25px); border-bottom: 1px solid #30363d; z-index: 100;
         }
         .status-pill { padding: 6px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: 900; border: 1px solid #30363d; text-transform: uppercase; }
-        .status-teacher { color: #f85149; border-color: #f85149; }
-        .status-student { color: #3fb950; border-color: #3fb950; }
+        .status-teacher { background: rgba(248, 81, 73, 0.1); color: #f85149; border-color: #f85149; }
+        .status-student { background: rgba(63, 185, 80, 0.1); color: #3fb950; border-color: #3fb950; }
 
         .pane-container { flex: 1; position: relative; padding: 30px; }
         .dx-pane { position: absolute; inset: 30px; visibility: hidden; opacity: 0; transform: translateY(20px); transition: var(--transition); }
         .dx-pane.active { visibility: visible; opacity: 1; transform: translateY(0); z-index: 10; }
 
-        .dx-card { background: var(--bg-panel); border: 1px solid #30363d; border-radius: var(--radius-xl); display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        .dx-card { background: var(--bg-panel); border: 1px solid #30363d; border-radius: var(--radius-xl); display: flex; flex-direction: column; height: 100%; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .dx-card-header { padding: 25px 30px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
         .dx-card-title { font-size: 0.95rem; font-weight: 900; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; }
         .dx-card-body { flex: 1; overflow-y: auto; padding: 30px; }
 
         /* 
            =============================================================
-           SURVEY FORMS & RESULTS
+           CANVAS & SKETCH BOARD
+           ============================================================= 
+        */
+        #canvas-wrapper { background: #fff; border-radius: 12px; flex: 1; position: relative; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.1); }
+        #main-canvas { cursor: crosshair; touch-action: none; }
+        .canvas-toolbar { padding: 15px 30px; background: var(--bg-card); display: flex; gap: 20px; align-items: center; border-bottom: 1px solid #30363d; }
+        .tool-btn {
+            width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            background: transparent; color: var(--text-dim); border: 1px solid transparent; cursor: pointer; transition: 0.2s;
+        }
+        .tool-btn:hover { color: white; background: rgba(255,255,255,0.08); }
+        .tool-btn.active { color: var(--p-color); border-color: var(--p-color); background: rgba(99, 102, 241, 0.15); }
+
+        /* 
+           =============================================================
+           POLLING / SURVEY MODULE
            ============================================================= 
         */
         .poll-box { background: var(--bg-card); border-radius: 20px; padding: 35px; border: 1px solid #30363d; margin-bottom: 20px; }
         .sv-option-btn {
-            width: 100%; padding: 18px; background: var(--bg-panel); border: 1px solid #444; border-radius: 12px;
-            color: white; margin-top: 12px; cursor: pointer; text-align: left; font-size: 1rem; font-weight: 700; transition: 0.2s;
+            width: 100%; padding: 20px; background: var(--bg-panel); border: 1px solid #444; border-radius: 15px;
+            color: white; margin-top: 15px; cursor: pointer; text-align: left; font-size: 1.1rem; font-weight: 700; transition: 0.3s;
         }
-        .sv-option-btn:hover { border-color: var(--p-color); background: var(--bg-input); }
+        .sv-option-btn:hover { border-color: var(--p-color); transform: scale(1.02); background: var(--bg-input); }
         
         .rating-star { font-size: 2.5rem; color: #333; cursor: pointer; transition: 0.2s; margin: 0 5px; }
         .rating-star.active { color: var(--accent-warn); text-shadow: 0 0 15px rgba(210, 153, 34, 0.5); }
 
-        .free-answer-item { background: var(--bg-sidebar); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 3px solid var(--p-color); animation: dx-slide 0.3s ease; }
-        @keyframes dx-slide { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+        .free-answer-item { background: var(--bg-sidebar); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--p-color); animation: msg-slide 0.3s forwards; }
 
-        .progress-bar-bg { height: 10px; background: #30363d; border-radius: 10px; overflow: hidden; margin-top: 8px; }
-        .progress-bar-fill { height: 100%; background: var(--p-color); transition: width 0.6s ease; }
+        .progress-bar-bg { height: 12px; background: #30363d; border-radius: 10px; overflow: hidden; margin-top: 8px; }
+        .progress-bar-fill { height: 100%; background: var(--p-color); transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
 
-        /* Right Sidebar */
+        /* 
+           =============================================================
+           RIGHT SIDEBAR
+           ============================================================= 
+        */
         .right-bar { background: var(--bg-sidebar); border-left: 1px solid #30363d; display: flex; flex-direction: column; }
         .chat-log { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
-        .chat-msg { background: var(--bg-card); padding: 15px 20px; border-radius: 15px; border: 1px solid #30363d; }
+        .chat-msg { background: var(--bg-card); padding: 15px 20px; border-radius: 15px; border: 1px solid #30363d; animation: msg-slide 0.4s ease-out; }
+        @keyframes msg-slide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
         .msg-meta { font-size: 0.7rem; font-weight: 900; color: var(--p-light); margin-bottom: 6px; text-transform: uppercase; }
+        .msg-text { font-size: 0.9rem; line-height: 1.6; color: var(--text-vivid); }
 
         .hand-btn {
             width: 100%; padding: 18px; border-radius: 16px; font-weight: 900;
             background: var(--accent-warn); color: #000; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 12px; transition: var(--transition);
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            transition: var(--transition); text-transform: uppercase;
         }
-        .hand-btn.active { background: var(--accent-error); color: white; }
+        .hand-btn.active { background: var(--accent-error); color: white; box-shadow: 0 0 30px rgba(218, 54, 51, 0.4); }
 
-        canvas { background: white; border-radius: 12px; }
-        #timer-big { font-size: 9rem; font-weight: 900; font-family: var(--font-code); color: var(--accent-error); text-shadow: 0 0 50px rgba(218, 54, 51, 0.3); }
-
+        /* Permissions & Utilities */
         .teacher-only, .teacher-only-block { display: none !important; }
         body.is-teacher .teacher-only { display: flex !important; }
         body.is-teacher .teacher-only-block { display: block !important; }
+        
         .student-only { display: none !important; }
         body.is-student .student-only { display: flex !important; }
+
+        #timer-big { font-size: 9rem; font-weight: 900; font-family: var(--font-code); color: var(--accent-error); text-shadow: 0 0 50px rgba(218, 54, 51, 0.3); }
+
+        #reaction-layer { position: fixed; inset: 0; pointer-events: none; z-index: 100000; overflow: hidden; }
+        .floating-emoji { position: absolute; bottom: -100px; font-size: 4.5rem; animation: emojiFloat 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        @keyframes emojiFloat { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-100vh) scale(1.5); opacity: 0; } }
     </style>
 </head>
 <body>
@@ -178,17 +217,19 @@
     <div id="os-boot-loader">
         <div class="boot-card">
             <div class="boot-logo">LECTURE DX</div>
-            <div class="boot-version">QUANTUM-CORE OS v26.0 | ADVANCED POLL ENGINE</div>
+            <div class="boot-version">QUANTUM-CORE OS v27.0 | ALL-IN-ONE ARCHITECTURE</div>
+            
             <div class="input-group">
                 <label>Room ID</label>
-                <input type="text" id="boot-room-id" class="dx-input" placeholder="e.g. chemistry-lab-01">
+                <input type="text" id="boot-room-id" class="dx-input" placeholder="e.g. physics-global-01">
             </div>
             <div class="input-group">
-                <label>Identifier Name</label>
-                <input type="text" id="boot-user-name" class="dx-input" placeholder="e.g. Prof. Sato">
+                <label>Identify Yourself</label>
+                <input type="text" id="boot-user-name" class="dx-input" placeholder="e.g. Dr. Newton">
             </div>
+            
             <div id="boot-actions">
-                <button class="btn-boot btn-p" onclick="core.ignition('teacher')">Launch as Teacher</button>
+                <button class="btn-boot btn-p" onclick="core.ignition('teacher')">Initialize as Teacher</button>
                 <button class="btn-boot btn-s" onclick="core.ignition('student')">Join as Student</button>
             </div>
         </div>
@@ -198,43 +239,53 @@
 
     <!-- MAIN OS SHELL -->
     <div id="app-shell">
+        
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="sidebar-brand" onclick="location.reload()">LDX</div>
-            <div class="nav-tool active" data-tip="Lecture Note" onclick="core.ui.switchPane('note')"><i class="fa-solid fa-file-lines"></i></div>
-            <div class="nav-tool" data-tip="Sketch Board" onclick="core.ui.switchPane('sketch')"><i class="fa-solid fa-paintbrush"></i></div>
-            <div class="nav-tool nav-survey" id="nav-survey-link" data-tip="Dynamic Poll" onclick="core.ui.switchPane('survey')">
-                <i class="fa-solid fa-chart-simple"></i>
+            <div class="nav-tool active" data-tip="Lecture Note" onclick="core.ui.switchPane('note')"><i class="fa-solid fa-file-signature"></i></div>
+            <div class="nav-tool" data-tip="Sketch Board" onclick="core.ui.switchPane('sketch')"><i class="fa-solid fa-palette"></i></div>
+            
+            <!-- Dynamic Survey Menu -->
+            <div class="nav-tool nav-survey" id="nav-survey-link" data-tip="Live Survey" onclick="core.ui.switchPane('survey')">
+                <i class="fa-solid fa-square-poll-vertical"></i>
             </div>
-            <div class="nav-tool" data-tip="Time Sync" onclick="core.ui.switchPane('timer')"><i class="fa-solid fa-stopwatch"></i></div>
-            <div class="nav-tool teacher-only" data-tip="Admin Console" onclick="core.ui.switchPane('admin')"><i class="fa-solid fa-user-shield"></i></div>
+            
+            <div class="nav-tool" data-tip="Sync Timer" onclick="core.ui.switchPane('timer')"><i class="fa-solid fa-stopwatch"></i></div>
+            <div class="nav-tool teacher-only" data-tip="Classroom Control" onclick="core.ui.switchPane('admin')"><i class="fa-solid fa-users-gear"></i></div>
         </aside>
 
+        <!-- VIEWPORT -->
         <main class="viewport">
             <header class="top-bar">
                 <div style="display:flex; align-items:center; gap:20px;">
                     <span id="display-role" class="status-pill">---</span>
-                    <span id="display-room" style="font-family:var(--font-code); font-weight:800; font-size:0.8rem; color:var(--text-dim);">ID: ----</span>
-                    <div id="mini-timer" style="font-family:var(--font-code); font-weight:900; color:var(--accent-warn); margin-left:25px;">00:00</div>
+                    <span id="display-room" style="font-family:var(--font-code); font-weight:800; font-size:0.85rem; color:var(--text-dim);">ID: ----</span>
+                    <div id="mini-timer" style="font-family:var(--font-code); font-weight:900; color:var(--accent-warn); margin-left:30px;">00:00</div>
                 </div>
                 <div style="display:flex; gap:15px; align-items:center;">
-                    <div id="clock" style="font-family:var(--font-code); font-weight:800; color:var(--p-light);">00:00:00</div>
-                    <button class="btn-boot btn-s btn-sm teacher-only" onclick="core.net.copyInviteUrl()"><i class="fa-solid fa-link"></i> URL</button>
-                    <button id="btn-screen-share" class="btn-boot btn-p btn-sm teacher-only" onclick="core.media.toggleScreenShare()"><i class="fa-solid fa-display"></i> SCREEN</button>
+                    <div id="clock" style="font-family:var(--font-code); font-weight:800; color:var(--p-light); margin-right:20px;">00:00:00</div>
+                    <button class="btn-boot btn-s btn-sm teacher-only" style="padding:10px 20px;" onclick="core.net.copyInviteUrl()"><i class="fa-solid fa-link"></i> Copy URL</button>
+                    <button id="btn-screen-share" class="btn-boot btn-p btn-sm teacher-only" style="padding:10px 20px;" onclick="core.media.toggleScreenShare()"><i class="fa-solid fa-display"></i> Share Screen</button>
                 </div>
             </header>
 
             <div class="pane-container">
-                <div id="stream-box" style="display:none; width:100%; aspect-ratio:16/9; background:#000; border-radius:20px; overflow:hidden; margin-bottom:20px;">
+                <!-- VIDEO BOX -->
+                <div id="stream-container" style="display:none; width:100%; aspect-ratio:16/9; background:#000; border-radius:20px; overflow:hidden; margin-bottom:20px; border:1px solid #333;">
                     <video id="remote-video" autoplay playsinline style="width:100%; height:100%; object-fit:contain;"></video>
                 </div>
 
                 <!-- PANE: NOTE -->
                 <div id="pane-note" class="dx-pane active">
                     <div class="dx-card">
-                        <div class="dx-card-header"><span class="dx-card-title">Live Note</span></div>
+                        <div class="dx-card-header">
+                            <span class="dx-card-title">Synchronized Note</span>
+                            <div class="teacher-only"><button class="btn-boot btn-s btn-sm" onclick="core.note.clear()">Clear Note</button></div>
+                        </div>
                         <div class="dx-card-body" style="padding:0;">
-                            <textarea id="note-editor" class="teacher-only-block" style="width:100%; height:100%; background:transparent; color:#fff; padding:35px; border:none; font-size:1.15rem; line-height:1.7; resize:none;" placeholder="Type here..."></textarea>
-                            <div id="note-viewer" class="student-only" style="padding:35px; font-size:1.15rem; line-height:1.7; white-space:pre-wrap;">教員のノートを待機中...</div>
+                            <textarea id="note-editor" class="teacher-only-block" style="width:100%; height:100%; background:transparent; color:#fff; padding:40px; border:none; font-size:1.2rem; line-height:1.8; resize:none;" placeholder="Start lesson notes..."></textarea>
+                            <div id="note-viewer" class="student-only" style="padding:40px; font-size:1.2rem; line-height:1.8; white-space:pre-wrap;">教員の入力を待機中...</div>
                         </div>
                     </div>
                 </div>
@@ -243,21 +294,22 @@
                 <div id="pane-sketch" class="dx-pane">
                     <div class="dx-card">
                         <div class="dx-card-header">
-                            <span class="dx-card-title">Quantum Board</span>
+                            <span class="dx-card-title">DX Sketch Board</span>
                             <div class="teacher-only"><button class="btn-boot btn-s btn-sm" id="btn-sk-lock" onclick="core.board.toggleLock()">LOCK BOARD</button></div>
                         </div>
-                        <div class="canvas-toolbar teacher-only" style="padding:15px; background:var(--bg-card); display:flex; gap:15px; align-items:center;">
-                            <input type="color" id="sk-color" value="#6366f1">
-                            <input type="range" id="sk-size" min="1" max="40" value="5">
-                            <button class="tool-btn active" id="tool-pen" onclick="core.board.setTool('pen')"><i class="fa-solid fa-pencil"></i></button>
+                        <div class="canvas-toolbar teacher-only">
+                            <input type="color" id="sk-color" value="#6366f1" style="width:35px; height:35px; border:none; background:none;">
+                            <input type="range" id="sk-size" min="1" max="50" value="5">
+                            <div style="width:1px; height:25px; background:#333; margin:0 10px;"></div>
+                            <button class="tool-btn active" id="tool-pen" onclick="core.board.setTool('pen')"><i class="fa-solid fa-pen-nib"></i></button>
                             <button class="tool-btn" id="tool-eraser" onclick="core.board.setTool('eraser')"><i class="fa-solid fa-eraser"></i></button>
-                            <button class="tool-btn" onclick="core.board.clear()"><i class="fa-solid fa-trash"></i></button>
+                            <button class="tool-btn" onclick="core.board.clear()"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                         <div class="dx-card-body" style="background:#080a0f; position:relative;">
                             <canvas id="main-canvas"></canvas>
-                            <div id="canvas-student-lock" class="student-only" style="position:absolute; inset:0; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                <i class="fa-solid fa-lock" style="font-size:3rem; color:#444; margin-bottom:15px;"></i>
-                                <p style="color:#555; font-weight:700;">BOARD LOCKED BY TEACHER</p>
+                            <div id="canvas-student-lock" class="student-only" style="position:absolute; inset:0; background:rgba(0,0,0,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                                <i class="fa-solid fa-lock" style="font-size:4rem; color:var(--text-dim); margin-bottom:20px;"></i>
+                                <h3 style="color:var(--text-dim);">BOARD LOCKED</h3>
                             </div>
                         </div>
                     </div>
@@ -266,44 +318,44 @@
                 <!-- PANE: DYNAMIC SURVEY -->
                 <div id="pane-survey" class="dx-pane">
                     <div class="dx-card">
-                        <div class="dx-card-header"><span class="dx-card-title">Dynamic Polling Engine</span></div>
+                        <div class="dx-card-header"><span class="dx-card-title">Live Dynamic Polling</span></div>
                         <div class="dx-card-body">
-                            <!-- 教員：設定画面 -->
+                            <!-- Teacher Side -->
                             <div class="teacher-only-block" style="display:grid; grid-template-columns: 1fr 1fr; gap:40px;">
                                 <div class="poll-box">
-                                    <h2 style="margin-bottom:20px;">New Poll Configuration</h2>
+                                    <h2 style="margin-bottom:20px;">New Poll</h2>
                                     <div class="input-group">
-                                        <label>Poll Format</label>
-                                        <select id="sv-type" class="dx-select" onchange="core.survey.toggleFormatFields()">
-                                            <option value="choice">単一選択 (Multiple Choice)</option>
-                                            <option value="text">自由記述 (Free Text Answer)</option>
-                                            <option value="rating">理解度評価 (5-Star Rating)</option>
+                                        <label>Format</label>
+                                        <select id="sv-type" class="dx-select" onchange="core.survey.toggleFields()">
+                                            <option value="choice">単一選択 (Choices)</option>
+                                            <option value="text">自由記述 (Text)</option>
+                                            <option value="rating">5段階評価 (Rating)</option>
                                         </select>
                                     </div>
                                     <div class="input-group">
-                                        <label>Question Text</label>
-                                        <input type="text" id="sv-q" class="dx-input" placeholder="例: どちらが正しいですか？">
+                                        <label>Question</label>
+                                        <input type="text" id="sv-q" class="dx-input" placeholder="例: 正解はどれ？">
                                     </div>
                                     <div id="sv-opts-group" class="input-group">
-                                        <label>Options (Comma Separated)</label>
-                                        <input type="text" id="sv-opts" class="dx-input" placeholder="Option A, Option B, Option C">
+                                        <label>Options (Comma Sep)</label>
+                                        <input type="text" id="sv-opts" class="dx-input" placeholder="A, B, C">
                                     </div>
-                                    <button class="btn-boot btn-p" onclick="core.survey.broadcast()">Start Poll</button>
-                                    <button class="btn-boot btn-s" style="margin-top:10px;" onclick="core.survey.reset()">Reset</button>
+                                    <button class="btn-boot btn-p" onclick="core.survey.broadcast()">Broadcast Poll</button>
+                                    <button class="btn-boot btn-s" style="margin-top:10px;" onclick="core.survey.reset()">Reset All</button>
                                 </div>
-                                <div class="poll-box">
-                                    <h2 style="margin-bottom:20px; color:var(--p-light);">Live Aggregation</h2>
+                                <div class="poll-box" style="border-color:var(--p-color);">
+                                    <h2 style="margin-bottom:20px; color:var(--p-light);">Results</h2>
                                     <div id="sv-results-teacher"></div>
                                 </div>
                             </div>
-                            <!-- 生徒：回答画面 -->
+                            <!-- Student Side -->
                             <div class="student-only-block">
-                                <div id="sv-student-area" class="poll-box" style="max-width:650px; margin:0 auto; text-align:center;">
+                                <div id="sv-student-view" class="poll-box" style="max-width:700px; margin:0 auto; text-align:center;">
                                     <h1 id="sv-student-q" style="margin-bottom:30px; line-height:1.4;">Active Question</h1>
-                                    <div id="sv-input-render"></div>
+                                    <div id="sv-render-area"></div>
                                     <div id="sv-thanks" style="display:none; margin-top:30px;">
-                                        <h2 style="color:var(--accent-success);">✅ 回答を送信しました</h2>
-                                        <p style="margin-top:10px; color:var(--text-dim);">教員の集計をお待ちください</p>
+                                        <h2 style="color:var(--accent-success);">✅ 回答完了</h2>
+                                        <p style="margin-top:10px; color:var(--text-dim);">結果の集計をお待ちください</p>
                                     </div>
                                 </div>
                             </div>
@@ -314,11 +366,11 @@
                 <!-- PANE: TIMER -->
                 <div id="pane-timer" class="dx-pane">
                     <div class="dx-card">
-                        <div class="dx-card-header"><span class="dx-card-title">Timer Sync</span></div>
+                        <div class="dx-card-header"><span class="dx-card-title">Session Timer</span></div>
                         <div class="dx-card-body" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
                             <div id="timer-big">00:00</div>
-                            <div class="teacher-only" style="margin-top:40px; display:flex; gap:15px; align-items:center;">
-                                <input type="number" id="timer-m" value="10" class="dx-input" style="width:100px; text-align:center;">
+                            <div class="teacher-only" style="margin-top:40px; display:flex; gap:20px; align-items:center;">
+                                <input type="number" id="timer-m" value="10" class="dx-input" style="width:120px; text-align:center; font-size:1.5rem;">
                                 <button class="btn-boot btn-p" style="width:180px;" onclick="core.timer.start()">START</button>
                             </div>
                         </div>
@@ -328,43 +380,42 @@
                 <!-- PANE: ADMIN -->
                 <div id="pane-admin" class="dx-pane teacher-only-block">
                     <div class="dx-card">
-                        <div class="dx-card-header"><span class="dx-card-title">Class Management</span></div>
+                        <div class="dx-card-header"><span class="dx-card-title">Participants</span></div>
                         <div class="dx-card-body">
-                            <div style="font-size:1.3rem; font-weight:900; margin-bottom:25px;">Active: <span id="admin-count">0</span></div>
-                            <div id="admin-roster" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:15px;"></div>
+                            <div style="font-size:1.5rem; font-weight:900; margin-bottom:30px;">Online: <span id="admin-count">0</span></div>
+                            <div id="admin-roster" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:20px;"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
 
+        <!-- RIGHT SIDEBAR -->
         <aside class="right-bar">
-            <div class="dx-card-header"><span class="dx-card-title">Log & Reaction</span></div>
+            <div class="dx-card-header"><span class="dx-card-title">System Log</span></div>
             <div id="chat-log" class="chat-log"></div>
+            
             <div style="padding:25px; border-top:1px solid #30363d;">
                 <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:15px;">
                     <button class="tool-btn" style="background:var(--bg-card); width:100%;" onclick="core.ui.emitEmoji('👏')">👏</button>
                     <button class="tool-btn" style="background:var(--bg-card); width:100%;" onclick="core.ui.emitEmoji('👍')">👍</button>
                     <button class="tool-btn" style="background:var(--bg-card); width:100%;" onclick="core.ui.emitEmoji('❓')">❓</button>
-                    <button class="tool-btn" style="background:var(--bg-card); width:100%;" onclick="core.ui.emitEmoji('🔥')">🔥</button>
+                    <button class="tool-btn" style="background:var(--bg-card); width:100%;" onclick="core.ui.emitEmoji('🎉')">🎉</button>
                 </div>
                 <div class="student-only"><button id="btn-hand" class="hand-btn" onclick="core.ui.toggleHand()"><i class="fa-solid fa-hand"></i> Raise Hand</button></div>
+                <div class="teacher-only"><button class="btn-boot btn-s" style="width:100%" onclick="core.ui.pickStudent()">Pick Student</button></div>
             </div>
         </aside>
     </div>
 
 <script>
-/**
- * LECTURE DX QUANTUM CORE v26.0
- */
-
 class LectureDX {
     constructor() {
         this.role = ''; this.room = ''; this.userName = '';
         this.peer = null; this.conns = new Map(); this.hostConn = null;
         this.participants = new Map();
         
-        // Modules
+        // Load Modules
         this.ui = new DX_UI(this);
         this.net = new DX_Network(this);
         this.board = new DX_Board(this);
@@ -377,11 +428,11 @@ class LectureDX {
     ignition(role) {
         this.role = role;
         this.room = document.getElementById('boot-room-id').value.trim() || 'default';
-        this.userName = document.getElementById('boot-user-name').value.trim() || 'Guest';
-        const pid = role === 'teacher' ? `ldx26-${this.room}-host` : `ldx26-${this.room}-${Math.random().toString(36).substr(2,8)}`;
-        this.peer = new Peer(pid, { debug: 1 });
+        this.userName = document.getElementById('boot-user-name').value.trim() || 'Anonymous';
+        const pid = role === 'teacher' ? `ldx27-${this.room}-host` : `ldx27-${this.room}-${Math.random().toString(36).substr(2,8)}`;
+        this.peer = new Peer(pid);
         this.peer.on('open', () => this.boot());
-        this.peer.on('error', () => { alert("Peer Connection Error"); location.reload(); });
+        this.peer.on('error', () => { alert("Peer Error"); location.reload(); });
         this.peer.on('connection', c => this.net.onConn(c));
         this.peer.on('call', c => this.media.onCall(c));
     }
@@ -392,18 +443,16 @@ class LectureDX {
         document.getElementById('app-shell').classList.add('active');
         document.getElementById('display-role').innerText = this.role.toUpperCase();
         document.getElementById('display-role').className = `status-pill status-${this.role}`;
-        document.getElementById('display-room').innerText = `ID: ${this.room}`;
+        document.getElementById('display-room').innerText = `ROOM ID: ${this.room}`;
         if(this.role === 'student') this.net.connect();
-        this.board.init();
-        this.note.init();
-        this.ui.init();
+        this.board.init(); this.note.init(); this.ui.init();
     }
 }
 
 class DX_Network {
     constructor(c) { this.core = c; }
     connect() {
-        this.core.hostConn = this.core.peer.connect(`ldx26-${this.core.room}-host`);
+        this.core.hostConn = this.core.peer.connect(`ldx27-${this.core.room}-host`);
         this.core.hostConn.on('open', () => this.core.hostConn.send({ type:'JOIN', name:this.core.userName }));
         this.core.hostConn.on('data', d => this.router(d));
     }
@@ -428,11 +477,11 @@ class DX_Network {
             case 'TIMER_SYNC': this.core.timer.receive(d.end); break;
             case 'EMOJI': this.core.ui.spawnEmoji(d.emoji); break;
             case 'HAND': const p = this.core.participants.get(c.peer); if(p) { p.hand = d.val; this.core.ui.updateAdmin(); if(d.val) this.core.ui.notify(); } break;
-            case 'SCREEN_OFF': document.getElementById('stream-box').style.display='none'; break;
+            case 'SCREEN_OFF': document.getElementById('stream-container').style.display='none'; break;
         }
     }
     broadcast(d) { this.core.conns.forEach(c => c.open && c.send(d)); }
-    copyInviteUrl() { const url = `${window.location.origin}${window.location.pathname}?room=${this.core.room}`; navigator.clipboard.writeText(url).then(() => alert("Copied!")); }
+    copyInviteUrl() { navigator.clipboard.writeText(`${location.origin}${location.pathname}?room=${this.core.room}`).then(()=>alert("Copied!")); }
 }
 
 class DX_Board {
@@ -443,13 +492,13 @@ class DX_Board {
         if(this.core.role === 'teacher') {
             const getPos = e => { const r = this.canvas.getBoundingClientRect(); return { x: (e.clientX || e.touches[0].clientX)-r.left, y: (e.clientY || e.touches[0].clientY)-r.top }; };
             const start = e => { this.drawing=true; this.ctx.beginPath(); const p=getPos(e); this.ctx.moveTo(p.x, p.y); };
-            const move = e => { if(!this.drawing) return; const p=getPos(e); this.ctx.lineTo(p.x, p.y); this.ctx.lineCap='round'; this.ctx.strokeStyle=this.tool==='eraser'?'#fff':document.getElementById('sk-color').value; this.ctx.lineWidth=document.getElementById('sk-size').value; this.ctx.stroke(); };
+            const move = e => { if(!this.drawing) return; const p=getPos(e); this.ctx.lineTo(p.x, p.y); this.ctx.strokeStyle=this.tool==='eraser'?'#fff':document.getElementById('sk-color').value; this.ctx.lineWidth=document.getElementById('sk-size').value; this.ctx.lineCap='round'; this.ctx.stroke(); };
             const stop = () => { if(this.drawing) { this.drawing=false; this.core.net.broadcast({ type:'BOARD_SYNC', val:this.canvas.toDataURL() }); } };
             this.canvas.onmousedown=start; this.canvas.onmousemove=move; window.onmouseup=stop;
             this.canvas.ontouchstart=e=>{e.preventDefault();start(e);}; this.canvas.ontouchmove=e=>{e.preventDefault();move(e);}; window.ontouchend=stop;
         }
     }
-    resize() { const w = this.canvas.parentElement; const data = this.canvas.toDataURL(); this.canvas.width = w.offsetWidth; this.canvas.height = w.offsetHeight; const img = new Image(); img.onload = () => this.ctx.drawImage(img,0,0); img.src = data; }
+    resize() { const w = this.canvas.parentElement; const d = this.canvas.toDataURL(); this.canvas.width = w.offsetWidth; this.canvas.height = w.offsetHeight; const img = new Image(); img.onload = () => this.ctx.drawImage(img,0,0); img.src = d; }
     receive(v) { const img = new Image(); img.onload = () => { this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height); this.ctx.drawImage(img,0,0); }; img.src = v; }
     setTool(t) { this.tool=t; document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active')); document.getElementById(`tool-${t}`).classList.add('active'); }
     clear() { this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height); this.core.net.broadcast({ type:'BOARD_SYNC', val:this.canvas.toDataURL() }); }
@@ -461,97 +510,45 @@ class DX_Note {
     constructor(c) { this.core = c; }
     init() { const ed = document.getElementById('note-editor'); if(this.core.role === 'teacher') ed.oninput = () => this.core.net.broadcast({ type:'NOTE_SYNC', val:ed.value }); }
     receive(v) { document.getElementById('note-viewer').innerText = v; document.getElementById('note-editor').value = v; }
+    clear() { if(confirm("Clear note?")) { document.getElementById('note-editor').value = ''; this.core.net.broadcast({ type:'NOTE_SYNC', val:'' }); } }
 }
 
 class DX_Survey {
     constructor(c) { this.core = c; this.active=false; this.q=''; this.type='choice'; this.opts=[]; this.results=[]; this.total=0; }
-    
-    toggleFormatFields() {
-        const type = document.getElementById('sv-type').value;
-        document.getElementById('sv-opts-group').style.display = (type === 'choice') ? 'block' : 'none';
-    }
-
+    toggleFields() { document.getElementById('sv-opts-group').style.display = (document.getElementById('sv-type').value === 'choice') ? 'block' : 'none'; }
     broadcast() {
-        this.q = document.getElementById('sv-q').value;
-        this.type = document.getElementById('sv-type').value;
-        this.opts = document.getElementById('sv-opts').value.split(',').map(s=>s.trim());
-        if(!this.q) return alert("Question is required.");
-        
-        this.active = true; this.total = 0;
-        this.results = (this.type === 'choice') ? this.opts.map(()=>0) : (this.type === 'rating' ? [0,0,0,0,0] : []);
-        
+        this.q = document.getElementById('sv-q').value; this.type = document.getElementById('sv-type').value; this.opts = document.getElementById('sv-opts').value.split(',').map(s=>s.trim());
+        if(!this.q) return alert("Enter Question");
+        this.active = true; this.total = 0; this.results = (this.type === 'choice') ? this.opts.map(()=>0) : (this.type === 'rating' ? [0,0,0,0,0] : []);
         this.core.net.broadcast({ type:'SV_OPEN', q:this.q, svType:this.type, opts:this.opts });
         this.renderTeacher();
-        this.core.ui.log('POLL', `Started: ${this.q}`);
     }
-
     show(d) {
         this.active = true; this.q = d.q; this.type = d.svType; this.opts = d.opts;
-        const menu = document.getElementById('nav-survey-link');
-        menu.classList.add('active-survey');
-        document.getElementById('sv-student-q').innerText = d.q;
-        document.getElementById('sv-thanks').style.display = 'none';
-        
-        const area = document.getElementById('sv-input-render');
-        area.innerHTML = ''; area.style.display = 'block';
-
+        const menu = document.getElementById('nav-survey-link'); menu.classList.add('active-survey'); menu.setAttribute('data-badge', '');
+        document.getElementById('sv-student-q').innerText = d.q; document.getElementById('sv-thanks').style.display = 'none';
+        const area = document.getElementById('sv-render-area'); area.innerHTML = ''; area.style.display = 'block';
         if(this.type === 'choice') {
-            d.opts.forEach((o, i) => {
-                const b = document.createElement('button'); b.className = 'sv-option-btn'; b.innerText = o;
-                b.onclick = () => this.submit(i); area.appendChild(b);
-            });
+            d.opts.forEach((o, i) => { const b = document.createElement('button'); b.className = 'sv-option-btn'; b.innerText = o; b.onclick = () => this.submit(i); area.appendChild(b); });
         } else if(this.type === 'text') {
-            area.innerHTML = `<textarea id="sv-text-val" class="dx-input" style="height:120px; margin-bottom:15px;"></textarea>
-                              <button class="btn-boot btn-p" onclick="core.survey.submit(null, document.getElementById('sv-text-val').value)">Submit</button>`;
+            area.innerHTML = `<textarea id="sv-t-val" class="dx-input" style="height:120px; margin-bottom:15px;"></textarea><button class="btn-boot btn-p" onclick="core.survey.submit(null, document.getElementById('sv-t-val').value)">SUBMIT</button>`;
         } else if(this.type === 'rating') {
-            const wrap = document.createElement('div');
-            for(let i=1; i<=5; i++) {
-                const s = document.createElement('span'); s.className = 'rating-star'; s.innerHTML = '★';
-                s.onclick = () => this.submit(i-1); wrap.appendChild(s);
-            }
-            area.appendChild(wrap);
+            const w = document.createElement('div'); for(let i=1; i<=5; i++) { const s = document.createElement('span'); s.className = 'rating-star'; s.innerHTML = '★'; s.onclick = () => this.submit(i-1); w.appendChild(s); } area.appendChild(w);
         }
-        this.core.ui.switchPane('survey');
-        this.core.ui.notify();
+        this.core.ui.switchPane('survey'); this.core.ui.notify();
     }
-
-    submit(idx, val=null) {
-        this.core.hostConn.send({ type:'SV_VOTE', idx:idx, val:val });
-        document.getElementById('sv-input-render').style.display = 'none';
-        document.getElementById('sv-thanks').style.display = 'block';
-    }
-
-    tally(idx, val) {
-        this.total++;
-        if(this.type === 'choice' || this.type === 'rating') this.results[idx]++;
-        else if(this.type === 'text') this.results.push(val);
-        this.renderTeacher();
-    }
-
+    submit(idx, val=null) { this.core.hostConn.send({ type:'SV_VOTE', idx:idx, val:val }); document.getElementById('sv-render-area').style.display = 'none'; document.getElementById('sv-thanks').style.display = 'block'; }
+    tally(idx, val) { this.total++; if(this.type === 'choice' || this.type === 'rating') this.results[idx]++; else if(this.type === 'text') this.results.push(val); this.renderTeacher(); }
     renderTeacher() {
-        const area = document.getElementById('sv-results-teacher');
-        area.innerHTML = `<h3>Q: ${this.q}</h3><p>Total: ${this.total}</p><br>`;
+        const area = document.getElementById('sv-results-teacher'); area.innerHTML = `<h3>Q: ${this.q}</h3><p>Votes: ${this.total}</p><br>`;
         if(this.type === 'choice') {
-            this.opts.forEach((o, i) => {
-                const pct = this.total ? Math.round(this.results[i]/this.total*100) : 0;
-                area.innerHTML += `<div>${o} (${this.results[i]})</div><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div><br>`;
-            });
+            this.opts.forEach((o, i) => { const pct = this.total ? Math.round(this.results[i]/this.total*100) : 0; area.innerHTML += `<div>${o} (${this.results[i]})</div><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div><br>`; });
         } else if(this.type === 'rating') {
-            for(let i=0; i<5; i++) {
-                const pct = this.total ? Math.round(this.results[i]/this.total*100) : 0;
-                area.innerHTML += `<div>${i+1} Star (${this.results[i]})</div><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div><br>`;
-            }
-        } else {
-            this.results.forEach(v => area.innerHTML += `<div class="free-answer-item">${v}</div>`);
-        }
+            for(let i=0; i<5; i++) { const pct = this.total ? Math.round(this.results[i]/this.total*100) : 0; area.innerHTML += `<div>${i+1} Star (${this.results[i]})</div><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div><br>`; }
+        } else { this.results.forEach(v => area.innerHTML += `<div class="free-answer-item">${v}</div>`); }
     }
-
     reset() { this.core.net.broadcast({ type:'SV_RESET' }); this.onReset(); }
-    onReset() {
-        document.getElementById('nav-survey-link').classList.remove('active-survey');
-        document.getElementById('sv-results-teacher').innerHTML = '';
-        if(this.core.role === 'student') this.core.ui.switchPane('note');
-    }
+    onReset() { document.getElementById('nav-survey-link').classList.remove('active-survey'); document.getElementById('sv-results-teacher').innerHTML = ''; if(this.core.role === 'student') this.core.ui.switchPane('note'); }
 }
 
 class DX_Timer {
@@ -573,12 +570,12 @@ class DX_Timer {
 class DX_Media {
     constructor(c) { this.core = c; this.stream=null; }
     async toggleScreenShare() {
-        if(this.stream) { this.stream.getTracks().forEach(t=>t.stop()); this.stream=null; this.core.net.broadcast({ type:'SCREEN_OFF' }); document.getElementById('stream-box').style.display='none'; return; }
+        if(this.stream) { this.stream.getTracks().forEach(t=>t.stop()); this.stream=null; this.core.net.broadcast({ type:'SCREEN_OFF' }); document.getElementById('stream-container').style.display='none'; return; }
         this.stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-        document.getElementById('stream-box').style.display='block'; document.getElementById('remote-video').srcObject=this.stream;
+        document.getElementById('stream-container').style.display='block'; document.getElementById('remote-video').srcObject=this.stream;
         this.core.conns.forEach(c => this.core.peer.call(c.peer, this.stream));
     }
-    onCall(call) { call.answer(); call.on('stream', s => { document.getElementById('stream-box').style.display='block'; document.getElementById('remote-video').srcObject=s; }); }
+    onCall(call) { call.answer(); call.on('stream', s => { document.getElementById('stream-container').style.display='block'; document.getElementById('remote-video').srcObject=s; }); }
 }
 
 class DX_UI {
@@ -588,28 +585,32 @@ class DX_UI {
         document.querySelectorAll('.dx-pane').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-tool').forEach(t => t.classList.remove('active'));
         document.getElementById(`pane-${id}`).classList.add('active');
+        if(id === 'survey') document.getElementById('nav-survey-link').removeAttribute('data-badge');
         const tools = document.querySelectorAll('.nav-tool');
         tools.forEach(t => { if(t.getAttribute('data-tip').toLowerCase().includes(id)) t.classList.add('active'); });
         if(id === 'sketch') this.core.board.resize();
     }
     log(s, t) { const l = document.getElementById('chat-log'); const m = document.createElement('div'); m.className='chat-msg'; m.innerHTML=`<div class="msg-meta">${s}</div><div>${t}</div>`; l.appendChild(m); l.scrollTop=l.scrollHeight; }
     emitEmoji(e) { this.spawnEmoji(e); if(this.core.role==='teacher') this.core.net.broadcast({ type:'EMOJI', emoji:e }); else this.core.hostConn.send({ type:'EMOJI', emoji:e }); }
-    spawnEmoji(e) { const el = document.createElement('div'); el.innerText=e; el.style.cssText=`position:fixed; bottom:-50px; left:${Math.random()*80+10}%; font-size:4rem; animation:emojiFloat 3s forwards; z-index:100000; pointer-events:none;`; document.body.appendChild(el); setTimeout(()=>el.remove(),3000); }
-    toggleHand() { this.hand=!this.hand; const b=document.getElementById('btn-hand'); b.classList.toggle('active'); this.core.hostConn.send({ type:'HAND', val:this.hand }); }
+    spawnEmoji(e) { const el = document.createElement('div'); el.className='floating-emoji'; el.innerText=e; el.style.left=`${Math.random()*80+10}%`; document.getElementById('reaction-layer').appendChild(el); setTimeout(()=>el.remove(),3500); }
+    toggleHand() { this.hand=!this.hand; const b=document.getElementById('btn-hand'); b.classList.toggle('active'); b.innerHTML = this.hand ? '<i class="fa-solid fa-hand-slash"></i> Lower Hand' : '<i class="fa-solid fa-hand"></i> Raise Hand'; this.core.hostConn.send({ type:'HAND', val:this.hand }); }
     updateAdmin() {
         document.getElementById('admin-count').innerText = this.core.participants.size;
         const r = document.getElementById('admin-roster'); r.innerHTML = '';
         this.core.participants.forEach(p => { r.innerHTML += `<div class="chat-msg" style="border-color:${p.hand?'var(--accent-warn)':'#333'}"><strong>${p.name}</strong><br>${p.hand?'🖐 Hand Up':'Online'}</div>`; });
     }
+    pickStudent() { const ks = Array.from(this.core.participants.keys()); if(!ks.length) return; const w = this.core.participants.get(ks[Math.floor(Math.random()*ks.length)]); this.log('Dice', `🎯 Picked: 【${w.name}】`); this.core.net.broadcast({ type:'EMOJI', emoji:'🎯' }); }
     notify() { const a=new AudioContext(); const o=a.createOscillator(); const g=a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value=600; g.gain.setValueAtTime(0.1, a.currentTime); g.gain.exponentialRampToValueAtTime(0.01, a.currentTime+0.3); o.start(); o.stop(a.currentTime+0.3); }
 }
 
 const core = new LectureDX();
 window.onload = () => {
     const p = new URLSearchParams(window.location.search);
-    if(p.has('room')) { document.getElementById('boot-room-id').value = p.get('room'); document.getElementById('boot-actions').innerHTML = `<button class="btn-boot btn-p" onclick="core.ignition('student')">Join as Student</button>`; }
+    if(p.has('room')) {
+        document.getElementById('boot-room-id').value = p.get('room');
+        document.getElementById('boot-actions').innerHTML = `<button class="btn-boot btn-p" onclick="core.ignition('student')">Join Class</button>`;
+    }
 };
-const style = document.createElement('style'); style.innerHTML = `@keyframes emojiFloat { 0%{transform:translateY(0) scale(0.5);opacity:0;} 20%{opacity:1;} 100%{transform:translateY(-100vh) scale(1.5);opacity:0;} }`; document.head.appendChild(style);
 </script>
 </body>
 </html>
