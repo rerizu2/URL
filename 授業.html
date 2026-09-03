@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lecture DX OS v33.0 | Resilient Autonomous Suite</title>
+    <title>Lecture DX OS v34.0 | Ultra-Resilient Architecture</title>
     
-    <!-- 
-       =============================================================
-       EXTERNAL LIBRARIES
-       ============================================================= 
-    -->
+    <!-- External Dependencies -->
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -45,11 +41,6 @@
             --font-code: 'JetBrains Mono', monospace;
         }
 
-        /* 
-           =============================================================
-           2. GLOBAL RESET & BASE
-           ============================================================= 
-        */
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
         html, body { height: 100%; width: 100%; background-color: var(--bg-base); color: var(--text-main); font-family: var(--font-main); overflow: hidden; display: flex; }
 
@@ -60,7 +51,7 @@
 
         /* 
            =============================================================
-           3. AUTHENTICATION & BOOT UI
+           2. BOOT LOADER & AUTHENTICATION UI
            ============================================================= 
         */
         #os-boot-loader {
@@ -74,10 +65,7 @@
             animation: dx-entry 0.8s ease;
         }
         @keyframes dx-entry { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        .boot-logo { 
-            font-size: 3.5rem; font-weight: 900; letter-spacing: -3px; margin-bottom: 10px; 
-            background: linear-gradient(135deg, #fff, var(--p-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-        }
+        .boot-logo { font-size: 3.5rem; font-weight: 900; letter-spacing: -3px; margin-bottom: 10px; background: linear-gradient(135deg, #fff, var(--p-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .boot-version { font-family: var(--font-code); font-size: 0.8rem; color: var(--text-dim); margin-bottom: 50px; opacity: 0.6; }
         
         .input-group { text-align: left; margin-bottom: 25px; }
@@ -93,7 +81,7 @@
 
         /* 
            =============================================================
-           4. MAIN APP SHELL
+           3. MAIN APP SHELL
            ============================================================= 
         */
         #app-shell { display: none; width: 100%; height: 100%; grid-template-columns: 90px 1fr 350px; }
@@ -105,7 +93,6 @@
         .nav-tool:hover { background: var(--bg-card); color: white; transform: translateX(5px); }
         .nav-tool.active { background: var(--p-color); color: white; box-shadow: 0 10px 25px var(--p-glow); }
         
-        /* 動的アンケートメニュー */
         body.is-student .nav-tool.nav-survey { display: none; opacity: 0; }
         body.is-student .nav-tool.nav-survey.active-survey { display: flex; opacity: 1; animation: menu-reveal 0.5s forwards; }
         @keyframes menu-reveal { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
@@ -117,7 +104,6 @@
         .viewport { display: flex; flex-direction: column; background: var(--bg-base); border-right: 1px solid var(--border); overflow: hidden; position: relative; }
         .top-bar { height: 80px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; background: rgba(13, 17, 23, 0.7); backdrop-filter: blur(25px); border-bottom: 1px solid #30363d; z-index: 100; }
         
-        /* ステータスバッジ */
         .status-pill { padding: 6px 16px; border-radius: 20px; font-size: 0.7rem; font-weight: 900; border: 1.5px solid var(--border); text-transform: uppercase; }
         .status-teacher { background: rgba(248, 81, 73, 0.1); color: #f85149; border-color: #f85149; }
         .status-student { background: rgba(63, 185, 80, 0.1); color: #3fb950; border-color: #3fb950; }
@@ -126,13 +112,10 @@
 
         /* 
            =============================================================
-           5. PERSISTENT VIDEO & PANE SYSTEM
+           4. PERSISTENT VIDEO & PANE SYSTEM
            ============================================================= 
         */
-        #persistent-stream-container {
-            width: 100%; max-height: 45vh; background: #000; border-bottom: 2px solid var(--p-color);
-            display: none; flex-direction: column; position: relative; overflow: hidden; flex-shrink: 0;
-        }
+        #persistent-stream-container { width: 100%; max-height: 45vh; background: #000; border-bottom: 2px solid var(--p-color); display: none; flex-direction: column; position: relative; overflow: hidden; flex-shrink: 0; }
         #remote-video { width: 100%; height: 100%; max-height: 45vh; object-fit: contain; }
         .stream-status-overlay { position: absolute; top: 15px; left: 20px; background: rgba(218, 54, 51, 0.9); color: white; padding: 4px 12px; border-radius: 5px; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; }
 
@@ -162,7 +145,7 @@
 
         /* 
            =============================================================
-           6. RIGHT SIDEBAR
+           5. RIGHT SIDEBAR
            ============================================================= 
         */
         .right-bar { background: var(--bg-sidebar); border-left: 1px solid var(--border); display: flex; flex-direction: column; width: 350px; }
@@ -176,7 +159,7 @@
 
         /* 
            =============================================================
-           7. UTILS & REACTION
+           6. UTILS & REACTION
            ============================================================= 
         */
         .teacher-only, .teacher-only-block { display: none !important; }
@@ -188,7 +171,7 @@
         #timer-big { font-size: 9rem; font-weight: 900; font-family: var(--font-code); color: var(--accent-error); text-shadow: 0 0 50px rgba(218, 54, 51, 0.3); }
         #reaction-layer { position: fixed; inset: 0; pointer-events: none; z-index: 100000; overflow: hidden; }
         .floating-emoji { position: absolute; bottom: -100px; font-size: 4.5rem; animation: emojiFloat 3.5s forwards; }
-        @keyframes emojiFloat { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-100vh) scale(1.5); opacity: 0; } }
+        @keyframes emojiFloat { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 15% { opacity: 1; transform: translateY(-50px) scale(1.2); } 100% { transform: translateY(-100vh) scale(1.5); opacity: 0; } }
 
         .user-pill { background: var(--bg-card); padding: 15px 20px; border-radius: 15px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .user-pill.hand-up { border-color: var(--accent-warn); background: #1f1b11; }
@@ -200,11 +183,11 @@
     <div id="os-boot-loader">
         <div class="boot-card">
             <div class="boot-logo">LECTURE DX</div>
-            <div class="boot-version">QUANTUM-CORE OS v33.0 | GHOST-SYNC ENABLED</div>
+            <div class="boot-version">QUANTUM-CORE OS v34.0 | FULL-SYNC RECOVERY</div>
             
             <div class="input-group">
-                <label>Room ID (Unique)</label>
-                <input type="text" id="boot-room-id" class="dx-input" placeholder="e.g. physics-pro-101">
+                <label>Room ID</label>
+                <input type="text" id="boot-room-id" class="dx-input" placeholder="e.g. math-class-01">
             </div>
             <div class="input-group">
                 <label>Identifier Name</label>
@@ -250,7 +233,7 @@
                 </div>
             </header>
 
-            <!-- 永続ビデオエリア（共有中のみ表示、メニューを変えても見れる） -->
+            <!-- 永続ビデオエリア -->
             <div id="persistent-stream-container">
                 <div class="stream-status-overlay"><i class="fa-solid fa-tower-broadcast"></i> Live Streaming</div>
                 <video id="remote-video" autoplay playsinline></video>
@@ -294,7 +277,7 @@
                                     <div class="input-group"><label>Format</label><select id="sv-type" class="dx-select" onchange="core.survey.toggleFields()"><option value="choice">単一選択 (Radio)</option><option value="multi">複数選択 (Checkbox)</option><option value="text">自由記述 (Free Text)</option><option value="rating">5段階評価 (Rating)</option></select></div>
                                     <div class="input-group"><label>Question</label><input type="text" id="sv-q" class="dx-input"></div>
                                     <div id="sv-opts-group" class="input-group"><label>Options (Comma Sep)</label><input type="text" id="sv-opts" class="dx-input" placeholder="A, B, C"></div>
-                                    <div class="input-group" style="display:flex; align-items:center; gap:10px;"><input type="checkbox" id="sv-auto-share" checked style="width:20px; height:20px;"><label>結果を生徒に公開する</label></div>
+                                    <div class="input-group" style="display:flex; align-items:center; gap:10px;"><input type="checkbox" id="sv-auto-share" checked style="width:22px; height:22px;"><label>結果を生徒に公開する</label></div>
                                     <button class="btn-boot btn-p" onclick="core.survey.broadcast()">Broadcast Poll</button>
                                     <button class="btn-boot btn-s" style="margin-top:10px;" onclick="core.survey.reset()">Reset</button>
                                 </div>
@@ -305,7 +288,7 @@
                                     <h1 id="sv-student-q" style="margin-bottom:40px; line-height:1.4;">Active Question</h1>
                                     <div id="sv-render-area"></div>
                                     <div id="sv-thanks" style="display:none; margin-top:30px;"><h2 style="color:var(--accent-success);">✅ Answer Submitted</h2></div>
-                                    <div id="sv-student-results-panel" style="display:none; margin-top:40px; border-top:1px solid #333; padding-top:30px; text-align:left;"><h3 style="margin-bottom:20px; color:var(--p-light);">全体の集計結果 (匿名)</h3><div id="sv-results-student-area"></div></div>
+                                    <div id="sv-student-results-panel" style="display:none; margin-top:40px; border-top:1px solid #333; padding-top:30px; text-align:left;"><h3 style="margin-bottom:25px; color:var(--p-light);">全体の集計結果 (匿名)</h3><div id="sv-results-student-area"></div></div>
                                 </div>
                             </div>
                         </div>
@@ -349,7 +332,7 @@
 
 <script>
 /**
- * LECTURE DX KERNEL v33.0
+ * LECTURE DX KERNEL v34.0
  */
 
 class LectureDX {
@@ -377,7 +360,7 @@ class LectureDX {
             }
         }
 
-        const pid = role === 'teacher' ? `ldx33-${this.room}-host` : `ldx33-${this.room}-${Math.random().toString(36).substr(2,8)}`;
+        const pid = role === 'teacher' ? `ldx34-${this.room}-host` : `ldx34-${this.room}-${Math.random().toString(36).substr(2,8)}`;
         this.peer = new Peer(pid);
         this.peer.on('open', () => this.boot());
         this.peer.on('error', (e) => { 
@@ -411,11 +394,12 @@ class DX_Network {
     constructor(c) { this.core = c; this.queue = []; }
     connect() {
         if(this.core.hostConn) this.core.hostConn.close();
-        this.core.hostConn = this.core.peer.connect(`ldx33-${this.core.room}-host`, { reliable: true });
+        this.core.hostConn = this.core.peer.connect(`ldx34-${this.core.room}-host`, { reliable: true });
         this.core.hostConn.on('open', () => {
             this.core.ui.setStatus('student');
-            this.core.hostConn.send({ type:'JOIN', name:this.core.userName });
-            // 不在中に溜まったキューを送信
+            // 教員に自分の情報を再送信（再バインド）
+            this.core.hostConn.send({ type:'JOIN', name:this.core.userName, hand:this.core.ui.hand });
+            // オフライン中の操作があれば送信
             this.queue.forEach(p => this.core.hostConn.send(p));
             this.queue = [];
         });
@@ -429,7 +413,7 @@ class DX_Network {
         c.on('open', () => {
             this.core.conns.set(c.peer, c);
             c.on('data', d => this.router(d, c));
-            // 教員復帰時の同期（生徒を最新状態へ上書き）
+            // 教員が再開した際、既存の生徒たちに最新の状態を強制同期
             c.send({ type:'NOTE_SYNC', val: document.getElementById('note-editor').value });
             c.send({ type:'BOARD_LOCK', val: this.core.board.locked });
             c.send({ type:'BOARD_SYNC', val: this.core.board.canvas.toDataURL() });
@@ -444,7 +428,11 @@ class DX_Network {
     }
     router(d, c=null) {
         switch(d.type) {
-            case 'JOIN': this.core.participants.set(c.peer, { name:d.name, hand:false }); this.core.ui.log('SYSTEM', `${d.name} joined.`); this.core.ui.updateAdmin(); break;
+            case 'JOIN': 
+                this.core.participants.set(c.peer, { name:d.name, hand:d.hand||false }); 
+                this.core.ui.log('SYSTEM', `${d.name} connected.`); 
+                this.core.ui.updateAdmin(); 
+                break;
             case 'NOTE_SYNC': this.core.note.receive(d.val); break;
             case 'BOARD_SYNC': this.core.board.receive(d.val); break;
             case 'BOARD_LOCK': this.core.board.setLock(d.val); break;
@@ -454,13 +442,16 @@ class DX_Network {
             case 'SV_SYNC_RESULT': this.core.survey.receiveResults(d); break;
             case 'TIMER_SYNC': this.core.timer.receive(d.end); break;
             case 'EMOJI': this.core.ui.spawnEmoji(d.emoji); break;
-            case 'HAND': const p = this.core.participants.get(c.peer); if(p) { p.hand = d.val; this.core.ui.updateAdmin(); if(d.val) this.core.ui.notify(); } break;
+            case 'HAND': 
+                const p = this.core.participants.get(c.peer); 
+                if(p) { p.hand = d.val; this.core.ui.updateAdmin(); if(d.val) this.core.ui.notify(); } 
+                break;
             case 'SCREEN_OFF': document.getElementById('persistent-stream-container').style.display='none'; break;
         }
     }
     sendToHost(p) {
         if(this.core.hostConn && this.core.hostConn.open) this.core.hostConn.send(p);
-        else this.queue.push(p); // オフライン中は送信待ちにする
+        else this.queue.push(p);
     }
     broadcast(d) { this.core.conns.forEach(c => c.open && c.send(d)); if(this.core.role==='teacher') this.core.recovery.save(); }
     copyInviteUrl() { navigator.clipboard.writeText(`${location.origin}${location.pathname}?room=${this.core.room}`).then(()=>alert("Copied!")); }
@@ -523,7 +514,7 @@ class DX_Survey {
     submit(indices, val=null) { this.core.net.sendToHost({ type:'SV_VOTE', idx:indices, val:val }); document.getElementById('sv-render-area').style.display = 'none'; document.getElementById('sv-thanks').style.display = 'block'; }
     tally(indices, val, conn) {
         const student = this.core.participants.get(conn.peer); const name = student ? student.name : "Unknown"; this.total++;
-        if(['choice','multi','rating'].includes(this.type)) { indices.forEach(idx => { this.results[idx].count++; this.results[idx].users.push(name); }); } else { this.results.push({ val: val, user: name }); }
+        if(['choice','multi','rating'].includes(this.type)) { indices.forEach(idx => { if(this.results[idx]) { this.results[idx].count++; this.results[idx].users.push(name); } }); } else { this.results.push({ val: val, user: name }); }
         this.renderTeacher();
         if(this.isShared) { const anonymized = (['choice','multi','rating'].includes(this.type)) ? this.results.map(r => r.count) : []; this.core.net.broadcast({ type:'SV_SYNC_RESULT', results:anonymized, total:this.total }); }
     }
@@ -568,9 +559,9 @@ class DX_Recovery {
     save() {
         if(this.core.role !== 'teacher') return;
         const snapshot = { note: document.getElementById('note-editor').value, board: this.core.board.canvas.toDataURL(), boardLocked: this.core.board.locked, survey: { active: this.core.survey.active, q: this.core.survey.q, type: this.core.survey.type, opts: this.core.survey.opts, results: this.core.survey.results, total: this.core.survey.total, isShared: this.core.survey.isShared }, timerEnd: this.core.timer.endTS, ts: Date.now() };
-        localStorage.setItem(`ldx33_recovery_${this.core.room}`, JSON.stringify(snapshot));
+        localStorage.setItem(`ldx34_recovery_${this.core.room}`, JSON.stringify(snapshot));
     }
-    getSnapshot(room) { const d = localStorage.getItem(`ldx33_recovery_${room}`); return d ? JSON.parse(d) : null; }
+    getSnapshot(room) { const d = localStorage.getItem(`ldx34_recovery_${room}`); return d ? JSON.parse(d) : null; }
     executeRestore() {
         const d = this.getSnapshot(this.core.room); if(!d) return;
         document.getElementById('note-editor').value = d.note; this.core.note.receive(d.note);
@@ -582,13 +573,13 @@ class DX_Recovery {
 }
 
 class DX_UI {
-    constructor(c) { this.core = c; }
+    constructor(c) { this.core = c; this.hand = false; }
     init() { setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000); }
     setStatus(s) {
         const p = document.getElementById('display-role');
         p.classList.remove('status-teacher', 'status-student', 'status-offline');
-        if(s==='teacher') { p.innerText = 'TEACHER'; p.classList.add('status-teacher'); }
-        else if(s==='student') { p.innerText = 'STUDENT'; p.classList.add('status-student'); }
+        if(s==='teacher') { p.innerText = 'TEACHER (ON)'; p.classList.add('status-teacher'); }
+        else if(s==='student') { p.innerText = 'STUDENT (CONNECTED)'; p.classList.add('status-student'); }
         else { p.innerText = 'TEACHER OFFLINE'; p.classList.add('status-offline'); }
     }
     switchPane(id) {
@@ -612,7 +603,7 @@ window.onload = () => {
         document.getElementById('boot-room-id').value = p.get('room');
         document.getElementById('boot-actions').innerHTML = `<button class="btn-boot btn-p" onclick="core.ignition('student')">Join Classroom</button>`;
         document.getElementById('btn-boot-teacher').style.display = 'none';
-        document.getElementById('boot-status').innerText = "招待リンクを検出しました。生徒としてログインします。";
+        document.getElementById('boot-status').innerText = "招待リンクを検出しました。";
     }
 };
 </script>
