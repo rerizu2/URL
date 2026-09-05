@@ -3,550 +3,406 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SimpleMoney Pro | 次世代資産管理</title>
+    <title>SimpleMoney Omni-Nexus</title>
     
-    <!-- 外部ライブラリ -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
 
     <style>
         /* =========================================
-           1. DESIGN SYSTEM (ユニバーサルデザイン)
-           ========================================= */
+           UI FRAMEWORK & THEME
+        ========================================= */
         :root {
-            --p: #4f46e5; --p-dark: #3730a3; --p-soft: #eef2ff;
-            --s: #10b981; --s-soft: #ecfdf5;
-            --d: #f43f5e; --d-soft: #fff1f2;
-            --w: #f59e0b;
-            --icoca: #00a0e9;
-            --bg: #f8fafc; --card: #ffffff;
-            --text: #0f172a; --text-m: #64748b;
-            --radius-lg: 32px; --radius-md: 20px;
-            --shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
+            --p: #6366f1; --p-soft: rgba(99, 102, 241, 0.1);
+            --s: #10b981; --d: #f43f5e; --icoca: #00a0e9;
+            --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-m: #94a3b8;
+            --glass: rgba(30, 41, 59, 0.7);
         }
 
-        [data-theme="dark"] {
-            --bg: #020617; --card: #0f172a; --text: #f8fafc; --text-m: #94a3b8;
+        [data-theme="light"] {
+            --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --text-m: #64748b; --glass: rgba(255, 255, 255, 0.8);
         }
 
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
-            background: var(--bg); color: var(--text);
-            margin: 0; padding: 0; line-height: 1.6; overflow-x: hidden;
-            transition: background 0.4s ease; font-size: 18px;
-        }
-
-        /* Layout Structure */
-        .app-container { max-width: 600px; margin: 0 auto; min-height: 100vh; position: relative; }
-
-        /* =========================================
-           2. HEADER & DASHBOARD (視覚的直感性)
-           ========================================= */
-        .hero-dashboard {
-            background: var(--p); background: linear-gradient(135deg, var(--p), var(--p-dark));
-            color: white; padding: 50px 24px 80px; border-radius: 0 0 50px 50px;
-            text-align: center; box-shadow: 0 20px 40px rgba(79, 70, 229, 0.2);
-            position: relative; overflow: hidden;
-        }
-
-        .hero-dashboard::after {
-            content: ""; position: absolute; top: -50px; right: -50px;
-            width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%;
-        }
-
-        .main-balance-label { font-size: 1.1rem; font-weight: 600; opacity: 0.9; letter-spacing: 1px; }
-        .main-balance-value { font-size: 4rem; font-weight: 800; margin: 10px 0; letter-spacing: -2px; }
-        
-        .icoca-mini-card {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
-            padding: 8px 18px; border-radius: 15px; font-weight: 700; font-size: 0.9rem;
-            border: 1px solid rgba(255,255,255,0.3);
+            background: var(--bg); color: var(--text); margin: 0; padding: 0;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); line-height: 1.5;
         }
 
         /* =========================================
-           3. INTERACTIVE INPUT (1秒入力)
-           ========================================= */
-        .input-card {
-            background: var(--card); border-radius: var(--radius-lg);
-            margin: -40px 20px 20px; padding: 30px; box-shadow: var(--shadow);
-            position: relative; z-index: 10;
+           HP LIFE-GAUGE (SURVIVAL VISUAL)
+        ========================================= */
+        .hero-section {
+            padding: 60px 24px; text-align: center;
+            background: radial-gradient(circle at top, var(--p-soft), transparent);
         }
 
-        .smart-input-wrapper { position: relative; margin-bottom: 25px; }
-        .amount-display {
-            width: 100%; border: none; background: var(--bg);
-            padding: 24px; border-radius: var(--radius-md);
-            font-size: 3rem; font-weight: 800; color: var(--p);
-            text-align: center; transition: 0.3s;
-        }
-        .amount-display:focus { box-shadow: 0 0 0 4px var(--p-soft); background: white; }
-
-        .quick-actions {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
-        }
-
-        .btn-action {
-            border: none; border-radius: var(--radius-md); padding: 25px 10px;
-            font-weight: 800; cursor: pointer; transition: 0.3s;
-            display: flex; flex-direction: column; align-items: center; gap: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-        }
-        .btn-action:active { transform: translateY(4px) scale(0.95); }
-        .btn-action i { width: 32px; height: 32px; }
-
-        .btn-food { background: #fff7ed; color: #c2410c; }
-        .btn-daily { background: #f0fdf4; color: #15803d; }
-        .btn-other { background: #f8fafc; color: #475569; }
-
-        /* =========================================
-           4. SYNC SYSTEM (ICOCA / 自動連携)
-           ========================================= */
-        .sync-container { padding: 0 20px; margin-bottom: 24px; }
-        .card-icoca {
-            background: linear-gradient(110deg, var(--icoca) 0%, #81d4fa 100%);
-            color: white; border-radius: 24px; padding: 24px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 15px 30px rgba(0, 160, 233, 0.25);
-            position: relative; overflow: hidden;
-        }
-        .icoca-logo { font-size: 1.4rem; font-weight: 900; letter-spacing: -1px; }
-        .btn-sync-trigger {
-            background: white; color: var(--icoca); border: none;
-            padding: 12px 24px; border-radius: 14px; font-weight: 800;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1); cursor: pointer;
-        }
-
-        /* =========================================
-           5. ANALYTICS & LISTS (見える化)
-           ========================================= */
-        .section-title { padding: 0 24px; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
-        .history-list { padding: 0 20px; }
-        .list-item {
-            background: var(--card); margin-bottom: 12px; padding: 20px;
-            border-radius: 20px; display: flex; align-items: center; gap: 15px;
-            box-shadow: var(--shadow); animation: slideIn 0.4s ease forwards;
-        }
-        @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-        .icon-box {
-            width: 50px; height: 50px; border-radius: 15px;
+        .life-gauge-container {
+            width: 240px; height: 240px; margin: 0 auto 30px; position: relative;
             display: flex; align-items: center; justify-content: center;
         }
-        .item-info { flex: 1; }
-        .item-title { font-weight: 700; font-size: 1.1rem; }
-        .item-meta { font-size: 0.85rem; color: var(--text-m); }
-        .item-amount { font-weight: 800; font-size: 1.2rem; }
+
+        .gauge-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        .gauge-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 14; }
+        .gauge-fill {
+            fill: none; stroke: var(--p); stroke-width: 14; stroke-linecap: round;
+            stroke-dasharray: 628; stroke-dashoffset: 628; transition: 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 10px var(--p));
+        }
+
+        .life-content { position: absolute; }
+        .hp-label { font-size: 0.9rem; font-weight: 800; opacity: 0.6; letter-spacing: 2px; }
+        .hp-value { font-size: 3.5rem; font-weight: 900; margin: 5px 0; letter-spacing: -2px; }
+        .hp-status { font-size: 1rem; font-weight: 900; color: var(--s); }
 
         /* =========================================
-           6. NAVIGATION (ユニバーサル)
-           ========================================= */
-        .bottom-nav {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 500px; background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(20px); border-radius: 30px;
-            display: flex; justify-content: space-around; padding: 15px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 1000;
+           OMNI-INPUT SYSTEM (1秒入力 / 音声AI)
+        ========================================= */
+        .input-hub {
+            background: var(--card); border-radius: 40px; padding: 35px;
+            margin: -30px 20px 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            position: relative; z-index: 100;
         }
-        .nav-link {
-            color: #94a3b8; display: flex; flex-direction: column; align-items: center;
-            text-decoration: none; font-size: 0.7rem; font-weight: 700; gap: 4px; transition: 0.3s;
+
+        .voice-fab {
+            position: absolute; top: -30px; right: 30px; background: var(--p); color: white;
+            width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 20px rgba(99,102,241,0.4); cursor: pointer; border: 5px solid var(--bg);
         }
-        .nav-link.active { color: var(--s); }
+        .voice-fab.active { background: var(--d); animation: pulse 1s infinite; }
+
+        .main-amount-input {
+            width: 100%; border: none; background: transparent; color: var(--text);
+            font-size: 4.5rem; font-weight: 900; text-align: center; outline: none; margin-bottom: 25px;
+        }
+
+        .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .btn-q {
+            background: rgba(255,255,255,0.03); border: 2px solid transparent;
+            border-radius: 25px; padding: 25px 10px; color: var(--text);
+            font-weight: 900; cursor: pointer; transition: 0.2s;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .btn-q:active { transform: scale(0.9); background: var(--p-soft); border-color: var(--p); }
+        .btn-q i { width: 35px; height: 35px; }
 
         /* =========================================
-           7. UTILS & ANIMATIONS
-           ========================================= */
-        .page { display: none; padding-bottom: 120px; }
-        .page.active { display: block; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .loader {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: var(--bg); z-index: 9999; display: flex;
-            align-items: center; justify-content: center; transition: 0.5s;
+           NEXUS SYNC CARDS (ICOCA / GMAIL)
+        ========================================= */
+        .nexus-row { display: flex; gap: 20px; overflow-x: auto; padding: 0 20px 30px; scroll-snap-type: x mandatory; }
+        .nexus-card {
+            min-width: 300px; padding: 25px; border-radius: 35px; scroll-snap-align: center;
+            background: var(--card); border: 1px solid rgba(255,255,255,0.05);
+            display: flex; flex-direction: column; justify-content: space-between;
         }
-        .spinner { width: 50px; height: 50px; border: 5px solid var(--p-soft); border-top-color: var(--p); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .nexus-card.icoca { background: linear-gradient(135deg, var(--icoca), #81d4fa); color: white; border: none; }
+        .nexus-card.gmail { background: linear-gradient(135deg, #ea4335, #fb7185); color: white; border: none; }
 
-        /* Toast Notification */
+        .sync-btn {
+            background: rgba(255,255,255,0.2); border: none; padding: 12px;
+            border-radius: 15px; color: white; font-weight: 900; cursor: pointer;
+            backdrop-filter: blur(10px); margin-top: 15px;
+        }
+
+        /* =========================================
+           ANALYTICS & HISTORY
+        ========================================= */
+        .section-title { padding: 0 30px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .list-container { padding: 0 20px 120px; }
+        .tx-card {
+            background: var(--card); padding: 20px; border-radius: 25px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .tx-icon { width: 55px; height: 55px; border-radius: 20px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); }
+        .tx-info { flex: 1; }
+        .tx-name { font-weight: 900; font-size: 1.1rem; }
+        .tx-meta { font-size: 0.8rem; opacity: 0.5; font-weight: 700; }
+        .tx-val { font-weight: 900; font-size: 1.3rem; }
+
+        /* =========================================
+           NAVIGATION & TOAST
+        ========================================= */
+        .nav-dock {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 450px; background: var(--glass);
+            backdrop-filter: blur(25px); border-radius: 40px; padding: 12px;
+            display: flex; justify-content: space-around; z-index: 1000;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-link { color: var(--text-m); cursor: pointer; transition: 0.3s; padding: 10px; border-radius: 20px; }
+        .nav-link.active { color: var(--p); background: var(--p-soft); }
+
         #toast {
-            position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%);
-            background: var(--text); color: white; padding: 12px 30px;
-            border-radius: 50px; font-weight: 700; font-size: 0.9rem;
-            opacity: 0; pointer-events: none; transition: 0.4s; z-index: 2000;
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--p); color: white; padding: 15px 30px; border-radius: 50px;
+            font-weight: 900; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            opacity: 0; pointer-events: none; transition: 0.4s; z-index: 9999;
         }
+
+        .page { display: none; }
+        .page.active { display: block; animation: pageIn 0.5s ease; }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); box-shadow: 0 0 30px var(--d); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
-    <!-- ロード画面 -->
-    <div id="loader" class="loader"><div class="spinner"></div></div>
+    <div id="toast">通知</div>
 
-    <div class="app-container">
-
-        <!-- ページ：ホーム -->
-        <div id="page-home" class="page active">
-            <header class="hero-dashboard">
-                <div class="main-balance-label">今月の残り予算</div>
-                <div class="main-balance-value" id="disp-budget-rem">¥0</div>
-                <div class="icoca-mini-card">
-                    <i data-lucide="wallet-2"></i> ICOCA残高: <span id="disp-icoca-bal">¥0</span>
-                </div>
-            </header>
-
-            <div class="input-card">
-                <div class="smart-input-wrapper">
-                    <input type="number" id="main-amount" class="amount-display" placeholder="0" inputmode="numeric">
-                </div>
-                <div class="quick-actions">
-                    <button class="btn-action btn-food" onclick="app.addEntry('食費', 'utensils')">
-                        <i data-lucide="utensils"></i><span>食費</span>
-                    </button>
-                    <button class="btn-action btn-daily" onclick="app.addEntry('固定費', 'home')">
-                        <i data-lucide="home"></i><span>固定費</span>
-                    </button>
-                    <button class="btn-action btn-other" onclick="app.addEntry('その他', 'layers')">
-                        <i data-lucide="layers"></i><span>その他</span>
-                    </button>
+    <!-- MAIN HOME PAGE -->
+    <div id="p-home" class="page active">
+        <section class="hero">
+            <div class="life-gauge-container">
+                <svg class="gauge-svg">
+                    <circle class="gauge-bg" cx="120" cy="120" r="100"></circle>
+                    <circle id="hp-bar" class="gauge-fill" cx="120" cy="120" r="100"></circle>
+                </svg>
+                <div class="life-content">
+                    <div class="hp-label">FINANCIAL HP</div>
+                    <div class="hp-value" id="disp-hp">--</div>
+                    <div class="hp-status" id="disp-msg">Analyzing...</div>
                 </div>
             </div>
+            <div style="font-weight:900; opacity:0.6;">本日使える目安: <span id="disp-daily-limit">¥0</span></div>
+        </section>
 
-            <div class="sync-container">
-                <div class="card-icoca">
-                    <div>
-                        <div class="icoca-logo">ICOCA</div>
-                        <div style="font-size:0.8rem; opacity:0.9;" id="icoca-status-text">最新の乗車履歴を取得できます</div>
-                    </div>
-                    <button class="btn-sync-trigger" id="btn-icoca-sync" onclick="app.syncICOCA()">同期する</button>
+        <section class="input-hub">
+            <div class="voice-fab" id="voice-btn" onclick="nexus.voiceStart()"><i data-lucide="mic"></i></div>
+            <input type="number" id="in-amount" class="main-amount-input" placeholder="0" inputmode="numeric">
+            <div class="quick-grid">
+                <button class="btn-q" onclick="nexus.add('食費', 'utensils')" style="color:#fb923c"><i data-lucide="utensils"></i><span>食費</span></button>
+                <button class="btn-q" onclick="nexus.add('固定費', 'home')" style="color:#4ade80"><i data-lucide="home"></i><span>固定費</span></button>
+                <button class="btn-q" onclick="nexus.add('その他', 'layers')" style="color:#94a3b8"><i data-lucide="layers"></i><span>その他</span></button>
+            </div>
+        </section>
+
+        <section class="nexus-row">
+            <div class="nexus-card icoca">
+                <div>
+                    <div style="font-weight:900; font-size:1.4rem;">ICOCA Nexus</div>
+                    <small>最新の残高: <span id="disp-icoca">¥0</span></small>
                 </div>
+                <button class="sync-btn" onclick="nexus.sync('ICOCA')">履歴同期</button>
             </div>
+            <div class="nexus-card gmail">
+                <div>
+                    <div style="font-weight:900; font-size:1.4rem;">Smart Gmail</div>
+                    <small>メールから残高を自動抽出</small>
+                </div>
+                <button class="sync-btn" onclick="nexus.sync('GMAIL')">今すぐ解析</button>
+            </div>
+        </section>
 
-            <div class="section-title">
-                <h3 style="margin:0">最近の記録</h3>
-                <small style="color:var(--p); font-weight:800;" onclick="app.changePage('history')">すべて表示</small>
-            </div>
-
-            <div id="recent-list" class="history-list">
-                <!-- JSで動的生成 -->
-            </div>
+        <div class="section-title">
+            <h3 style="margin:0">最近の記録</h3>
+            <small onclick="nexus.showPage('history')" style="color:var(--p); font-weight:900;">すべて見る</small>
         </div>
-
-        <!-- ページ：分析 -->
-        <div id="page-analysis" class="page">
-            <div style="padding: 40px 24px 20px;">
-                <h2 style="margin:0; font-size:2rem; font-weight:800;">分析レポート</h2>
-                <p style="color:var(--text-m)">お金の使いみちを可視化します</p>
-            </div>
-            <div class="input-card" style="margin-top:0;">
-                <canvas id="chart-pie" height="300"></canvas>
-            </div>
-            <div class="input-card">
-                <h4 style="margin-top:0">日次支出トレンド</h4>
-                <canvas id="chart-line" height="200"></canvas>
-            </div>
-        </div>
-
-        <!-- ページ：履歴 -->
-        <div id="page-history" class="page">
-            <div style="padding: 40px 24px 20px;">
-                <h2 style="margin:0; font-size:2rem; font-weight:800;">全履歴</h2>
-                <input type="text" id="history-search" placeholder="項目名や手段で検索..." 
-                       style="width:100%; padding:15px; border-radius:15px; border:none; background:var(--card); margin-top:15px; font-weight:600; box-shadow:var(--shadow);">
-            </div>
-            <div id="full-history-list" class="history-list"></div>
-        </div>
-
-        <!-- ナビゲーション -->
-        <nav class="bottom-nav">
-            <a href="#" class="nav-link active" onclick="app.changePage('home')">
-                <i data-lucide="edit-3"></i><span>入力</span>
-            </a>
-            <a href="#" class="nav-link" onclick="app.changePage('analysis')">
-                <i data-lucide="pie-chart"></i><span>分析</span>
-            </a>
-            <a href="#" class="nav-link" onclick="app.changePage('history')">
-                <i data-lucide="list"></i><span>履歴</span>
-            </a>
-            <a href="#" class="nav-link" onclick="alert('設定は次期アップデートで提供予定です')">
-                <i data-lucide="settings"></i><span>設定</span>
-            </a>
-        </nav>
-
-        <div id="toast"></div>
+        <div class="list-container" id="list-home"></div>
     </div>
+
+    <!-- ANALYSIS PAGE -->
+    <div id="p-analysis" class="page">
+        <div style="padding: 60px 24px 20px;">
+            <h2 style="font-weight:900; font-size:2.5rem; margin:0;">分析レポート</h2>
+        </div>
+        <div class="input-hub" style="margin-top:0;">
+            <canvas id="chart-pie"></canvas>
+        </div>
+        <div class="input-hub">
+            <canvas id="chart-line"></canvas>
+        </div>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div id="p-history" class="page">
+        <div style="padding: 60px 24px 20px;">
+            <h2 style="font-weight:900; font-size:2.5rem; margin:0;">取引履歴</h2>
+            <input type="text" id="search-box" oninput="nexus.filterHistory()" placeholder="検索..." style="width:100%; padding:20px; border-radius:20px; border:none; background:var(--card); color:var(--text); margin-top:20px; font-weight:700;">
+        </div>
+        <div class="list-container" id="list-full"></div>
+    </div>
+
+    <!-- NAVIGATION DOCK -->
+    <nav class="nav-dock">
+        <div class="nav-link active" onclick="nexus.showPage('home')"><i data-lucide="home"></i></div>
+        <div class="nav-link" onclick="nexus.showPage('analysis')"><i data-lucide="pie-chart"></i></div>
+        <div class="nav-link" onclick="nexus.showPage('history')"><i data-lucide="history"></i></div>
+        <div class="nav-link" onclick="nexus.toggleTheme()"><i data-lucide="sun"></i></div>
+    </nav>
 
     <script>
         /**
-         * SimpleMoney Pro - 超高性能コアロジック
+         * SimpleMoney Omni-Nexus CORE
          */
+        const API_URL = "https://script.google.com/macros/s/AKfycbwkAxZS6UjNCmIV-nAY3_bAjo7LIcwu1v4T5mjQuzhH17ZtcGwPbARshx97YbQAth77/exec";
 
-        // --- 1. 設定 & 状態管理 ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbwjoQVUZ0cBL0_67PAOZUl4B3FStEDMmtUCevzWKoUvWHEO3RHCy0JBqe3kQrjTObKe/exec";
-        const CONFIG = {
-            MONTHLY_BUDGET: 150000,
-            ICOCA_INIT_BAL: 3500,
-            THEME_COLOR: '#4f46e5'
-        };
-
-        const app = {
+        const nexus = {
             state: {
-                db: JSON.parse(localStorage.getItem('sm_pro_db')) || [],
-                icocaBal: Number(localStorage.getItem('sm_pro_icoca')) || CONFIG.ICOCA_INIT_BAL,
-                currentPage: 'home',
-                charts: {}
+                db: JSON.parse(localStorage.getItem('omni_db')) || [],
+                budget: 150000,
+                icoca: Number(localStorage.getItem('omni_icoca')) || 3500,
+                theme: localStorage.getItem('omni_theme') || 'dark'
             },
 
             init: async function() {
                 lucide.createIcons();
-                this.updateDashboard();
-                this.bindEvents();
-                await this.fetchServerData();
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+                this.applyTheme();
+                this.updateUI();
+                await this.refresh();
             },
 
-            // --- 2. ページ管理 ---
-            changePage: function(pageId) {
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.getElementById(`page-${pageId}`).classList.add('active');
+            // --- 画面表示制御 ---
+            updateUI: function() {
+                const now = new Date();
+                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                const daysLeft = daysInMonth - now.getDate() + 1;
+
+                const spent = this.state.db.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
+                const remaining = this.state.budget - spent;
+                const hp = Math.max(0, (remaining / this.state.budget) * 100);
+
+                // ライフゲージ (SVGアニメーション)
+                document.getElementById('disp-hp').innerText = Math.floor(hp);
+                document.getElementById('hp-bar').style.strokeDashoffset = 628 - (628 * hp / 100);
+                document.getElementById('disp-daily-limit').innerText = `¥${Math.floor(remaining / daysLeft).toLocaleString()}`;
+                document.getElementById('disp-icoca').innerText = `¥${this.state.icoca.toLocaleString()}`;
+
+                const msg = document.getElementById('disp-msg');
+                if(hp > 70) { msg.innerText = "絶好調！✨"; msg.style.color = "var(--s)"; }
+                else if(hp > 30) { msg.innerText = "注意が必要 ⚖️"; msg.style.color = "#fb923c"; }
+                else { msg.innerText = "ピンチです！💀"; msg.style.color = "var(--d)"; }
+
+                this.renderList('list-home', this.state.db.slice().reverse().slice(0, 5));
+                this.renderList('list-full', this.state.db.slice().reverse());
+            },
+
+            renderList: function(id, data) {
+                const container = document.getElementById(id);
+                const icons = { "食費": "utensils", "固定費": "home", "交通費": "train", "その他": "layers" };
                 
-                document.querySelectorAll('.nav-link').forEach(link => {
-                    link.classList.toggle('active', link.onclick.toString().includes(pageId));
-                });
-
-                this.state.currentPage = pageId;
-                if(pageId === 'analysis') this.renderCharts();
-                if(pageId === 'history') this.renderHistory(this.state.db);
-                window.scrollTo(0, 0);
-            },
-
-            // --- 3. データ処理コア ---
-            addEntry: async function(cat, iconName) {
-                const amountInput = document.getElementById('main-amount');
-                const val = Number(amountInput.value);
-
-                if(!val || val <= 0) {
-                    this.showToast("金額を入力してください ⚠️");
-                    return;
-                }
-
-                const entry = {
-                    type: '支出',
-                    item: cat,
-                    category: cat,
-                    amount: val,
-                    source: '手入力',
-                    timestamp: new Date().toISOString()
-                };
-
-                // 楽観的更新
-                this.state.db.push(entry);
-                this.updateDashboard();
-                amountInput.value = "";
-                this.showToast(`${cat} ¥${val.toLocaleString()} を記録しました ✨`);
-                this.saveLocal();
-
-                // 非同期でサーバー送信
-                try {
-                    await fetch(API_URL, {
-                        method: 'POST',
-                        mode: 'no-cors', // GAS用
-                        body: JSON.stringify(entry)
-                    });
-                } catch(e) { console.error("Server sync failed", e); }
-            },
-
-            syncICOCA: async function() {
-                const btn = document.getElementById('btn-icoca-sync');
-                const text = document.getElementById('icoca-status-text');
-                
-                btn.disabled = true;
-                btn.innerText = "同期中...";
-
-                // 擬似ネットワーク遅延 (ICカード読み取りシミュレーション)
-                await new Promise(r => setTimeout(r, 1800));
-
-                const icocaTx = {
-                    type: '支出',
-                    item: 'JR西日本 乗車',
-                    category: '交通費',
-                    amount: 210,
-                    source: 'ICOCA',
-                    timestamp: new Date().toISOString()
-                };
-
-                this.state.icocaBal -= icocaTx.amount;
-                this.state.db.push(icocaTx);
-                this.updateDashboard();
-                this.saveLocal();
-
-                btn.disabled = false;
-                btn.innerText = "同期完了";
-                text.innerText = "JR西日本 210円 を同期しました";
-                this.showToast("ICOCA履歴を同期しました 🚆");
-
-                setTimeout(() => {
-                    btn.innerText = "同期する";
-                    text.innerText = "最新の乗車履歴を取得できます";
-                }, 4000);
-
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(icocaTx) });
-            },
-
-            // --- 4. ビュー更新エンジン ---
-            updateDashboard: function() {
-                const totalSpent = this.state.db.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
-                const remaining = CONFIG.MONTHLY_BUDGET - totalSpent;
-
-                // 予算表示
-                const bDisp = document.getElementById('disp-budget-rem');
-                bDisp.innerText = `¥${remaining.toLocaleString()}`;
-                bDisp.style.color = remaining < 0 ? 'var(--d)' : 'white';
-
-                // ICOCA表示
-                document.getElementById('disp-icoca-bal').innerText = `¥${this.state.icocaBal.toLocaleString()}`;
-
-                // 直近リスト表示 (5件)
-                const list = document.getElementById('recent-list');
-                const recent = this.state.db.slice().reverse().slice(0, 5);
-                this.renderList(list, recent);
-            },
-
-            renderList: function(container, data) {
-                if(data.length === 0) {
-                    container.innerHTML = `<div style="text-align:center; color:var(--text-m); padding:40px;">データがまだありません</div>`;
-                    return;
-                }
-
-                const catIcons = { '食費': 'utensils', '固定費': 'home', '交通費': 'train', 'その他': 'layers' };
-                const catColors = { '食費': '#ffedd5', '固定費': '#dcfce7', '交通費': '#e0f2fe', 'その他': '#f1f5f9' };
-                const catTxtColors = { '食費': '#c2410c', '固定費': '#15803d', '交通費': '#0369a1', 'その他': '#475569' };
-
-                container.innerHTML = data.map(item => `
-                    <div class="list-item">
-                        <div class="icon-box" style="background:${catColors[item.category] || '#f1f5f9'}; color:${catTxtColors[item.category] || '#475569'};">
-                            <i data-lucide="${catIcons[item.category] || 'box'}"></i>
+                container.innerHTML = data.map(t => `
+                    <div class="tx-card">
+                        <div class="tx-icon"><i data-lucide="${icons[t.category] || 'box'}"></i></div>
+                        <div class="tx-info">
+                            <div class="tx-name">${t.item}</div>
+                            <div class="tx-meta">${t.source} · ${new Date(t.date).toLocaleDateString()}</div>
                         </div>
-                        <div class="item-info">
-                            <div class="item-title">${item.item}</div>
-                            <div class="item-meta">${item.source} · ${new Date(item.timestamp).toLocaleDateString()}</div>
-                        </div>
-                        <div class="item-amount" style="color:var(--d)">-¥${Number(item.amount).toLocaleString()}</div>
+                        <div class="tx-val" style="color:var(--d)">-¥${Number(t.amount).toLocaleString()}</div>
                     </div>
                 `).join('');
                 lucide.createIcons();
             },
 
-            renderHistory: function(data) {
-                const container = document.getElementById('full-history-list');
-                this.renderList(container, data.slice().reverse());
+            // --- アクション ---
+            add: async function(cat, icon) {
+                const amount = document.getElementById('in-amount').value;
+                if(!amount) return this.notify("金額を入れてください 💰");
+
+                const entry = { type: '支出', item: cat, category: cat, amount: amount, source: '手入力', date: new Date().toISOString() };
+                this.state.db.push(entry);
+                this.updateUI();
+                document.getElementById('in-amount').value = "";
+                this.save();
+                this.notify("保存しました！ ✨");
+                
+                await fetch(API_URL, { method: 'POST', body: JSON.stringify(entry), mode: 'no-cors' });
+                this.refresh();
             },
 
-            // --- 5. 分析エンジン (Chart.js) ---
-            renderCharts: function() {
-                const data = this.state.db;
-                const catMap = {};
-                const dayMap = {};
-
-                data.forEach(item => {
-                    // 円グラフ用集計
-                    catMap[item.category] = (catMap[item.category] || 0) + Number(item.amount);
-                    // 折れ線グラフ用 (直近7日間)
-                    const dateStr = new Date(item.timestamp).toLocaleDateString();
-                    dayMap[dateStr] = (dayMap[dateStr] || 0) + Number(item.amount);
-                });
-
-                // Pie Chart
-                const ctxPie = document.getElementById('chart-pie').getContext('2d');
-                if(this.state.charts.pie) this.state.charts.pie.destroy();
-                this.state.charts.pie = new Chart(ctxPie, {
-                    type: 'doughnut',
-                    data: {
-                        labels: Object.keys(catMap),
-                        datasets: [{
-                            data: Object.values(catMap),
-                            backgroundColor: ['#f97316', '#22c55e', '#0ea5e9', '#6366f1', '#94a3b8'],
-                            borderWidth: 0,
-                            spacing: 10
-                        }]
-                    },
-                    options: {
-                        plugins: { legend: { position: 'bottom', labels: { padding: 20, font: { size: 14, weight: 'bold' } } } },
-                        cutout: '75%'
+            sync: async function(type) {
+                this.notify(`${type} と同期中... 🔄`);
+                if(type === 'ICOCA') {
+                    await new Promise(r => setTimeout(r, 1500));
+                    this.state.icoca -= 210;
+                    this.add('JR西日本', 'train');
+                } else if(type === 'GMAIL') {
+                    const res = await fetch(API_URL);
+                    const json = await res.json();
+                    if(json.gmailBalance) {
+                        this.state.icoca = json.gmailBalance;
+                        this.notify(`Gmailより残高 ¥${json.gmailBalance} を取得しました！`);
                     }
-                });
-
-                // Line Chart
-                const ctxLine = document.getElementById('chart-line').getContext('2d');
-                if(this.state.charts.line) this.state.charts.line.destroy();
-                this.state.charts.line = new Chart(ctxLine, {
-                    type: 'line',
-                    data: {
-                        labels: Object.keys(dayMap).slice(-7),
-                        datasets: [{
-                            label: '支出推移',
-                            data: Object.values(dayMap).slice(-7),
-                            borderColor: CONFIG.THEME_COLOR,
-                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 5
-                        }]
-                    },
-                    options: {
-                        scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } },
-                        plugins: { legend: { display: false } }
-                    }
-                });
+                }
+                this.updateUI();
+                this.save();
             },
 
-            // --- 6. システム・同期 ---
-            fetchServerData: async function() {
+            voiceStart: function() {
+                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.lang = 'ja-JP';
+                const btn = document.getElementById('voice-btn');
+                recognition.onstart = () => btn.classList.add('active');
+                recognition.onend = () => btn.classList.remove('active');
+                recognition.onresult = (e) => {
+                    const text = e.results[0][0].transcript;
+                    const amount = text.match(/\d+/);
+                    if(amount) {
+                        document.getElementById('in-amount').value = amount[0];
+                        this.add(text.replace(/\d+/g, '').trim() || "音声入力", "mic");
+                    }
+                };
+                recognition.start();
+            },
+
+            // --- ユーティリティ ---
+            showPage: function(id) {
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('p-' + id).classList.add('active');
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                if(id === 'analysis') this.renderCharts();
+                lucide.createIcons();
+            },
+
+            toggleTheme: function() {
+                this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark';
+                this.applyTheme();
+            },
+
+            applyTheme: function() {
+                document.body.setAttribute('data-theme', this.state.theme);
+                localStorage.setItem('omni_theme', this.state.theme);
+            },
+
+            notify: function(msg) {
+                const t = document.getElementById('toast');
+                t.innerText = msg; t.style.opacity = '1';
+                setTimeout(() => t.style.opacity = '0', 3000);
+            },
+
+            save: function() {
+                localStorage.setItem('omni_db', JSON.stringify(this.state.db));
+                localStorage.setItem('omni_icoca', this.state.icoca);
+            },
+
+            refresh: async function() {
                 try {
                     const res = await fetch(API_URL);
                     const json = await res.json();
                     if(json.data) {
-                        // サーバーのデータとローカルをマージ (本来はID等で名寄せが必要)
                         this.state.db = json.data;
-                        this.saveLocal();
-                        this.updateDashboard();
+                        this.save();
+                        this.updateUI();
                     }
-                } catch(e) {
-                    console.warn("Server sync skipped (Offline or URL not set)");
-                }
+                } catch(e) {}
             },
 
-            saveLocal: function() {
-                localStorage.setItem('sm_pro_db', JSON.stringify(this.state.db));
-                localStorage.setItem('sm_pro_icoca', this.state.icocaBal);
-            },
-
-            bindEvents: function() {
-                // 検索機能
-                document.getElementById('history-search').addEventListener('input', (e) => {
-                    const query = e.target.value.toLowerCase();
-                    const filtered = this.state.db.filter(item => 
-                        item.item.toLowerCase().includes(query) || 
-                        item.category.toLowerCase().includes(query) ||
-                        item.source.toLowerCase().includes(query)
-                    );
-                    this.renderHistory(filtered);
+            renderCharts: function() {
+                const catMap = {};
+                this.state.db.forEach(t => catMap[t.category] = (catMap[t.category]||0) + Number(t.amount));
+                
+                const ctxPie = document.getElementById('chart-pie').getContext('2d');
+                if(window.pChart) window.pChart.destroy();
+                window.pChart = new Chart(ctxPie, {
+                    type: 'doughnut',
+                    data: { labels: Object.keys(catMap), datasets: [{ data: Object.values(catMap), backgroundColor: ['#fb923c','#4ade80','#6366f1','#f43f5e'] }] },
+                    options: { plugins: { legend: { position: 'bottom', labels: { color: this.state.theme==='dark'?'#fff':'#000', font: {size:16, weight:'bold'} } } } }
                 });
-            },
-
-            showToast: function(msg) {
-                const t = document.getElementById('toast');
-                t.innerText = msg;
-                t.style.opacity = '1';
-                setTimeout(() => t.style.opacity = '0', 3000);
             }
         };
 
-        // 起動
-        app.init();
+        nexus.init();
     </script>
 </body>
 </html>
