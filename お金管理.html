@@ -2,407 +2,396 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SimpleMoney Omni-Nexus</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleMoney - クラウド家計管理</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* =========================================
-           UI FRAMEWORK & THEME
-        ========================================= */
         :root {
-            --p: #6366f1; --p-soft: rgba(99, 102, 241, 0.1);
-            --s: #10b981; --d: #f43f5e; --icoca: #00a0e9;
-            --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-m: #94a3b8;
-            --glass: rgba(30, 41, 59, 0.7);
+            --primary: #6dbb9a;
+            --primary-light: #eaf6f0;
+            --danger: #e57373;
+            --bg-body: #f1f4f3;
+            --bg-card: #ffffff;
+            --text-main: #333d39;
+            --text-sub: #88928e;
+            --border-radius: 16px;
+            --sidebar-width: 240px;
         }
 
-        [data-theme="light"] {
-            --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --text-m: #64748b; --glass: rgba(255, 255, 255, 0.8);
+        body.dark-mode {
+            --bg-body: #1a1d1c;
+            --bg-card: #2a2e2d;
+            --text-main: #e0e6e3;
+            --text-sub: #a0aaa5;
+            --primary-light: #34403a;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
-            background: var(--bg); color: var(--text); margin: 0; padding: 0;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); line-height: 1.5;
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; }
+        body { background-color: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Loader Overlay */
+        #loader {
+            position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7);
+            display: none; align-items: center; justify-content: center; z-index: 20000; font-weight: bold; color: var(--primary);
         }
 
-        /* =========================================
-           HP LIFE-GAUGE (SURVIVAL VISUAL)
-        ========================================= */
-        .hero-section {
-            padding: 60px 24px; text-align: center;
-            background: radial-gradient(circle at top, var(--p-soft), transparent);
+        /* Auth Screen */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: 10000; display: flex; align-items: center; justify-content: center;
         }
-
-        .life-gauge-container {
-            width: 240px; height: 240px; margin: 0 auto 30px; position: relative;
-            display: flex; align-items: center; justify-content: center;
+        .auth-card {
+            background: var(--bg-card); padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100%; max-width: 400px; text-align: center;
         }
+        .auth-toggle { display: flex; background: var(--primary-light); padding: 4px; border-radius: 10px; margin-bottom: 25px; }
+        .auth-toggle button { flex: 1; padding: 8px; border: none; background: none; cursor: pointer; border-radius: 8px; font-weight: 600; color: var(--text-sub); }
+        .auth-toggle button.active { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
-        .gauge-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-        .gauge-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 14; }
-        .gauge-fill {
-            fill: none; stroke: var(--p); stroke-width: 14; stroke-linecap: round;
-            stroke-dasharray: 628; stroke-dashoffset: 628; transition: 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-            filter: drop-shadow(0 0 10px var(--p));
-        }
+        /* Main UI Layout */
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); padding: 24px; display: flex; flex-direction: column; border-right: 1px solid rgba(0,0,0,0.05); }
+        .logo { display: flex; align-items: center; gap: 12px; font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 40px; }
+        .logo i { background: var(--primary); color: white; padding: 8px; border-radius: 8px; }
+        
+        .nav-menu { list-style: none; flex-grow: 1; }
+        .nav-item { display: flex; align-items: center; padding: 12px 16px; margin-bottom: 8px; border-radius: 12px; cursor: pointer; color: var(--text-sub); font-weight: 500; }
+        .nav-item.active { background: var(--primary-light); color: var(--primary); }
+        .nav-item.hidden { display: none; }
 
-        .life-content { position: absolute; }
-        .hp-label { font-size: 0.9rem; font-weight: 800; opacity: 0.6; letter-spacing: 2px; }
-        .hp-value { font-size: 3.5rem; font-weight: 900; margin: 5px 0; letter-spacing: -2px; }
-        .hp-status { font-size: 1rem; font-weight: 900; color: var(--s); }
+        .main-container { flex-grow: 1; padding: 24px 40px; overflow-y: auto; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-info img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary); }
 
-        /* =========================================
-           OMNI-INPUT SYSTEM (1秒入力 / 音声AI)
-        ========================================= */
-        .input-hub {
-            background: var(--card); border-radius: 40px; padding: 35px;
-            margin: -30px 20px 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            position: relative; z-index: 100;
-        }
+        /* Cards & Assets */
+        .card { background: var(--bg-card); padding: 24px; border-radius: var(--border-radius); box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px; }
+        .asset-card { border-left: 5px solid var(--primary); }
+        .asset-amount { font-size: 1.6rem; font-weight: 700; margin-top: 8px; }
 
-        .voice-fab {
-            position: absolute; top: -30px; right: 30px; background: var(--p); color: white;
-            width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 20px rgba(99,102,241,0.4); cursor: pointer; border: 5px solid var(--bg);
-        }
-        .voice-fab.active { background: var(--d); animation: pulse 1s infinite; }
+        /* Forms */
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.85rem; margin-bottom: 5px; color: var(--text-sub); }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: var(--bg-card); color: var(--text-main); outline: none; }
+        
+        .btn { padding: 12px 20px; border-radius: 8px; cursor: pointer; border: none; font-weight: 600; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-primary:hover { opacity: 0.8; }
+        .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
 
-        .main-amount-input {
-            width: 100%; border: none; background: transparent; color: var(--text);
-            font-size: 4.5rem; font-weight: 900; text-align: center; outline: none; margin-bottom: 25px;
-        }
+        /* Toggles */
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
 
-        .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .btn-q {
-            background: rgba(255,255,255,0.03); border: 2px solid transparent;
-            border-radius: 25px; padding: 25px 10px; color: var(--text);
-            font-weight: 900; cursor: pointer; transition: 0.2s;
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-        }
-        .btn-q:active { transform: scale(0.9); background: var(--p-soft); border-color: var(--p); }
-        .btn-q i { width: 35px; height: 35px; }
-
-        /* =========================================
-           NEXUS SYNC CARDS (ICOCA / GMAIL)
-        ========================================= */
-        .nexus-row { display: flex; gap: 20px; overflow-x: auto; padding: 0 20px 30px; scroll-snap-type: x mandatory; }
-        .nexus-card {
-            min-width: 300px; padding: 25px; border-radius: 35px; scroll-snap-align: center;
-            background: var(--card); border: 1px solid rgba(255,255,255,0.05);
-            display: flex; flex-direction: column; justify-content: space-between;
-        }
-        .nexus-card.icoca { background: linear-gradient(135deg, var(--icoca), #81d4fa); color: white; border: none; }
-        .nexus-card.gmail { background: linear-gradient(135deg, #ea4335, #fb7185); color: white; border: none; }
-
-        .sync-btn {
-            background: rgba(255,255,255,0.2); border: none; padding: 12px;
-            border-radius: 15px; color: white; font-weight: 900; cursor: pointer;
-            backdrop-filter: blur(10px); margin-top: 15px;
-        }
-
-        /* =========================================
-           ANALYTICS & HISTORY
-        ========================================= */
-        .section-title { padding: 0 30px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .list-container { padding: 0 20px 120px; }
-        .tx-card {
-            background: var(--card); padding: 20px; border-radius: 25px; margin-bottom: 12px;
-            display: flex; align-items: center; gap: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        }
-        .tx-icon { width: 55px; height: 55px; border-radius: 20px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); }
-        .tx-info { flex: 1; }
-        .tx-name { font-weight: 900; font-size: 1.1rem; }
-        .tx-meta { font-size: 0.8rem; opacity: 0.5; font-weight: 700; }
-        .tx-val { font-weight: 900; font-size: 1.3rem; }
-
-        /* =========================================
-           NAVIGATION & TOAST
-        ========================================= */
-        .nav-dock {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 450px; background: var(--glass);
-            backdrop-filter: blur(25px); border-radius: 40px; padding: 12px;
-            display: flex; justify-content: space-around; z-index: 1000;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .nav-link { color: var(--text-m); cursor: pointer; transition: 0.3s; padding: 10px; border-radius: 20px; }
-        .nav-link.active { color: var(--p); background: var(--p-soft); }
-
-        #toast {
-            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--p); color: white; padding: 15px 30px; border-radius: 50px;
-            font-weight: 900; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            opacity: 0; pointer-events: none; transition: 0.4s; z-index: 9999;
-        }
-
-        .page { display: none; }
-        .page.active { display: block; animation: pageIn 0.5s ease; }
-        @keyframes pageIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); box-shadow: 0 0 30px var(--d); } 100% { transform: scale(1); } }
+        .content-page { display: none; }
+        .content-page.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .transaction-list { list-style: none; max-height: 400px; overflow-y: auto; }
+        .transaction-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="toast">通知</div>
+    <div id="loader">通信中...</div>
 
-    <!-- MAIN HOME PAGE -->
-    <div id="p-home" class="page active">
-        <section class="hero">
-            <div class="life-gauge-container">
-                <svg class="gauge-svg">
-                    <circle class="gauge-bg" cx="120" cy="120" r="100"></circle>
-                    <circle id="hp-bar" class="gauge-fill" cx="120" cy="120" r="100"></circle>
-                </svg>
-                <div class="life-content">
-                    <div class="hp-label">FINANCIAL HP</div>
-                    <div class="hp-value" id="disp-hp">--</div>
-                    <div class="hp-status" id="disp-msg">Analyzing...</div>
-                </div>
+    <!-- 認証画面 -->
+    <div id="auth-overlay">
+        <div class="auth-card">
+            <div class="logo"><i class="fa-solid fa-leaf"></i><span>SimpleMoney</span></div>
+            <div class="auth-toggle">
+                <button id="toggle-login" class="active" onclick="switchAuthMode('login')">ログイン</button>
+                <button id="toggle-signup" onclick="switchAuthMode('signup')">新規登録</button>
             </div>
-            <div style="font-weight:900; opacity:0.6;">本日使える目安: <span id="disp-daily-limit">¥0</span></div>
-        </section>
 
-        <section class="input-hub">
-            <div class="voice-fab" id="voice-btn" onclick="nexus.voiceStart()"><i data-lucide="mic"></i></div>
-            <input type="number" id="in-amount" class="main-amount-input" placeholder="0" inputmode="numeric">
-            <div class="quick-grid">
-                <button class="btn-q" onclick="nexus.add('食費', 'utensils')" style="color:#fb923c"><i data-lucide="utensils"></i><span>食費</span></button>
-                <button class="btn-q" onclick="nexus.add('固定費', 'home')" style="color:#4ade80"><i data-lucide="home"></i><span>固定費</span></button>
-                <button class="btn-q" onclick="nexus.add('その他', 'layers')" style="color:#94a3b8"><i data-lucide="layers"></i><span>その他</span></button>
+            <div id="login-form">
+                <div class="input-group"><label>ユーザー名</label><input type="text" id="login-name"></div>
+                <div class="input-group"><label>パスワード</label><input type="password" id="login-pass"></div>
+                <button class="btn btn-primary" onclick="handleLogin()">ログイン</button>
             </div>
-        </section>
 
-        <section class="nexus-row">
-            <div class="nexus-card icoca">
-                <div>
-                    <div style="font-weight:900; font-size:1.4rem;">ICOCA Nexus</div>
-                    <small>最新の残高: <span id="disp-icoca">¥0</span></small>
-                </div>
-                <button class="sync-btn" onclick="nexus.sync('ICOCA')">履歴同期</button>
+            <div id="signup-form" class="hidden">
+                <div class="input-group"><label>希望のユーザー名</label><input type="text" id="signup-name"></div>
+                <div class="input-group"><label>パスワード</label><input type="password" id="signup-pass"></div>
+                <div class="input-group"><label>最初の所持金 (財布)</label><input type="number" id="signup-balance" value="0"></div>
+                <button class="btn btn-primary" onclick="handleSignup()">アカウント作成</button>
             </div>
-            <div class="nexus-card gmail">
-                <div>
-                    <div style="font-weight:900; font-size:1.4rem;">Smart Gmail</div>
-                    <small>メールから残高を自動抽出</small>
-                </div>
-                <button class="sync-btn" onclick="nexus.sync('GMAIL')">今すぐ解析</button>
-            </div>
-        </section>
-
-        <div class="section-title">
-            <h3 style="margin:0">最近の記録</h3>
-            <small onclick="nexus.showPage('history')" style="color:var(--p); font-weight:900;">すべて見る</small>
-        </div>
-        <div class="list-container" id="list-home"></div>
-    </div>
-
-    <!-- ANALYSIS PAGE -->
-    <div id="p-analysis" class="page">
-        <div style="padding: 60px 24px 20px;">
-            <h2 style="font-weight:900; font-size:2.5rem; margin:0;">分析レポート</h2>
-        </div>
-        <div class="input-hub" style="margin-top:0;">
-            <canvas id="chart-pie"></canvas>
-        </div>
-        <div class="input-hub">
-            <canvas id="chart-line"></canvas>
         </div>
     </div>
 
-    <!-- HISTORY PAGE -->
-    <div id="p-history" class="page">
-        <div style="padding: 60px 24px 20px;">
-            <h2 style="font-weight:900; font-size:2.5rem; margin:0;">取引履歴</h2>
-            <input type="text" id="search-box" oninput="nexus.filterHistory()" placeholder="検索..." style="width:100%; padding:20px; border-radius:20px; border:none; background:var(--card); color:var(--text); margin-top:20px; font-weight:700;">
+    <!-- メインアプリ -->
+    <aside class="sidebar">
+        <div class="logo"><i class="fa-solid fa-leaf"></i><span>SimpleMoney</span></div>
+        <ul class="nav-menu">
+            <li class="nav-item active" onclick="showSection('dashboard')"><i class="fa-solid fa-house"></i> ホーム</li>
+            <li class="nav-item" id="nav-reports" onclick="showSection('reports')"><i class="fa-solid fa-chart-pie"></i> レポート</li>
+            <li class="nav-item" onclick="showSection('settings')"><i class="fa-solid fa-gear"></i> 設定</li>
+        </ul>
+        <div style="padding: 20px;">
+            <button class="btn btn-danger" style="width:100%;" onclick="logout()">ログアウト</button>
         </div>
-        <div class="list-container" id="list-full"></div>
-    </div>
+    </aside>
 
-    <!-- NAVIGATION DOCK -->
-    <nav class="nav-dock">
-        <div class="nav-link active" onclick="nexus.showPage('home')"><i data-lucide="home"></i></div>
-        <div class="nav-link" onclick="nexus.showPage('analysis')"><i data-lucide="pie-chart"></i></div>
-        <div class="nav-link" onclick="nexus.showPage('history')"><i data-lucide="history"></i></div>
-        <div class="nav-link" onclick="nexus.toggleTheme()"><i data-lucide="sun"></i></div>
-    </nav>
+    <main class="main-container">
+        <header>
+            <h2 id="page-title">ホーム</h2>
+            <div class="user-info">
+                <span id="header-name" style="font-weight:600;">ユーザーさん</span>
+                <img id="header-avatar" src="" alt="Avatar">
+            </div>
+        </header>
+
+        <!-- ホーム -->
+        <div id="dashboard" class="content-page active">
+            <div class="grid-3">
+                <div class="card asset-card"><h4>財布</h4><div class="asset-amount" id="disp-wallet">¥0</div></div>
+                <div class="card asset-card" style="border-color:#aed9c5;"><h4>貯金</h4><div class="asset-amount" id="disp-savings">¥0</div></div>
+                <div class="card asset-card" style="border-color:#ffe5b4;"><h4>自由費</h4><div class="asset-amount" id="disp-spending">¥0</div></div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:24px;">
+                <div class="card">
+                    <h3>支出の記録</h3>
+                    <div class="input-group"><label>内容</label><input type="text" id="in-name" placeholder="買い物など"></div>
+                    <div class="input-group"><label>金額</label><input type="number" id="in-amount" placeholder="0"></div>
+                    <div class="input-group"><label>出金元</label>
+                        <select id="in-account">
+                            <option value="wallet">財布</option>
+                            <option value="savings">貯金</option>
+                            <option value="spending">自由費</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="addEntry()">記録する</button>
+                </div>
+                <div class="card">
+                    <h3>最近の履歴</h3>
+                    <ul class="transaction-list" id="history-ui"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 設定 -->
+        <div id="settings" class="content-page">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+                <div class="card">
+                    <h3 style="margin-bottom:20px;">プロフィール</h3>
+                    <div class="input-group"><label>表示名</label><input type="text" id="set-name"></div>
+                    <div class="input-group"><label>アバター（キーワード）</label><input type="text" id="set-avatar"></div>
+                    <button class="btn btn-primary" onclick="saveAccount()">プロフィールを更新</button>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:20px;">アプリ設定</h3>
+                    <div class="setting-row"><span>ダークモード</span><label class="switch"><input type="checkbox" id="tog-dark" onchange="toggleSetting('dark')"><span class="slider"></span></label></div>
+                    <div class="setting-row"><span>残高を隠す</span><label class="switch"><input type="checkbox" id="tog-privacy" onchange="toggleSetting('privacy')"><span class="slider"></span></label></div>
+                    <div class="setting-row"><span>レポートを表示</span><label class="switch"><input type="checkbox" id="tog-reports" onchange="toggleSetting('showReports')"><span class="slider"></span></label></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reports" class="content-page"><div class="card"><h3>統計レポート</h3><p>履歴データに基づいた分析が表示されます。</p></div></div>
+    </main>
 
     <script>
-        /**
-         * SimpleMoney Omni-Nexus CORE
-         */
-        const API_URL = "https://script.google.com/macros/s/AKfycbwkAxZS6UjNCmIV-nAY3_bAjo7LIcwu1v4T5mjQuzhH17ZtcGwPbARshx97YbQAth77/exec";
+        // --- 設定：GASのURLをここに貼り付けてください ---
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxpnDIH5Zmp8xQvsdinsN0SVRIlSk0TUdB1E30tX7SksK2CGsXOZ_Uu2VVlt8M4ga9y/exec";
 
-        const nexus = {
-            state: {
-                db: JSON.parse(localStorage.getItem('omni_db')) || [],
-                budget: 150000,
-                icoca: Number(localStorage.getItem('omni_icoca')) || 3500,
-                theme: localStorage.getItem('omni_theme') || 'dark'
-            },
+        let currentUserId = null;
+        let db = null;
 
-            init: async function() {
-                lucide.createIcons();
-                this.applyTheme();
-                this.updateUI();
-                await this.refresh();
-            },
+        const INIT_TEMPLATE = {
+            user: { name: "", avatar: "User" },
+            config: { dark: false, privacy: false, showReports: true },
+            balance: { wallet: 0, savings: 0, spending: 0 },
+            history: []
+        };
 
-            // --- 画面表示制御 ---
-            updateUI: function() {
-                const now = new Date();
-                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                const daysLeft = daysInMonth - now.getDate() + 1;
-
-                const spent = this.state.db.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
-                const remaining = this.state.budget - spent;
-                const hp = Math.max(0, (remaining / this.state.budget) * 100);
-
-                // ライフゲージ (SVGアニメーション)
-                document.getElementById('disp-hp').innerText = Math.floor(hp);
-                document.getElementById('hp-bar').style.strokeDashoffset = 628 - (628 * hp / 100);
-                document.getElementById('disp-daily-limit').innerText = `¥${Math.floor(remaining / daysLeft).toLocaleString()}`;
-                document.getElementById('disp-icoca').innerText = `¥${this.state.icoca.toLocaleString()}`;
-
-                const msg = document.getElementById('disp-msg');
-                if(hp > 70) { msg.innerText = "絶好調！✨"; msg.style.color = "var(--s)"; }
-                else if(hp > 30) { msg.innerText = "注意が必要 ⚖️"; msg.style.color = "#fb923c"; }
-                else { msg.innerText = "ピンチです！💀"; msg.style.color = "var(--d)"; }
-
-                this.renderList('list-home', this.state.db.slice().reverse().slice(0, 5));
-                this.renderList('list-full', this.state.db.slice().reverse());
-            },
-
-            renderList: function(id, data) {
-                const container = document.getElementById(id);
-                const icons = { "食費": "utensils", "固定費": "home", "交通費": "train", "その他": "layers" };
-                
-                container.innerHTML = data.map(t => `
-                    <div class="tx-card">
-                        <div class="tx-icon"><i data-lucide="${icons[t.category] || 'box'}"></i></div>
-                        <div class="tx-info">
-                            <div class="tx-name">${t.item}</div>
-                            <div class="tx-meta">${t.source} · ${new Date(t.date).toLocaleDateString()}</div>
-                        </div>
-                        <div class="tx-val" style="color:var(--d)">-¥${Number(t.amount).toLocaleString()}</div>
-                    </div>
-                `).join('');
-                lucide.createIcons();
-            },
-
-            // --- アクション ---
-            add: async function(cat, icon) {
-                const amount = document.getElementById('in-amount').value;
-                if(!amount) return this.notify("金額を入れてください 💰");
-
-                const entry = { type: '支出', item: cat, category: cat, amount: amount, source: '手入力', date: new Date().toISOString() };
-                this.state.db.push(entry);
-                this.updateUI();
-                document.getElementById('in-amount').value = "";
-                this.save();
-                this.notify("保存しました！ ✨");
-                
-                await fetch(API_URL, { method: 'POST', body: JSON.stringify(entry), mode: 'no-cors' });
-                this.refresh();
-            },
-
-            sync: async function(type) {
-                this.notify(`${type} と同期中... 🔄`);
-                if(type === 'ICOCA') {
-                    await new Promise(r => setTimeout(r, 1500));
-                    this.state.icoca -= 210;
-                    this.add('JR西日本', 'train');
-                } else if(type === 'GMAIL') {
-                    const res = await fetch(API_URL);
-                    const json = await res.json();
-                    if(json.gmailBalance) {
-                        this.state.icoca = json.gmailBalance;
-                        this.notify(`Gmailより残高 ¥${json.gmailBalance} を取得しました！`);
-                    }
-                }
-                this.updateUI();
-                this.save();
-            },
-
-            voiceStart: function() {
-                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-                recognition.lang = 'ja-JP';
-                const btn = document.getElementById('voice-btn');
-                recognition.onstart = () => btn.classList.add('active');
-                recognition.onend = () => btn.classList.remove('active');
-                recognition.onresult = (e) => {
-                    const text = e.results[0][0].transcript;
-                    const amount = text.match(/\d+/);
-                    if(amount) {
-                        document.getElementById('in-amount').value = amount[0];
-                        this.add(text.replace(/\d+/g, '').trim() || "音声入力", "mic");
-                    }
-                };
-                recognition.start();
-            },
-
-            // --- ユーティリティ ---
-            showPage: function(id) {
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.getElementById('p-' + id).classList.add('active');
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                if(id === 'analysis') this.renderCharts();
-                lucide.createIcons();
-            },
-
-            toggleTheme: function() {
-                this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark';
-                this.applyTheme();
-            },
-
-            applyTheme: function() {
-                document.body.setAttribute('data-theme', this.state.theme);
-                localStorage.setItem('omni_theme', this.state.theme);
-            },
-
-            notify: function(msg) {
-                const t = document.getElementById('toast');
-                t.innerText = msg; t.style.opacity = '1';
-                setTimeout(() => t.style.opacity = '0', 3000);
-            },
-
-            save: function() {
-                localStorage.setItem('omni_db', JSON.stringify(this.state.db));
-                localStorage.setItem('omni_icoca', this.state.icoca);
-            },
-
-            refresh: async function() {
-                try {
-                    const res = await fetch(API_URL);
-                    const json = await res.json();
-                    if(json.data) {
-                        this.state.db = json.data;
-                        this.save();
-                        this.updateUI();
-                    }
-                } catch(e) {}
-            },
-
-            renderCharts: function() {
-                const catMap = {};
-                this.state.db.forEach(t => catMap[t.category] = (catMap[t.category]||0) + Number(t.amount));
-                
-                const ctxPie = document.getElementById('chart-pie').getContext('2d');
-                if(window.pChart) window.pChart.destroy();
-                window.pChart = new Chart(ctxPie, {
-                    type: 'doughnut',
-                    data: { labels: Object.keys(catMap), datasets: [{ data: Object.values(catMap), backgroundColor: ['#fb923c','#4ade80','#6366f1','#f43f5e'] }] },
-                    options: { plugins: { legend: { position: 'bottom', labels: { color: this.state.theme==='dark'?'#fff':'#000', font: {size:16, weight:'bold'} } } } }
-                });
+        // ページ読み込み時の処理
+        window.onload = function() {
+            const savedUser = sessionStorage.getItem('sm_user');
+            if (savedUser) {
+                currentUserId = savedUser;
+                loadDataFromGAS();
             }
         };
 
-        nexus.init();
+        function setLoader(show) {
+            document.getElementById('loader').style.display = show ? 'flex' : 'none';
+        }
+
+        async function callGAS(payload) {
+            if (GAS_URL.includes("ここに")) {
+                alert("GASのURLが設定されていません。コード内のGAS_URLを更新してください。");
+                return { success: false };
+            }
+            setLoader(true);
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                setLoader(false);
+                return result;
+            } catch (e) {
+                setLoader(false);
+                alert("サーバー通信エラーが発生しました");
+                return { success: false };
+            }
+        }
+
+        // 認証
+        function switchAuthMode(mode) {
+            document.getElementById('login-form').classList.toggle('hidden', mode !== 'login');
+            document.getElementById('signup-form').classList.toggle('hidden', mode !== 'signup');
+            document.getElementById('toggle-login').classList.toggle('active', mode === 'login');
+            document.getElementById('toggle-signup').classList.toggle('active', mode === 'signup');
+        }
+
+        async function handleSignup() {
+            const name = document.getElementById('signup-name').value.trim();
+            const pass = document.getElementById('signup-pass').value.trim();
+            const bal = parseInt(document.getElementById('signup-balance').value) || 0;
+
+            if (!name || !pass) return alert("全て入力してください");
+
+            let initialDb = JSON.parse(JSON.stringify(INIT_TEMPLATE));
+            initialDb.user.name = name;
+            initialDb.user.avatar = name;
+            initialDb.balance.wallet = bal;
+
+            const res = await callGAS({
+                action: "signup",
+                username: name,
+                password: pass,
+                userData: JSON.stringify(initialDb)
+            });
+
+            if (res.success) {
+                alert("登録完了しました！");
+                completeLogin(name, initialDb);
+            } else {
+                alert(res.message);
+            }
+        }
+
+        async function handleLogin() {
+            const name = document.getElementById('login-name').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+
+            const res = await callGAS({ action: "login", username: name, password: pass });
+
+            if (res.success) {
+                completeLogin(name, JSON.parse(res.userData));
+            } else {
+                alert(res.message);
+            }
+        }
+
+        async function loadDataFromGAS() {
+            // セッションがある場合、最新データを再取得
+            // (簡易化のため今回はログイン時のみ取得にしていますが、必要に応じてここに追加)
+            const savedData = sessionStorage.getItem('sm_data');
+            if (savedData) {
+                db = JSON.parse(savedData);
+                document.getElementById('auth-overlay').classList.add('hidden');
+                applyUI();
+            }
+        }
+
+        function completeLogin(name, userData) {
+            currentUserId = name;
+            db = userData;
+            sessionStorage.setItem('sm_user', name);
+            sessionStorage.setItem('sm_data', JSON.stringify(userData));
+            document.getElementById('auth-overlay').classList.add('hidden');
+            applyUI();
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            location.reload();
+        }
+
+        // アプリ機能
+        async function save() {
+            applyUI();
+            sessionStorage.setItem('sm_data', JSON.stringify(db));
+            await callGAS({
+                action: "save",
+                username: currentUserId,
+                userData: JSON.stringify(db)
+            });
+        }
+
+        function applyUI() {
+            if (!db) return;
+            document.getElementById('header-name').innerText = db.user.name + "さん";
+            document.getElementById('header-avatar').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${db.user.avatar}`;
+            
+            const mask = (val) => db.config.privacy ? "¥ ****" : `¥${val.toLocaleString()}`;
+            document.getElementById('disp-wallet').innerText = mask(db.balance.wallet);
+            document.getElementById('disp-savings').innerText = mask(db.balance.savings);
+            document.getElementById('disp-spending').innerText = mask(db.balance.spending);
+
+            document.body.classList.toggle('dark-mode', db.config.dark);
+            document.getElementById('nav-reports').classList.toggle('hidden', !db.config.showReports);
+
+            document.getElementById('tog-dark').checked = db.config.dark;
+            document.getElementById('tog-privacy').checked = db.config.privacy;
+            document.getElementById('tog-reports').checked = db.config.showReports;
+            document.getElementById('set-name').value = db.user.name;
+            document.getElementById('set-avatar').value = db.user.avatar;
+
+            const histUI = document.getElementById('history-ui');
+            histUI.innerHTML = db.history.slice(-10).reverse().map(h => `
+                <li class="transaction-item">
+                    <span>${h.name}</span>
+                    <span style="color:var(--primary); font-weight:700;">¥${h.amount.toLocaleString()}</span>
+                </li>
+            `).join('');
+        }
+
+        function addEntry() {
+            const name = document.getElementById('in-name').value || "未分類";
+            const amount = parseInt(document.getElementById('in-amount').value) || 0;
+            const acc = document.getElementById('in-account').value;
+            if (amount === 0) return;
+
+            db.balance[acc] -= amount;
+            db.history.push({ name, amount, date: new Date() });
+            document.getElementById('in-name').value = "";
+            document.getElementById('in-amount').value = "";
+            save();
+        }
+
+        function toggleSetting(key) {
+            db.config[key] = !db.config[key];
+            save();
+        }
+
+        function saveAccount() {
+            db.user.name = document.getElementById('set-name').value;
+            db.user.avatar = document.getElementById('set-avatar').value;
+            save();
+            alert("プロフィールを更新しました");
+        }
+
+        function showSection(id) {
+            document.querySelectorAll('.content-page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
+            document.getElementById('page-title').innerText = {dashboard:"ホーム", reports:"レポート", settings:"設定"}[id];
+        }
     </script>
 </body>
 </html>
