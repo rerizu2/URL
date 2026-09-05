@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoneyFlow Ultimate</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --accent: #10b981; --accent-dark: #059669; --bg: #f3f4f6;
+            --card: #ffffff; --text: #1f2937; --text-muted: #6b7280;
+            --danger: #ef4444; --glass: rgba(255, 255, 255, 0.7);
+        }
+
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; overflow: hidden; }
+        
+        /* Sidebar Glassmorphism */
+        .sidebar {
+            width: 260px; height: 100vh; background: var(--card); border-right: 1px solid #e5e7eb;
+            display: flex; flex-direction: column; padding: 1.5rem; box-sizing: border-box;
+        }
+
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 0.8rem 1rem;
+            border-radius: 12px; cursor: pointer; color: var(--text-muted); transition: 0.3s; margin-bottom: 0.5rem;
+        }
+        .nav-item:hover, .nav-item.active { background: #ecfdf5; color: var(--accent); }
+
+        /* Main Content */
+        .main-content { flex: 1; height: 100vh; overflow-y: auto; padding: 2rem; box-sizing: border-box; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--card); padding: 1.5rem; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #f1f5f9; }
+        .stat-val { font-size: 1.8rem; font-weight: 700; margin: 0.5rem 0; }
+        
+        /* Visuals */
+        .dashboard-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+        .chart-box { background: var(--card); padding: 1.5rem; border-radius: 24px; min-height: 300px; }
+        
+        /* Transaction Table */
+        .table-box { background: var(--card); border-radius: 20px; overflow: hidden; margin-top: 1.5rem; border: 1px solid #f1f5f9; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f9fafb; padding: 1rem; text-align: left; font-size: 0.8rem; color: var(--text-muted); }
+        td { padding: 1rem; border-top: 1px solid #f3f4f6; }
+
+        /* Floating Input Button */
+        .fab {
+            position: fixed; bottom: 2rem; right: 2rem; background: var(--accent); color: white;
+            width: 60px; height: 60px; border-radius: 30px; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4); cursor: pointer; transition: 0.3s;
+        }
+        .fab:hover { transform: scale(1.1); background: var(--accent-dark); }
+
+        /* Modal Modern */
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-content { background: var(--card); width: 100%; max-width: 440px; padding: 2.5rem; border-radius: 30px; position: relative; }
+        input, select { width: 100%; padding: 0.8rem; margin: 0.5rem 0 1.2rem; border: 1.5px solid #e5e7eb; border-radius: 12px; font-size: 1rem; }
+        .btn-submit { background: var(--accent); color: white; border: none; width: 100%; padding: 1rem; border-radius: 14px; font-weight: 700; cursor: pointer; }
+
+        .page { display: none; } .page.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo"><i data-lucide="zap"></i> MoneyFlow</div>
+        <nav>
+            <div class="nav-item active" onclick="switchPage('home')"><i data-lucide="layout-dashboard"></i> <span>ホーム</span></div>
+            <div class="nav-item" onclick="switchPage('reports')"><i data-lucide="pie-chart"></i> <span>分析レポート</span></div>
+            <div class="nav-item" onclick="switchPage('history')"><i data-lucide="list"></i> <span>全履歴</span></div>
+            <div class="nav-item" onclick="switchPage('settings')"><i data-lucide="settings"></i> <span>設定</span></div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div id="page-home" class="page active">
+            <div class="header">
+                <h2>ダッシュボード</h2>
+                <span id="sync-status" style="font-size: 0.8rem; color: var(--text-muted);">● 同期済み</span>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="text-muted">今月の残高</span>
+                    <div class="stat-val" id="total-balance">¥0</div>
+                    <small style="color:var(--accent)">前月比 +5.2% ↑</small>
+                </div>
+                <div class="stat-card">
+                    <span class="text-muted">収入</span>
+                    <div class="stat-val" style="color:var(--accent)" id="total-income">¥0</div>
+                </div>
+                <div class="stat-card">
+                    <span class="text-muted">支出</span>
+                    <div class="stat-val" style="color:var(--danger)" id="total-expense">¥0</div>
+                </div>
+            </div>
+
+            <div class="dashboard-layout">
+                <div class="chart-box"><canvas id="mainChart"></canvas></div>
+                <div class="chart-box"><canvas id="categoryChart"></canvas></div>
+            </div>
+
+            <div class="table-box">
+                <table>
+                    <thead><tr><th>日付</th><th>項目</th><th>カテゴリ</th><th>金額</th></tr></thead>
+                    <tbody id="recent-transactions"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="page-reports" class="page"><h2>分析レポート</h2><p>Coming Soon...</p></div>
+    </main>
+
+    <div class="fab" onclick="openModal()"><i data-lucide="plus"></i></div>
+
+    <div class="modal" id="entryModal">
+        <div class="modal-content">
+            <h3 style="margin-top:0">新規データを追加</h3>
+            <label>タイプ</label>
+            <select id="type"><option value="支出">支出 (-)</option><option value="収入">収入 (+)</option></select>
+            <label>項目名</label>
+            <input type="text" id="item" placeholder="例: 焼肉ランチ">
+            <label>金額</label>
+            <input type="number" id="amount" placeholder="¥ 0">
+            <label>カテゴリ</label>
+            <select id="category">
+                <option>食費</option><option>日用品</option><option>交通費</option><option>交際費</option><option>住居費</option><option>その他</option>
+            </select>
+            <button class="btn-submit" onclick="saveEntry()">データを保存</button>
+            <button class="btn-submit" style="background:transparent; color:var(--text-muted); margin-top:10px" onclick="closeModal()">キャンセル</button>
+        </div>
+    </div>
+
+    <script>
+        // 設定: あなたのGASウェブアプリのURLをここに貼る
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbw3suyGmKs3aBX02L_ANrzC4z1CRX37_4Ptw1cWaaH96cKdqAWAYKA7TXdom6syYWs/exec";
+
+        let rawData = JSON.parse(localStorage.getItem('moneyflow_data')) || [];
+        let myCharts = {};
+
+        // 初期化
+        async function init() {
+            lucide.createIcons();
+            renderUI();
+            await syncData();
+        }
+
+        // UI表示
+        function renderUI() {
+            if (rawData.length < 2) return;
+            const rows = rawData.slice(1);
+            
+            // 集計ロジック
+            let income = 0, expense = 0;
+            const categoryMap = {};
+
+            rows.forEach(r => {
+                const amt = parseInt(r[4]);
+                if (r[1] === "収入") income += amt;
+                else {
+                    expense += amt;
+                    categoryMap[r[3]] = (categoryMap[r[3]] || 0) + amt;
+                }
+            });
+
+            document.getElementById('total-income').innerText = `¥${income.toLocaleString()}`;
+            document.getElementById('total-expense').innerText = `¥${expense.toLocaleString()}`;
+            document.getElementById('total-balance').innerText = `¥${(income - expense).toLocaleString()}`;
+
+            // 最近の履歴表示 (5件)
+            const tbody = document.getElementById('recent-transactions');
+            tbody.innerHTML = rows.reverse().slice(0, 5).map(r => `
+                <tr>
+                    <td>${String(r[0]).split('T')[0]}</td>
+                    <td>${r[2]}</td>
+                    <td><span style="background:#f3f4f6; padding:4px 10px; border-radius:8px; font-size:0.8rem">${r[3]}</span></td>
+                    <td style="color:${r[1]==='支出'? 'var(--danger)':'var(--accent)'}; font-weight:700">
+                        ${r[1]==='支出'?'-':'+'}¥${parseInt(r[4]).toLocaleString()}
+                    </td>
+                </tr>
+            `).join('');
+
+            updateCharts(rows, categoryMap);
+        }
+
+        // グラフ更新
+        function updateCharts(rows, categoryMap) {
+            const ctx1 = document.getElementById('mainChart').getContext('2d');
+            if(myCharts.main) myCharts.main.destroy();
+            myCharts.main = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: rows.slice(-7).map(r => String(r[0]).split('T')[0].substring(5)),
+                    datasets: [{ label: '残高推移', data: rows.slice(-7).map(r => r[4]), borderColor: '#10b981', tension: 0.4, fill: true, backgroundColor: 'rgba(16,185,129,0.1)' }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            const ctx2 = document.getElementById('categoryChart').getContext('2d');
+            if(myCharts.cat) myCharts.cat.destroy();
+            myCharts.cat = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categoryMap),
+                    datasets: [{ data: Object.values(categoryMap), backgroundColor: ['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6'] }]
+                },
+                options: { maintainAspectRatio: false, cutout: '70%' }
+            });
+        }
+
+        // 同期ロジック (高性能化の鍵：バックグラウンド同期)
+        async function syncData() {
+            document.getElementById('sync-status').innerText = "● 同期中...";
+            try {
+                const res = await fetch(GAS_URL);
+                const json = await res.json();
+                rawData = json.data;
+                localStorage.setItem('moneyflow_data', JSON.stringify(rawData));
+                renderUI();
+                document.getElementById('sync-status').innerText = "● 同期済み";
+            } catch (e) {
+                document.getElementById('sync-status').innerText = "● オフライン";
+            }
+        }
+
+        async function saveEntry() {
+            const data = {
+                date: new Date().toISOString(),
+                type: document.getElementById('type').value,
+                item: document.getElementById('item').value,
+                amount: document.getElementById('amount').value,
+                category: document.getElementById('category').value,
+                account: "メイン"
+            };
+            if(!data.item || !data.amount) return alert("入力してください");
+            
+            closeModal();
+            // 楽観的UI更新 (サーバーの返答を待たずに反映)
+            rawData.push([data.date, data.type, data.item, data.category, data.amount, data.account]);
+            renderUI();
+
+            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) });
+            syncData();
+        }
+
+        function openModal() { document.getElementById('entryModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('entryModal').style.display = 'none'; }
+        function switchPage(p) {
+            document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+            document.getElementById('page-'+p).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        init();
+    </script>
+</body>
+</html>
