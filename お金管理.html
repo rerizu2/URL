@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SimpleMoney - クラウド家計管理</title>
+    <title>SimpleMoney Pro - クラウド家計管理</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -20,7 +20,7 @@
             --text-main: #333d39;
             --text-sub: #88928e;
             --border-radius: 16px;
-            --sidebar-width: 240px;
+            --sidebar-width: 260px;
         }
 
         body.dark-mode {
@@ -34,314 +34,377 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; }
         body { background-color: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7); display: none; align-items: center; justify-content: center; z-index: 20000; font-weight: bold; color: var(--primary); }
+        /* Loader */
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.1); display: none; align-items: center; justify-content: center; z-index: 30000; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Auth */
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 10000; display: flex; align-items: center; justify-content: center; }
-        .auth-card { background: var(--bg-card); padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        .auth-toggle { display: flex; background: var(--primary-light); padding: 4px; border-radius: 10px; margin-bottom: 25px; }
-        .auth-toggle button { flex: 1; padding: 8px; border: none; background: none; cursor: pointer; border-radius: 8px; font-weight: 600; color: var(--text-sub); }
+        /* Auth Screen */
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: var(--bg-card); padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; }
+        .auth-toggle { display: flex; background: var(--primary-light); padding: 5px; border-radius: 12px; margin-bottom: 30px; }
+        .auth-toggle button { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; border-radius: 10px; font-weight: 600; color: var(--text-sub); }
         .auth-toggle button.active { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
         /* Layout */
-        .sidebar { width: var(--sidebar-width); background: var(--bg-card); padding: 24px; display: flex; flex-direction: column; border-right: 1px solid rgba(0,0,0,0.05); }
-        .logo { display: flex; align-items: center; gap: 12px; font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 40px; }
-        .logo i { background: var(--primary); color: white; padding: 8px; border-radius: 8px; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); padding: 30px 20px; display: flex; flex-direction: column; border-right: 1px solid rgba(0,0,0,0.05); }
+        .logo { display: flex; align-items: center; gap: 12px; font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-bottom: 40px; }
+        .logo i { background: var(--primary); color: white; padding: 10px; border-radius: 10px; }
         .nav-menu { list-style: none; flex-grow: 1; }
-        .nav-item { display: flex; align-items: center; padding: 12px 16px; margin-bottom: 8px; border-radius: 12px; cursor: pointer; color: var(--text-sub); font-weight: 500; }
+        .nav-item { display: flex; align-items: center; padding: 14px 18px; margin-bottom: 8px; border-radius: 12px; cursor: pointer; color: var(--text-sub); font-weight: 600; gap: 12px; }
         .nav-item.active { background: var(--primary-light); color: var(--primary); }
+        .nav-item:hover:not(.active) { background: rgba(0,0,0,0.02); }
 
-        .main-container { flex-grow: 1; padding: 24px 40px; overflow-y: auto; }
+        .main-container { flex-grow: 1; padding: 30px 50px; overflow-y: auto; }
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .user-info { display: flex; align-items: center; gap: 12px; }
-        .user-info img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary); }
+        .user-pill { display: flex; align-items: center; gap: 12px; background: var(--bg-card); padding: 8px 16px; border-radius: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .user-pill img { width: 32px; height: 32px; border-radius: 50%; }
 
-        .card { background: var(--bg-card); padding: 24px; border-radius: var(--border-radius); box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 24px; }
+        /* Cards */
+        .card { background: var(--bg-card); padding: 25px; border-radius: var(--border-radius); box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 24px; }
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px; }
-        .asset-card { border-left: 5px solid var(--primary); }
-        .asset-amount { font-size: 1.6rem; font-weight: 700; margin-top: 8px; }
+        .asset-card { border-left: 6px solid var(--primary); }
+        .asset-label { font-size: 0.9rem; color: var(--text-sub); font-weight: 500; }
+        .asset-amount { font-size: 1.8rem; font-weight: 800; margin-top: 10px; }
 
-        /* Input Type Toggle (Income/Expense) */
-        .type-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
-        .type-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #ddd; cursor: pointer; background: none; font-weight: 600; color: var(--text-sub); }
-        .type-btn.active-income { border-color: var(--income); color: var(--income); background: rgba(76, 175, 80, 0.1); }
-        .type-btn.active-expense { border-color: var(--expense); color: var(--expense); background: rgba(229, 115, 115, 0.1); }
+        /* Form */
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mode-btn { flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #eee; cursor: pointer; background: none; font-weight: 700; color: var(--text-sub); }
+        .mode-btn.active-income { border-color: var(--income); color: var(--income); background: rgba(76, 175, 80, 0.1); }
+        .mode-btn.active-expense { border-color: var(--expense); color: var(--expense); background: rgba(229, 115, 115, 0.1); }
 
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; font-size: 0.85rem; margin-bottom: 5px; color: var(--text-sub); }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: var(--bg-card); color: var(--text-main); outline: none; }
+        .input-group { margin-bottom: 18px; text-align: left; }
+        .input-group label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-sub); font-weight: 600; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; background: var(--bg-card); color: var(--text-main); outline: none; font-size: 1rem; }
+        input:focus { border-color: var(--primary); }
         
-        .btn { padding: 12px 20px; border-radius: 8px; cursor: pointer; border: none; font-weight: 600; transition: 0.2s; }
+        .btn { padding: 14px 20px; border-radius: 10px; cursor: pointer; border: none; font-weight: 700; font-size: 1rem; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(109, 187, 154, 0.3); }
 
-        .transaction-list { list-style: none; max-height: 400px; overflow-y: auto; }
-        .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .item-info { flex: 1; }
-        .item-delete { color: var(--danger); cursor: pointer; padding: 8px; opacity: 0.5; }
-        .item-delete:hover { opacity: 1; }
+        /* Transaction List */
+        .transaction-list { list-style: none; }
+        .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(0,0,0,0.05); animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity:0; transform: translateX(10px); } to { opacity:1; transform: translateX(0); } }
+        .item-main { flex: 1; }
+        .item-title { font-weight: 600; font-size: 1.05rem; }
+        .item-meta { font-size: 0.8rem; color: var(--text-sub); margin-top: 2px; }
+        .item-amount { font-weight: 800; font-size: 1.1rem; margin-right: 20px; }
+        .item-del { color: var(--text-sub); cursor: pointer; padding: 8px; border-radius: 8px; transition: 0.2s; }
+        .item-del:hover { color: var(--danger); background: rgba(229, 115, 115, 0.1); }
+
+        .amount-plus { color: var(--income); }
+        .amount-minus { color: var(--expense); }
+
+        /* Settings Toggle */
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .switch { position: relative; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: var(--primary); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        .content-page { display: none; }
+        .content-page.active { display: block; }
         .hidden { display: none !important; }
-
-        .amount-income { color: var(--income); }
-        .amount-expense { color: var(--expense); }
     </style>
 </head>
 <body>
 
-    <div id="loader">通信中...</div>
+    <div id="loader"><div class="spinner"></div></div>
 
-    <!-- 認証画面 -->
+    <!-- 認証レイヤー -->
     <div id="auth-overlay">
         <div class="auth-card">
             <div class="logo"><i class="fa-solid fa-leaf"></i><span>SimpleMoney</span></div>
             <div class="auth-toggle">
-                <button id="toggle-login" class="active" onclick="switchAuthMode('login')">ログイン</button>
-                <button id="toggle-signup" onclick="switchAuthMode('signup')">新規登録</button>
+                <button id="tab-login" class="active" onclick="toggleAuth('login')">ログイン</button>
+                <button id="tab-signup" onclick="toggleAuth('signup')">新規作成</button>
             </div>
-            <div id="login-form">
-                <div class="input-group"><label>ユーザー名</label><input type="text" id="login-name"></div>
-                <div class="input-group"><label>パスワード</label><input type="password" id="login-pass"></div>
-                <button class="btn btn-primary" onclick="handleLogin()">ログイン</button>
+
+            <div id="form-login">
+                <div class="input-group"><label>ユーザー名</label><input type="text" id="log-user"></div>
+                <div class="input-group"><label>パスワード</label><input type="password" id="log-pass"></div>
+                <button class="btn btn-primary" onclick="doLogin()">ログイン</button>
             </div>
-            <div id="signup-form" class="hidden">
-                <div class="input-group"><label>ユーザー名</label><input type="text" id="signup-name"></div>
-                <div class="input-group"><label>パスワード</label><input type="password" id="signup-pass"></div>
-                <div class="input-group"><label>最初の所持金</label><input type="number" id="signup-balance" value="0"></div>
-                <button class="btn btn-primary" onclick="handleSignup()">開始する</button>
+
+            <div id="form-signup" class="hidden">
+                <div class="input-group"><label>希望のユーザー名</label><input type="text" id="sig-user"></div>
+                <div class="input-group"><label>パスワード</label><input type="password" id="sig-pass"></div>
+                <div class="input-group"><label>最初の所持金 (財布)</label><input type="number" id="sig-bal" value="0"></div>
+                <button class="btn btn-primary" onclick="doSignup()">アカウントを作成</button>
             </div>
         </div>
     </div>
 
-    <!-- アプリUI -->
+    <!-- メインUI -->
     <aside class="sidebar">
         <div class="logo"><i class="fa-solid fa-leaf"></i><span>SimpleMoney</span></div>
         <ul class="nav-menu">
-            <li class="nav-item active" onclick="showSection('dashboard')"><i class="fa-solid fa-house"></i> ホーム</li>
-            <li class="nav-item" onclick="showSection('settings')"><i class="fa-solid fa-gear"></i> 設定</li>
+            <li class="nav-item active" onclick="nav('dashboard')"><i class="fa-solid fa-house"></i>ホーム</li>
+            <li class="nav-item" onclick="nav('settings')"><i class="fa-solid fa-gear"></i>設定</li>
         </ul>
-        <div style="padding: 20px;"><button class="btn btn-danger" style="width:100%;" onclick="logout()">ログアウト</button></div>
+        <button class="btn btn-danger" style="margin-top:20px; font-size:0.9rem;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> ログアウト</button>
     </aside>
 
     <main class="main-container">
         <header>
             <h2 id="page-title">ホーム</h2>
-            <div class="user-info">
-                <span id="header-name" style="font-weight:600;">ユーザーさん</span>
-                <img id="header-avatar" src="" alt="Avatar">
+            <div class="user-pill">
+                <span id="ui-username" style="font-weight:700;">User</span>
+                <img id="ui-avatar" src="" alt="">
             </div>
         </header>
 
+        <!-- ダッシュボード -->
         <div id="dashboard" class="content-page active">
             <div class="grid-3">
-                <div class="card asset-card"><h4>財布</h4><div class="asset-amount" id="disp-wallet">¥0</div></div>
-                <div class="card asset-card" style="border-color:#aed9c5;"><h4>貯金</h4><div class="asset-amount" id="disp-savings">¥0</div></div>
-                <div class="card asset-card" style="border-color:#ffe5b4;"><h4>自由費</h4><div class="asset-amount" id="disp-spending">¥0</div></div>
+                <div class="card asset-card">
+                    <span class="asset-label">財布</span>
+                    <div class="asset-amount" id="bal-wallet">¥0</div>
+                </div>
+                <div class="card asset-card" style="border-color:#aed9c5">
+                    <span class="asset-label">貯金</span>
+                    <div class="asset-amount" id="bal-savings">¥0</div>
+                </div>
+                <div class="card asset-card" style="border-color:#ffe5b4">
+                    <span class="asset-label">自由費</span>
+                    <div class="asset-amount" id="bal-spending">¥0</div>
+                </div>
             </div>
 
-            <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:24px;">
+            <div style="display:grid; grid-template-columns: 1fr 1.6fr; gap:24px;">
                 <div class="card">
-                    <h3>記録をつける</h3>
-                    
-                    <div class="type-toggle">
-                        <button id="btn-expense" class="type-btn active-expense" onclick="setMode('expense')">ー 出金</button>
-                        <button id="btn-income" class="type-btn" onclick="setMode('income')">＋ 入金</button>
+                    <h3 style="margin-bottom:20px;">記録を追加</h3>
+                    <div class="mode-selector">
+                        <button id="mode-exp" class="mode-btn active-expense" onclick="setMode('expense')">出金</button>
+                        <button id="mode-inc" class="mode-btn" onclick="setMode('income')">入金</button>
                     </div>
-
-                    <div class="input-group"><label>項目名</label><input type="text" id="in-name" placeholder="買い物・給料など"></div>
-                    <div class="input-group"><label>金額</label><input type="number" id="in-amount" placeholder="0"></div>
-                    <div class="input-group"><label>対象の口座</label>
-                        <select id="in-account">
+                    <div class="input-group"><label>項目名</label><input type="text" id="in-title" placeholder="例: ランチ"></div>
+                    <div class="input-group"><label>金額</label><input type="number" id="in-amt" placeholder="0"></div>
+                    <div class="input-group"><label>使用口座</label>
+                        <select id="in-acc">
                             <option value="wallet">財布</option>
                             <option value="savings">貯金</option>
                             <option value="spending">自由費</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary" onclick="addEntry()">記録を保存</button>
+                    <button class="btn btn-primary" onclick="addEntry()">記録を保存する</button>
                 </div>
 
                 <div class="card">
-                    <h3>最近の履歴</h3>
-                    <ul class="transaction-list" id="history-ui"></ul>
+                    <h3 style="margin-bottom:20px;">最近の履歴</h3>
+                    <ul class="transaction-list" id="ui-history"></ul>
                 </div>
             </div>
         </div>
 
+        <!-- 設定画面 -->
         <div id="settings" class="content-page">
-            <div class="card">
-                <h3>設定</h3>
-                <p>ダークモードやプライバシー設定はここで変更できます（準備中）</p>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+                <div class="card">
+                    <h3>プロフィール設定</h3>
+                    <div class="input-group" style="margin-top:20px;"><label>表示名</label><input type="text" id="set-name"></div>
+                    <div class="input-group"><label>アバター（キーワード）</label><input type="text" id="set-ava" placeholder="名前など"></div>
+                    <button class="btn btn-primary" onclick="updateProfile()">更新する</button>
+                </div>
+                <div class="card">
+                    <h3>表示設定</h3>
+                    <div class="setting-item">
+                        <span>ダークモード</span>
+                        <label class="switch"><input type="checkbox" id="set-dark" onchange="applySetting('dark')"><span class="slider"></span></label>
+                    </div>
+                    <div class="setting-item">
+                        <span>残高を隠す (***)</span>
+                        <label class="switch"><input type="checkbox" id="set-priv" onchange="applySetting('privacy')"><span class="slider"></span></label>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
-        // --- 設定：GASのURL ---
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxpnDIH5Zmp8xQvsdinsN0SVRIlSk0TUdB1E30tX7SksK2CGsXOZ_Uu2VVlt8M4ga9y/exec";
+        // --- 設定：ここにGASのURLを入れてください ---
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzDx0MWpHqaeEx7Xu7-xNfzu6ew5agJQVkia4jAsLy1Vip7VpaBA0sR_b5fFcw8S4cq/exec";
 
-        let currentUserId = null;
         let db = null;
-        let currentMode = 'expense'; // 'income' or 'expense'
+        let userId = null;
+        let mode = 'expense';
 
-        const INIT_TEMPLATE = {
-            user: { name: "" },
+        const TEMPLATE = {
+            user: { name: "", avatar: "" },
+            config: { dark: false, privacy: false },
             balance: { wallet: 0, savings: 0, spending: 0 },
             history: []
         };
 
-        window.onload = function() {
-            const savedUser = sessionStorage.getItem('sm_user');
-            if (savedUser) {
-                currentUserId = savedUser;
-                db = JSON.parse(sessionStorage.getItem('sm_data'));
+        window.onload = () => {
+            const saved = sessionStorage.getItem('sm_session');
+            if(saved) {
+                const data = JSON.parse(saved);
+                userId = data.id;
+                db = data.db;
                 document.getElementById('auth-overlay').classList.add('hidden');
                 applyUI();
             }
         };
 
-        function setLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
-
-        async function callGAS(payload) {
-            setLoader(true);
+        // GAS通信
+        async function api(payload) {
+            if(GAS_URL.length < 10) return alert("GASのURLが正しく設定されていません。");
+            document.getElementById('loader').style.display = 'flex';
             try {
-                const response = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
-                const result = await response.json();
-                setLoader(false);
-                return result;
-            } catch (e) {
-                setLoader(false);
-                alert("通信エラー");
+                const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+                const json = await res.json();
+                document.getElementById('loader').style.display = 'none';
+                return json;
+            } catch(e) {
+                document.getElementById('loader').style.display = 'none';
+                alert("通信エラーが発生しました。");
                 return { success: false };
             }
         }
 
-        // 入金・出金モード切り替え
-        function setMode(mode) {
-            currentMode = mode;
-            document.getElementById('btn-income').classList.toggle('active-income', mode === 'income');
-            document.getElementById('btn-expense').classList.toggle('active-expense', mode === 'expense');
+        // 認証処理
+        function toggleAuth(m) {
+            document.getElementById('form-login').classList.toggle('hidden', m !== 'login');
+            document.getElementById('form-signup').classList.toggle('hidden', m !== 'signup');
+            document.getElementById('tab-login').classList.toggle('active', m === 'login');
+            document.getElementById('tab-signup').classList.toggle('active', m === 'signup');
         }
 
-        async function handleLogin() {
-            const name = document.getElementById('login-name').value.trim();
-            const pass = document.getElementById('login-pass').value.trim();
-            const res = await callGAS({ action: "login", username: name, password: pass });
-            if (res.success) {
-                currentUserId = name;
+        async function doSignup() {
+            const user = document.getElementById('sig-user').value.trim();
+            const pass = document.getElementById('sig-pass').value.trim();
+            const bal = parseInt(document.getElementById('sig-bal').value) || 0;
+            if(!user || !pass) return alert("入力してください");
+
+            let newDb = JSON.parse(JSON.stringify(TEMPLATE));
+            newDb.user.name = user;
+            newDb.user.avatar = user;
+            newDb.balance.wallet = bal;
+
+            const res = await api({ action:"signup", username:user, password:pass, userData:JSON.stringify(newDb) });
+            if(res.success) {
+                alert("作成完了！ログインしてください");
+                toggleAuth('login');
+            } else alert(res.message);
+        }
+
+        async function doLogin() {
+            const user = document.getElementById('log-user').value.trim();
+            const pass = document.getElementById('log-pass').value.trim();
+            const res = await api({ action:"login", username:user, password:pass });
+            if(res.success) {
+                userId = user;
                 db = JSON.parse(res.userData);
-                sessionStorage.setItem('sm_user', name);
-                sessionStorage.setItem('sm_data', res.userData);
+                sessionStorage.setItem('sm_session', JSON.stringify({id:user, db:db}));
                 document.getElementById('auth-overlay').classList.add('hidden');
                 applyUI();
-            } else alert(res.message);
-        }
-
-        async function handleSignup() {
-            const name = document.getElementById('signup-name').value.trim();
-            const pass = document.getElementById('signup-pass').value.trim();
-            const bal = parseInt(document.getElementById('signup-balance').value) || 0;
-            if(!name || !pass) return alert("入力不足");
-
-            let initialDb = JSON.parse(JSON.stringify(INIT_TEMPLATE));
-            initialDb.user.name = name;
-            initialDb.balance.wallet = bal;
-
-            const res = await callGAS({ action: "signup", username: name, password: pass, userData: JSON.stringify(initialDb) });
-            if (res.success) {
-                currentUserId = name;
-                db = initialDb;
-                sessionStorage.setItem('sm_user', name);
-                sessionStorage.setItem('sm_data', JSON.stringify(db));
-                document.getElementById('auth-overlay').classList.add('hidden');
-                applyUI();
-            } else alert(res.message);
+            } else alert("名前またはパスワードが違います");
         }
 
         function logout() { sessionStorage.clear(); location.reload(); }
 
+        // データ操作
         async function save() {
             applyUI();
-            sessionStorage.setItem('sm_data', JSON.stringify(db));
-            await callGAS({ action: "save", username: currentUserId, userData: JSON.stringify(db) });
+            sessionStorage.setItem('sm_session', JSON.stringify({id:userId, db:db}));
+            await api({ action:"save", username:userId, userData:JSON.stringify(db) });
         }
 
-        function applyUI() {
-            if (!db) return;
-            document.getElementById('header-name').innerText = db.user.name + "さん";
-            document.getElementById('header-avatar').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${db.user.name}`;
-            
-            document.getElementById('disp-wallet').innerText = `¥${db.balance.wallet.toLocaleString()}`;
-            document.getElementById('disp-savings').innerText = `¥${db.balance.savings.toLocaleString()}`;
-            document.getElementById('disp-spending').innerText = `¥${db.balance.spending.toLocaleString()}`;
-
-            const histUI = document.getElementById('history-ui');
-            histUI.innerHTML = "";
-            for (let i = db.history.length - 1; i >= 0; i--) {
-                const h = db.history[i];
-                const isIncome = h.type === 'income';
-                const li = document.createElement('li');
-                li.className = "transaction-item";
-                li.innerHTML = `
-                    <div class="item-info">
-                        <div style="font-weight:600;">${h.name}</div>
-                        <div style="font-size:0.75rem; color:var(--text-sub);">${h.acc}</div>
-                    </div>
-                    <div style="font-weight:700; margin-right:15px;" class="${isIncome ? 'amount-income' : 'amount-expense'}">
-                        ${isIncome ? '+' : '-'} ¥${h.amount.toLocaleString()}
-                    </div>
-                    <div class="item-delete" onclick="deleteEntry(${i})"><i class="fa-solid fa-trash"></i></div>
-                `;
-                histUI.appendChild(li);
-            }
+        function setMode(m) {
+            mode = m;
+            document.getElementById('mode-inc').classList.toggle('active-income', m === 'income');
+            document.getElementById('mode-exp').classList.toggle('active-expense', m === 'expense');
         }
 
         function addEntry() {
-            const name = document.getElementById('in-name').value || (currentMode === 'income' ? "臨時収入" : "未分類");
-            const amount = parseInt(document.getElementById('in-amount').value) || 0;
-            const acc = document.getElementById('in-account').value;
-            if (amount <= 0) return;
+            const title = document.getElementById('in-title').value || "未分類";
+            const amt = parseInt(document.getElementById('in-amt').value) || 0;
+            const acc = document.getElementById('in-acc').value;
+            if(amt <= 0) return;
 
-            // 計算（入金ならプラス、出金ならマイナス）
-            if (currentMode === 'income') {
-                db.balance[acc] += amount;
-            } else {
-                db.balance[acc] -= amount;
-            }
+            if(mode === 'income') db.balance[acc] += amt;
+            else db.balance[acc] -= amt;
 
-            // 履歴にタイプ(income/expense)を保存
-            db.history.push({ name, amount, acc, type: currentMode, date: new Date() });
-            
-            document.getElementById('in-name').value = "";
-            document.getElementById('in-amount').value = "";
+            db.history.push({ title, amt, acc, mode, date: new Date().toLocaleString('ja-JP') });
+            document.getElementById('in-title').value = "";
+            document.getElementById('in-amt').value = "";
             save();
         }
 
-        function deleteEntry(index) {
-            if (!confirm("この記録を削除しますか？残高も調整されます。")) return;
-            const item = db.history[index];
-
-            // 逆算して残高を戻す
-            if (item.type === 'income') {
-                db.balance[item.acc] -= item.amount; // 入金だったなら、引く
-            } else {
-                db.balance[item.acc] += item.amount; // 出金だったなら、足す
-            }
+        function delEntry(idx) {
+            if(!confirm("削除しますか？（残高は自動的に戻ります）")) return;
+            const item = db.history[idx];
+            // 逆算して戻す
+            if(item.mode === 'income') db.balance[item.acc] -= item.amt;
+            else db.balance[item.acc] += item.amt;
             
-            db.history.splice(index, 1);
+            db.history.splice(idx, 1);
             save();
         }
 
-        function switchAuthMode(mode) {
-            document.getElementById('login-form').classList.toggle('hidden', mode !== 'login');
-            document.getElementById('signup-form').classList.toggle('hidden', mode !== 'signup');
-            document.getElementById('toggle-login').classList.toggle('active', mode === 'login');
-            document.getElementById('toggle-signup').classList.toggle('active', mode === 'signup');
+        function applySetting(key) {
+            db.config[key] = document.getElementById(key === 'dark' ? 'set-dark' : 'set-priv').checked;
+            save();
         }
 
-        function showSection(id) {
+        function updateProfile() {
+            db.user.name = document.getElementById('set-name').value;
+            db.user.avatar = document.getElementById('set-ava').value;
+            save();
+            alert("更新しました");
+        }
+
+        // UI反映
+        function applyUI() {
+            if(!db) return;
+            // プロフィール
+            document.getElementById('ui-username').innerText = db.user.name;
+            document.getElementById('ui-avatar').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${db.user.avatar}`;
+            
+            // 設定反映
+            document.body.classList.toggle('dark-mode', db.config.dark);
+            document.getElementById('set-dark').checked = db.config.dark;
+            document.getElementById('set-priv').checked = db.config.privacy;
+            document.getElementById('set-name').value = db.user.name;
+            document.getElementById('set-ava').value = db.user.avatar;
+
+            // 残高反映
+            const mask = (v) => db.config.privacy ? "¥ ****" : `¥${v.toLocaleString()}`;
+            document.getElementById('bal-wallet').innerText = mask(db.balance.wallet);
+            document.getElementById('bal-savings').innerText = mask(db.balance.savings);
+            document.getElementById('bal-spending').innerText = mask(db.balance.spending);
+
+            // 履歴反映
+            const list = document.getElementById('ui-history');
+            list.innerHTML = "";
+            db.history.slice().reverse().forEach((h, i) => {
+                const actualIdx = db.history.length - 1 - i;
+                const li = document.createElement('li');
+                li.className = "transaction-item";
+                li.innerHTML = `
+                    <div class="item-main">
+                        <div class="item-title">${h.title}</div>
+                        <div class="item-meta">${h.date} | ${h.acc === 'wallet' ? '財布' : h.acc === 'savings' ? '貯金' : '自由費'}</div>
+                    </div>
+                    <div class="item-amount ${h.mode === 'income' ? 'amount-plus' : 'amount-minus'}">
+                        ${h.mode === 'income' ? '+' : '-'} ¥${h.amt.toLocaleString()}
+                    </div>
+                    <div class="item-del" onclick="delEntry(${actualIdx})"><i class="fa-solid fa-trash-can"></i></div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function nav(id) {
             document.querySelectorAll('.content-page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             event.currentTarget.classList.add('active');
+            document.getElementById('page-title').innerText = id === 'dashboard' ? 'ホーム' : '設定';
         }
     </script>
 </body>
