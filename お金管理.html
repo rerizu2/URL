@@ -12,6 +12,8 @@
         :root {
             --primary: #6dbb9a;
             --primary-light: #eaf6f0;
+            --income: #4caf50;
+            --expense: #e57373;
             --danger: #e57373;
             --bg-body: #f1f4f3;
             --bg-card: #ffffff;
@@ -32,30 +34,19 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; }
         body { background-color: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Loader Overlay */
-        #loader {
-            position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7);
-            display: none; align-items: center; justify-content: center; z-index: 20000; font-weight: bold; color: var(--primary);
-        }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.7); display: none; align-items: center; justify-content: center; z-index: 20000; font-weight: bold; color: var(--primary); }
 
-        /* Auth Screen */
-        #auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-body); z-index: 10000; display: flex; align-items: center; justify-content: center;
-        }
-        .auth-card {
-            background: var(--bg-card); padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            width: 100%; max-width: 400px; text-align: center;
-        }
+        /* Auth */
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .auth-card { background: var(--bg-card); padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         .auth-toggle { display: flex; background: var(--primary-light); padding: 4px; border-radius: 10px; margin-bottom: 25px; }
         .auth-toggle button { flex: 1; padding: 8px; border: none; background: none; cursor: pointer; border-radius: 8px; font-weight: 600; color: var(--text-sub); }
         .auth-toggle button.active { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
-        /* Main UI Layout */
+        /* Layout */
         .sidebar { width: var(--sidebar-width); background: var(--bg-card); padding: 24px; display: flex; flex-direction: column; border-right: 1px solid rgba(0,0,0,0.05); }
         .logo { display: flex; align-items: center; gap: 12px; font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 40px; }
         .logo i { background: var(--primary); color: white; padding: 8px; border-radius: 8px; }
-        
         .nav-menu { list-style: none; flex-grow: 1; }
         .nav-item { display: flex; align-items: center; padding: 12px 16px; margin-bottom: 8px; border-radius: 12px; cursor: pointer; color: var(--text-sub); font-weight: 500; }
         .nav-item.active { background: var(--primary-light); color: var(--primary); }
@@ -70,6 +61,12 @@
         .asset-card { border-left: 5px solid var(--primary); }
         .asset-amount { font-size: 1.6rem; font-weight: 700; margin-top: 8px; }
 
+        /* Input Type Toggle (Income/Expense) */
+        .type-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
+        .type-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid #ddd; cursor: pointer; background: none; font-weight: 600; color: var(--text-sub); }
+        .type-btn.active-income { border-color: var(--income); color: var(--income); background: rgba(76, 175, 80, 0.1); }
+        .type-btn.active-expense { border-color: var(--expense); color: var(--expense); background: rgba(229, 115, 115, 0.1); }
+
         .input-group { margin-bottom: 15px; text-align: left; }
         .input-group label { display: block; font-size: 0.85rem; margin-bottom: 5px; color: var(--text-sub); }
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: var(--bg-card); color: var(--text-main); outline: none; }
@@ -78,30 +75,22 @@
         .btn-primary { background: var(--primary); color: white; width: 100%; }
         .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
 
-        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(22px); }
-
-        .content-page { display: none; }
-        .content-page.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
         .transaction-list { list-style: none; max-height: 400px; overflow-y: auto; }
         .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .item-info { flex: 1; }
-        .item-delete { color: var(--danger); cursor: pointer; padding: 8px; opacity: 0.5; transition: 0.2s; }
+        .item-delete { color: var(--danger); cursor: pointer; padding: 8px; opacity: 0.5; }
         .item-delete:hover { opacity: 1; }
         .hidden { display: none !important; }
+
+        .amount-income { color: var(--income); }
+        .amount-expense { color: var(--expense); }
     </style>
 </head>
 <body>
 
     <div id="loader">通信中...</div>
 
+    <!-- 認証画面 -->
     <div id="auth-overlay">
         <div class="auth-card">
             <div class="logo"><i class="fa-solid fa-leaf"></i><span>SimpleMoney</span></div>
@@ -115,14 +104,15 @@
                 <button class="btn btn-primary" onclick="handleLogin()">ログイン</button>
             </div>
             <div id="signup-form" class="hidden">
-                <div class="input-group"><label>希望のユーザー名</label><input type="text" id="signup-name"></div>
+                <div class="input-group"><label>ユーザー名</label><input type="text" id="signup-name"></div>
                 <div class="input-group"><label>パスワード</label><input type="password" id="signup-pass"></div>
                 <div class="input-group"><label>最初の所持金</label><input type="number" id="signup-balance" value="0"></div>
-                <button class="btn btn-primary" onclick="handleSignup()">アカウント作成</button>
+                <button class="btn btn-primary" onclick="handleSignup()">開始する</button>
             </div>
         </div>
     </div>
 
+    <!-- アプリUI -->
     <aside class="sidebar">
         <div class="logo"><i class="fa-solid fa-leaf"></i><span>SimpleMoney</span></div>
         <ul class="nav-menu">
@@ -147,20 +137,28 @@
                 <div class="card asset-card" style="border-color:#aed9c5;"><h4>貯金</h4><div class="asset-amount" id="disp-savings">¥0</div></div>
                 <div class="card asset-card" style="border-color:#ffe5b4;"><h4>自由費</h4><div class="asset-amount" id="disp-spending">¥0</div></div>
             </div>
+
             <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:24px;">
                 <div class="card">
-                    <h3>支出の記録</h3>
-                    <div class="input-group"><label>内容</label><input type="text" id="in-name" placeholder="買い物など"></div>
+                    <h3>記録をつける</h3>
+                    
+                    <div class="type-toggle">
+                        <button id="btn-expense" class="type-btn active-expense" onclick="setMode('expense')">ー 出金</button>
+                        <button id="btn-income" class="type-btn" onclick="setMode('income')">＋ 入金</button>
+                    </div>
+
+                    <div class="input-group"><label>項目名</label><input type="text" id="in-name" placeholder="買い物・給料など"></div>
                     <div class="input-group"><label>金額</label><input type="number" id="in-amount" placeholder="0"></div>
-                    <div class="input-group"><label>出金元</label>
+                    <div class="input-group"><label>対象の口座</label>
                         <select id="in-account">
                             <option value="wallet">財布</option>
                             <option value="savings">貯金</option>
                             <option value="spending">自由費</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary" onclick="addEntry()">記録する</button>
+                    <button class="btn btn-primary" onclick="addEntry()">記録を保存</button>
                 </div>
+
                 <div class="card">
                     <h3>最近の履歴</h3>
                     <ul class="transaction-list" id="history-ui"></ul>
@@ -170,23 +168,22 @@
 
         <div id="settings" class="content-page">
             <div class="card">
-                <h3>アプリ設定</h3>
-                <div class="setting-row"><span>ダークモード</span><label class="switch"><input type="checkbox" id="tog-dark" onchange="toggleSetting('dark')"><span class="slider"></span></label></div>
-                <div class="setting-row"><span>残高を隠す</span><label class="switch"><input type="checkbox" id="tog-privacy" onchange="toggleSetting('privacy')"><span class="slider"></span></label></div>
+                <h3>設定</h3>
+                <p>ダークモードやプライバシー設定はここで変更できます（準備中）</p>
             </div>
         </div>
     </main>
 
     <script>
-        // --- 設定：GASのURLを貼り付けてください ---
+        // --- 設定：GASのURL ---
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxpnDIH5Zmp8xQvsdinsN0SVRIlSk0TUdB1E30tX7SksK2CGsXOZ_Uu2VVlt8M4ga9y/exec";
 
         let currentUserId = null;
         let db = null;
+        let currentMode = 'expense'; // 'income' or 'expense'
 
         const INIT_TEMPLATE = {
-            user: { name: "", avatar: "User" },
-            config: { dark: false, privacy: false },
+            user: { name: "" },
             balance: { wallet: 0, savings: 0, spending: 0 },
             history: []
         };
@@ -195,12 +192,9 @@
             const savedUser = sessionStorage.getItem('sm_user');
             if (savedUser) {
                 currentUserId = savedUser;
-                const savedData = sessionStorage.getItem('sm_data');
-                if (savedData) {
-                    db = JSON.parse(savedData);
-                    document.getElementById('auth-overlay').classList.add('hidden');
-                    applyUI();
-                }
+                db = JSON.parse(sessionStorage.getItem('sm_data'));
+                document.getElementById('auth-overlay').classList.add('hidden');
+                applyUI();
             }
         };
 
@@ -220,43 +214,46 @@
             }
         }
 
-        function switchAuthMode(mode) {
-            document.getElementById('login-form').classList.toggle('hidden', mode !== 'login');
-            document.getElementById('signup-form').classList.toggle('hidden', mode !== 'signup');
-            document.getElementById('toggle-login').classList.toggle('active', mode === 'login');
-            document.getElementById('toggle-signup').classList.toggle('active', mode === 'signup');
-        }
-
-        async function handleSignup() {
-            const name = document.getElementById('signup-name').value.trim();
-            const pass = document.getElementById('signup-pass').value.trim();
-            const bal = parseInt(document.getElementById('signup-balance').value) || 0;
-            if (!name || !pass) return alert("入力不足");
-
-            let initialDb = JSON.parse(JSON.stringify(INIT_TEMPLATE));
-            initialDb.user.name = name;
-            initialDb.balance.wallet = bal;
-
-            const res = await callGAS({ action: "signup", username: name, password: pass, userData: JSON.stringify(initialDb) });
-            if (res.success) completeLogin(name, initialDb);
-            else alert(res.message);
+        // 入金・出金モード切り替え
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn-income').classList.toggle('active-income', mode === 'income');
+            document.getElementById('btn-expense').classList.toggle('active-expense', mode === 'expense');
         }
 
         async function handleLogin() {
             const name = document.getElementById('login-name').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
             const res = await callGAS({ action: "login", username: name, password: pass });
-            if (res.success) completeLogin(name, JSON.parse(res.userData));
-            else alert(res.message);
+            if (res.success) {
+                currentUserId = name;
+                db = JSON.parse(res.userData);
+                sessionStorage.setItem('sm_user', name);
+                sessionStorage.setItem('sm_data', res.userData);
+                document.getElementById('auth-overlay').classList.add('hidden');
+                applyUI();
+            } else alert(res.message);
         }
 
-        function completeLogin(name, userData) {
-            currentUserId = name;
-            db = userData;
-            sessionStorage.setItem('sm_user', name);
-            sessionStorage.setItem('sm_data', JSON.stringify(userData));
-            document.getElementById('auth-overlay').classList.add('hidden');
-            applyUI();
+        async function handleSignup() {
+            const name = document.getElementById('signup-name').value.trim();
+            const pass = document.getElementById('signup-pass').value.trim();
+            const bal = parseInt(document.getElementById('signup-balance').value) || 0;
+            if(!name || !pass) return alert("入力不足");
+
+            let initialDb = JSON.parse(JSON.stringify(INIT_TEMPLATE));
+            initialDb.user.name = name;
+            initialDb.balance.wallet = bal;
+
+            const res = await callGAS({ action: "signup", username: name, password: pass, userData: JSON.stringify(initialDb) });
+            if (res.success) {
+                currentUserId = name;
+                db = initialDb;
+                sessionStorage.setItem('sm_user', name);
+                sessionStorage.setItem('sm_data', JSON.stringify(db));
+                document.getElementById('auth-overlay').classList.add('hidden');
+                applyUI();
+            } else alert(res.message);
         }
 
         function logout() { sessionStorage.clear(); location.reload(); }
@@ -272,22 +269,15 @@
             document.getElementById('header-name').innerText = db.user.name + "さん";
             document.getElementById('header-avatar').src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${db.user.name}`;
             
-            const mask = (val) => db.config.privacy ? "¥ ****" : `¥${val.toLocaleString()}`;
-            document.getElementById('disp-wallet').innerText = mask(db.balance.wallet);
-            document.getElementById('disp-savings').innerText = mask(db.balance.savings);
-            document.getElementById('disp-spending').innerText = mask(db.balance.spending);
+            document.getElementById('disp-wallet').innerText = `¥${db.balance.wallet.toLocaleString()}`;
+            document.getElementById('disp-savings').innerText = `¥${db.balance.savings.toLocaleString()}`;
+            document.getElementById('disp-spending').innerText = `¥${db.balance.spending.toLocaleString()}`;
 
-            document.body.classList.toggle('dark-mode', db.config.dark);
-            document.getElementById('tog-dark').checked = db.config.dark;
-            document.getElementById('tog-privacy').checked = db.config.privacy;
-
-            // 履歴の描画
             const histUI = document.getElementById('history-ui');
             histUI.innerHTML = "";
-            
-            // 配列の最後（最新）からループを回す
             for (let i = db.history.length - 1; i >= 0; i--) {
                 const h = db.history[i];
+                const isIncome = h.type === 'income';
                 const li = document.createElement('li');
                 li.className = "transaction-item";
                 li.innerHTML = `
@@ -295,7 +285,9 @@
                         <div style="font-weight:600;">${h.name}</div>
                         <div style="font-size:0.75rem; color:var(--text-sub);">${h.acc}</div>
                     </div>
-                    <div style="font-weight:700; margin-right:15px;">¥${h.amount.toLocaleString()}</div>
+                    <div style="font-weight:700; margin-right:15px;" class="${isIncome ? 'amount-income' : 'amount-expense'}">
+                        ${isIncome ? '+' : '-'} ¥${h.amount.toLocaleString()}
+                    </div>
                     <div class="item-delete" onclick="deleteEntry(${i})"><i class="fa-solid fa-trash"></i></div>
                 `;
                 histUI.appendChild(li);
@@ -303,38 +295,46 @@
         }
 
         function addEntry() {
-            const name = document.getElementById('in-name').value || "未分類";
+            const name = document.getElementById('in-name').value || (currentMode === 'income' ? "臨時収入" : "未分類");
             const amount = parseInt(document.getElementById('in-amount').value) || 0;
             const acc = document.getElementById('in-account').value;
-            if (amount === 0) return;
+            if (amount <= 0) return;
 
-            // 残高から引く
-            db.balance[acc] -= amount;
-            // 履歴に口座情報も含めて保存
-            db.history.push({ name, amount, acc, date: new Date() });
+            // 計算（入金ならプラス、出金ならマイナス）
+            if (currentMode === 'income') {
+                db.balance[acc] += amount;
+            } else {
+                db.balance[acc] -= amount;
+            }
+
+            // 履歴にタイプ(income/expense)を保存
+            db.history.push({ name, amount, acc, type: currentMode, date: new Date() });
             
             document.getElementById('in-name').value = "";
             document.getElementById('in-amount').value = "";
             save();
         }
 
-        // --- 今回追加した削除機能 ---
         function deleteEntry(index) {
-            if (!confirm("この記録を削除しますか？（金額は口座に戻ります）")) return;
-
+            if (!confirm("この記録を削除しますか？残高も調整されます。")) return;
             const item = db.history[index];
-            // 削除する項目の金額を、元の口座に戻す（プラスする）
-            db.balance[item.acc] += item.amount;
+
+            // 逆算して残高を戻す
+            if (item.type === 'income') {
+                db.balance[item.acc] -= item.amount; // 入金だったなら、引く
+            } else {
+                db.balance[item.acc] += item.amount; // 出金だったなら、足す
+            }
             
-            // 配列から削除
             db.history.splice(index, 1);
-            
             save();
         }
 
-        function toggleSetting(key) {
-            db.config[key] = !db.config[key];
-            save();
+        function switchAuthMode(mode) {
+            document.getElementById('login-form').classList.toggle('hidden', mode !== 'login');
+            document.getElementById('signup-form').classList.toggle('hidden', mode !== 'signup');
+            document.getElementById('toggle-login').classList.toggle('active', mode === 'login');
+            document.getElementById('toggle-signup').classList.toggle('active', mode === 'signup');
         }
 
         function showSection(id) {
@@ -342,7 +342,6 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             event.currentTarget.classList.add('active');
-            document.getElementById('page-title').innerText = {dashboard:"ホーム", settings:"設定"}[id];
         }
     </script>
 </body>
