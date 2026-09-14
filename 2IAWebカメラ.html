@@ -1,465 +1,846 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-  <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width,
-             initial-scale=1,
-             maximum-scale=1,
-             user-scalable=no,
-             viewport-fit=cover"
-  >
+<meta charset="UTF-8">
 
-  <title>GAS Smart Camera</title>
+<meta
+  name="viewport"
+  content="width=device-width,
+           initial-scale=1,
+           maximum-scale=1,
+           user-scalable=no"
+>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+<title>GAS Smart Camera</title>
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-      color: #fff;
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-    }
+<style>
 
-    body {
-      display: flex;
-      flex-direction: column;
-    }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
-    /* =========================
-       上部
-    ========================= */
+html,
+body {
 
-    #topBar {
-      height: 60px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 15px;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 10;
-    }
+  margin: 0;
 
-    #title {
-      font-size: 18px;
-      font-weight: bold;
-    }
+  width: 100%;
+  height: 100%;
 
-    .topButton {
-      border: none;
-      background: rgba(255,255,255,0.15);
-      color: white;
-      border-radius: 50%;
-      width: 42px;
-      height: 42px;
-      font-size: 20px;
-    }
+  overflow: hidden;
 
-    /* =========================
-       カメラ
-    ========================= */
+  background: #000;
 
-    #cameraArea {
-      position: relative;
-      flex: 1;
-      min-height: 0;
-      background: #000;
-      overflow: hidden;
-    }
+  color: #fff;
 
-    #video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      transform-origin: center center;
-    }
+  font-family:
+    Arial,
+    sans-serif;
 
-    /* =========================
-       ズーム
-    ========================= */
+}
 
-    #zoomArea {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 5;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
+body {
 
-    #zoomLabel {
-      font-size: 13px;
-      background: rgba(0,0,0,.6);
-      padding: 4px 7px;
-      border-radius: 8px;
-    }
+  display: flex;
 
-    #zoom {
-      writing-mode: vertical-lr;
-      direction: rtl;
-      height: 180px;
-    }
+  flex-direction: column;
 
-    /* =========================
-       状態
-    ========================= */
+}
 
-    #status {
-      position: absolute;
-      left: 50%;
-      top: 15px;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,.65);
-      padding: 7px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      white-space: nowrap;
-      z-index: 6;
-    }
 
-    #recordTimer {
-      position: absolute;
-      top: 55px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #ff3b30;
-      font-size: 18px;
-      font-weight: bold;
-      display: none;
-      z-index: 6;
-    }
+/* =====================================================
+   上部
+===================================================== */
 
-    /* =========================
-       下部
-    ========================= */
+#topBar {
 
-    #bottomBar {
-      height: 130px;
-      flex-shrink: 0;
-      background: rgba(0,0,0,.95);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      z-index: 10;
-    }
+  height: 60px;
 
-    #modeArea {
-      display: flex;
-      gap: 8px;
-    }
+  background:
+    rgba(0,0,0,.9);
 
-    .modeButton {
-      border: none;
-      padding: 8px 18px;
-      border-radius: 20px;
-      background: #333;
-      color: white;
-      font-size: 14px;
-    }
+  display: flex;
 
-    .modeButton.active {
-      background: white;
-      color: black;
-    }
+  align-items: center;
 
-    #shutter {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      border: 6px solid white;
-      background: #fff;
-      position: relative;
-      touch-action: manipulation;
-    }
+  justify-content: space-between;
 
-    #shutter.recording {
-      background: #ff3b30;
-      border-color: white;
-    }
+  padding:
+    0 12px;
 
-    #shutter.recording::after {
-      content: "";
-      position: absolute;
-      width: 25px;
-      height: 25px;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      border-radius: 5px;
-    }
+  flex-shrink: 0;
 
-    /* =========================
-       ロック
-    ========================= */
+}
 
-    #lockScreen {
-      position: fixed;
-      inset: 0;
-      background: #111;
-      z-index: 999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 25px;
-    }
+#title {
 
-    #lockScreen.hidden {
-      display: none;
-    }
+  font-size: 17px;
 
-    #lockIcon {
-      font-size: 60px;
-      margin-bottom: 20px;
-    }
+  font-weight: bold;
 
-    #lockMessage {
-      font-size: 17px;
-      margin-bottom: 20px;
-    }
+}
 
-    #startButton {
-      border: none;
-      background: white;
-      color: black;
-      padding: 15px 30px;
-      border-radius: 30px;
-      font-size: 17px;
-      font-weight: bold;
-    }
+.topButton {
 
-    /* =========================
-       エラー
-    ========================= */
+  width: 42px;
 
-    #errorBox {
-      position: fixed;
-      left: 15px;
-      right: 15px;
-      bottom: 155px;
-      background: rgba(180,0,0,.95);
-      padding: 15px;
-      border-radius: 12px;
-      z-index: 1000;
-      display: none;
-      white-space: pre-wrap;
-      font-size: 13px;
-    }
+  height: 42px;
 
-    #errorBox.show {
-      display: block;
-    }
-  </style>
+  border: none;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,.15);
+
+  color: white;
+
+  font-size: 20px;
+
+}
+
+
+/* =====================================================
+   カメラ
+===================================================== */
+
+#cameraArea {
+
+  position: relative;
+
+  flex: 1;
+
+  min-height: 0;
+
+  overflow: hidden;
+
+  background: #000;
+
+}
+
+#video {
+
+  width: 100%;
+
+  height: 100%;
+
+  object-fit: cover;
+
+  display: block;
+
+  transform-origin: center;
+
+}
+
+
+/* =====================================================
+   状態
+===================================================== */
+
+#status {
+
+  position: absolute;
+
+  top: 15px;
+
+  left: 50%;
+
+  transform:
+    translateX(-50%);
+
+  background:
+    rgba(0,0,0,.65);
+
+  padding:
+    7px 15px;
+
+  border-radius: 20px;
+
+  font-size: 13px;
+
+  white-space: nowrap;
+
+  z-index: 10;
+
+}
+
+
+/* =====================================================
+   ズーム
+===================================================== */
+
+#zoomArea {
+
+  position: absolute;
+
+  right: 10px;
+
+  top: 50%;
+
+  transform:
+    translateY(-50%);
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 8px;
+
+}
+
+#zoomLabel {
+
+  background:
+    rgba(0,0,0,.7);
+
+  padding:
+    5px 8px;
+
+  border-radius: 8px;
+
+  font-size: 12px;
+
+}
+
+#zoom {
+
+  height: 180px;
+
+  writing-mode:
+    vertical-lr;
+
+  direction: rtl;
+
+}
+
+
+/* =====================================================
+   録画時間
+===================================================== */
+
+#recordTimer {
+
+  position: absolute;
+
+  top: 55px;
+
+  left: 50%;
+
+  transform:
+    translateX(-50%);
+
+  color: red;
+
+  font-weight: bold;
+
+  font-size: 18px;
+
+  display: none;
+
+}
+
+
+/* =====================================================
+   下部
+===================================================== */
+
+#bottomBar {
+
+  height: 130px;
+
+  background:
+    rgba(0,0,0,.95);
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 10px;
+
+}
+
+
+/* モード */
+
+#modeArea {
+
+  display: flex;
+
+  gap: 8px;
+
+}
+
+.modeButton {
+
+  border: none;
+
+  background: #333;
+
+  color: white;
+
+  padding:
+    8px 18px;
+
+  border-radius: 20px;
+
+}
+
+.modeButton.active {
+
+  background: white;
+
+  color: black;
+
+}
+
+
+/* シャッター */
+
+#shutter {
+
+  width: 70px;
+
+  height: 70px;
+
+  border-radius: 50%;
+
+  border: 6px solid white;
+
+  background: white;
+
+}
+
+#shutter.recording {
+
+  background: red;
+
+}
+
+
+/* =====================================================
+   ロック
+===================================================== */
+
+#lockScreen {
+
+  position: fixed;
+
+  inset: 0;
+
+  background: #111;
+
+  z-index: 999;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 25px;
+
+}
+
+#lockScreen.hidden {
+
+  display: none;
+
+}
+
+#lockIcon {
+
+  font-size: 60px;
+
+  margin-bottom: 20px;
+
+}
+
+#lockMessage {
+
+  font-size: 17px;
+
+  line-height: 1.7;
+
+  margin-bottom: 20px;
+
+}
+
+#startButton {
+
+  border: none;
+
+  background: white;
+
+  color: black;
+
+  padding:
+    15px 30px;
+
+  border-radius: 30px;
+
+  font-size: 17px;
+
+  font-weight: bold;
+
+}
+
+
+/* =====================================================
+   エラー
+===================================================== */
+
+#errorBox {
+
+  position: fixed;
+
+  left: 15px;
+
+  right: 15px;
+
+  bottom: 150px;
+
+  background:
+    rgba(180,0,0,.95);
+
+  padding: 15px;
+
+  border-radius: 12px;
+
+  z-index: 1000;
+
+  display: none;
+
+  white-space: pre-wrap;
+
+  font-size: 13px;
+
+}
+
+#errorBox.show {
+
+  display: block;
+
+}
+
+
+/* =====================================================
+   設定状態
+===================================================== */
+
+#settingStatus {
+
+  position: fixed;
+
+  inset: 0;
+
+  background:
+    rgba(0,0,0,.95);
+
+  z-index: 2000;
+
+  display: none;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 25px;
+
+}
+
+#settingStatus.show {
+
+  display: flex;
+
+}
+
+#settingPanel {
+
+  width: 100%;
+
+  max-width: 500px;
+
+  background: #222;
+
+  border-radius: 20px;
+
+  padding: 25px;
+
+}
+
+#settingPanel h2 {
+
+  margin-top: 0;
+
+}
+
+.settingItem {
+
+  padding:
+    12px 0;
+
+  border-bottom:
+    1px solid #444;
+
+}
+
+.ok {
+
+  color: #4cff75;
+
+}
+
+.ng {
+
+  color: #ff5c5c;
+
+}
+
+#closeSetting {
+
+  margin-top: 20px;
+
+  width: 100%;
+
+  padding: 13px;
+
+  border: none;
+
+  border-radius: 12px;
+
+}
+
+</style>
+
 </head>
+
 
 <body>
 
-  <!-- ロック画面 -->
-  <div id="lockScreen">
 
-    <div id="lockIcon">📷</div>
+<!-- =====================================================
+     ロック
+===================================================== -->
 
-    <div id="lockMessage">
-      カメラを使用するには<br>
-      下のボタンを押してください
-    </div>
+<div id="lockScreen">
 
-    <button id="startButton">
-      カメラを起動
-    </button>
+  <div id="lockIcon">
+    📷
+  </div>
+
+  <div id="lockMessage">
+
+    カメラの設定を確認しています…
 
   </div>
 
-  <!-- 上部 -->
-  <div id="topBar">
+  <button id="startButton">
 
-    <button
-      class="topButton"
-      id="switchCamera"
-      title="カメラ切替"
+    カメラを起動
+
+  </button>
+
+</div>
+
+
+<!-- =====================================================
+     上部
+===================================================== -->
+
+<div id="topBar">
+
+  <button
+    class="topButton"
+    id="switchCamera"
+  >
+    🔄
+  </button>
+
+  <div id="title">
+    GAS Smart Camera
+  </div>
+
+  <button
+    class="topButton"
+    id="checkSettings"
+  >
+    ⚙️
+  </button>
+
+</div>
+
+
+<!-- =====================================================
+     カメラ
+===================================================== -->
+
+<div id="cameraArea">
+
+  <video
+    id="video"
+    autoplay
+    playsinline
+    muted
+  ></video>
+
+  <div id="status">
+    設定確認中
+  </div>
+
+  <div id="recordTimer">
+    00:00
+  </div>
+
+  <div id="zoomArea">
+
+    <div id="zoomLabel">
+      1.0x
+    </div>
+
+    <input
+      id="zoom"
+      type="range"
+      min="1"
+      max="5"
+      step="0.1"
+      value="1"
     >
-      🔄
-    </button>
 
-    <div id="title">
-      GAS Smart Camera
-    </div>
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     下部
+===================================================== -->
+
+<div id="bottomBar">
+
+  <div id="modeArea">
 
     <button
-      class="topButton"
-      id="reloadCamera"
-      title="再読み込み"
+      class="modeButton active"
+      id="photoMode"
     >
-      ↻
+      📷 写真
+    </button>
+
+    <button
+      class="modeButton"
+      id="videoMode"
+    >
+      🎥 動画
     </button>
 
   </div>
 
-  <!-- カメラ -->
-  <div id="cameraArea">
+  <button
+    id="shutter"
+  ></button>
 
-    <video
-      id="video"
-      autoplay
-      playsinline
-      muted
-    ></video>
+</div>
 
-    <div id="status">
-      カメラ待機中
+
+<!-- =====================================================
+     エラー
+===================================================== -->
+
+<div id="errorBox"></div>
+
+
+<!-- =====================================================
+     設定確認
+===================================================== -->
+
+<div id="settingStatus">
+
+  <div id="settingPanel">
+
+    <h2>
+      ⚙️ カメラ設定
+    </h2>
+
+    <div
+      class="settingItem"
+      id="cameraSetting"
+    >
+      カメラ使用許可：確認中
     </div>
 
-    <div id="recordTimer">
-      00:00
+    <div
+      class="settingItem"
+      id="folderSetting"
+    >
+      Google Drive：確認中
     </div>
 
-    <div id="zoomArea">
-
-      <div id="zoomLabel">
-        1.0x
-      </div>
-
-      <input
-        type="range"
-        id="zoom"
-        min="1"
-        max="5"
-        step="0.1"
-        value="1"
-      >
-
-    </div>
-
-  </div>
-
-  <!-- 下部 -->
-  <div id="bottomBar">
-
-    <div id="modeArea">
-
-      <button
-        class="modeButton active"
-        id="photoMode"
-      >
-        📷 写真
-      </button>
-
-      <button
-        class="modeButton"
-        id="videoMode"
-      >
-        🎥 動画
-      </button>
-
+    <div
+      class="settingItem"
+      id="folderNameSetting"
+    >
+      フォルダ：確認中
     </div>
 
     <button
-      id="shutter"
-      aria-label="撮影"
-    ></button>
+      id="closeSetting"
+    >
+      閉じる
+    </button>
 
   </div>
 
-  <div id="errorBox"></div>
+</div>
+
 
 <script>
 
-/* =========================================================
-   設定
-========================================================= */
 
-/*
-  ▼▼▼ ここをGAS WebアプリURLに変更 ▼▼▼
-*/
+/* =====================================================
+   GAS URL
+===================================================== */
+
 const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbwX3svumiGHJgj4ostsbeQzgvSvdFChjXpABdXKHBDKsx1jMQeDIYnvrxQ7-oK4Ujsfaw/exec";
+  "https://script.google.com/macros/s/AKfycbxO5NOec9Iguu36_aF4ZownAY1yMzdV-nX1BXoOl7CFPFrkXXue3BSoM_1_2jf2jv6j8A/exec";
 
 
 /*
-  最大アップロードサイズ
-  大きすぎる動画はブラウザやGASの制限に
-  引っかかる可能性があるため制限しています。
+  ファイルサイズ上限
+
+  Base64化するとデータ量が増えるため、
+  まずは15MB程度を推奨。
 */
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+const MAX_FILE_SIZE =
+  15 * 1024 * 1024;
 
 
-/* =========================================================
+/* =====================================================
    DOM
-========================================================= */
+===================================================== */
 
 const video =
-  document.getElementById("video");
-
-const startButton =
-  document.getElementById("startButton");
+  document.getElementById(
+    "video"
+  );
 
 const lockScreen =
-  document.getElementById("lockScreen");
+  document.getElementById(
+    "lockScreen"
+  );
+
+const lockMessage =
+  document.getElementById(
+    "lockMessage"
+  );
+
+const startButton =
+  document.getElementById(
+    "startButton"
+  );
 
 const shutter =
-  document.getElementById("shutter");
-
-const switchCamera =
-  document.getElementById("switchCamera");
-
-const reloadCamera =
-  document.getElementById("reloadCamera");
-
-const photoMode =
-  document.getElementById("photoMode");
-
-const videoMode =
-  document.getElementById("videoMode");
+  document.getElementById(
+    "shutter"
+  );
 
 const status =
-  document.getElementById("status");
-
-const zoom =
-  document.getElementById("zoom");
-
-const zoomLabel =
-  document.getElementById("zoomLabel");
-
-const recordTimer =
-  document.getElementById("recordTimer");
+  document.getElementById(
+    "status"
+  );
 
 const errorBox =
-  document.getElementById("errorBox");
+  document.getElementById(
+    "errorBox"
+  );
+
+const photoMode =
+  document.getElementById(
+    "photoMode"
+  );
+
+const videoMode =
+  document.getElementById(
+    "videoMode"
+  );
+
+const switchCamera =
+  document.getElementById(
+    "switchCamera"
+  );
+
+const zoom =
+  document.getElementById(
+    "zoom"
+  );
+
+const zoomLabel =
+  document.getElementById(
+    "zoomLabel"
+  );
+
+const recordTimer =
+  document.getElementById(
+    "recordTimer"
+  );
+
+const checkSettings =
+  document.getElementById(
+    "checkSettings"
+  );
+
+const settingStatus =
+  document.getElementById(
+    "settingStatus"
+  );
+
+const cameraSetting =
+  document.getElementById(
+    "cameraSetting"
+  );
+
+const folderSetting =
+  document.getElementById(
+    "folderSetting"
+  );
+
+const folderNameSetting =
+  document.getElementById(
+    "folderNameSetting"
+  );
+
+const closeSetting =
+  document.getElementById(
+    "closeSetting"
+  );
 
 
-/* =========================================================
+/* =====================================================
    変数
-========================================================= */
+===================================================== */
 
 let stream = null;
 
-let facingMode = "environment";
+let facingMode =
+  "environment";
 
-let currentMode = "photo";
+let currentMode =
+  "photo";
 
 let mediaRecorder = null;
 
@@ -473,82 +854,375 @@ let timerInterval = null;
 
 let currentZoom = 1;
 
+let cameraEnabled = false;
 
-/* =========================================================
-   エラー表示
-========================================================= */
+
+/* =====================================================
+   エラー
+===================================================== */
 
 function showError(message) {
 
   console.error(message);
 
-  errorBox.textContent = message;
+  errorBox.textContent =
+    message;
 
-  errorBox.classList.add("show");
+  errorBox.classList.add(
+    "show"
+  );
 
   setTimeout(() => {
-    errorBox.classList.remove("show");
+
+    errorBox.classList.remove(
+      "show"
+    );
+
   }, 8000);
-}
-
-
-/* =========================================================
-   状態表示
-========================================================= */
-
-function setStatus(message) {
-
-  status.textContent = message;
 
 }
 
 
-/* =========================================================
-   カメラ開始
-========================================================= */
+/* =====================================================
+   設定確認
+===================================================== */
 
-async function startCamera() {
+function checkGASSettings() {
+
+  return new Promise(
+    (resolve) => {
+
+      const callbackName =
+        "gasCallback_" +
+        Date.now();
+
+      window[callbackName] =
+        function(data) {
+
+          delete window[
+            callbackName
+          ];
+
+          script.remove();
+
+          resolve(data);
+
+        };
+
+
+      const script =
+        document.createElement(
+          "script"
+        );
+
+
+      script.src =
+        GAS_URL +
+        "?callback=" +
+        encodeURIComponent(
+          callbackName
+        );
+
+
+      script.onerror =
+        function() {
+
+          delete window[
+            callbackName
+          ];
+
+          script.remove();
+
+          resolve({
+
+            success: false,
+
+            message:
+              "GASへの接続に失敗しました。"
+
+          });
+
+        };
+
+
+      document.body.appendChild(
+        script
+      );
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   設定画面
+===================================================== */
+
+async function showSettings() {
+
+  settingStatus.classList.add(
+    "show"
+  );
+
+  cameraSetting.textContent =
+    "カメラ使用許可：確認中";
+
+  folderSetting.textContent =
+    "Google Drive：確認中";
+
+  folderNameSetting.textContent =
+    "フォルダ：確認中";
+
+
+  const result =
+    await checkGASSettings();
+
+
+  if (!result.success) {
+
+    cameraSetting.textContent =
+      "❌ GAS接続エラー";
+
+    cameraSetting.className =
+      "settingItem ng";
+
+    folderSetting.textContent =
+      "❌ 設定を取得できません";
+
+    folderSetting.className =
+      "settingItem ng";
+
+    folderNameSetting.textContent =
+      result.message || "";
+
+    return;
+
+  }
+
+
+  /* カメラ */
+
+  if (result.cameraEnabled) {
+
+    cameraSetting.textContent =
+      "✅ カメラ使用許可：ON";
+
+    cameraSetting.className =
+      "settingItem ok";
+
+  } else {
+
+    cameraSetting.textContent =
+      "❌ カメラ使用許可：OFF";
+
+    cameraSetting.className =
+      "settingItem ng";
+
+  }
+
+
+  /* Drive */
+
+  if (result.folderExists) {
+
+    folderSetting.textContent =
+      "✅ Google Drive：接続OK";
+
+    folderSetting.className =
+      "settingItem ok";
+
+    folderNameSetting.textContent =
+      "📁 フォルダ：" +
+      result.folderName;
+
+  } else {
+
+    folderSetting.textContent =
+      "❌ Google Drive：接続失敗";
+
+    folderSetting.className =
+      "settingItem ng";
+
+    folderNameSetting.textContent =
+      result.folderError ||
+      "フォルダを確認できません。";
+
+  }
+
+}
+
+
+checkSettings.addEventListener(
+  "click",
+  showSettings
+);
+
+
+closeSetting.addEventListener(
+  "click",
+  () => {
+
+    settingStatus.classList.remove(
+      "show"
+    );
+
+  }
+);
+
+
+/* =====================================================
+   起動時設定確認
+===================================================== */
+
+async function initialize() {
 
   try {
 
-    setStatus("カメラを起動しています…");
+    const result =
+      await checkGASSettings();
+
+
+    if (!result.success) {
+
+      lockMessage.innerHTML =
+        "GASに接続できません。<br>" +
+        "GAS_URLを確認してください。";
+
+      status.textContent =
+        "GAS接続エラー";
+
+      return;
+
+    }
+
+
+    if (!result.cameraEnabled) {
+
+      cameraEnabled =
+        false;
+
+      lockMessage.innerHTML =
+        "スプレッドシートの設定で<br>" +
+        "カメラ使用がOFFになっています。";
+
+      startButton.style.display =
+        "none";
+
+      status.textContent =
+        "カメラ使用OFF";
+
+      return;
+
+    }
+
+
+    if (!result.folderExists) {
+
+      lockMessage.innerHTML =
+        "Google Driveフォルダに<br>" +
+        "アクセスできません。";
+
+      startButton.style.display =
+        "none";
+
+      status.textContent =
+        "Driveエラー";
+
+      return;
+
+    }
+
+
+    cameraEnabled =
+      true;
+
+    lockMessage.innerHTML =
+      "カメラを使用できます。<br>" +
+      "下のボタンを押してください。";
+
+    startButton.style.display =
+      "block";
+
+    status.textContent =
+      "カメラ待機中";
+
+
+  } catch (error) {
+
+    showError(
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   カメラ開始
+===================================================== */
+
+async function startCamera() {
+
+  if (!cameraEnabled) {
+
+    showError(
+      "スプレッドシートでカメラ使用がOFFです。"
+    );
+
+    return;
+
+  }
+
+
+  try {
 
     stopCamera();
 
-    if (!navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia) {
+    setStatus(
+      "カメラ起動中…"
+    );
 
-      throw new Error(
-        "このブラウザではカメラ機能を使用できません。HTTPSでアクセスしてください。"
-      );
-    }
 
     stream =
-      await navigator.mediaDevices.getUserMedia({
+      await navigator
+        .mediaDevices
+        .getUserMedia({
 
-        video: {
-          facingMode: {
-            ideal: facingMode
+          video: {
+
+            facingMode: {
+              ideal:
+                facingMode
+            },
+
+            width: {
+              ideal: 1920
+            },
+
+            height: {
+              ideal: 1080
+            }
+
           },
 
-          width: {
-            ideal: 1920
-          },
+          audio: true
 
-          height: {
-            ideal: 1080
-          }
-        },
+        });
 
-        audio: true
 
-      });
+    video.srcObject =
+      stream;
 
-    video.srcObject = stream;
 
     await video.play();
 
-    lockScreen.classList.add("hidden");
+
+    lockScreen.classList.add(
+      "hidden"
+    );
+
 
     setStatus(
       facingMode === "environment"
@@ -556,55 +1230,31 @@ async function startCamera() {
         : "前面カメラ"
     );
 
+
     applyZoom();
+
 
   } catch (error) {
 
-    console.error(error);
+    showError(
+      "カメラ起動エラー\n\n" +
+      error.name +
+      "\n" +
+      error.message
+    );
 
-    let message =
-      "カメラを起動できませんでした。\n\n";
-
-    if (error.name === "NotAllowedError") {
-
-      message +=
-        "カメラの使用が拒否されています。\n" +
-        "ブラウザのサイト設定でカメラを許可してください。";
-
-    } else if (error.name === "NotFoundError") {
-
-      message +=
-        "カメラが見つかりませんでした。";
-
-    } else if (error.name === "NotReadableError") {
-
-      message +=
-        "カメラが他のアプリで使用されています。";
-
-    } else if (error.name === "SecurityError") {
-
-      message +=
-        "HTTPSでアクセスしてください。";
-
-    } else {
-
-      message +=
-        error.message || error.toString();
-
-    }
-
-    showError(message);
-
-    setStatus("カメラエラー");
+    setStatus(
+      "カメラエラー"
+    );
 
   }
 
 }
 
 
-/* =========================================================
+/* =====================================================
    カメラ停止
-========================================================= */
+===================================================== */
 
 function stopCamera() {
 
@@ -614,7 +1264,10 @@ function stopCamera() {
 
   stream
     .getTracks()
-    .forEach(track => track.stop());
+    .forEach(
+      track =>
+        track.stop()
+    );
 
   stream = null;
 
@@ -623,9 +1276,9 @@ function stopCamera() {
 }
 
 
-/* =========================================================
+/* =====================================================
    カメラ切替
-========================================================= */
+===================================================== */
 
 switchCamera.addEventListener(
   "click",
@@ -642,67 +1295,9 @@ switchCamera.addEventListener(
 );
 
 
-/* =========================================================
-   再読み込み
-========================================================= */
-
-reloadCamera.addEventListener(
-  "click",
-  async () => {
-
-    await startCamera();
-
-  }
-);
-
-
-/* =========================================================
-   撮影モード
-========================================================= */
-
-photoMode.addEventListener(
-  "click",
-  () => {
-
-    if (recording) return;
-
-    currentMode = "photo";
-
-    photoMode.classList.add("active");
-
-    videoMode.classList.remove("active");
-
-    setStatus("写真モード");
-
-  }
-);
-
-
-/* =========================================================
-   動画モード
-========================================================= */
-
-videoMode.addEventListener(
-  "click",
-  () => {
-
-    if (recording) return;
-
-    currentMode = "video";
-
-    videoMode.classList.add("active");
-
-    photoMode.classList.remove("active");
-
-    setStatus("動画モード");
-
-  }
-);
-
-
-/* =========================================================
+/* =====================================================
    シャッター
-========================================================= */
+===================================================== */
 
 shutter.addEventListener(
   "click",
@@ -713,9 +1308,13 @@ shutter.addEventListener(
       await startCamera();
 
       return;
+
     }
 
-    if (currentMode === "photo") {
+
+    if (
+      currentMode === "photo"
+    ) {
 
       await takePhoto();
 
@@ -737,39 +1336,37 @@ shutter.addEventListener(
 );
 
 
-/* =========================================================
-   写真撮影
-========================================================= */
+/* =====================================================
+   写真
+===================================================== */
 
 async function takePhoto() {
 
   try {
 
-    setStatus("撮影しています…");
+    setStatus(
+      "写真を撮影中…"
+    );
+
 
     const canvas =
-      document.createElement("canvas");
-
-    canvas.width = video.videoWidth;
-
-    canvas.height = video.videoHeight;
-
-    const ctx =
-      canvas.getContext("2d");
-
-    /*
-      前面カメラの場合は左右反転
-    */
-    if (facingMode === "user") {
-
-      ctx.translate(
-        canvas.width,
-        0
+      document.createElement(
+        "canvas"
       );
 
-      ctx.scale(-1, 1);
 
-    }
+    canvas.width =
+      video.videoWidth;
+
+    canvas.height =
+      video.videoHeight;
+
+
+    const ctx =
+      canvas.getContext(
+        "2d"
+      );
+
 
     ctx.drawImage(
       video,
@@ -779,32 +1376,43 @@ async function takePhoto() {
       canvas.height
     );
 
+
     const blob =
-      await new Promise(resolve => {
+      await new Promise(
+        resolve => {
 
-        canvas.toBlob(
-          resolve,
-          "image/jpeg",
-          0.92
-        );
+          canvas.toBlob(
+            resolve,
+            "image/jpeg",
+            0.9
+          );
 
-      });
+        }
+      );
+
 
     if (!blob) {
 
       throw new Error(
-        "画像の作成に失敗しました。"
+        "画像生成に失敗しました。"
       );
 
     }
 
+
     await uploadBlob(
       blob,
-      "IMG_" + Date.now() + ".jpg",
+      "IMG_" +
+      Date.now() +
+      ".jpg",
       "image/jpeg"
     );
 
-    setStatus("写真を保存しました");
+
+    setStatus(
+      "✅ Google Driveへ保存しました"
+    );
+
 
   } catch (error) {
 
@@ -813,18 +1421,74 @@ async function takePhoto() {
       error.message
     );
 
-    setStatus("保存エラー");
+    setStatus(
+      "保存エラー"
+    );
 
   }
 
 }
 
 
-/* =========================================================
-   動画MIME取得
-========================================================= */
+/* =====================================================
+   動画モード
+===================================================== */
 
-function getSupportedMimeType() {
+photoMode.addEventListener(
+  "click",
+  () => {
+
+    if (recording) return;
+
+    currentMode =
+      "photo";
+
+    photoMode.classList.add(
+      "active"
+    );
+
+    videoMode.classList.remove(
+      "active"
+    );
+
+    setStatus(
+      "写真モード"
+    );
+
+  }
+);
+
+
+videoMode.addEventListener(
+  "click",
+  () => {
+
+    if (recording) return;
+
+    currentMode =
+      "video";
+
+    videoMode.classList.add(
+      "active"
+    );
+
+    photoMode.classList.remove(
+      "active"
+    );
+
+    setStatus(
+      "動画モード"
+    );
+
+  }
+);
+
+
+/* =====================================================
+   動画MIME
+===================================================== */
+
+function getMimeType() {
 
   const types = [
 
@@ -840,10 +1504,15 @@ function getSupportedMimeType() {
 
   ];
 
-  for (const type of types) {
+
+  for (
+    const type of types
+  ) {
 
     if (
-      MediaRecorder.isTypeSupported(type)
+      MediaRecorder.isTypeSupported(
+        type
+      )
     ) {
 
       return type;
@@ -852,146 +1521,161 @@ function getSupportedMimeType() {
 
   }
 
+
   return "";
 
 }
 
 
-/* =========================================================
+/* =====================================================
    録画開始
-========================================================= */
+===================================================== */
 
 function startRecording() {
 
-  if (!stream) {
+  const mimeType =
+    getMimeType();
+
+
+  if (!mimeType) {
 
     showError(
-      "カメラが起動していません。"
+      "動画録画に対応していません。"
     );
 
     return;
 
   }
 
-  try {
 
-    const mimeType =
-      getSupportedMimeType();
+  recordedChunks = [];
 
-    if (!mimeType) {
 
-      throw new Error(
-        "このブラウザでは動画録画に対応していません。"
+  mediaRecorder =
+    new MediaRecorder(
+      stream,
+      {
+        mimeType:
+          mimeType
+      }
+    );
+
+
+  mediaRecorder.ondataavailable =
+    event => {
+
+      if (
+        event.data &&
+        event.data.size > 0
+      ) {
+
+        recordedChunks.push(
+          event.data
+        );
+
+      }
+
+    };
+
+
+  mediaRecorder.onstop =
+    () => {
+
+      saveVideo(
+        mimeType
       );
 
-    }
+    };
 
-    recordedChunks = [];
 
-    mediaRecorder =
-      new MediaRecorder(
-        stream,
-        {
-          mimeType: mimeType
-        }
-      );
+  mediaRecorder.start(
+    1000
+  );
 
-    mediaRecorder.ondataavailable =
-      event => {
 
-        if (event.data &&
-            event.data.size > 0) {
+  recording =
+    true;
 
-          recordedChunks.push(
-            event.data
-          );
 
-        }
+  shutter.classList.add(
+    "recording"
+  );
 
-      };
 
-    mediaRecorder.onstop =
-      async () => {
+  recordTimer.style.display =
+    "block";
 
-        await saveVideo(mimeType);
 
-      };
+  recordingStart =
+    Date.now();
 
-    mediaRecorder.start(
-      1000
+
+  timerInterval =
+    setInterval(
+      updateTimer,
+      500
     );
 
-    recording = true;
 
-    shutter.classList.add(
-      "recording"
-    );
-
-    recordTimer.style.display =
-      "block";
-
-    recordingStart =
-      Date.now();
-
-    timerInterval =
-      setInterval(updateTimer, 500);
-
-    setStatus("録画中");
-
-  } catch (error) {
-
-    showError(
-      "録画開始エラー\n" +
-      error.message
-    );
-
-  }
+  setStatus(
+    "🔴 録画中"
+  );
 
 }
 
 
-/* =========================================================
+/* =====================================================
    録画停止
-========================================================= */
+===================================================== */
 
 function stopRecording() {
 
   if (
     !mediaRecorder ||
-    mediaRecorder.state === "inactive"
+    mediaRecorder.state ===
+      "inactive"
   ) {
 
     return;
 
   }
 
+
   mediaRecorder.stop();
 
-  recording = false;
+
+  recording =
+    false;
+
 
   shutter.classList.remove(
     "recording"
   );
 
+
   clearInterval(
     timerInterval
   );
 
-  timerInterval = null;
 
   recordTimer.style.display =
     "none";
 
-  setStatus("動画を保存しています…");
+
+  setStatus(
+    "動画を保存中…"
+  );
 
 }
 
 
-/* =========================================================
+/* =====================================================
    動画保存
-========================================================= */
+===================================================== */
 
-async function saveVideo(mimeType) {
+async function saveVideo(
+  mimeType
+) {
 
   try {
 
@@ -999,9 +1683,11 @@ async function saveVideo(mimeType) {
       new Blob(
         recordedChunks,
         {
-          type: mimeType
+          type:
+            mimeType
         }
       );
+
 
     if (
       blob.size >
@@ -1009,37 +1695,37 @@ async function saveVideo(mimeType) {
     ) {
 
       throw new Error(
-        "動画サイズが大きすぎます。\n" +
-        "20MB以下にしてください。"
+        "動画サイズが15MBを超えています。"
       );
 
     }
 
-    let extension =
-      ".webm";
 
-    if (
-      mimeType.includes("mp4")
-    ) {
+    const extension =
+      mimeType.includes(
+        "mp4"
+      )
+        ? ".mp4"
+        : ".webm";
 
-      extension = ".mp4";
-
-    }
-
-    const fileName =
-      "VID_" +
-      Date.now() +
-      extension;
 
     await uploadBlob(
+
       blob,
-      fileName,
+
+      "VID_" +
+      Date.now() +
+      extension,
+
       mimeType
+
     );
 
+
     setStatus(
-      "動画を保存しました"
+      "✅ Google Driveへ保存しました"
     );
+
 
   } catch (error) {
 
@@ -1048,18 +1734,22 @@ async function saveVideo(mimeType) {
       error.message
     );
 
-    setStatus("保存エラー");
+    setStatus(
+      "保存エラー"
+    );
 
   }
 
 }
 
 
-/* =========================================================
+/* =====================================================
    Blob → Base64
-========================================================= */
+===================================================== */
 
-function blobToBase64(blob) {
+function blobToBase64(
+  blob
+) {
 
   return new Promise(
     (resolve, reject) => {
@@ -1067,23 +1757,28 @@ function blobToBase64(blob) {
       const reader =
         new FileReader();
 
-      reader.onloadend =
+
+      reader.onload =
         () => {
 
           const result =
             reader.result;
 
-          const base64 =
-            result.split(",")[1];
 
-          resolve(base64);
+          resolve(
+            result.split(",")[1]
+          );
 
         };
+
 
       reader.onerror =
         reject;
 
-      reader.readAsDataURL(blob);
+
+      reader.readAsDataURL(
+        blob
+      );
 
     }
   );
@@ -1091,26 +1786,15 @@ function blobToBase64(blob) {
 }
 
 
-/* =========================================================
-   GASへアップロード
-========================================================= */
+/* =====================================================
+   GitHub → GAS
+===================================================== */
 
 async function uploadBlob(
   blob,
   fileName,
   mimeType
 ) {
-
-  if (!GAS_URL ||
-      GAS_URL.includes(
-        "ここにGAS"
-      )) {
-
-    throw new Error(
-      "GAS_URLが設定されていません。"
-    );
-
-  }
 
   if (
     blob.size >
@@ -1123,64 +1807,89 @@ async function uploadBlob(
 
   }
 
+
   const base64 =
-    await blobToBase64(blob);
+    await blobToBase64(
+      blob
+    );
+
 
   /*
-    GAS Webアプリへ送信
+    JSONではなく
+    application/x-www-form-urlencoded
+    で送信します。
+
+    これにより、
+    ブラウザのCORSプリフライトを
+    発生させにくい構成にします。
   */
 
-  const payload = {
+  const body =
+    new URLSearchParams();
 
-    base64Data: base64,
 
-    fileName: fileName,
+  body.append(
+    "base64Data",
+    base64
+  );
 
-    mimeType: mimeType
 
-  };
+  body.append(
+    "fileName",
+    fileName
+  );
 
-  /*
-    no-corsを使用するため、
-    ブラウザ側ではレスポンス本文を
-    読み取れません。
 
-    送信そのものはGASへ行われます。
-  */
+  body.append(
+    "mimeType",
+    mimeType
+  );
+
 
   await fetch(
     GAS_URL,
     {
-      method: "POST",
 
-      mode: "no-cors",
+      method:
+        "POST",
+
+      mode:
+        "no-cors",
 
       headers: {
+
         "Content-Type":
-          "text/plain;charset=utf-8"
+          "application/x-www-form-urlencoded;charset=UTF-8"
+
       },
 
       body:
-        JSON.stringify(payload)
+        body.toString()
+
     }
   );
 
 }
 
 
-/* =========================================================
+/* =====================================================
    ズーム
-========================================================= */
+===================================================== */
 
 zoom.addEventListener(
   "input",
   () => {
 
     currentZoom =
-      Number(zoom.value);
+      Number(
+        zoom.value
+      );
+
 
     zoomLabel.textContent =
-      currentZoom.toFixed(1) + "x";
+      currentZoom.toFixed(1) +
+      "x";
+
 
     applyZoom();
 
@@ -1191,135 +1900,16 @@ zoom.addEventListener(
 function applyZoom() {
 
   video.style.transform =
-    `scale(${currentZoom})`;
+    "scale(" +
+    currentZoom +
+    ")";
 
 }
 
 
-/* =========================================================
-   ピンチズーム
-========================================================= */
-
-let pinchStartDistance = null;
-
-let pinchStartZoom = 1;
-
-
-video.addEventListener(
-  "touchstart",
-  event => {
-
-    if (event.touches.length !== 2) {
-      return;
-    }
-
-    pinchStartDistance =
-      getTouchDistance(
-        event.touches[0],
-        event.touches[1]
-      );
-
-    pinchStartZoom =
-      currentZoom;
-
-  },
-  {
-    passive: true
-  }
-);
-
-
-video.addEventListener(
-  "touchmove",
-  event => {
-
-    if (
-      event.touches.length !== 2 ||
-      pinchStartDistance === null
-    ) {
-
-      return;
-
-    }
-
-    const distance =
-      getTouchDistance(
-        event.touches[0],
-        event.touches[1]
-      );
-
-    const ratio =
-      distance /
-      pinchStartDistance;
-
-    let newZoom =
-      pinchStartZoom *
-      ratio;
-
-    newZoom =
-      Math.max(
-        1,
-        Math.min(
-          5,
-          newZoom
-        )
-      );
-
-    currentZoom =
-      newZoom;
-
-    zoom.value =
-      newZoom;
-
-    zoomLabel.textContent =
-      newZoom.toFixed(1) + "x";
-
-    applyZoom();
-
-  },
-  {
-    passive: true
-  }
-);
-
-
-video.addEventListener(
-  "touchend",
-  () => {
-
-    pinchStartDistance = null;
-
-  },
-  {
-    passive: true
-  }
-);
-
-
-function getTouchDistance(
-  a,
-  b
-) {
-
-  const dx =
-    a.clientX -
-    b.clientX;
-
-  const dy =
-    a.clientY -
-    b.clientY;
-
-  return Math.sqrt(
-    dx * dx +
-    dy * dy
-  );
-
-}
-
-
-/* =========================================================
-   録画時間
-========================================================= */
+/* =====================================================
+   タイマー
+===================================================== */
 
 function updateTimer() {
 
@@ -1327,30 +1917,61 @@ function updateTimer() {
     Date.now() -
     recordingStart;
 
-  const totalSeconds =
+
+  const seconds =
     Math.floor(
       elapsed / 1000
     );
 
+
   const minutes =
     Math.floor(
-      totalSeconds / 60
+      seconds / 60
     );
 
-  const seconds =
-    totalSeconds % 60;
+
+  const sec =
+    seconds % 60;
+
 
   recordTimer.textContent =
-    String(minutes).padStart(2, "0") +
+
+    String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    ) +
+
     ":" +
-    String(seconds).padStart(2, "0");
+
+    String(
+      sec
+    ).padStart(
+      2,
+      "0"
+    );
 
 }
 
 
-/* =========================================================
+/* =====================================================
+   状態
+===================================================== */
+
+function setStatus(
+  text
+) {
+
+  status.textContent =
+    text;
+
+}
+
+
+/* =====================================================
    起動
-========================================================= */
+===================================================== */
 
 startButton.addEventListener(
   "click",
@@ -1358,20 +1979,16 @@ startButton.addEventListener(
 );
 
 
-/* =========================================================
-   ページ終了
-========================================================= */
-
 window.addEventListener(
   "beforeunload",
-  () => {
-
-    stopCamera();
-
-  }
+  stopCamera
 );
+
+
+initialize();
 
 </script>
 
 </body>
+
 </html>
