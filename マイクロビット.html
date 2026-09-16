@@ -2,7 +2,6 @@
 <html lang="ja">
 
 <head>
-
 <meta charset="UTF-8">
 
 <meta
@@ -10,7 +9,7 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>micro:bit USB Controller</title>
+<title>micro:bit USB Test</title>
 
 <style>
 
@@ -26,14 +25,13 @@ body {
     color: white;
 
     font-family:
+        Arial,
         "Noto Sans JP",
-        "Yu Gothic",
-        Meiryo,
         sans-serif;
 }
 
 header {
-    padding: 25px 15px;
+    padding: 25px;
 
     text-align: center;
 
@@ -45,18 +43,14 @@ header {
 
 header h1 {
     margin: 0;
-
-    font-size: 28px;
 }
 
 header p {
-    margin: 8px 0 0;
-
     color: #8b949e;
 }
 
 main {
-    width: min(850px, 94%);
+    width: min(800px, 94%);
 
     margin: 30px auto;
 }
@@ -74,30 +68,16 @@ main {
     border-radius: 18px;
 }
 
-h2 {
-    margin-top: 0;
-}
-
-.connection {
-    display: flex;
-
-    align-items: center;
-
-    flex-wrap: wrap;
-
-    gap: 15px;
-}
-
 button {
-    font-family: inherit;
+    border: none;
 
     cursor: pointer;
 
-    border: none;
+    font-family: inherit;
 }
 
-#connectButton {
-    padding: 14px 24px;
+#connect {
+    padding: 15px 25px;
 
     background: #00eaff;
 
@@ -110,8 +90,8 @@ button {
     font-weight: bold;
 }
 
-#disconnectButton {
-    padding: 14px 24px;
+#disconnect {
+    padding: 15px 25px;
 
     background: #ff4d4d;
 
@@ -124,79 +104,24 @@ button {
     font-weight: bold;
 }
 
-button:hover {
-    opacity: 0.85;
-}
-
-button:active {
-    transform: scale(0.96);
-}
-
 .status {
-    display: flex;
+    margin-top: 15px;
 
-    align-items: center;
-
-    gap: 8px;
-}
-
-.status-dot {
-    width: 12px;
-    height: 12px;
-
-    border-radius: 50%;
-
-    background: #ff4d4d;
-}
-
-.status-dot.connected {
-    background: #39d353;
-
-    box-shadow:
-        0 0 12px
-        rgba(57, 211, 83, 0.8);
-}
-
-#statusText {
-    color: #8b949e;
-}
-
-.preview {
-    height: 250px;
-
-    display: flex;
-
-    justify-content: center;
-
-    align-items: center;
+    padding: 15px;
 
     background: #010409;
 
-    border:
-        1px solid #30363d;
+    border-radius: 10px;
 
-    border-radius: 15px;
+    color: #8b949e;
 }
 
-#arrow {
-    font-size: 130px;
-
-    color: #00eaff;
-
-    text-shadow:
-        0 0 15px
-        rgba(0, 234, 255, 0.6),
-
-        0 0 40px
-        rgba(0, 234, 255, 0.3);
-}
-
-.hidden {
-    display: none;
+#status {
+    font-weight: bold;
 }
 
 .controller {
-    max-width: 500px;
+    width: min(450px, 100%);
 
     margin: auto;
 
@@ -211,8 +136,6 @@ button:active {
 .control {
     height: 90px;
 
-    border-radius: 18px;
-
     background: #21262d;
 
     color: white;
@@ -220,9 +143,15 @@ button:active {
     border:
         1px solid #30363d;
 
-    font-size: 38px;
+    border-radius: 18px;
+
+    font-size: 35px;
 
     font-weight: bold;
+}
+
+.control:hover {
+    background: #30363d;
 }
 
 .forward {
@@ -249,28 +178,28 @@ button:active {
     grid-row: 3;
 }
 
-.command {
-    margin-top: 20px;
+.preview {
+    height: 200px;
 
-    padding: 15px;
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
 
     background: #010409;
 
-    border-radius: 12px;
-
-    text-align: center;
-
-    color: #8b949e;
+    border-radius: 15px;
 }
 
-#currentCommand {
-    color: #00eaff;
+#arrow {
+    font-size: 120px;
 
-    font-weight: bold;
+    color: #00eaff;
 }
 
 .log {
-    height: 180px;
+    height: 220px;
 
     overflow-y: auto;
 
@@ -278,62 +207,22 @@ button:active {
 
     background: #010409;
 
-    border:
-        1px solid #30363d;
-
-    border-radius: 12px;
+    border-radius: 10px;
 
     font-family: monospace;
-
-    font-size: 13px;
 }
 
 .log div {
-    padding: 5px 0;
+    padding: 5px;
 
     border-bottom:
         1px solid #21262d;
-
-    color: #8b949e;
 }
 
 .info {
     color: #8b949e;
 
     line-height: 1.8;
-}
-
-.warning {
-    margin-top: 15px;
-
-    padding: 12px;
-
-    border-radius: 10px;
-
-    background: #1c2128;
-
-    color: #8b949e;
-}
-
-@media (max-width: 600px) {
-
-    header h1 {
-        font-size: 22px;
-    }
-
-    .card {
-        padding: 18px;
-    }
-
-    .control {
-        height: 75px;
-
-        font-size: 30px;
-    }
-
-    #arrow {
-        font-size: 100px;
-    }
 }
 
 </style>
@@ -347,11 +236,11 @@ button:active {
 <header>
 
 <h1>
-micro:bit USB Controller
+micro:bit USB TEST
 </h1>
 
 <p>
-USBケーブルでmicro:bitを操作
+USBシリアル通信テスト
 </p>
 
 </header>
@@ -360,82 +249,59 @@ USBケーブルでmicro:bitを操作
 <main>
 
 
+<!-- 接続 -->
+
 <section class="card">
 
 <h2>
-USB接続
+① USB接続
 </h2>
 
-<div class="connection">
-
-<button id="connectButton">
+<button id="connect">
 micro:bitに接続
 </button>
 
-<button id="disconnectButton">
+<button id="disconnect">
 切断
 </button>
 
 <div class="status">
 
-<span
-    id="statusDot"
-    class="status-dot"
-></span>
+状態：
 
-<span id="statusText">
+<span id="status">
 未接続
 </span>
 
 </div>
 
-</div>
-
-<div class="warning">
-
-micro:bitをUSBケーブルでPCに接続してから
-「micro:bitに接続」を押してください。
-
-</div>
-
 </section>
 
 
+<!-- プレビュー -->
 
 <section class="card">
 
 <h2>
-LED表示
+② LED表示
 </h2>
 
 <div class="preview">
 
-<div
-    id="arrow"
-    class="hidden"
->
+<div id="arrow">
 </div>
-
-</div>
-
-<div class="command">
-
-現在の命令：
-
-<span id="currentCommand">
-STOP
-</span>
 
 </div>
 
 </section>
 
 
+<!-- 操作 -->
 
 <section class="card">
 
 <h2>
-操作
+③ 操作
 </h2>
 
 <div class="controller">
@@ -443,38 +309,39 @@ STOP
 <button
     class="control forward"
     data-command="F"
+    data-arrow="↑"
 >
 ↑
 </button>
 
-
 <button
     class="control left"
     data-command="L"
+    data-arrow="←"
 >
 ←
 </button>
 
-
 <button
     class="control stop"
     data-command="S"
+    data-arrow=""
 >
 ■
 </button>
 
-
 <button
     class="control right"
     data-command="R"
+    data-arrow="→"
 >
 →
 </button>
 
-
 <button
     class="control back"
     data-command="B"
+    data-arrow="↓"
 >
 ↓
 </button>
@@ -484,38 +351,40 @@ STOP
 </section>
 
 
+<!-- 説明 -->
 
 <section class="card">
 
 <h2>
-キーボード操作
+キーボード
 </h2>
 
 <div class="info">
 
-<b>W</b> → ↑ 前
+W = ↑
 
 <br>
 
-<b>S</b> → ↓ 後
+S = ↓
 
 <br>
 
-<b>A</b> → ← 左
+A = ←
 
 <br>
 
-<b>D</b> → → 右
+D = →
 
 <br>
 
-<b>Space</b> → 停止
+Space = 停止
 
 </div>
 
 </section>
 
 
+<!-- ログ -->
 
 <section class="card">
 
@@ -523,10 +392,8 @@ STOP
 通信ログ
 </h2>
 
-<div
-    id="log"
-    class="log"
-></div>
+<div id="log" class="log">
+</div>
 
 </section>
 
@@ -534,64 +401,43 @@ STOP
 </main>
 
 
-
 <script>
 
 
-// ========================================
+// ==========================================
 // USB Serial
-// ========================================
+// ==========================================
 
 let port = null;
 
 let writer = null;
 
 
-// ========================================
+// ==========================================
 // HTML
-// ========================================
+// ==========================================
 
 const connectButton =
-    document.getElementById(
-        "connectButton"
-    );
+    document.getElementById("connect");
 
 const disconnectButton =
-    document.getElementById(
-        "disconnectButton"
-    );
+    document.getElementById("disconnect");
 
-const statusDot =
-    document.getElementById(
-        "statusDot"
-    );
-
-const statusText =
-    document.getElementById(
-        "statusText"
-    );
+const status =
+    document.getElementById("status");
 
 const arrow =
-    document.getElementById(
-        "arrow"
-    );
-
-const currentCommand =
-    document.getElementById(
-        "currentCommand"
-    );
+    document.getElementById("arrow");
 
 const log =
-    document.getElementById(
-        "log"
-    );
+    document.getElementById("log");
 
 
-// ========================================
+// ==========================================
 // ログ
-// ========================================
+// ==========================================
 
-function addLog(message) {
+function addLog(text) {
 
     const div =
         document.createElement("div");
@@ -600,76 +446,50 @@ function addLog(message) {
         new Date().toLocaleTimeString();
 
     div.textContent =
-        "[" + time + "] " + message;
+        "[" + time + "] " + text;
 
     log.prepend(div);
 }
 
 
-// ========================================
-// 接続状態
-// ========================================
-
-function setConnected() {
-
-    statusDot.classList.add(
-        "connected"
-    );
-
-    statusText.textContent =
-        "USB接続済み";
-
-    connectButton.disabled =
-        true;
-}
-
-
-function setDisconnected() {
-
-    statusDot.classList.remove(
-        "connected"
-    );
-
-    statusText.textContent =
-        "未接続";
-
-    connectButton.disabled =
-        false;
-}
-
-
-// ========================================
-// USB接続
-// ========================================
+// ==========================================
+// 接続
+// ==========================================
 
 async function connectMicrobit() {
 
-    if (!("serial" in navigator)) {
-
-        alert(
-            "Web Serial APIに対応していません。\n\n" +
-            "Google ChromeまたはMicrosoft Edgeを使用してください。"
-        );
-
-        return;
-    }
-
-
     try {
 
+        // Web Serial対応確認
+
+        if (!("serial" in navigator)) {
+
+            alert(
+                "このブラウザはWeb Serialに対応していません。\n\n" +
+                "ChromeまたはEdgeを使用してください。"
+            );
+
+            return;
+        }
+
+
         addLog(
-            "USBポートを検索しています..."
+            "USBポートを選択してください"
         );
 
+
+        // USBポート選択
 
         port =
             await navigator.serial.requestPort();
 
 
         addLog(
-            "USBポートを選択しました"
+            "ポートを選択しました"
         );
 
+
+        // 接続
 
         await port.open({
             baudRate: 115200
@@ -681,14 +501,23 @@ async function connectMicrobit() {
         );
 
 
+        // Writer
+
         writer =
             port.writable.getWriter();
 
 
-        setConnected();
+        status.textContent =
+            "接続済み";
 
 
-        // 最初に停止
+        addLog(
+            "通信準備完了"
+        );
+
+
+        // 接続テスト
+
         await sendCommand("S");
 
     }
@@ -698,19 +527,95 @@ async function connectMicrobit() {
         console.error(error);
 
         addLog(
-            "接続エラー：" +
+            "ERROR: " +
             error.message
         );
 
-        setDisconnected();
-
+        status.textContent =
+            "接続失敗";
     }
 }
 
 
-// ========================================
-// USB切断
-// ========================================
+// ==========================================
+// 送信
+// ==========================================
+
+async function sendCommand(command) {
+
+    if (!writer) {
+
+        addLog(
+            "ERROR: USB未接続"
+        );
+
+        return;
+    }
+
+
+    try {
+
+        const encoder =
+            new TextEncoder();
+
+
+        // 重要
+        // micro:bit側が改行を待っている
+
+        const data =
+            encoder.encode(
+                command + "\r\n"
+            );
+
+
+        await writer.write(data);
+
+
+        addLog(
+            "送信 → [" +
+            command +
+            "]"
+        );
+
+
+        // Web側プレビュー
+
+        const arrows = {
+
+            F: "↑",
+
+            B: "↓",
+
+            L: "←",
+
+            R: "→",
+
+            S: ""
+
+        };
+
+
+        arrow.textContent =
+            arrows[command];
+
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+        addLog(
+            "送信ERROR: " +
+            error.message
+        );
+    }
+}
+
+
+// ==========================================
+// 切断
+// ==========================================
 
 async function disconnectMicrobit() {
 
@@ -734,10 +639,12 @@ async function disconnectMicrobit() {
         }
 
 
-        setDisconnected();
+        status.textContent =
+            "未接続";
+
 
         addLog(
-            "USBから切断しました"
+            "USB切断"
         );
 
     }
@@ -747,140 +654,39 @@ async function disconnectMicrobit() {
         console.error(error);
 
         addLog(
-            "切断エラー：" +
+            "切断ERROR: " +
             error.message
         );
     }
 }
 
 
-// ========================================
-// 命令送信
-// ========================================
-
-async function sendCommand(command) {
-
-    if (!writer) {
-
-        addLog(
-            "送信できません：未接続"
-        );
-
-        return;
-    }
-
-
-    try {
-
-        const encoder =
-            new TextEncoder();
-
-
-        const data =
-            encoder.encode(
-                command + "\n"
-            );
-
-
-        await writer.write(data);
-
-
-        addLog(
-            "送信：" + command
-        );
-
-
-        updatePreview(command);
-
-    }
-
-    catch(error) {
-
-        console.error(error);
-
-        addLog(
-            "送信エラー：" +
-            error.message
-        );
-    }
-}
-
-
-// ========================================
-// 表示
-// ========================================
-
-function updatePreview(command) {
-
-    const arrows = {
-
-        F: "↑",
-
-        B: "↓",
-
-        L: "←",
-
-        R: "→"
-
-    };
-
-
-    if (command === "S") {
-
-        arrow.textContent = "";
-
-        arrow.classList.add(
-            "hidden"
-        );
-
-        currentCommand.textContent =
-            "STOP";
-
-        return;
-    }
-
-
-    if (arrows[command]) {
-
-        arrow.textContent =
-            arrows[command];
-
-        arrow.classList.remove(
-            "hidden"
-        );
-
-        currentCommand.textContent =
-            command;
-    }
-}
-
-
-// ========================================
+// ==========================================
 // ボタン
-// ========================================
+// ==========================================
 
 document
-    .querySelectorAll(".control")
-    .forEach(button => {
+.querySelectorAll(".control")
+.forEach(button => {
 
-        button.addEventListener(
-            "click",
-            function() {
+    button.addEventListener(
+        "click",
+        function() {
 
-                const command =
-                    this.dataset.command;
+            const command =
+                this.dataset.command;
 
-                sendCommand(command);
+            sendCommand(command);
 
-            }
-        );
+        }
+    );
 
-    });
+});
 
 
-// ========================================
+// ==========================================
 // キーボード
-// ========================================
+// ==========================================
 
 document.addEventListener(
     "keydown",
@@ -942,9 +748,9 @@ document.addEventListener(
 );
 
 
-// ========================================
-// ボタンイベント
-// ========================================
+// ==========================================
+// 接続ボタン
+// ==========================================
 
 connectButton.addEventListener(
     "click",
@@ -958,16 +764,16 @@ disconnectButton.addEventListener(
 );
 
 
-// ========================================
+// ==========================================
 // 初期ログ
-// ========================================
+// ==========================================
 
 addLog(
-    "USB Controller 起動"
+    "USB通信テスト開始"
 );
 
 addLog(
-    "micro:bitをUSBで接続してください"
+    "micro:bitをUSB接続してください"
 );
 
 
