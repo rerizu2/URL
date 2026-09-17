@@ -1,92 +1,57 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-      content="width=device-width,
-               initial-scale=1,
-               maximum-scale=1,
-               user-scalable=no">
+<meta
+  name="viewport"
+  content="width=device-width,
+  initial-scale=1.0,
+  maximum-scale=1.0,
+  user-scalable=no"
+>
 
 <title>共有カメラ</title>
 
-
 <style>
 
-/* =========================================
-   基本
-========================================= */
-
 * {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
 body {
+  margin: 0;
+  padding: 0;
 
-    margin: 0;
+  width: 100%;
+  height: 100%;
 
-    padding: 0;
+  overflow: hidden;
 
-    width: 100%;
+  background: #000;
 
-    height: 100%;
+  color: #fff;
 
-    overflow: hidden;
-
-    background: #000;
-
-    color: #fff;
-
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
 button {
-
-    border: none;
-
-    color: white;
-
-    background: transparent;
-
-    cursor: pointer;
-
-    font: inherit;
-
+  font: inherit;
 }
-
-button:active {
-
-    transform: scale(.94);
-
-}
-
-
-/* =========================================
-   アプリ
-========================================= */
 
 #app {
+  position: fixed;
 
-    width: 100vw;
+  inset: 0;
 
-    height: 100dvh;
-
-    position: relative;
-
-    background: #000;
-
-    overflow: hidden;
-
+  background: #000;
 }
 
 
@@ -96,25 +61,79 @@ button:active {
 
 #cameraScreen {
 
-    position: absolute;
+  position: absolute;
 
-    inset: 0;
+  inset: 0;
 
-    background: #000;
+  background: #000;
 
+  overflow: hidden;
 }
-
 
 #video {
 
-    width: 100%;
+  position: absolute;
 
-    height: 100%;
+  inset: 0;
 
-    object-fit: cover;
+  width: 100%;
 
-    background: #000;
+  height: 100%;
 
+  object-fit: cover;
+
+  background: #000;
+}
+
+
+/* =========================================
+   カメラ無効画面
+========================================= */
+
+#disabledScreen {
+
+  position: absolute;
+
+  inset: 0;
+
+  display: none;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-direction: column;
+
+  gap: 15px;
+
+  background:
+    radial-gradient(
+      circle at center,
+      #202020,
+      #000
+    );
+
+  text-align: center;
+
+  padding: 30px;
+}
+
+#disabledScreen.show {
+  display: flex;
+}
+
+.disabledIcon {
+  font-size: 70px;
+}
+
+.disabledTitle {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.disabledText {
+  color: #aaa;
+  line-height: 1.7;
 }
 
 
@@ -124,170 +143,75 @@ button:active {
 
 .topBar {
 
-    position: absolute;
+  position: absolute;
 
-    top: 0;
+  top: 0;
+  left: 0;
+  right: 0;
 
-    left: 0;
+  height: 90px;
 
-    right: 0;
+  display: flex;
 
-    z-index: 20;
+  align-items: center;
 
-    padding:
-        calc(env(safe-area-inset-top) + 12px)
-        18px
-        12px;
+  justify-content: space-between;
 
-    display: flex;
+  padding:
+    env(safe-area-inset-top)
+    18px
+    0
+    18px;
 
-    justify-content: space-between;
+  z-index: 20;
 
-    align-items: center;
-
-    background:
-        linear-gradient(
-            rgba(0,0,0,.65),
-            transparent
-        );
-
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,.7),
+      transparent
+    );
 }
 
+.topButton {
 
-.topLeft,
-.topRight {
+  width: 48px;
+  height: 48px;
 
-    display: flex;
+  border: 0;
 
-    align-items: center;
+  border-radius: 50%;
 
-    gap: 10px;
+  background:
+    rgba(0,0,0,.4);
 
+  color: #fff;
+
+  font-size: 22px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  cursor: pointer;
+
+  backdrop-filter: blur(10px);
 }
 
-
-.iconButton {
-
-    width: 42px;
-
-    height: 42px;
-
-    border-radius: 50%;
-
-    background:
-        rgba(0,0,0,.42);
-
-    backdrop-filter:
-        blur(10px);
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    font-size: 20px;
-
+.topButton:active {
+  transform: scale(.9);
 }
 
+.topCenter {
 
-/* =========================================
-   録画表示
-========================================= */
+  font-size: 15px;
 
-#recording {
+  font-weight: 600;
 
-    display: none;
-
-    align-items: center;
-
-    gap: 8px;
-
-    background:
-        rgba(0,0,0,.65);
-
-    padding: 7px 12px;
-
-    border-radius: 20px;
-
-    font-size: 14px;
-
-}
-
-
-#recording.active {
-
-    display: flex;
-
-}
-
-
-.recordDot {
-
-    width: 10px;
-
-    height: 10px;
-
-    background: red;
-
-    border-radius: 50%;
-
-    animation:
-        blink 1s infinite;
-
-}
-
-
-@keyframes blink {
-
-    50% {
-        opacity: .3;
-    }
-
-}
-
-
-/* =========================================
-   フォーカス
-========================================= */
-
-#focusBox {
-
-    position: absolute;
-
-    width: 55px;
-
-    height: 55px;
-
-    border: 2px solid #ffd400;
-
-    border-radius: 8px;
-
-    transform:
-        translate(-50%, -50%)
-        scale(.8);
-
-    opacity: 0;
-
-    pointer-events: none;
-
-    transition:
-        opacity .2s,
-        transform .2s;
-
-    z-index: 10;
-
-}
-
-
-#focusBox.show {
-
-    opacity: 1;
-
-    transform:
-        translate(-50%, -50%)
-        scale(1);
-
+  text-shadow:
+    0 1px 5px #000;
 }
 
 
@@ -297,72 +221,162 @@ button:active {
 
 .zoomArea {
 
-    position: absolute;
+  position: absolute;
 
-    right: 18px;
+  right: 18px;
 
-    top: 50%;
+  top: 50%;
 
-    transform:
-        translateY(-50%);
+  transform:
+    translateY(-50%);
 
-    z-index: 20;
+  display: flex;
 
-    display: flex;
+  flex-direction: column;
 
-    flex-direction: column;
+  gap: 8px;
 
-    gap: 8px;
-
+  z-index: 20;
 }
-
 
 .zoomButton {
 
-    width: 42px;
+  width: 44px;
+  height: 44px;
 
-    height: 42px;
+  border-radius: 50%;
 
-    border-radius: 50%;
+  border: 1px solid
+    rgba(255,255,255,.2);
 
-    background:
-        rgba(0,0,0,.45);
+  background:
+    rgba(0,0,0,.45);
 
-    backdrop-filter:
-        blur(10px);
+  color: #fff;
 
-    font-size: 13px;
+  font-size: 14px;
 
+  backdrop-filter: blur(10px);
 }
 
 
 /* =========================================
-   下部操作
+   フォーカス
 ========================================= */
 
-.bottomArea {
+#focusBox {
 
-    position: absolute;
+  position: absolute;
 
-    left: 0;
+  width: 70px;
+  height: 70px;
 
-    right: 0;
+  border: 2px solid #ffd60a;
 
-    bottom: 0;
+  display: none;
 
-    z-index: 20;
+  pointer-events: none;
 
-    padding:
-        15px
-        18px
-        calc(env(safe-area-inset-bottom) + 18px);
+  z-index: 15;
+}
 
-    background:
-        linear-gradient(
-            transparent,
-            rgba(0,0,0,.85)
-        );
 
+/* =========================================
+   録画時間
+========================================= */
+
+#recording {
+
+  position: absolute;
+
+  top: 100px;
+
+  left: 50%;
+
+  transform:
+    translateX(-50%);
+
+  display: none;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding:
+    8px 14px;
+
+  border-radius: 20px;
+
+  background:
+    rgba(0,0,0,.6);
+
+  font-weight: 700;
+
+  z-index: 30;
+}
+
+.recordDot {
+
+  width: 10px;
+  height: 10px;
+
+  border-radius: 50%;
+
+  background: red;
+
+  animation:
+    blink 1s infinite;
+}
+
+@keyframes blink {
+
+  0%,100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .3;
+  }
+}
+
+
+/* =========================================
+   下部
+========================================= */
+
+.bottomBar {
+
+  position: absolute;
+
+  bottom: 0;
+
+  left: 0;
+  right: 0;
+
+  padding:
+    20px
+    20px
+    calc(
+      20px +
+      env(safe-area-inset-bottom)
+    );
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 16px;
+
+  z-index: 20;
+
+  background:
+    linear-gradient(
+      to top,
+      rgba(0,0,0,.8),
+      transparent
+    );
 }
 
 
@@ -370,34 +384,36 @@ button:active {
    モード
 ========================================= */
 
-.modeSelector {
+.modeBar {
 
-    display: flex;
+  display: flex;
 
-    justify-content: center;
+  gap: 28px;
 
-    gap: 28px;
+  padding: 8px 18px;
 
-    margin-bottom: 18px;
+  border-radius: 30px;
 
+  background:
+    rgba(0,0,0,.45);
+
+  backdrop-filter: blur(10px);
 }
-
 
 .mode {
 
-    font-size: 14px;
+  color: #aaa;
 
-    color: #aaa;
+  font-size: 14px;
 
+  cursor: pointer;
 }
-
 
 .mode.active {
 
-    color: white;
+  color: #fff;
 
-    font-weight: bold;
-
+  font-weight: 700;
 }
 
 
@@ -407,82 +423,75 @@ button:active {
 
 .captureRow {
 
-    display: flex;
+  width: 100%;
 
-    align-items: center;
+  display: flex;
 
-    justify-content: center;
+  align-items: center;
 
-    position: relative;
+  justify-content: center;
 
-    min-height: 90px;
-
+  position: relative;
 }
-
 
 .captureButton {
 
-    width: 78px;
+  width: 76px;
+  height: 76px;
 
-    height: 78px;
+  border-radius: 50%;
 
-    border-radius: 50%;
+  border: 6px solid
+    rgba(255,255,255,.8);
 
-    background: white;
+  background: #fff;
 
-    border: 5px solid
-        rgba(255,255,255,.5);
+  cursor: pointer;
 
-    box-shadow:
-        0 0 0 3px
-        rgba(0,0,0,.45);
-
+  box-shadow:
+    0 0 0 4px
+    rgba(0,0,0,.3);
 }
-
 
 .captureButton.videoMode {
 
-    border-color: #ff3030;
-
+  background: #ff3b30;
 }
 
+.captureButton.recording {
 
-.captureButton.videoMode.recording {
+  transform: scale(.75);
 
-    background: #ff3030;
-
+  border-color: #ff3b30;
 }
 
+.sideButton {
 
-.galleryButton {
+  position: absolute;
 
-    position: absolute;
+  width: 48px;
+  height: 48px;
 
-    left: 20px;
+  border: 0;
 
-    width: 55px;
+  border-radius: 50%;
 
-    height: 55px;
+  background:
+    rgba(0,0,0,.45);
 
-    border-radius: 12px;
+  color: #fff;
 
-    overflow: hidden;
+  font-size: 22px;
 
-    background: #222;
-
-    border: 2px solid #fff;
-
+  backdrop-filter: blur(10px);
 }
 
+.sideButton.left {
+  left: 15px;
+}
 
-.galleryButton img {
-
-    width: 100%;
-
-    height: 100%;
-
-    object-fit: cover;
-
+.sideButton.right {
+  right: 15px;
 }
 
 
@@ -490,180 +499,194 @@ button:active {
    ギャラリー
 ========================================= */
 
-#galleryPanel {
+#gallery {
 
-    position: absolute;
+  position: absolute;
 
-    inset: 0;
+  inset: 0;
 
-    z-index: 100;
+  background:
+    #101010;
 
-    background:
-        rgba(0,0,0,.96);
+  z-index: 100;
 
-    display: none;
+  display: none;
 
-    flex-direction: column;
+  overflow-y: auto;
 
+  padding:
+    80px 12px
+    calc(30px + env(safe-area-inset-bottom));
 }
 
-
-#galleryPanel.show {
-
-    display: flex;
-
+#gallery.show {
+  display: block;
 }
-
 
 .galleryHeader {
 
-    padding:
-        calc(env(safe-area-inset-top) + 12px)
-        16px
-        12px;
+  position: fixed;
 
-    display: flex;
+  top: 0;
 
-    align-items: center;
+  left: 0;
 
-    justify-content: space-between;
+  right: 0;
 
-    border-bottom:
-        1px solid #222;
+  height: 70px;
 
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 10px 15px;
+
+  background:
+    rgba(16,16,16,.9);
+
+  backdrop-filter: blur(15px);
+
+  z-index: 110;
 }
-
 
 .galleryTitle {
 
-    font-size: 20px;
+  font-size: 20px;
 
-    font-weight: bold;
-
+  font-weight: 700;
 }
 
+.galleryClose {
 
-.galleryTabs {
+  width: 42px;
+  height: 42px;
 
-    display: flex;
+  border: 0;
 
-    gap: 8px;
+  border-radius: 50%;
 
-    padding: 12px 16px;
+  background: #292929;
 
+  color: #fff;
+
+  font-size: 20px;
 }
 
+.tabs {
+
+  display: flex;
+
+  gap: 8px;
+
+  margin-bottom: 15px;
+}
 
 .tab {
 
-    padding: 8px 16px;
+  border: 0;
 
-    border-radius: 20px;
+  border-radius: 20px;
 
-    background: #222;
+  padding:
+    8px 15px;
 
-    color: #aaa;
+  background: #242424;
 
+  color: #aaa;
 }
-
 
 .tab.active {
 
-    background: #fff;
+  background: #fff;
 
-    color: #000;
-
+  color: #000;
 }
 
 
-#gallery {
+/* =========================================
+   グリッド
+========================================= */
 
-    flex: 1;
+.grid {
 
-    overflow-y: auto;
+  display: grid;
 
-    padding: 8px;
+  grid-template-columns:
+    repeat(3, 1fr);
 
-    display: grid;
-
-    grid-template-columns:
-        repeat(3, 1fr);
-
-    gap: 5px;
-
-    align-content: start;
-
+  gap: 4px;
 }
 
+.media {
 
-.mediaItem {
+  position: relative;
 
-    aspect-ratio: 1;
+  aspect-ratio: 1 / 1;
 
-    background: #151515;
+  background: #222;
 
-    position: relative;
+  overflow: hidden;
 
-    overflow: hidden;
-
-    border-radius: 5px;
-
+  cursor: pointer;
 }
 
+.media img {
 
-.mediaItem img,
-.mediaItem video {
+  width: 100%;
+  height: 100%;
 
-    width: 100%;
-
-    height: 100%;
-
-    object-fit: cover;
-
+  object-fit: cover;
 }
 
+.videoThumb {
 
-.mediaItem .videoIcon {
+  width: 100%;
+  height: 100%;
 
-    position: absolute;
+  display: flex;
 
-    inset: 0;
+  align-items: center;
 
-    display: flex;
+  justify-content: center;
 
-    align-items: center;
+  flex-direction: column;
 
-    justify-content: center;
+  gap: 5px;
 
-    font-size: 38px;
+  font-size: 42px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #111,
-            #333
-        );
-
+  background:
+    linear-gradient(
+      135deg,
+      #202020,
+      #050505
+    );
 }
 
+.videoLabel {
 
-.mineMark {
+  font-size: 12px;
 
-    position: absolute;
+  color: #bbb;
+}
 
-    top: 5px;
+.mineBadge {
 
-    right: 5px;
+  position: absolute;
 
-    background:
-        rgba(0,0,0,.65);
+  right: 5px;
+  bottom: 5px;
 
-    border-radius: 10px;
+  padding: 3px 7px;
 
-    padding: 3px 7px;
+  border-radius: 10px;
 
-    font-size: 10px;
+  font-size: 10px;
 
+  background:
+    rgba(0,0,0,.7);
 }
 
 
@@ -673,181 +696,106 @@ button:active {
 
 #preview {
 
-    position: absolute;
+  position: fixed;
 
-    inset: 0;
+  inset: 0;
 
-    z-index: 200;
+  z-index: 300;
 
-    background: #000;
+  display: none;
 
-    display: none;
+  background:
+    rgba(0,0,0,.96);
 
-    flex-direction: column;
+  align-items: center;
 
+  justify-content: center;
+
+  flex-direction: column;
 }
-
 
 #preview.show {
-
-    display: flex;
-
+  display: flex;
 }
 
+.previewContent {
 
-.previewHeader {
+  max-width: 96vw;
 
-    padding:
-        calc(env(safe-area-inset-top) + 10px)
-        15px
-        10px;
+  max-height: 70vh;
 
-    display: flex;
+  display: flex;
 
-    justify-content: space-between;
+  align-items: center;
 
-    align-items: center;
-
+  justify-content: center;
 }
 
+.previewContent img,
+.previewContent video {
 
-#previewContent {
+  max-width: 96vw;
 
-    flex: 1;
+  max-height: 70vh;
 
-    min-height: 0;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    overflow: hidden;
-
+  object-fit: contain;
 }
 
+.previewInfo {
 
-#previewContent img,
-#previewContent video {
+  margin-top: 15px;
 
-    max-width: 100%;
+  text-align: center;
 
-    max-height: 100%;
-
-    object-fit: contain;
-
+  max-width: 90vw;
 }
 
+.previewName {
 
-.previewBottom {
+  font-weight: 700;
 
-    padding:
-        15px
-        15px
-        calc(env(safe-area-inset-bottom) + 15px);
-
-    display: flex;
-
-    justify-content: center;
-
-    gap: 12px;
-
-    flex-wrap: wrap;
-
+  word-break: break-all;
 }
 
+.previewButtons {
 
-.actionButton {
+  display: flex;
 
-    padding: 12px 18px;
+  gap: 10px;
 
-    border-radius: 25px;
+  margin-top: 20px;
 
-    background: #222;
+  flex-wrap: wrap;
 
+  justify-content: center;
 }
 
+.previewButton {
 
-.actionButton.primary {
+  border: 0;
 
-    background: white;
+  border-radius: 22px;
 
-    color: black;
+  padding:
+    11px 18px;
 
+  background: #292929;
+
+  color: #fff;
 }
 
+.previewButton.primary {
 
-.actionButton.danger {
+  background: #fff;
 
-    background: #a00;
-
+  color: #000;
 }
 
+.previewButton.danger {
 
-/* =========================================
-   アップロード
-========================================= */
+  background: #ff3b30;
 
-#uploadStatus {
-
-    position: absolute;
-
-    left: 50%;
-
-    bottom: 120px;
-
-    transform:
-        translateX(-50%);
-
-    z-index: 300;
-
-    width: min(340px, 90vw);
-
-    padding: 15px;
-
-    border-radius: 15px;
-
-    background:
-        rgba(20,20,20,.95);
-
-    display: none;
-
-}
-
-
-#uploadStatus.show {
-
-    display: block;
-
-}
-
-
-.progress {
-
-    height: 6px;
-
-    background: #333;
-
-    border-radius: 10px;
-
-    overflow: hidden;
-
-    margin-top: 10px;
-
-}
-
-
-#progressBar {
-
-    width: 0%;
-
-    height: 100%;
-
-    background: white;
-
-    transition: width .15s;
-
+  color: #fff;
 }
 
 
@@ -857,59 +805,75 @@ button:active {
 
 #loading {
 
-    position: absolute;
+  position: fixed;
 
-    inset: 0;
+  inset: 0;
 
-    z-index: 500;
+  display: none;
 
-    background:
-        rgba(0,0,0,.8);
+  align-items: center;
 
-    display: none;
+  justify-content: center;
 
-    align-items: center;
+  flex-direction: column;
 
-    justify-content: center;
+  gap: 15px;
 
-    flex-direction: column;
+  background:
+    rgba(0,0,0,.75);
 
-    gap: 15px;
+  z-index: 500;
 
+  backdrop-filter: blur(5px);
 }
-
 
 #loading.show {
-
-    display: flex;
-
+  display: flex;
 }
 
+.loader {
 
-.spinner {
+  width: 45px;
+  height: 45px;
 
-    width: 40px;
+  border:
+    4px solid #444;
 
-    height: 40px;
+  border-top-color: #fff;
 
-    border: 4px solid #444;
+  border-radius: 50%;
 
-    border-top-color: white;
-
-    border-radius: 50%;
-
-    animation:
-        spin 1s linear infinite;
-
+  animation:
+    spin 1s linear infinite;
 }
-
 
 @keyframes spin {
 
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
+.progress {
+
+  width: 240px;
+
+  height: 8px;
+
+  border-radius: 10px;
+
+  background: #333;
+
+  overflow: hidden;
+}
+
+.progressInner {
+
+  height: 100%;
+
+  width: 0%;
+
+  background: #fff;
 }
 
 
@@ -919,496 +883,456 @@ button:active {
 
 @media (min-width: 700px) {
 
-    #gallery {
+  .grid {
 
-        grid-template-columns:
-            repeat(6, 1fr);
+    grid-template-columns:
+      repeat(6, 1fr);
+  }
 
-        padding: 15px;
+  #gallery {
 
-        gap: 8px;
-
-    }
-
-}
-
-
-/* =========================================
-   横画面
-========================================= */
-
-@media (orientation: landscape) {
-
-    .bottomArea {
-
-        padding-bottom:
-            calc(
-                env(safe-area-inset-bottom)
-                + 10px
-            );
-
-    }
-
-
-    .modeSelector {
-
-        margin-bottom: 8px;
-
-    }
-
-
-    .captureButton {
-
-        width: 65px;
-
-        height: 65px;
-
-    }
-
+    padding-left: 30px;
+    padding-right: 30px;
+  }
 }
 
 </style>
 
 </head>
 
-
 <body>
-
 
 <div id="app">
 
 
-    <!-- ==================================
-         カメラ
-    =================================== -->
+  <!-- =====================================
+       カメラ画面
+  ====================================== -->
 
-    <div id="cameraScreen">
+  <div id="cameraScreen">
 
-        <video
-            id="video"
-            autoplay
-            muted
-            playsinline>
-        </video>
-
-
-        <div id="focusBox"></div>
+    <video
+      id="video"
+      autoplay
+      muted
+      playsinline
+    ></video>
 
 
-        <div class="topBar">
+    <!-- 無効画面 -->
 
-            <div class="topLeft">
+    <div id="disabledScreen">
 
-                <button
-                    class="iconButton"
-                    id="switchCamera">
-                    🔄
-                </button>
+      <div class="disabledIcon">
+        🔒
+      </div>
 
-                <button
-                    class="iconButton"
-                    id="torchButton">
-                    🔦
-                </button>
+      <div class="disabledTitle">
+        カメラは無効です
+      </div>
 
-            </div>
+      <div class="disabledText">
 
+        スプレッドシートの<br>
 
-            <div id="recording">
+        「設定」シート B1 が
+        <b>FALSE</b>になっています。
 
-                <span
-                    class="recordDot">
-                </span>
-
-                <span id="recordTime">
-                    00:00
-                </span>
-
-            </div>
-
-
-            <div class="topRight">
-
-                <button
-                    class="iconButton"
-                    id="openGallery">
-                    🖼️
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- ズーム -->
-
-        <div class="zoomArea">
-
-            <button
-                class="zoomButton"
-                data-zoom="1">
-                1×
-            </button>
-
-            <button
-                class="zoomButton"
-                data-zoom="1.5">
-                1.5×
-            </button>
-
-            <button
-                class="zoomButton"
-                data-zoom="2">
-                2×
-            </button>
-
-        </div>
-
-
-        <!-- 下部 -->
-
-        <div class="bottomArea">
-
-            <div class="modeSelector">
-
-                <button
-                    class="mode"
-                    data-mode="photo">
-                    写真
-                </button>
-
-                <button
-                    class="mode active"
-                    data-mode="video">
-                    ビデオ
-                </button>
-
-            </div>
-
-
-            <div class="captureRow">
-
-
-                <button
-                    class="galleryButton"
-                    id="galleryPreview">
-
-                    <span
-                        id="galleryPreviewIcon">
-                        🖼️
-                    </span>
-
-                    <img
-                        id="galleryPreviewImage"
-                        style="display:none">
-
-                </button>
-
-
-                <button
-                    class="captureButton videoMode"
-                    id="captureButton">
-                </button>
-
-            </div>
-
-        </div>
+      </div>
 
     </div>
 
 
-    <!-- ==================================
-         ギャラリー
-    =================================== -->
+    <!-- 上部 -->
 
-    <div id="galleryPanel">
+    <div class="topBar">
 
-        <div class="galleryHeader">
+      <button
+        class="topButton"
+        id="flashButton"
+      >
+        ⚡
+      </button>
 
-            <div class="galleryTitle">
-                ギャラリー
-            </div>
+      <div
+        class="topCenter"
+        id="statusText"
+      >
+        共有カメラ
+      </div>
 
-            <button
-                class="iconButton"
-                id="closeGallery">
-                ✕
-            </button>
-
-        </div>
-
-
-        <div class="galleryTabs">
-
-            <button
-                class="tab active"
-                data-filter="all">
-                すべて
-            </button>
-
-            <button
-                class="tab"
-                data-filter="mine">
-                自分
-            </button>
-
-            <button
-                class="tab"
-                data-filter="shared">
-                共有
-            </button>
-
-        </div>
-
-
-        <div id="gallery"></div>
+      <button
+        class="topButton"
+        id="galleryButton"
+      >
+        🖼️
+      </button>
 
     </div>
 
 
-    <!-- ==================================
-         プレビュー
-    =================================== -->
+    <!-- ズーム -->
 
-    <div id="preview">
+    <div class="zoomArea">
 
-        <div class="previewHeader">
+      <button
+        class="zoomButton"
+        data-zoom="1"
+      >
+        1×
+      </button>
 
-            <div id="previewName">
-                ファイル
-            </div>
+      <button
+        class="zoomButton"
+        data-zoom="2"
+      >
+        2×
+      </button>
 
-            <button
-                class="iconButton"
-                id="closePreview">
-                ✕
-            </button>
-
-        </div>
-
-
-        <div id="previewContent"></div>
-
-
-        <div class="previewBottom">
-
-            <button
-                class="actionButton"
-                id="driveButton">
-                ☁️ Drive
-            </button>
-
-            <button
-                class="actionButton primary"
-                id="saveButton">
-                ⬇️ 保存
-            </button>
-
-            <button
-                class="actionButton danger"
-                id="deleteButton">
-                🗑️ 削除
-            </button>
-
-        </div>
+      <button
+        class="zoomButton"
+        data-zoom="3"
+      >
+        3×
+      </button>
 
     </div>
 
 
-    <!-- ==================================
-         アップロード
-    =================================== -->
+    <!-- フォーカス -->
 
-    <div id="uploadStatus">
+    <div id="focusBox"></div>
 
-        <div id="uploadText">
-            アップロード中...
+
+    <!-- 録画 -->
+
+    <div id="recording">
+
+      <span class="recordDot"></span>
+
+      <span id="recordTime">
+        00:00
+      </span>
+
+    </div>
+
+
+    <!-- 下部 -->
+
+    <div class="bottomBar">
+
+      <div class="modeBar">
+
+        <div
+          class="mode active"
+          data-mode="photo"
+        >
+          写真
         </div>
 
-        <div class="progress">
-
-            <div id="progressBar"></div>
-
+        <div
+          class="mode"
+          data-mode="video"
+        >
+          ビデオ
         </div>
+
+      </div>
+
+
+      <div class="captureRow">
+
+        <button
+          class="sideButton left"
+          id="switchButton"
+        >
+          🔄
+        </button>
+
+        <button
+          class="captureButton"
+          id="captureButton"
+        ></button>
+
+        <button
+          class="sideButton right"
+          id="refreshButton"
+        >
+          ↻
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================
+       ギャラリー
+  ====================================== -->
+
+  <div id="gallery">
+
+    <div class="galleryHeader">
+
+      <div class="galleryTitle">
+        写真・動画
+      </div>
+
+      <button
+        class="galleryClose"
+        id="galleryClose"
+      >
+        ×
+      </button>
 
     </div>
 
 
-    <!-- ==================================
-         ローディング
-    =================================== -->
+    <div class="tabs">
 
-    <div id="loading">
+      <button
+        class="tab active"
+        data-tab="all"
+      >
+        すべて
+      </button>
 
-        <div class="spinner"></div>
+      <button
+        class="tab"
+        data-tab="mine"
+      >
+        自分
+      </button>
 
-        <div id="loadingText">
-            読み込み中...
-        </div>
+      <button
+        class="tab"
+        data-tab="shared"
+      >
+        共有
+      </button>
 
     </div>
 
+
+    <div
+      class="grid"
+      id="mediaGrid"
+    ></div>
+
+  </div>
+
+
+  <!-- =====================================
+       プレビュー
+  ====================================== -->
+
+  <div id="preview">
+
+    <div
+      class="previewContent"
+      id="previewContent"
+    ></div>
+
+    <div class="previewInfo">
+
+      <div
+        class="previewName"
+        id="previewName"
+      ></div>
+
+    </div>
+
+    <div class="previewButtons">
+
+      <button
+        class="previewButton primary"
+        id="openDriveButton"
+      >
+        Google Drive
+      </button>
+
+      <button
+        class="previewButton"
+        id="downloadButton"
+      >
+        保存
+      </button>
+
+      <button
+        class="previewButton danger"
+        id="deleteButton"
+      >
+        削除
+      </button>
+
+      <button
+        class="previewButton"
+        id="previewClose"
+      >
+        閉じる
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================
+       ローディング
+  ====================================== -->
+
+  <div id="loading">
+
+    <div class="loader"></div>
+
+    <div id="loadingText">
+      処理中...
+    </div>
+
+    <div class="progress">
+
+      <div
+        class="progressInner"
+        id="progressInner"
+      ></div>
+
+    </div>
+
+  </div>
 
 </div>
 
 
 <script>
 
-/* =================================================
-   設定
-================================================= */
+/*************************************************
+ * GAS URL
+ *
+ * ↓ここだけ変更
+ *************************************************/
 
 const GAS_URL =
-    "https://script.google.com/macros/s/AKfycbxYVLRQoKT2tE7s9xZ-29wDn4FkwuTZ5ARc_JxMWT8Fmy1iE_UT5XLQ1SlHudMt0_cz6A/exec";
+  "https://script.google.com/macros/s/AKfycbz-XHmJbbiGuF2QDdBnGz-_kccmPHWXXpcWrz22lbTvCPksR-b0KDY-RmoG1nRIph-S5Q/exec";
 
+
+/*************************************************
+ * 設定
+ *************************************************/
 
 const MAX_FILE_SIZE =
-    20 * 1024 * 1024;
-
+  20 * 1024 * 1024;
 
 const CHUNK_SIZE =
-    256 * 1024;
-
+  256 * 1024;
 
 const MAX_RECORDING_TIME =
-    60;
+  60;
 
 
-/* =================================================
-   DOM
-================================================= */
+/*************************************************
+ * DOM
+ *************************************************/
 
 const video =
-    document.getElementById("video");
-
+  document.getElementById("video");
 
 const captureButton =
-    document.getElementById(
-        "captureButton"
-    );
+  document.getElementById("captureButton");
 
+const cameraScreen =
+  document.getElementById("cameraScreen");
 
-const recording =
-    document.getElementById(
-        "recording"
-    );
-
-
-const recordTime =
-    document.getElementById(
-        "recordTime"
-    );
-
-
-const galleryPanel =
-    document.getElementById(
-        "galleryPanel"
-    );
-
+const disabledScreen =
+  document.getElementById("disabledScreen");
 
 const gallery =
-    document.getElementById(
-        "gallery"
-    );
+  document.getElementById("gallery");
 
+const mediaGrid =
+  document.getElementById("mediaGrid");
 
 const preview =
-    document.getElementById(
-        "preview"
-    );
-
+  document.getElementById("preview");
 
 const previewContent =
-    document.getElementById(
-        "previewContent"
-    );
+  document.getElementById("previewContent");
 
-
-const uploadStatus =
-    document.getElementById(
-        "uploadStatus"
-    );
-
-
-const progressBar =
-    document.getElementById(
-        "progressBar"
-    );
-
-
-const uploadText =
-    document.getElementById(
-        "uploadText"
-    );
-
+const previewName =
+  document.getElementById("previewName");
 
 const loading =
-    document.getElementById(
-        "loading"
-    );
-
+  document.getElementById("loading");
 
 const loadingText =
-    document.getElementById(
-        "loadingText"
-    );
+  document.getElementById("loadingText");
+
+const progressInner =
+  document.getElementById("progressInner");
+
+const statusText =
+  document.getElementById("statusText");
+
+const recording =
+  document.getElementById("recording");
+
+const recordTime =
+  document.getElementById("recordTime");
 
 
-/* =================================================
-   Device ID
-================================================= */
+/*************************************************
+ * Device ID
+ *************************************************/
 
 let deviceId =
-    localStorage.getItem(
-        "shared_camera_device_id"
-    );
+  localStorage.getItem(
+    "shared_camera_device_id"
+  );
 
 
 if (!deviceId) {
 
-    if (
-        window.crypto &&
-        crypto.randomUUID
-    ) {
+  if (
+    window.crypto &&
+    crypto.randomUUID
+  ) {
 
-        deviceId =
-            crypto.randomUUID();
+    deviceId =
+      crypto.randomUUID();
 
-    } else {
+  } else {
 
-        deviceId =
-            "device_" +
-            Date.now() +
-            "_" +
-            Math.random()
-              .toString(36)
-              .substring(2);
+    deviceId =
+      "device_" +
+      Date.now() +
+      "_" +
+      Math.random()
+        .toString(36)
+        .substring(2);
+  }
 
-    }
 
-
-    localStorage.setItem(
-        "shared_camera_device_id",
-        deviceId
-    );
-
+  localStorage.setItem(
+    "shared_camera_device_id",
+    deviceId
+  );
 }
 
 
-/* =================================================
-   カメラ変数
-================================================= */
+/*************************************************
+ * 状態
+ *************************************************/
+
+let cameraEnabled = false;
 
 let stream = null;
 
-let facingMode =
-    "environment";
+let facingMode = "environment";
 
-let currentMode =
-    "video";
+let currentMode = "photo";
 
-let mediaRecorder =
-    null;
+let mediaRecorder = null;
 
 let recordedChunks = [];
 
@@ -1418,2866 +1342,2298 @@ let recordingTimer = null;
 
 let currentZoom = 1;
 
-let selectedMedia = null;
+let currentMedia = null;
 
-let currentFilter = "all";
+let currentTab = "all";
+
+let mediaList = [];
 
 
-/* =================================================
-   JSONP GET
-================================================= */
+/*************************************************
+ * JSONP
+ *************************************************/
 
 function gasGet(
-    action,
-    params = {}
+  action,
+  params = {}
 ) {
 
-    return new Promise(
-        (resolve, reject) => {
-
-            const callbackName =
-                "gasCallback_" +
-                Date.now() +
-                "_" +
-                Math.random()
-                    .toString(36)
-                    .substring(2);
-
-
-            const script =
-                document.createElement(
-                    "script"
-                );
-
-
-            const query =
-                new URLSearchParams();
-
-
-            query.set(
-                "action",
-                action
-            );
-
-
-            query.set(
-                "callback",
-                callbackName
-            );
-
-
-            Object.keys(params)
-              .forEach(key => {
-
-                query.set(
-                    key,
-                    params[key]
-                );
-
-              });
-
-
-            const timer =
-                setTimeout(
-                    () => {
-
-                        cleanup();
-
-                        reject(
-                            new Error(
-                                "GAS通信がタイムアウトしました"
-                            )
-                        );
-
-                    },
-                    30000
-                );
-
-
-            window[callbackName] =
-                function(data) {
-
-                    clearTimeout(timer);
-
-                    cleanup();
-
-                    if (
-                        data &&
-                        data.success === false
-                    ) {
-
-                        reject(
-                            new Error(
-                                data.error ||
-                                "GASエラー"
-                            )
-                        );
-
-                        return;
-
-                    }
-
-
-                    resolve(data);
-
-                };
-
-
-            function cleanup() {
-
-                delete window[
-                    callbackName
-                ];
-
-                if (
-                    script.parentNode
-                ) {
-
-                    script.parentNode
-                      .removeChild(
-                          script
-                      );
-
-                }
-
-            }
-
-
-            script.onerror =
-                function() {
-
-                    clearTimeout(timer);
-
-                    cleanup();
-
-                    reject(
-                        new Error(
-                            "GASへ接続できません"
-                        )
-                    );
-
-                };
-
-
-            script.src =
-                GAS_URL +
-                "?" +
-                query.toString();
-
-
-            document.body.appendChild(
-                script
-            );
-
-        }
-    );
-
-}
-
-
-/* =================================================
-   POST
-================================================= */
-
-function gasPost(
-    action,
-    data
-) {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            const iframe =
-                document.createElement(
-                    "iframe"
-                );
-
-
-            iframe.name =
-                "gas_post_" +
-                Date.now() +
-                "_" +
-                Math.random()
-                  .toString(36)
-                  .substring(2);
-
-
-            iframe.style.display =
-                "none";
-
-
-            document.body.appendChild(
-                iframe
-            );
-
-
-            const form =
-                document.createElement(
-                    "form"
-                );
-
-
-            form.method =
-                "POST";
-
-
-            form.action =
-                GAS_URL;
-
-
-            form.target =
-                iframe.name;
-
-
-            Object.keys(data)
-              .forEach(key => {
-
-                const input =
-                    document.createElement(
-                        "input"
-                    );
-
-
-                input.type =
-                    "hidden";
-
-
-                input.name =
-                    key;
-
-
-                input.value =
-                    data[key];
-
-
-                form.appendChild(
-                    input
-                );
-
-              });
-
-
-            const actionInput =
-                document.createElement(
-                    "input"
-                );
-
-
-            actionInput.type =
-                "hidden";
-
-
-            actionInput.name =
-                "action";
-
-
-            actionInput.value =
-                action;
-
-
-            form.appendChild(
-                actionInput
-            );
-
-
-            document.body.appendChild(
-                form
-            );
-
-
-            let finished = false;
-
-
-            const timeout =
-                setTimeout(
-                    () => {
-
-                        if (finished)
-                            return;
-
-
-                        finished = true;
-
-
-                        cleanup();
-
-
-                        reject(
-                            new Error(
-                                "アップロードがタイムアウトしました"
-                            )
-                        );
-
-                    },
-                    60000
-                );
-
-
-            iframe.onload =
-                function() {
-
-                    if (finished)
-                        return;
-
-
-                    finished = true;
-
-                    clearTimeout(
-                        timeout
-                    );
-
-                    cleanup();
-
-                    resolve({
-                        success: true
-                    });
-
-                };
-
-
-            iframe.onerror =
-                function() {
-
-                    if (finished)
-                        return;
-
-
-                    finished = true;
-
-                    clearTimeout(
-                        timeout
-                    );
-
-                    cleanup();
-
-                    reject(
-                        new Error(
-                            "POSTに失敗しました"
-                        )
-                    );
-
-                };
-
-
-            function cleanup() {
-
-                if (form.parentNode)
-                    form.parentNode
-                        .removeChild(form);
-
-
-                setTimeout(
-                    () => {
-
-                        if (
-                            iframe.parentNode
-                        ) {
-
-                            iframe.parentNode
-                                .removeChild(
-                                    iframe
-                                );
-
-                        }
-
-                    },
-                    500
-                );
-
-            }
-
-
-            form.submit();
-
-        }
-    );
-
-}
-
-
-/* =================================================
-   カメラ開始
-================================================= */
-
-async function startCamera() {
-
-    if (
-        !navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia
-    ) {
-
-        alert(
-            "このブラウザではカメラを利用できません。"
-        );
-
-        return;
-
-    }
-
-
-    if (stream) {
-
-        stream
-          .getTracks()
-          .forEach(
-              track =>
-                track.stop()
-          );
-
-    }
-
-
-    try {
-
-        stream =
-            await navigator.mediaDevices
-                .getUserMedia({
-
-                    video: {
-
-                        facingMode: {
-                            ideal:
-                                facingMode
-                        },
-
-                        width: {
-                            ideal: 1920
-                        },
-
-                        height: {
-                            ideal: 1080
-                        }
-
-                    },
-
-                    audio: true
-
-                });
-
-
-        video.srcObject =
-            stream;
-
-
-        currentZoom = 1;
-
-
-        applyZoom(1);
-
-
-        updateTorchButton();
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "カメラを開始できませんでした。\n\n" +
-            error.message
-        );
-
-    }
-
-}
-
-
-/* =================================================
-   カメラ切替
-================================================= */
-
-document
-  .getElementById("switchCamera")
-  .addEventListener(
-      "click",
-      async () => {
-
-          facingMode =
-              facingMode ===
-              "environment"
-                  ? "user"
-                  : "environment";
-
-
-          await startCamera();
-
-      }
-  );
-
-
-/* =================================================
-   ライト
-================================================= */
-
-async function toggleTorch() {
-
-    if (!stream)
-        return;
-
-
-    const track =
-        stream
-          .getVideoTracks()[0];
-
-
-    if (!track)
-        return;
-
-
-    const capabilities =
-        track.getCapabilities();
-
-
-    if (!capabilities.torch) {
-
-        alert(
-            "このカメラはライト制御に対応していません。"
-        );
-
-        return;
-
-    }
-
-
-    const settings =
-        track.getSettings();
-
-
-    await track.applyConstraints({
-
-        advanced: [
-
-            {
-                torch:
-                    !settings.torch
-            }
-
-        ]
-
-    });
-
-}
-
-
-document
-  .getElementById("torchButton")
-  .addEventListener(
-      "click",
-      toggleTorch
-  );
-
-
-function updateTorchButton() {
-
-    const button =
-        document.getElementById(
-            "torchButton"
-        );
-
-
-    button.style.opacity =
-        "1";
-
-}
-
-
-/* =================================================
-   ズーム
-================================================= */
-
-function applyZoom(
-    zoom
-) {
-
-    currentZoom =
-        zoom;
-
-
-    if (!stream)
-        return;
-
-
-    const track =
-        stream
-          .getVideoTracks()[0];
-
-
-    if (!track)
-        return;
-
-
-    const capabilities =
-        track.getCapabilities();
-
-
-    if (
-        capabilities.zoom
-    ) {
-
-        const actualZoom =
-            Math.min(
-                capabilities.zoom.max,
-                Math.max(
-                    capabilities.zoom.min,
-                    zoom
-                )
-            );
-
-
-        track.applyConstraints({
-
-            advanced: [
-
-                {
-                    zoom:
-                        actualZoom
-                }
-
-            ]
-
-        }).catch(
-            console.error
-        );
-
-    } else {
-
-        video.style.transform =
-            `scale(${zoom})`;
-
-    }
-
-}
-
-
-document
-  .querySelectorAll(
-      ".zoomButton"
-  )
-  .forEach(
-      button => {
-
-          button.addEventListener(
-              "click",
-              () => {
-
-                  applyZoom(
-                      Number(
-                          button.dataset.zoom
-                      )
-                  );
-
-              }
-          );
-
-      }
-  );
-
-
-/* =================================================
-   フォーカス
-================================================= */
-
-video.addEventListener(
-    "click",
-    event => {
-
-        const rect =
-            video.getBoundingClientRect();
-
-
-        const x =
-            event.clientX -
-            rect.left;
-
-
-        const y =
-            event.clientY -
-            rect.top;
-
-
-        const focus =
-            document.getElementById(
-                "focusBox"
-            );
-
-
-        focus.style.left =
-            x + "px";
-
-
-        focus.style.top =
-            y + "px";
-
-
-        focus.classList.add(
-            "show"
-        );
-
-
-        setTimeout(
-            () => {
-
-                focus.classList.remove(
-                    "show"
-                );
-
-            },
-            700
-        );
-
-    }
-);
-
-
-/* =================================================
-   モード変更
-================================================= */
-
-document
-  .querySelectorAll(".mode")
-  .forEach(
-      button => {
-
-          button.addEventListener(
-              "click",
-              () => {
-
-                  currentMode =
-                      button.dataset.mode;
-
-
-                  document
-                    .querySelectorAll(
-                        ".mode"
-                    )
-                    .forEach(
-                        x =>
-                          x.classList.remove(
-                              "active"
-                          )
-                    );
-
-
-                  button.classList.add(
-                      "active"
-                  );
-
-
-                  captureButton
-                    .classList.toggle(
-                        "videoMode",
-                        currentMode ===
-                        "video"
-                    );
-
-              }
-          );
-
-      }
-  );
-
-
-/* =================================================
-   シャッター
-================================================= */
-
-captureButton.addEventListener(
-    "click",
-    async () => {
-
-        if (
-            currentMode === "photo"
-        ) {
-
-            await takePhoto();
-
-        } else {
-
-            if (
-                mediaRecorder &&
-                mediaRecorder.state ===
-                    "recording"
-            ) {
-
-                stopRecording();
-
-            } else {
-
-                startRecording();
-
-            }
-
-        }
-
-    }
-);
-
-
-/* =================================================
-   写真撮影
-================================================= */
-
-async function takePhoto() {
-
-    if (!video.videoWidth) {
-
-        alert(
-            "カメラが準備中です。"
-        );
-
-        return;
-
-    }
-
-
-    const canvas =
+  return new Promise(
+    (resolve, reject) => {
+
+      const callbackName =
+        "gasCallback_" +
+        Date.now() +
+        "_" +
+        Math.random()
+          .toString(36)
+          .substring(2);
+
+
+      const script =
         document.createElement(
-            "canvas"
+          "script"
         );
 
 
-    canvas.width =
-        video.videoWidth;
+      const query =
+        new URLSearchParams({
 
+          action: action,
 
-    canvas.height =
-        video.videoHeight;
+          callback:
+            callbackName,
 
-
-    const ctx =
-        canvas.getContext(
-            "2d"
-        );
-
-
-    ctx.drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-
-    canvas.toBlob(
-        async blob => {
-
-            if (!blob)
-                return;
-
-
-            const fileName =
-                "photo_" +
-                makeDateName() +
-                ".jpg";
-
-
-            await uploadFile(
-                blob,
-                fileName
-            );
-
-        },
-        "image/jpeg",
-        .92
-    );
-
-}
-
-
-/* =================================================
-   MP4 MIME判定
-================================================= */
-
-function getSupportedVideoMime() {
-
-    const types = [
-
-        "video/mp4;codecs=h264,aac",
-
-        "video/mp4",
-
-        "video/webm;codecs=vp9,opus",
-
-        "video/webm;codecs=vp8,opus",
-
-        "video/webm"
-
-    ];
-
-
-    for (
-        const type of types
-    ) {
-
-        if (
-            window.MediaRecorder &&
-            MediaRecorder.isTypeSupported(
-                type
-            )
-        ) {
-
-            return type;
-
-        }
-
-    }
-
-
-    return "";
-
-}
-
-
-/* =================================================
-   録画開始
-================================================= */
-
-function startRecording() {
-
-    if (!stream) {
-
-        alert(
-            "カメラが起動していません。"
-        );
-
-        return;
-
-    }
-
-
-    recordedChunks = [];
-
-
-    const mimeType =
-        getSupportedVideoMime();
-
-
-    if (!mimeType) {
-
-        alert(
-            "このブラウザでは動画録画に対応していません。"
-        );
-
-        return;
-
-    }
-
-
-    try {
-
-        mediaRecorder =
-            new MediaRecorder(
-                stream,
-                {
-                    mimeType:
-                        mimeType
-                }
-            );
-
-
-    } catch (error) {
-
-        alert(
-            "録画を開始できませんでした。"
-        );
-
-        return;
-
-    }
-
-
-    mediaRecorder.ondataavailable =
-        event => {
-
-            if (
-                event.data &&
-                event.data.size > 0
-            ) {
-
-                recordedChunks.push(
-                    event.data
-                );
-
-            }
-
-        };
-
-
-    mediaRecorder.onstop =
-        async () => {
-
-            clearInterval(
-                recordingTimer
-            );
-
-
-            recording.classList.remove(
-                "active"
-            );
-
-
-            captureButton.classList.remove(
-                "recording"
-            );
-
-
-            const blob =
-                new Blob(
-                    recordedChunks,
-                    {
-                        type:
-                            mimeType
-                    }
-                );
-
-
-            if (
-                blob.size >
-                MAX_FILE_SIZE
-            ) {
-
-                alert(
-                    "動画が20MBを超えたため保存できませんでした。"
-                );
-
-                return;
-
-            }
-
-
-            if (
-                blob.size <= 0
-            ) {
-
-                return;
-
-            }
-
-
-            /*
-             * MP4でない場合
-             * MP4変換を試す
-             */
-
-            let uploadBlob =
-                blob;
-
-
-            let fileName =
-                "video_" +
-                makeDateName();
-
-
-            if (
-                mimeType
-                    .toLowerCase()
-                    .includes(
-                        "mp4"
-                    )
-            ) {
-
-                fileName +=
-                    ".mp4";
-
-            } else {
-
-                /*
-                 * MP4変換
-                 */
-
-                try {
-
-                    showLoading(
-                        "MP4へ変換中..."
-                    );
-
-
-                    const converted =
-                        await convertToMP4(
-                            blob
-                        );
-
-
-                    if (
-                        converted &&
-                        converted.size > 0
-                    ) {
-
-                        uploadBlob =
-                            converted;
-
-                    }
-
-
-                } catch (error) {
-
-                    console.warn(
-                        "MP4変換失敗",
-                        error
-                    );
-
-
-                    /*
-                     * 変換できない場合
-                     * WebMのままにはしない
-                     */
-
-                    hideLoading();
-
-
-                    alert(
-                        "この端末ではMP4変換に失敗しました。\n" +
-                        "別のブラウザまたはPCで試してください。"
-                    );
-
-
-                    return;
-
-                }
-
-
-                hideLoading();
-
-
-                fileName +=
-                    ".mp4";
-
-            }
-
-
-            if (
-                uploadBlob.size >
-                MAX_FILE_SIZE
-            ) {
-
-                alert(
-                    "MP4変換後の動画が20MBを超えました。"
-                );
-
-                return;
-
-            }
-
-
-            await uploadFile(
-                uploadBlob,
-                fileName
-            );
-
-        };
-
-
-    mediaRecorder.start(
-        250
-    );
-
-
-    captureButton.classList.add(
-        "recording"
-    );
-
-
-    recording.classList.add(
-        "active"
-    );
-
-
-    recordingStartTime =
-        Date.now();
-
-
-    updateRecordTime();
-
-
-    recordingTimer =
-        setInterval(
-            updateRecordTime,
-            250
-        );
-
-
-    /*
-     * 最大60秒
-     */
-
-    setTimeout(
-        () => {
-
-            if (
-                mediaRecorder &&
-                mediaRecorder.state ===
-                    "recording"
-            ) {
-
-                stopRecording();
-
-            }
-
-        },
-        MAX_RECORDING_TIME * 1000
-    );
-
-}
-
-
-/* =================================================
-   録画停止
-================================================= */
-
-function stopRecording() {
-
-    if (
-        mediaRecorder &&
-        mediaRecorder.state ===
-            "recording"
-    ) {
-
-        mediaRecorder.stop();
-
-    }
-
-}
-
-
-/* =================================================
-   録画時間
-================================================= */
-
-function updateRecordTime() {
-
-    const seconds =
-        Math.floor(
-            (
-                Date.now() -
-                recordingStartTime
-            ) / 1000
-        );
-
-
-    const min =
-        String(
-            Math.floor(
-                seconds / 60
-            )
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    const sec =
-        String(
-            seconds % 60
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    recordTime.textContent =
-        min + ":" + sec;
-
-}
-
-
-/* =================================================
-   MP4変換
-================================================= */
-
-async function convertToMP4(
-    inputBlob
-) {
-
-    /*
-     * FFmpegを動的読み込み
-     */
-
-    if (
-        !window.FFmpeg
-    ) {
-
-        await loadFFmpeg();
-
-    }
-
-
-    const {
-        createFFmpeg,
-        fetchFile
-    } = FFmpeg;
-
-
-    const ffmpeg =
-        createFFmpeg({
-            log: false
+          ...params
         });
 
 
-    await ffmpeg.load();
-
-
-    ffmpeg.FS(
-        "writeFile",
-        "input.webm",
-        await fetchFile(
-            inputBlob
-        )
-    );
-
-
-    await ffmpeg.run(
-
-        "-i",
-        "input.webm",
-
-        "-c:v",
-        "libx264",
-
-        "-preset",
-        "ultrafast",
-
-        "-crf",
-        "30",
-
-        "-c:a",
-        "aac",
-
-        "-movflags",
-        "+faststart",
-
-        "output.mp4"
-
-    );
-
-
-    const data =
-        ffmpeg.FS(
-            "readFile",
-            "output.mp4"
-        );
-
-
-    return new Blob(
-        [data.buffer],
-        {
-            type:
-                "video/mp4"
-        }
-    );
-
-}
-
-
-/* =================================================
-   FFmpeg読み込み
-================================================= */
-
-function loadFFmpeg() {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            const script =
-                document.createElement(
-                    "script"
-                );
-
-
-            script.src =
-                "https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js";
-
-
-            script.onload =
-                () => {
-
-                    if (
-                        window.FFmpeg
-                    ) {
-
-                        resolve();
-
-                    } else {
-
-                        reject(
-                            new Error(
-                                "FFmpeg読み込み失敗"
-                            )
-                        );
-
-                    }
-
-                };
-
-
-            script.onerror =
-                () => {
-
-                    reject(
-                        new Error(
-                            "FFmpegを読み込めませんでした"
-                        )
-                    );
-
-                };
-
-
-            document.head.appendChild(
-                script
-            );
-
-        }
-    );
-
-}
-
-
-/* =================================================
-   ファイルアップロード
-================================================= */
-
-async function uploadFile(
-    blob,
-    fileName
-) {
-
-    if (
-        blob.size >
-        MAX_FILE_SIZE
-    ) {
-
-        alert(
-            "20MBを超えています。"
-        );
-
-        return;
-
-    }
-
-
-    showUpload(
-        "アップロード開始..."
-    );
-
-
-    try {
-
-        const start =
-            await gasGet(
-                "start",
-                {
-
-                    fileName:
-                        fileName,
-
-                    mimeType:
-                        blob.type,
-
-                    totalSize:
-                        blob.size,
-
-                    deviceId:
-                        deviceId
-
-                }
-            );
-
-
-        if (
-            !start ||
-            !start.uploadId
-        ) {
-
-            throw new Error(
-                "アップロード開始に失敗しました"
-            );
-
-        }
-
-
-        const uploadId =
-            start.uploadId;
-
-
-        const totalChunks =
-            Math.ceil(
-                blob.size /
-                CHUNK_SIZE
-            );
-
-
-        for (
-            let i = 0;
-            i < totalChunks;
-            i++
-        ) {
-
-            const startByte =
-                i * CHUNK_SIZE;
-
-
-            const endByte =
-                Math.min(
-                    blob.size,
-                    startByte +
-                    CHUNK_SIZE
-                );
-
-
-            const chunk =
-                blob.slice(
-                    startByte,
-                    endByte
-                );
-
-
-            const base64 =
-                await blobToBase64(
-                    chunk
-                );
-
-
-            updateUpload(
-                `アップロード中 ${i + 1}/${totalChunks}`,
-                (
-                    (i + 1) /
-                    totalChunks
-                ) * 100
-            );
-
-
-            await gasPost(
-                "chunk",
-                {
-
-                    uploadId:
-                        uploadId,
-
-                    chunkIndex:
-                        i,
-
-                    totalChunks:
-                        totalChunks,
-
-                    data:
-                        base64
-
-                }
-            );
-
-
-            /*
-             * 少し待つ
-             */
-
-            await sleep(100);
-
-        }
-
-
-        updateUpload(
-            "保存処理中...",
-            100
-        );
-
-
-        await sleep(800);
-
-
-        hideUpload();
-
-
-        /*
-         * ギャラリー更新
-         */
-
-        await loadGallery();
-
-
-        /*
-         * 最新画像
-         */
-
-        await updateGalleryPreview();
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        hideUpload();
-
-
-        alert(
-            "アップロードに失敗しました。\n\n" +
-            error.message
-        );
-
-    }
-
-}
-
-
-/* =================================================
-   Blob → Base64
-================================================= */
-
-function blobToBase64(
-    blob
-) {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            const reader =
-                new FileReader();
-
-
-            reader.onload =
-                () => {
-
-                    const result =
-                        reader.result;
-
-
-                    resolve(
-                        result.split(
-                            ","
-                        )[1]
-                    );
-
-                };
-
-
-            reader.onerror =
-                reject;
-
-
-            reader.readAsDataURL(
-                blob
-            );
-
-        }
-    );
-
-}
-
-
-/* =================================================
-   ギャラリー読み込み
-================================================= */
-
-async function loadGallery() {
-
-    try {
-
-        const result =
-            await gasGet(
-                "list",
-                {
-                    deviceId:
-                        deviceId
-                }
-            );
-
-
-        if (
-            !result ||
-            !Array.isArray(
-                result.files
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        window.mediaList =
-            result.files;
-
-
-        renderGallery();
-
-
-    } catch (error) {
-
-        console.error(
-            "ギャラリー取得:",
-            error
-        );
-
-
-        gallery.innerHTML =
-            `<div style="
-                grid-column:1/-1;
-                padding:30px;
-                text-align:center;
-                color:#aaa;
-            ">
-                ギャラリーを読み込めませんでした
-                <br><br>
-                ${escapeHTML(error.message)}
-            </div>`;
-
-    }
-
-}
-
-
-/* =================================================
-   ギャラリー描画
-================================================= */
-
-function renderGallery() {
-
-    gallery.innerHTML =
-        "";
-
-
-    const files =
-        window.mediaList || [];
-
-
-    const filtered =
-        files.filter(
-            file => {
-
-                if (
-                    currentFilter ===
-                    "all"
-                ) {
-
-                    return true;
-
-                }
-
-
-                if (
-                    currentFilter ===
-                    "mine"
-                ) {
-
-                    return file.mine;
-
-                }
-
-
-                if (
-                    currentFilter ===
-                    "shared"
-                ) {
-
-                    return !file.mine;
-
-                }
-
-
-                return true;
-
-            }
-        );
-
-
-    if (
-        filtered.length === 0
-    ) {
-
-        gallery.innerHTML =
-            `<div style="
-                grid-column:1/-1;
-                padding:50px 20px;
-                text-align:center;
-                color:#777;
-            ">
-                写真・動画はありません
-            </div>`;
-
-        return;
-
-    }
-
-
-    filtered.forEach(
-        file => {
-
-            const item =
-                document.createElement(
-                    "div"
-                );
-
-
-            item.className =
-                "mediaItem";
-
-
-            /*
-             * 写真
-             */
-
-            if (
-                file.mimeType
-                    .startsWith(
-                        "image/"
-                    )
-            ) {
-
-                const img =
-                    document.createElement(
-                        "img"
-                    );
-
-
-                img.loading =
-                    "lazy";
-
-
-                img.src =
-                    file.thumbnailUrl;
-
-
-                img.onerror =
-                    () => {
-
-                        img.src =
-                            createPlaceholder(
-                                "📷"
-                            );
-
-                    };
-
-
-                item.appendChild(
-                    img
-                );
-
-            }
-
-
-            /*
-             * 動画
-             */
-
-            else {
-
-                const videoIcon =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                videoIcon.className =
-                    "videoIcon";
-
-
-                videoIcon.textContent =
-                    "🎥";
-
-
-                item.appendChild(
-                    videoIcon
-                );
-
-            }
-
-
-            /*
-             * 自分マーク
-             */
-
-            if (file.mine) {
-
-                const mark =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                mark.className =
-                    "mineMark";
-
-
-                mark.textContent =
-                    "自分";
-
-
-                item.appendChild(
-                    mark
-                );
-
-            }
-
-
-            item.addEventListener(
-                "click",
-                () => {
-
-                    openPreview(
-                        file
-                    );
-
-                }
-            );
-
-
-            gallery.appendChild(
-                item
-            );
-
-        }
-    );
-
-}
-
-
-/* =================================================
-   プレビュー
-================================================= */
-
-async function openPreview(
-    file
-) {
-
-    selectedMedia =
-        file;
-
-
-    previewName.textContent =
-        file.name;
-
-
-    previewContent.innerHTML =
-        "";
-
-
-    showLoading(
-        "写真・動画を読み込み中..."
-    );
-
-
-    preview.classList.add(
-        "show"
-    );
-
-
-    try {
-
-        /*
-         * DriveからGAS経由で取得
-         */
-
-        const result =
-            await gasGet(
-                "file",
-                {
-
-                    fileId:
-                        file.id,
-
-                    deviceId:
-                        deviceId
-
-                }
-            );
-
-
-        if (
-            result.tooLarge
-        ) {
-
-            previewContent.innerHTML =
-                `
-                <div style="
-                    text-align:center;
-                    padding:30px;
-                    color:#aaa;
-                ">
-                    <div style="
-                        font-size:60px;
-                    ">
-                        ${file.mimeType.startsWith("video/")
-                            ? "🎥"
-                            : "📷"}
-                    </div>
-
-                    <br>
-
-                    ファイルサイズが大きいため
-                    <br>
-                    Driveから開いてください。
-                </div>
-                `;
-
-
-            hideLoading();
-
-            return;
-
-        }
-
-
-        if (
-            !result.data
-        ) {
-
-            throw new Error(
-                "ファイルデータを取得できませんでした"
-            );
-
-        }
-
-
-        const dataUrl =
-            "data:" +
-            result.mimeType +
-            ";base64," +
-            result.data;
-
-
-        /*
-         * 写真
-         */
-
-        if (
-            result.mimeType
-                .startsWith(
-                    "image/"
-                )
-        ) {
-
-            const img =
-                document.createElement(
-                    "img"
-                );
-
-
-            img.src =
-                dataUrl;
-
-
-            img.alt =
-                file.name;
-
-
-            previewContent.appendChild(
-                img
-            );
-
-        }
-
-
-        /*
-         * 動画
-         */
-
-        else if (
-            result.mimeType
-                .startsWith(
-                    "video/"
-                )
-        ) {
-
-            const vid =
-                document.createElement(
-                    "video"
-                );
-
-
-            vid.controls =
-                true;
-
-
-            vid.autoplay =
-                true;
-
-
-            vid.playsInline =
-                true;
-
-
-            vid.preload =
-                "auto";
-
-
-            vid.src =
-                dataUrl;
-
-
-            previewContent.appendChild(
-                vid
-            );
-
-        }
-
-
-        hideLoading();
-
-
-    } catch (error) {
-
-        hideLoading();
-
-
-        previewContent.innerHTML =
-            `
-            <div style="
-                padding:30px;
-                text-align:center;
-            ">
-                <div style="
-                    font-size:50px;
-                ">
-                    ⚠️
-                </div>
-
-                <br>
-
-                ファイルを表示できませんでした。
-
-                <br><br>
-
-                <small>
-                    ${escapeHTML(
-                        error.message
-                    )}
-                </small>
-            </div>
-            `;
-
-    }
-
-}
-
-
-/* =================================================
-   Driveボタン
-================================================= */
-
-document
-  .getElementById(
-      "driveButton"
-  )
-  .addEventListener(
-      "click",
-      () => {
-
-          if (
-              !selectedMedia
-          )
-              return;
-
-
-          window.open(
-              selectedMedia.viewUrl,
-              "_blank"
-          );
-
-      }
-  );
-
-
-/* =================================================
-   保存
-================================================= */
-
-document
-  .getElementById(
-      "saveButton"
-  )
-  .addEventListener(
-      "click",
-      async () => {
-
-          if (
-              !selectedMedia
-          )
-              return;
-
-
-          try {
-
-              showLoading(
-                  "保存準備中..."
-              );
-
-
-              const result =
-                  await gasGet(
-                      "file",
-                      {
-
-                          fileId:
-                              selectedMedia.id,
-
-                          deviceId:
-                              deviceId
-
-                      }
-                  );
-
-
-              if (
-                  result.tooLarge
-              ) {
-
-                  hideLoading();
-
-                  window.open(
-                      selectedMedia.viewUrl,
-                      "_blank"
-                  );
-
-                  return;
-
-              }
-
-
-              const dataUrl =
-                  "data:" +
-                  result.mimeType +
-                  ";base64," +
-                  result.data;
-
-
-              const a =
-                  document.createElement(
-                      "a"
-                  );
-
-
-              a.href =
-                  dataUrl;
-
-
-              a.download =
-                  result.name ||
-                  selectedMedia.name;
-
-
-              document.body.appendChild(
-                  a
-              );
-
-
-              a.click();
-
-
-              a.remove();
-
-
-              hideLoading();
-
-
-          } catch (error) {
-
-              hideLoading();
-
-
-              alert(
-                  "保存に失敗しました。\n" +
-                  error.message
-              );
-
-          }
-
-      }
-  );
-
-
-/* =================================================
-   削除
-================================================= */
-
-document
-  .getElementById(
-      "deleteButton"
-  )
-  .addEventListener(
-      "click",
-      async () => {
-
-          if (
-              !selectedMedia
-          )
-              return;
-
-
-          if (
-              !selectedMedia.mine
-          ) {
-
-              alert(
-                  "自分が撮影したファイルだけ削除できます。"
-              );
-
-              return;
-
-          }
-
-
-          if (
-              !confirm(
-                  "このファイルを削除しますか？"
+      const timeout =
+        setTimeout(
+          () => {
+
+            cleanup();
+
+            reject(
+              new Error(
+                "GASへの接続がタイムアウトしました"
               )
-          ) {
+            );
 
-              return;
-
-          }
-
-
-          try {
-
-              showLoading(
-                  "削除中..."
-              );
-
-
-              await gasPost(
-                  "delete",
-                  {
-
-                      fileId:
-                          selectedMedia.id,
-
-                      deviceId:
-                          deviceId
-
-                  }
-              );
-
-
-              preview.classList.remove(
-                  "show"
-              );
-
-
-              selectedMedia =
-                  null;
-
-
-              await loadGallery();
-
-
-              await updateGalleryPreview();
-
-
-              hideLoading();
-
-
-          } catch (error) {
-
-              hideLoading();
-
-
-              alert(
-                  "削除に失敗しました。\n" +
-                  error.message
-              );
-
-          }
-
-      }
-  );
-
-
-/* =================================================
-   ギャラリー
-================================================= */
-
-document
-  .getElementById(
-      "openGallery"
-  )
-  .addEventListener(
-      "click",
-      async () => {
-
-          galleryPanel.classList.add(
-              "show"
-          );
-
-
-          await loadGallery();
-
-      }
-  );
-
-
-document
-  .getElementById(
-      "galleryPreview"
-  )
-  .addEventListener(
-      "click",
-      async () => {
-
-          galleryPanel.classList.add(
-              "show"
-          );
-
-
-          await loadGallery();
-
-      }
-  );
-
-
-document
-  .getElementById(
-      "closeGallery"
-  )
-  .addEventListener(
-      "click",
-      () => {
-
-          galleryPanel.classList.remove(
-              "show"
-          );
-
-      }
-  );
-
-
-/* =================================================
-   ギャラリーフィルター
-================================================= */
-
-document
-  .querySelectorAll(
-      ".tab"
-  )
-  .forEach(
-      tab => {
-
-          tab.addEventListener(
-              "click",
-              () => {
-
-                  currentFilter =
-                      tab.dataset.filter;
-
-
-                  document
-                    .querySelectorAll(
-                        ".tab"
-                    )
-                    .forEach(
-                        x =>
-                          x.classList.remove(
-                              "active"
-                          )
-                    );
-
-
-                  tab.classList.add(
-                      "active"
-                  );
-
-
-                  renderGallery();
-
-              }
-          );
-
-      }
-  );
-
-
-/* =================================================
-   プレビュー閉じる
-================================================= */
-
-document
-  .getElementById(
-      "closePreview"
-  )
-  .addEventListener(
-      "click",
-      () => {
-
-          preview.classList.remove(
-              "show"
-          );
-
-
-          previewContent.innerHTML =
-              "";
-
-
-          selectedMedia =
-              null;
-
-      }
-  );
-
-
-/* =================================================
-   最新画像
-================================================= */
-
-async function updateGalleryPreview() {
-
-    const files =
-        window.mediaList || [];
-
-
-    const image =
-        files.find(
-            file =>
-                file.mimeType
-                    .startsWith(
-                        "image/"
-                    )
+          },
+          20000
         );
 
 
-    const img =
-        document.getElementById(
-            "galleryPreviewImage"
-        );
+      window[callbackName] =
+        function(data) {
+
+          clearTimeout(timeout);
+
+          cleanup();
+
+          resolve(data);
+        };
 
 
-    const icon =
-        document.getElementById(
-            "galleryPreviewIcon"
-        );
+      function cleanup() {
+
+        try {
+
+          script.remove();
+
+        } catch(e) {}
+
+        try {
+
+          delete window[
+            callbackName
+          ];
+
+        } catch(e) {}
+      }
 
 
-    if (image) {
-
-        img.src =
-            image.thumbnailUrl;
-
-
-        img.style.display =
-            "block";
+      script.src =
+        GAS_URL +
+        "?" +
+        query.toString();
 
 
-        icon.style.display =
-            "none";
+      script.onerror =
+        function() {
 
-    } else {
+          clearTimeout(timeout);
 
-        img.style.display =
-            "none";
+          cleanup();
+
+          reject(
+            new Error(
+              "GASに接続できません"
+            )
+          );
+        };
 
 
-        icon.style.display =
-            "block";
-
+      document.body.appendChild(
+        script
+      );
     }
-
+  );
 }
 
 
-/* =================================================
-   Loading
-================================================= */
+/*************************************************
+ * POST
+ *************************************************/
+
+function gasPost(
+  action,
+  data = {}
+) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const iframe =
+        document.createElement(
+          "iframe"
+        );
+
+
+      iframe.style.display =
+        "none";
+
+
+      iframe.name =
+        "gasFrame_" +
+        Date.now() +
+        "_" +
+        Math.random()
+          .toString(36)
+          .substring(2);
+
+
+      document.body.appendChild(
+        iframe
+      );
+
+
+      const form =
+        document.createElement(
+          "form"
+        );
+
+
+      form.method =
+        "POST";
+
+      form.action =
+        GAS_URL;
+
+      form.target =
+        iframe.name;
+
+
+      function addInput(
+        name,
+        value
+      ) {
+
+        const input =
+          document.createElement(
+            "input"
+          );
+
+        input.type =
+          "hidden";
+
+        input.name =
+          name;
+
+        input.value =
+          value;
+
+        form.appendChild(
+          input
+        );
+      }
+
+
+      addInput(
+        "action",
+        action
+      );
+
+
+      Object.keys(data)
+        .forEach(
+          key => {
+
+            addInput(
+              key,
+              data[key]
+            );
+          }
+        );
+
+
+      document.body.appendChild(
+        form
+      );
+
+
+      const timeout =
+        setTimeout(
+          () => {
+
+            cleanup();
+
+            reject(
+              new Error(
+                "アップロードがタイムアウトしました"
+              )
+            );
+
+          },
+          30000
+        );
+
+
+      iframe.onload =
+        function() {
+
+          clearTimeout(timeout);
+
+          cleanup();
+
+          resolve({
+            success: true
+          });
+        };
+
+
+      iframe.onerror =
+        function() {
+
+          clearTimeout(timeout);
+
+          cleanup();
+
+          reject(
+            new Error(
+              "アップロードに失敗しました"
+            )
+          );
+        };
+
+
+      form.submit();
+
+
+      function cleanup() {
+
+        try {
+          form.remove();
+        } catch(e) {}
+
+        try {
+          iframe.remove();
+        } catch(e) {}
+      }
+
+    }
+  );
+}
+
+
+/*************************************************
+ * ローディング
+ *************************************************/
 
 function showLoading(
-    text
+  text,
+  progress = 0
 ) {
 
-    loadingText.textContent =
-        text ||
-        "読み込み中...";
+  loadingText.textContent =
+    text;
 
+  progressInner.style.width =
+    progress + "%";
 
-    loading.classList.add(
-        "show"
-    );
-
+  loading.classList.add(
+    "show"
+  );
 }
 
 
 function hideLoading() {
 
-    loading.classList.remove(
-        "show"
-    );
-
+  loading.classList.remove(
+    "show"
+  );
 }
 
 
-/* =================================================
-   Upload UI
-================================================= */
+/*************************************************
+ * 設定取得
+ *************************************************/
 
-function showUpload(
-    text
-) {
+async function loadSettings() {
 
-    uploadText.textContent =
-        text;
+  try {
 
-
-    progressBar.style.width =
-        "0%";
+    const result =
+      await gasGet(
+        "settings"
+      );
 
 
-    uploadStatus.classList.add(
-        "show"
+    if (!result.success) {
+
+      throw new Error(
+        result.error ||
+        "設定取得失敗"
+      );
+    }
+
+
+    cameraEnabled =
+      result.cameraEnabled;
+
+
+    if (!cameraEnabled) {
+
+      disableCamera();
+
+      return false;
+    }
+
+
+    disabledScreen.classList.remove(
+      "show"
     );
 
+
+    return true;
+
+  } catch(error) {
+
+    console.error(error);
+
+    disableCamera(
+      "GASに接続できないため、カメラを使用できません"
+    );
+
+    return false;
+  }
 }
 
 
-function updateUpload(
-    text,
-    percent
+/*************************************************
+ * カメラ無効
+ *************************************************/
+
+function disableCamera(
+  message
 ) {
 
-    uploadText.textContent =
-        text;
+  cameraEnabled =
+    false;
 
 
-    progressBar.style.width =
+  disabledScreen.classList.add(
+    "show"
+  );
+
+
+  if (message) {
+
+    disabledScreen.querySelector(
+      ".disabledText"
+    ).textContent =
+      message;
+  }
+
+
+  if (stream) {
+
+    stream
+      .getTracks()
+      .forEach(
+        track =>
+          track.stop()
+      );
+
+    stream = null;
+  }
+}
+
+
+/*************************************************
+ * カメラ起動
+ *************************************************/
+
+async function startCamera() {
+
+  if (!cameraEnabled) {
+
+    disableCamera();
+
+    return;
+  }
+
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+
+    throw new Error(
+      "このブラウザではカメラを使用できません"
+    );
+  }
+
+
+  if (stream) {
+
+    stream
+      .getTracks()
+      .forEach(
+        track =>
+          track.stop()
+      );
+  }
+
+
+  stream =
+    await navigator.mediaDevices
+      .getUserMedia({
+
+        video: {
+
+          facingMode:
+            facingMode,
+
+          width: {
+            ideal: 1920
+          },
+
+          height: {
+            ideal: 1080
+          },
+
+          frameRate: {
+            ideal: 30
+          }
+        },
+
+        audio: true
+      });
+
+
+  video.srcObject =
+    stream;
+
+
+  await video.play();
+
+
+  disabledScreen.classList.remove(
+    "show"
+  );
+
+
+  statusText.textContent =
+    "共有カメラ";
+}
+
+
+/*************************************************
+ * カメラ切替
+ *************************************************/
+
+async function switchCamera() {
+
+  if (!cameraEnabled) {
+    return;
+  }
+
+
+  facingMode =
+    facingMode === "environment"
+      ? "user"
+      : "environment";
+
+
+  try {
+
+    await startCamera();
+
+  } catch(error) {
+
+    alert(
+      "カメラ切替に失敗しました\n\n" +
+      error.message
+    );
+  }
+}
+
+
+/*************************************************
+ * フラッシュ
+ *************************************************/
+
+async function toggleTorch() {
+
+  if (!stream) {
+    return;
+  }
+
+
+  const track =
+    stream.getVideoTracks()[0];
+
+
+  if (!track) {
+    return;
+  }
+
+
+  const capabilities =
+    track.getCapabilities();
+
+
+  if (!capabilities.torch) {
+
+    alert(
+      "この端末ではライトを操作できません"
+    );
+
+    return;
+  }
+
+
+  const settings =
+    track.getSettings();
+
+
+  await track.applyConstraints({
+
+    advanced: [
+
+      {
+        torch:
+          !settings.torch
+      }
+
+    ]
+  });
+}
+
+
+/*************************************************
+ * ズーム
+ *************************************************/
+
+async function setZoom(
+  zoom
+) {
+
+  if (!stream) {
+    return;
+  }
+
+
+  const track =
+    stream.getVideoTracks()[0];
+
+
+  const capabilities =
+    track.getCapabilities();
+
+
+  if (
+    capabilities.zoom !== undefined
+  ) {
+
+    const min =
+      capabilities.zoom.min || 1;
+
+    const max =
+      capabilities.zoom.max || 1;
+
+    const value =
+      Math.max(
+        min,
         Math.min(
-            100,
-            Math.max(
-                0,
-                percent
-            )
-        ) + "%";
+          max,
+          zoom
+        )
+      );
 
+
+    try {
+
+      await track.applyConstraints({
+
+        advanced: [
+          {
+            zoom: value
+          }
+        ]
+
+      });
+
+      currentZoom =
+        value;
+
+      return;
+
+    } catch(error) {
+
+      console.warn(error);
+    }
+  }
+
+
+  /*
+   * ズーム非対応の場合はCSS
+   */
+  video.style.transform =
+    "scale(" +
+    zoom +
+    ")";
+
+  currentZoom =
+    zoom;
 }
 
 
-function hideUpload() {
+/*************************************************
+ * フォーカス表示
+ *************************************************/
 
-    uploadStatus.classList.remove(
-        "show"
+video.addEventListener(
+  "click",
+  event => {
+
+    const rect =
+      video.getBoundingClientRect();
+
+
+    focusBox.style.left =
+      (
+        event.clientX -
+        35
+      ) + "px";
+
+
+    focusBox.style.top =
+      (
+        event.clientY -
+        35
+      ) + "px";
+
+
+    focusBox.style.display =
+      "block";
+
+
+    setTimeout(
+      () => {
+
+        focusBox.style.display =
+          "none";
+
+      },
+      1000
+    );
+  }
+);
+
+
+/*************************************************
+ * 写真撮影
+ *************************************************/
+
+async function takePhoto() {
+
+  if (!cameraEnabled) {
+
+    alert(
+      "現在カメラが無効です"
     );
 
+    return;
+  }
+
+
+  if (!video.videoWidth) {
+
+    alert(
+      "カメラの準備ができていません"
+    );
+
+    return;
+  }
+
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+
+  canvas.width =
+    video.videoWidth;
+
+  canvas.height =
+    video.videoHeight;
+
+
+  const ctx =
+    canvas.getContext(
+      "2d"
+    );
+
+
+  /*
+   * 前面カメラの場合は左右反転
+   */
+  if (
+    facingMode === "user"
+  ) {
+
+    ctx.translate(
+      canvas.width,
+      0
+    );
+
+    ctx.scale(
+      -1,
+      1
+    );
+  }
+
+
+  ctx.drawImage(
+    video,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  const blob =
+    await new Promise(
+      resolve =>
+        canvas.toBlob(
+          resolve,
+          "image/jpeg",
+          .92
+        )
+    );
+
+
+  if (!blob) {
+
+    alert(
+      "写真の作成に失敗しました"
+    );
+
+    return;
+  }
+
+
+  const fileName =
+    "PHOTO_" +
+    makeDateName() +
+    ".jpg";
+
+
+  await uploadFile(
+    blob,
+    fileName
+  );
 }
 
 
-/* =================================================
-   日付
-================================================= */
+/*************************************************
+ * MP4対応チェック
+ *************************************************/
+
+function getVideoMimeType() {
+
+  /*
+   * MP4を最優先
+   */
+  const mp4Types = [
+
+    "video/mp4;codecs=h264,aac",
+
+    "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+
+    "video/mp4"
+  ];
+
+
+  for (
+    const type of mp4Types
+  ) {
+
+    if (
+      MediaRecorder.isTypeSupported(
+        type
+      )
+    ) {
+
+      return type;
+    }
+  }
+
+
+  /*
+   * MP4非対応ブラウザ
+   *
+   * WebMにフォールバック
+   */
+  const webmTypes = [
+
+    "video/webm;codecs=vp9,opus",
+
+    "video/webm;codecs=vp8,opus",
+
+    "video/webm"
+  ];
+
+
+  for (
+    const type of webmTypes
+  ) {
+
+    if (
+      MediaRecorder.isTypeSupported(
+        type
+      )
+    ) {
+
+      return type;
+    }
+  }
+
+
+  return "";
+}
+
+
+/*************************************************
+ * 動画撮影
+ *************************************************/
+
+function startRecording() {
+
+  if (!cameraEnabled) {
+
+    alert(
+      "現在カメラが無効です"
+    );
+
+    return;
+  }
+
+
+  const mimeType =
+    getVideoMimeType();
+
+
+  if (!mimeType) {
+
+    alert(
+      "このブラウザでは動画撮影に対応していません"
+    );
+
+    return;
+  }
+
+
+  recordedChunks = [];
+
+
+  try {
+
+    mediaRecorder =
+      new MediaRecorder(
+        stream,
+        {
+          mimeType:
+            mimeType,
+
+          videoBitsPerSecond:
+            1200000,
+
+          audioBitsPerSecond:
+            96000
+        }
+      );
+
+  } catch(error) {
+
+    alert(
+      "動画撮影を開始できません\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  mediaRecorder.ondataavailable =
+    event => {
+
+      if (
+        event.data &&
+        event.data.size > 0
+      ) {
+
+        recordedChunks.push(
+          event.data
+        );
+      }
+    };
+
+
+  mediaRecorder.onstop =
+    async () => {
+
+      stopRecordingUI();
+
+
+      const actualMime =
+        mediaRecorder.mimeType ||
+        mimeType;
+
+
+      const extension =
+        actualMime.includes(
+          "mp4"
+        )
+          ? "mp4"
+          : "webm";
+
+
+      const blob =
+        new Blob(
+          recordedChunks,
+          {
+            type:
+              actualMime
+          }
+        );
+
+
+      if (
+        blob.size >
+        MAX_FILE_SIZE
+      ) {
+
+        alert(
+          "動画が20MBを超えています。\n" +
+          "撮影時間を短くしてください。"
+        );
+
+        return;
+      }
+
+
+      if (
+        blob.size <= 0
+      ) {
+
+        alert(
+          "動画データがありません"
+        );
+
+        return;
+      }
+
+
+      const fileName =
+        "VIDEO_" +
+        makeDateName() +
+        "." +
+        extension;
+
+
+      /*
+       * MP4対応ブラウザなら.mp4
+       */
+      await uploadFile(
+        blob,
+        fileName
+      );
+    };
+
+
+  mediaRecorder.start(
+    1000
+  );
+
+
+  recordingStartTime =
+    Date.now();
+
+
+  recording.classList.add(
+    "show"
+  );
+
+
+  captureButton.classList.add(
+    "recording"
+  );
+
+
+  updateRecordTime();
+
+
+  recordingTimer =
+    setInterval(
+      updateRecordTime,
+      250
+    );
+
+
+  /*
+   * 最大60秒
+   */
+  setTimeout(
+    () => {
+
+      if (
+        mediaRecorder &&
+        mediaRecorder.state ===
+          "recording"
+      ) {
+
+        stopRecording();
+      }
+
+    },
+    MAX_RECORDING_TIME * 1000
+  );
+}
+
+
+/*************************************************
+ * 録画停止
+ *************************************************/
+
+function stopRecording() {
+
+  if (
+    mediaRecorder &&
+    mediaRecorder.state ===
+      "recording"
+  ) {
+
+    mediaRecorder.stop();
+  }
+}
+
+
+/*************************************************
+ * 録画UI停止
+ *************************************************/
+
+function stopRecordingUI() {
+
+  recording.classList.remove(
+    "show"
+  );
+
+  captureButton.classList.remove(
+    "recording"
+  );
+
+
+  clearInterval(
+    recordingTimer
+  );
+
+
+  recordingTimer =
+    null;
+}
+
+
+/*************************************************
+ * 録画時間
+ *************************************************/
+
+function updateRecordTime() {
+
+  const seconds =
+    Math.floor(
+      (
+        Date.now() -
+        recordingStartTime
+      ) / 1000
+    );
+
+
+  const mm =
+    String(
+      Math.floor(
+        seconds / 60
+      )
+    ).padStart(
+      2,
+      "0"
+    );
+
+
+  const ss =
+    String(
+      seconds % 60
+    ).padStart(
+      2,
+      "0"
+    );
+
+
+  recordTime.textContent =
+    mm + ":" + ss;
+}
+
+
+/*************************************************
+ * ファイルアップロード
+ *************************************************/
+
+async function uploadFile(
+  blob,
+  fileName
+) {
+
+  try {
+
+    if (!cameraEnabled) {
+
+      throw new Error(
+        "現在カメラが無効です"
+      );
+    }
+
+
+    if (
+      blob.size >
+      MAX_FILE_SIZE
+    ) {
+
+      throw new Error(
+        "20MBを超えています"
+      );
+    }
+
+
+    showLoading(
+      "アップロード準備中...",
+      0
+    );
+
+
+    /*
+     * アップロード開始
+     */
+    const start =
+      await gasGet(
+        "start",
+        {
+
+          fileName:
+            fileName,
+
+          mimeType:
+            blob.type,
+
+          totalSize:
+            blob.size,
+
+          deviceId:
+            deviceId
+        }
+      );
+
+
+    if (!start.success) {
+
+      throw new Error(
+        start.error ||
+        "アップロードを開始できません"
+      );
+    }
+
+
+    const uploadId =
+      start.uploadId;
+
+
+    const totalChunks =
+      Math.ceil(
+        blob.size /
+        CHUNK_SIZE
+      );
+
+
+    /*
+     * チャンク送信
+     */
+    for (
+      let i = 0;
+      i < totalChunks;
+      i++
+    ) {
+
+      const startByte =
+        i *
+        CHUNK_SIZE;
+
+
+      const endByte =
+        Math.min(
+          blob.size,
+          startByte +
+          CHUNK_SIZE
+        );
+
+
+      const chunk =
+        blob.slice(
+          startByte,
+          endByte
+        );
+
+
+      const base64 =
+        await blobToBase64(
+          chunk
+        );
+
+
+      showLoading(
+        "アップロード中 " +
+        (i + 1) +
+        " / " +
+        totalChunks,
+
+        Math.round(
+          (
+            i /
+            totalChunks
+          ) * 100
+        )
+      );
+
+
+      await gasPost(
+        "chunk",
+        {
+
+          uploadId:
+            uploadId,
+
+          chunkIndex:
+            i,
+
+          totalChunks:
+            totalChunks,
+
+          data:
+            base64
+        }
+      );
+
+
+      /*
+       * GAS負荷軽減
+       */
+      await sleep(150);
+    }
+
+
+    showLoading(
+      "保存完了",
+      100
+    );
+
+
+    await sleep(500);
+
+
+    hideLoading();
+
+
+    alert(
+      "Google Driveへの保存が完了しました"
+    );
+
+
+    /*
+     * ギャラリー更新
+     */
+    await loadGallery();
+
+  } catch(error) {
+
+    console.error(error);
+
+    hideLoading();
+
+
+    alert(
+      "アップロードに失敗しました\n\n" +
+      error.message
+    );
+  }
+}
+
+
+/*************************************************
+ * Blob → Base64
+ *************************************************/
+
+function blobToBase64(
+  blob
+) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const reader =
+        new FileReader();
+
+
+      reader.onload =
+        () => {
+
+          const result =
+            reader.result;
+
+
+          const base64 =
+            result.split(
+              ","
+            )[1];
+
+
+          resolve(
+            base64
+          );
+        };
+
+
+      reader.onerror =
+        reject;
+
+
+      reader.readAsDataURL(
+        blob
+      );
+    }
+  );
+}
+
+
+/*************************************************
+ * 日時ファイル名
+ *************************************************/
 
 function makeDateName() {
 
-    const d =
-        new Date();
+  const d =
+    new Date();
 
 
-    const y =
-        d.getFullYear();
+  const y =
+    d.getFullYear();
 
 
-    const m =
-        String(
-            d.getMonth() + 1
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    const day =
-        String(
-            d.getDate()
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    const h =
-        String(
-            d.getHours()
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    const min =
-        String(
-            d.getMinutes()
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    const sec =
-        String(
-            d.getSeconds()
-        ).padStart(
-            2,
-            "0"
-        );
-
-
-    return (
-        y +
-        m +
-        day +
-        "_" +
-        h +
-        min +
-        sec
+  const m =
+    String(
+      d.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
     );
 
-}
 
-
-/* =================================================
-   HTMLエスケープ
-================================================= */
-
-function escapeHTML(
-    text
-) {
-
-    return String(text)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-/* =================================================
-   プレースホルダー
-================================================= */
-
-function createPlaceholder(
-    emoji
-) {
-
-    return (
-        "data:image/svg+xml," +
-        encodeURIComponent(
-            `<svg xmlns="http://www.w3.org/2000/svg"
-                  width="500"
-                  height="500">
-                <rect width="100%"
-                      height="100%"
-                      fill="#222"/>
-                <text x="50%"
-                      y="50%"
-                      dominant-baseline="middle"
-                      text-anchor="middle"
-                      font-size="100">
-                    ${emoji}
-                </text>
-            </svg>`
-        )
+  const day =
+    String(
+      d.getDate()
+    ).padStart(
+      2,
+      "0"
     );
 
+
+  const h =
+    String(
+      d.getHours()
+    ).padStart(
+      2,
+      "0"
+    );
+
+
+  const min =
+    String(
+      d.getMinutes()
+    ).padStart(
+      2,
+      "0"
+    );
+
+
+  const s =
+    String(
+      d.getSeconds()
+    ).padStart(
+      2,
+      "0"
+    );
+
+
+  return (
+    y +
+    m +
+    day +
+    "_" +
+    h +
+    min +
+    s
+  );
 }
 
 
-/* =================================================
-   Sleep
-================================================= */
+/*************************************************
+ * ギャラリー取得
+ *************************************************/
 
-function sleep(ms) {
+async function loadGallery() {
 
-    return new Promise(
-        resolve =>
-            setTimeout(
-                resolve,
-                ms
+  try {
+
+    const result =
+      await gasGet(
+        "list",
+        {
+          deviceId:
+            deviceId
+        }
+      );
+
+
+    if (!result.success) {
+
+      throw new Error(
+        result.error
+      );
+    }
+
+
+    mediaList =
+      result.files || [];
+
+
+    renderGallery();
+
+  } catch(error) {
+
+    console.error(error);
+
+    mediaGrid.innerHTML =
+      `
+        <div
+          style="
+            grid-column:1/-1;
+            text-align:center;
+            padding:50px 20px;
+            color:#aaa;
+          "
+        >
+          写真・動画を取得できませんでした
+          <br><br>
+          ${escapeHtml(error.message)}
+        </div>
+      `;
+  }
+}
+
+
+/*************************************************
+ * ギャラリー表示
+ *************************************************/
+
+function renderGallery() {
+
+  let list =
+    mediaList;
+
+
+  if (
+    currentTab === "mine"
+  ) {
+
+    list =
+      mediaList.filter(
+        item => item.mine
+      );
+  }
+
+
+  if (
+    currentTab === "shared"
+  ) {
+
+    list =
+      mediaList.filter(
+        item => !item.mine
+      );
+  }
+
+
+  mediaGrid.innerHTML =
+    "";
+
+
+  if (
+    list.length === 0
+  ) {
+
+    mediaGrid.innerHTML =
+      `
+        <div
+          style="
+            grid-column:1/-1;
+            text-align:center;
+            padding:60px 20px;
+            color:#777;
+          "
+        >
+          写真・動画がありません
+        </div>
+      `;
+
+    return;
+  }
+
+
+  list.forEach(
+    item => {
+
+      const div =
+        document.createElement(
+          "div"
+        );
+
+
+      div.className =
+        "media";
+
+
+      if (
+        item.mimeType
+          .startsWith(
+            "image/"
+          )
+      ) {
+
+        const img =
+          document.createElement(
+            "img"
+          );
+
+
+        img.loading =
+          "lazy";
+
+
+        img.src =
+          item.thumbnailUrl;
+
+
+        img.onerror =
+          () => {
+
+            img.src =
+              item.downloadUrl;
+          };
+
+
+        div.appendChild(
+          img
+        );
+
+      } else {
+
+        div.innerHTML =
+          `
+            <div
+              class="videoThumb"
+            >
+              🎥
+              <span
+                class="videoLabel"
+              >
+                動画
+              </span>
+            </div>
+          `;
+      }
+
+
+      if (item.mine) {
+
+        const badge =
+          document.createElement(
+            "div"
+          );
+
+
+        badge.className =
+          "mineBadge";
+
+
+        badge.textContent =
+          "自分";
+
+
+        div.appendChild(
+          badge
+        );
+      }
+
+
+      div.addEventListener(
+        "click",
+        () =>
+          openPreview(item)
+      );
+
+
+      mediaGrid.appendChild(
+        div
+      );
+    }
+  );
+}
+
+
+/*************************************************
+ * プレビュー
+ *************************************************/
+
+function openPreview(
+  item
+) {
+
+  currentMedia =
+    item;
+
+
+  previewContent.innerHTML =
+    "";
+
+
+  previewName.textContent =
+    item.name;
+
+
+  if (
+    item.mimeType
+      .startsWith(
+        "image/"
+      )
+  ) {
+
+    const img =
+      document.createElement(
+        "img"
+      );
+
+
+    img.src =
+      item.downloadUrl;
+
+
+    img.alt =
+      item.name;
+
+
+    previewContent.appendChild(
+      img
+    );
+
+  } else {
+
+    const videoElement =
+      document.createElement(
+        "video"
+      );
+
+
+    videoElement.controls =
+      true;
+
+    videoElement.playsInline =
+      true;
+
+    videoElement.preload =
+      "metadata";
+
+    videoElement.src =
+      item.downloadUrl;
+
+
+    previewContent.appendChild(
+      videoElement
+    );
+  }
+
+
+  deleteButton.style.display =
+    item.mine
+      ? "inline-block"
+      : "none";
+
+
+  preview.classList.add(
+    "show"
+  );
+}
+
+
+/*************************************************
+ * プレビュー閉じる
+ *************************************************/
+
+function closePreview() {
+
+  preview.classList.remove(
+    "show"
+  );
+
+
+  previewContent.innerHTML =
+    "";
+
+
+  currentMedia =
+    null;
+}
+
+
+/*************************************************
+ * Google Driveを開く
+ *************************************************/
+
+function openDrive() {
+
+  if (!currentMedia) {
+    return;
+  }
+
+
+  window.open(
+    currentMedia.viewUrl,
+    "_blank"
+  );
+}
+
+
+/*************************************************
+ * 保存
+ *************************************************/
+
+function downloadCurrent() {
+
+  if (!currentMedia) {
+    return;
+  }
+
+
+  const a =
+    document.createElement(
+      "a"
+    );
+
+
+  a.href =
+    currentMedia.downloadUrl;
+
+
+  a.target =
+    "_blank";
+
+
+  a.rel =
+    "noopener";
+
+
+  document.body.appendChild(
+    a
+  );
+
+
+  a.click();
+
+
+  a.remove();
+}
+
+
+/*************************************************
+ * 削除
+ *************************************************/
+
+async function deleteCurrent() {
+
+  if (!currentMedia) {
+    return;
+  }
+
+
+  if (!currentMedia.mine) {
+
+    alert(
+      "自分が撮影したファイルだけ削除できます"
+    );
+
+    return;
+  }
+
+
+  if (
+    !confirm(
+      "この写真・動画を削除しますか？"
+    )
+  ) {
+
+    return;
+  }
+
+
+  try {
+
+    showLoading(
+      "削除中..."
+    );
+
+
+    const result =
+      await gasPost(
+        "delete",
+        {
+
+          fileId:
+            currentMedia.id,
+
+          deviceId:
+            deviceId
+        }
+      );
+
+
+    hideLoading();
+
+
+    if (!result.success) {
+
+      throw new Error(
+        result.error ||
+        "削除できませんでした"
+      );
+    }
+
+
+    closePreview();
+
+
+    await loadGallery();
+
+
+  } catch(error) {
+
+    hideLoading();
+
+
+    alert(
+      "削除に失敗しました\n\n" +
+      error.message
+    );
+  }
+}
+
+
+/*************************************************
+ * HTMLエスケープ
+ *************************************************/
+
+function escapeHtml(
+  text
+) {
+
+  return String(text)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+}
+
+
+/*************************************************
+ * Sleep
+ *************************************************/
+
+function sleep(
+  ms
+) {
+
+  return new Promise(
+    resolve =>
+      setTimeout(
+        resolve,
+        ms
+      )
+  );
+}
+
+
+/*************************************************
+ * 撮影ボタン
+ *************************************************/
+
+captureButton.addEventListener(
+  "click",
+  async () => {
+
+    if (
+      currentMode ===
+      "photo"
+    ) {
+
+      await takePhoto();
+
+    } else {
+
+      if (
+        mediaRecorder &&
+        mediaRecorder.state ===
+          "recording"
+      ) {
+
+        stopRecording();
+
+      } else {
+
+        startRecording();
+      }
+    }
+  }
+);
+
+
+/*************************************************
+ * モード
+ *************************************************/
+
+document
+  .querySelectorAll(
+    ".mode"
+  )
+  .forEach(
+    mode => {
+
+      mode.addEventListener(
+        "click",
+        () => {
+
+          document
+            .querySelectorAll(
+              ".mode"
             )
-    );
+            .forEach(
+              m =>
+                m.classList.remove(
+                  "active"
+                )
+            );
 
-}
+
+          mode.classList.add(
+            "active"
+          );
 
 
-/* =================================================
-   初期化
-================================================= */
+          currentMode =
+            mode.dataset.mode;
 
-window.addEventListener(
-    "load",
+
+          captureButton.classList.toggle(
+            "videoMode",
+            currentMode ===
+              "video"
+          );
+        }
+      );
+    }
+  );
+
+
+/*************************************************
+ * カメラ切替
+ *************************************************/
+
+document
+  .getElementById(
+    "switchButton"
+  )
+  .addEventListener(
+    "click",
+    switchCamera
+  );
+
+
+/*************************************************
+ * ライト
+ *************************************************/
+
+document
+  .getElementById(
+    "flashButton"
+  )
+  .addEventListener(
+    "click",
+    toggleTorch
+  );
+
+
+/*************************************************
+ * ズーム
+ *************************************************/
+
+document
+  .querySelectorAll(
+    ".zoomButton"
+  )
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () =>
+          setZoom(
+            Number(
+              button.dataset.zoom
+            )
+          )
+      );
+    }
+  );
+
+
+/*************************************************
+ * ギャラリー
+ *************************************************/
+
+document
+  .getElementById(
+    "galleryButton"
+  )
+  .addEventListener(
+    "click",
     async () => {
 
-        /*
-         * カメラ起動
-         */
+      gallery.classList.add(
+        "show"
+      );
 
-        try {
-
-            await startCamera();
-
-        } catch (error) {
-
-            console.warn(
-                error
-            );
-
-        }
-
-
-        /*
-         * ギャラリー
-         */
-
-        try {
-
-            await loadGallery();
-
-            await updateGalleryPreview();
-
-        } catch (error) {
-
-            console.warn(
-                error
-            );
-
-        }
-
+      await loadGallery();
     }
-);
+  );
 
 
-/* =================================================
-   ページ離脱時
-================================================= */
-
-window.addEventListener(
-    "beforeunload",
+document
+  .getElementById(
+    "galleryClose"
+  )
+  .addEventListener(
+    "click",
     () => {
 
-        if (stream) {
-
-            stream
-              .getTracks()
-              .forEach(
-                  track =>
-                    track.stop()
-              );
-
-        }
-
+      gallery.classList.remove(
+        "show"
+      );
     }
-);
+  );
+
+
+/*************************************************
+ * タブ
+ *************************************************/
+
+document
+  .querySelectorAll(
+    ".tab"
+  )
+  .forEach(
+    tab => {
+
+      tab.addEventListener(
+        "click",
+        () => {
+
+          document
+            .querySelectorAll(
+              ".tab"
+            )
+            .forEach(
+              t =>
+                t.classList.remove(
+                  "active"
+                )
+            );
+
+
+          tab.classList.add(
+            "active"
+          );
+
+
+          currentTab =
+            tab.dataset.tab;
+
+
+          renderGallery();
+        }
+      );
+    }
+  );
+
+
+/*************************************************
+ * プレビュー
+ *************************************************/
+
+document
+  .getElementById(
+    "previewClose"
+  )
+  .addEventListener(
+    "click",
+    closePreview
+  );
+
+
+document
+  .getElementById(
+    "openDriveButton"
+  )
+  .addEventListener(
+    "click",
+    openDrive
+  );
+
+
+document
+  .getElementById(
+    "downloadButton"
+  )
+  .addEventListener(
+    "click",
+    downloadCurrent
+  );
+
+
+document
+  .getElementById(
+    "deleteButton"
+  )
+  .addEventListener(
+    "click",
+    deleteCurrent
+  );
+
+
+/*************************************************
+ * 更新
+ *************************************************/
+
+document
+  .getElementById(
+    "refreshButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      await loadSettings();
+
+      if (cameraEnabled) {
+
+        try {
+
+          await startCamera();
+
+        } catch(error) {
+
+          console.error(error);
+        }
+      }
+    }
+  );
+
+
+/*************************************************
+ * 起動
+ *************************************************/
+
+(async function() {
+
+  /*
+   * 最初にB1/B2を確認
+   */
+  const enabled =
+    await loadSettings();
+
+
+  if (!enabled) {
+
+    return;
+  }
+
+
+  /*
+   * カメラ起動
+   */
+  try {
+
+    await startCamera();
+
+  } catch(error) {
+
+    console.error(error);
+
+    /*
+     * ブラウザによっては
+     * ユーザー操作が必要
+     */
+    statusText.textContent =
+      "カメラボタンを操作してください";
+  }
+
+})();
 
 </script>
 
-
 </body>
-
 </html>
