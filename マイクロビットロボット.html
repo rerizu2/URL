@@ -1,0 +1,2075 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width,
+      initial-scale=1.0,
+      maximum-scale=1.0,
+      user-scalable=no">
+
+<title>micro:bit ロボットコントローラー</title>
+
+<style>
+
+/* =====================================================
+   基本設定
+===================================================== */
+
+* {
+    box-sizing: border-box;
+
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+html,
+body {
+
+    margin: 0;
+    padding: 0;
+
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+    font-family:
+        Arial,
+        "Noto Sans JP",
+        sans-serif;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0b132b,
+            #1c2541
+        );
+
+    color: white;
+}
+
+body {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+}
+
+
+/* =====================================================
+   メイン
+===================================================== */
+
+.container {
+
+    width: 100%;
+
+    max-width: 650px;
+
+    height: 100%;
+
+    max-height: 950px;
+
+    padding: 15px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 10px;
+}
+
+
+/* =====================================================
+   タイトル
+===================================================== */
+
+h1 {
+
+    margin: 0;
+
+    font-size: 28px;
+
+    text-align: center;
+}
+
+.subtitle {
+
+    font-size: 13px;
+
+    opacity: 0.75;
+
+    text-align: center;
+}
+
+
+/* =====================================================
+   接続ボタン
+===================================================== */
+
+.connection {
+
+    width: 100%;
+
+    display: flex;
+
+    gap: 8px;
+}
+
+.connect-button {
+
+    flex: 1;
+
+    border: none;
+
+    border-radius: 12px;
+
+    padding: 13px 8px;
+
+    color: white;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    touch-action: manipulation;
+
+    transition:
+        transform 0.1s,
+        opacity 0.1s;
+}
+
+.connect-button:active {
+
+    transform: scale(0.96);
+
+    opacity: 0.85;
+}
+
+.bluetooth-button {
+
+    background: #2563eb;
+}
+
+.usb-button {
+
+    background: #059669;
+}
+
+
+/* =====================================================
+   ステータス
+===================================================== */
+
+.status {
+
+    width: 100%;
+
+    padding: 10px 14px;
+
+    border-radius: 12px;
+
+    background: rgba(0,0,0,0.25);
+
+    border: 1px solid
+            rgba(255,255,255,0.08);
+}
+
+.status-row {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 3px 0;
+
+    font-size: 14px;
+}
+
+.connected {
+
+    color: #4ade80;
+
+    font-weight: bold;
+}
+
+.disconnected {
+
+    color: #f87171;
+}
+
+.warning {
+
+    color: #facc15;
+
+    font-weight: bold;
+}
+
+
+/* =====================================================
+   コントローラー
+===================================================== */
+
+.controller {
+
+    width: min(88vw, 410px);
+
+    aspect-ratio: 1 / 1;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    grid-template-rows:
+        repeat(3, 1fr);
+
+    gap: 10px;
+}
+
+
+/* =====================================================
+   操作ボタン
+===================================================== */
+
+.control {
+
+    border: none;
+
+    border-radius: 24px;
+
+    background: #1e3a5f;
+
+    color: white;
+
+    font-size: 55px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    touch-action: none;
+
+    -webkit-tap-highlight-color:
+        transparent;
+
+    box-shadow:
+        0 7px 0 #102a43,
+        0 10px 20px
+        rgba(0,0,0,0.3);
+
+    transition:
+        transform 0.03s,
+        background 0.03s,
+        box-shadow 0.03s;
+}
+
+.control.pressed {
+
+    transform:
+        translateY(7px);
+
+    box-shadow:
+        0 0 0 #102a43;
+
+    background: #3b82f6;
+}
+
+
+/* =====================================================
+   配置
+===================================================== */
+
+.up {
+
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.left {
+
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.stop {
+
+    grid-column: 2;
+    grid-row: 2;
+
+    background: #991b1b;
+
+    box-shadow:
+        0 7px 0 #5f1111,
+        0 10px 20px
+        rgba(0,0,0,0.3);
+}
+
+.stop.pressed {
+
+    background: #dc2626;
+
+    box-shadow:
+        0 0 0 #5f1111;
+}
+
+.right {
+
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.down {
+
+    grid-column: 2;
+    grid-row: 3;
+}
+
+
+/* =====================================================
+   最終操作
+===================================================== */
+
+.last-action {
+
+    width: 100%;
+
+    padding: 10px;
+
+    border-radius: 10px;
+
+    background:
+        rgba(0,0,0,0.25);
+
+    text-align: center;
+
+    font-size: 16px;
+
+    font-weight: bold;
+}
+
+
+/* =====================================================
+   ログ
+===================================================== */
+
+.log {
+
+    width: 100%;
+
+    height: 95px;
+
+    overflow-y: auto;
+
+    padding: 8px;
+
+    border-radius: 10px;
+
+    background: #050b18;
+
+    color: #a5b4fc;
+
+    font-family: monospace;
+
+    font-size: 11px;
+
+    white-space: pre-wrap;
+
+    border: 1px solid
+            rgba(255,255,255,0.05);
+}
+
+
+/* =====================================================
+   スマートフォン
+===================================================== */
+
+@media (max-width: 500px) {
+
+    .container {
+
+        padding: 10px;
+
+        gap: 7px;
+    }
+
+    h1 {
+
+        font-size: 22px;
+    }
+
+    .subtitle {
+
+        font-size: 11px;
+    }
+
+    .controller {
+
+        width: min(92vw, 360px);
+
+        gap: 7px;
+    }
+
+    .control {
+
+        font-size: 43px;
+
+        border-radius: 19px;
+    }
+
+    .connect-button {
+
+        padding: 10px 4px;
+
+        font-size: 12px;
+    }
+
+    .log {
+
+        height: 65px;
+    }
+}
+
+
+/* =====================================================
+   横画面
+===================================================== */
+
+@media
+(max-height: 600px)
+and
+(orientation: landscape) {
+
+    .container {
+
+        max-width: 850px;
+
+        display: grid;
+
+        grid-template-columns:
+            1fr 1fr;
+
+        grid-template-rows:
+            auto auto 1fr auto;
+
+        gap: 8px;
+    }
+
+    h1 {
+
+        grid-column:
+            1 / 3;
+    }
+
+    .subtitle {
+
+        grid-column:
+            1 / 3;
+    }
+
+    .connection {
+
+        grid-column:
+            1 / 3;
+    }
+
+    .status {
+
+        grid-column:
+            1;
+
+        grid-row:
+            4;
+    }
+
+    .controller {
+
+        grid-column:
+            2;
+
+        grid-row:
+            3 / 5;
+
+        width:
+            min(50vh, 360px);
+    }
+
+    .last-action {
+
+        grid-column:
+            1;
+
+        grid-row:
+            3;
+    }
+
+    .log {
+
+        display: none;
+    }
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<!-- ==================================================
+     タイトル
+================================================== -->
+
+<h1>
+🤖 micro:bit ロボット
+</h1>
+
+<div class="subtitle">
+押している間だけ走行・離すと即停止
+</div>
+
+
+<!-- ==================================================
+     接続
+================================================== -->
+
+<div class="connection">
+
+<button
+    id="bluetoothButton"
+    class="connect-button bluetooth-button"
+>
+📡 Bluetooth接続
+</button>
+
+<button
+    id="usbButton"
+    class="connect-button usb-button"
+>
+🔌 USB接続
+</button>
+
+</div>
+
+
+<!-- ==================================================
+     状態
+================================================== -->
+
+<div class="status">
+
+<div class="status-row">
+
+<span>
+Bluetooth
+</span>
+
+<span
+    id="bluetoothStatus"
+    class="disconnected"
+>
+未接続
+</span>
+
+</div>
+
+
+<div class="status-row">
+
+<span>
+USB
+</span>
+
+<span
+    id="usbStatus"
+    class="disconnected"
+>
+未接続
+</span>
+
+</div>
+
+</div>
+
+
+<!-- ==================================================
+     コントローラー
+================================================== -->
+
+<div class="controller">
+
+
+<button
+    id="up"
+    class="control up"
+    aria-label="前進"
+>
+↑
+</button>
+
+
+<button
+    id="left"
+    class="control left"
+    aria-label="左"
+>
+←
+</button>
+
+
+<button
+    id="stop"
+    class="control stop"
+    aria-label="停止"
+>
+■
+</button>
+
+
+<button
+    id="right"
+    class="control right"
+    aria-label="右"
+>
+→
+</button>
+
+
+<button
+    id="down"
+    class="control down"
+    aria-label="後退"
+>
+↓
+</button>
+
+
+</div>
+
+
+<!-- ==================================================
+     操作表示
+================================================== -->
+
+<div
+    id="lastAction"
+    class="last-action"
+>
+操作なし
+</div>
+
+
+<!-- ==================================================
+     ログ
+================================================== -->
+
+<div
+    id="log"
+    class="log"
+>
+起動しました
+Bluetooth / USB 待機中
+</div>
+
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   Bluetooth UUID
+===================================================== */
+
+const UART_SERVICE_UUID =
+    "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+
+const UART_RX_UUID =
+    "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+
+const UART_TX_UUID =
+    "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+
+
+/* =====================================================
+   Bluetooth
+===================================================== */
+
+let bluetoothDevice = null;
+
+let bluetoothServer = null;
+
+let bluetoothService = null;
+
+let bluetoothRX = null;
+
+let bluetoothTX = null;
+
+
+/* =====================================================
+   USB
+===================================================== */
+
+let serialPort = null;
+
+let serialWriter = null;
+
+let serialReader = null;
+
+
+/* =====================================================
+   操作状態
+===================================================== */
+
+let activeCommand = null;
+
+let activeButton = null;
+
+
+/* =====================================================
+   DOM
+===================================================== */
+
+const bluetoothButton =
+    document.getElementById(
+        "bluetoothButton"
+    );
+
+const usbButton =
+    document.getElementById(
+        "usbButton"
+    );
+
+const bluetoothStatus =
+    document.getElementById(
+        "bluetoothStatus"
+    );
+
+const usbStatus =
+    document.getElementById(
+        "usbStatus"
+    );
+
+const lastAction =
+    document.getElementById(
+        "lastAction"
+    );
+
+const logElement =
+    document.getElementById(
+        "log"
+    );
+
+
+/* =====================================================
+   ログ
+===================================================== */
+
+function log(message) {
+
+    const time =
+        new Date().toLocaleTimeString();
+
+    logElement.textContent =
+        `[${time}] ${message}\n` +
+        logElement.textContent;
+}
+
+
+/* =====================================================
+   Bluetooth接続
+===================================================== */
+
+async function connectBluetooth() {
+
+    try {
+
+        if (!navigator.bluetooth) {
+
+            throw new Error(
+                "このブラウザはWeb Bluetoothに対応していません"
+            );
+        }
+
+
+        log(
+            "Bluetooth検索開始"
+        );
+
+
+        /*
+         * UART Serviceを持つデバイスだけ表示
+         */
+
+        bluetoothDevice =
+            await navigator.bluetooth.requestDevice({
+
+                filters: [
+
+                    {
+                        services: [
+                            UART_SERVICE_UUID
+                        ]
+                    }
+
+                ],
+
+                optionalServices: [
+
+                    UART_SERVICE_UUID
+
+                ]
+
+            });
+
+
+        log(
+            "デバイス発見: " +
+            (
+                bluetoothDevice.name ||
+                "名称なし"
+            )
+        );
+
+
+        bluetoothDevice.addEventListener(
+            "gattserverdisconnected",
+            bluetoothDisconnected
+        );
+
+
+        log(
+            "GATT接続中..."
+        );
+
+
+        bluetoothServer =
+            await bluetoothDevice.gatt.connect();
+
+
+        log(
+            "GATT接続成功"
+        );
+
+
+        log(
+            "UART Service取得中..."
+        );
+
+
+        bluetoothService =
+            await bluetoothServer.getPrimaryService(
+                UART_SERVICE_UUID
+            );
+
+
+        log(
+            "UART Service取得成功"
+        );
+
+
+        log(
+            "RX取得中..."
+        );
+
+
+        bluetoothRX =
+            await bluetoothService.getCharacteristic(
+                UART_RX_UUID
+            );
+
+
+        log(
+            "RX取得成功"
+        );
+
+
+        /*
+         * TX
+         */
+
+        try {
+
+            bluetoothTX =
+                await bluetoothService.getCharacteristic(
+                    UART_TX_UUID
+                );
+
+
+            await bluetoothTX.startNotifications();
+
+
+            bluetoothTX.addEventListener(
+                "characteristicvaluechanged",
+                receiveBluetooth
+            );
+
+
+            log(
+                "TX通知開始"
+            );
+
+        } catch (error) {
+
+            bluetoothTX = null;
+
+            log(
+                "TXは使用できません"
+            );
+        }
+
+
+        bluetoothStatus.textContent =
+            "接続済み";
+
+        bluetoothStatus.className =
+            "connected";
+
+
+        bluetoothButton.textContent =
+            "📡 Bluetooth切断";
+
+
+        log(
+            "Bluetooth接続完了"
+        );
+
+
+        /*
+         * 通信テスト
+         */
+
+        await sendBluetooth(
+            "TEST"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+
+        bluetoothRX = null;
+
+        bluetoothTX = null;
+
+        bluetoothService = null;
+
+        bluetoothServer = null;
+
+
+        bluetoothStatus.textContent =
+            "接続失敗";
+
+        bluetoothStatus.className =
+            "warning";
+
+
+        bluetoothButton.textContent =
+            "📡 Bluetooth接続";
+
+
+        log(
+            "Bluetooth接続エラー: " +
+            error.message
+        );
+
+
+        if (
+            error.message.includes(
+                "No Services matching UUID"
+            )
+        ) {
+
+            log(
+                "UART Serviceが見つかりません"
+            );
+
+            log(
+                "micro:bit側のBluetooth UARTを確認してください"
+            );
+        }
+    }
+}
+
+
+/* =====================================================
+   Bluetooth受信
+===================================================== */
+
+function receiveBluetooth(event) {
+
+    try {
+
+        const decoder =
+            new TextDecoder();
+
+        const text =
+            decoder.decode(
+                event.target.value
+            );
+
+
+        log(
+            "micro:bit → Web : " +
+            text.trim()
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+    }
+}
+
+
+/* =====================================================
+   Bluetooth切断
+===================================================== */
+
+function bluetoothDisconnected() {
+
+    bluetoothRX = null;
+
+    bluetoothTX = null;
+
+    bluetoothService = null;
+
+    bluetoothServer = null;
+
+
+    bluetoothStatus.textContent =
+        "未接続";
+
+    bluetoothStatus.className =
+        "disconnected";
+
+
+    bluetoothButton.textContent =
+        "📡 Bluetooth接続";
+
+
+    removePressed();
+
+
+    activeCommand = null;
+
+    activeButton = null;
+
+
+    log(
+        "Bluetooth切断"
+    );
+}
+
+
+/* =====================================================
+   Bluetooth接続ボタン
+===================================================== */
+
+bluetoothButton.addEventListener(
+    "click",
+    async function () {
+
+        if (
+            bluetoothDevice &&
+            bluetoothDevice.gatt &&
+            bluetoothDevice.gatt.connected
+        ) {
+
+            try {
+
+                await sendBluetooth(
+                    "S"
+                );
+
+            } catch (e) {}
+
+
+            bluetoothDevice.gatt.disconnect();
+
+        } else {
+
+            await connectBluetooth();
+        }
+    }
+);
+
+
+/* =====================================================
+   Bluetooth送信
+===================================================== */
+
+async function sendBluetooth(
+    command
+) {
+
+    if (!bluetoothRX) {
+
+        return false;
+    }
+
+
+    try {
+
+        const data =
+            new TextEncoder().encode(
+                command + "\n"
+            );
+
+
+        if (
+            typeof
+            bluetoothRX.writeValueWithResponse
+            ===
+            "function"
+        ) {
+
+            await bluetoothRX.writeValueWithResponse(
+                data
+            );
+
+        } else {
+
+            await bluetoothRX.writeValue(
+                data
+            );
+        }
+
+
+        log(
+            "Web → Bluetooth : " +
+            command
+        );
+
+
+        return true;
+
+
+    } catch (error) {
+
+        log(
+            "Bluetooth送信エラー: " +
+            error.message
+        );
+
+
+        return false;
+    }
+}
+
+
+/* =====================================================
+   USB接続
+===================================================== */
+
+async function connectUSB() {
+
+    try {
+
+        if (
+            !("serial" in navigator)
+        ) {
+
+            throw new Error(
+                "Web Serial APIが利用できません"
+            );
+        }
+
+
+        log(
+            "USBデバイス選択"
+        );
+
+
+        serialPort =
+            await navigator.serial.requestPort();
+
+
+        await serialPort.open({
+
+            baudRate: 115200
+
+        });
+
+
+        serialWriter =
+            serialPort.writable.getWriter();
+
+
+        usbStatus.textContent =
+            "接続済み";
+
+        usbStatus.className =
+            "connected";
+
+
+        usbButton.textContent =
+            "🔌 USB切断";
+
+
+        log(
+            "USB接続成功"
+        );
+
+
+        readUSB();
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+
+        log(
+            "USB接続エラー: " +
+            error.message
+        );
+
+
+        serialPort = null;
+
+        serialWriter = null;
+    }
+}
+
+
+/* =====================================================
+   USB受信
+===================================================== */
+
+async function readUSB() {
+
+    if (
+        !serialPort ||
+        !serialPort.readable
+    ) {
+
+        return;
+    }
+
+
+    serialReader =
+        serialPort.readable.getReader();
+
+
+    const decoder =
+        new TextDecoder();
+
+
+    try {
+
+        while (true) {
+
+            const result =
+                await serialReader.read();
+
+
+            if (result.done) {
+
+                break;
+            }
+
+
+            if (result.value) {
+
+                log(
+                    "micro:bit → USB : " +
+                    decoder
+                        .decode(
+                            result.value
+                        )
+                        .trim()
+                );
+            }
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+
+    } finally {
+
+        try {
+
+            serialReader.releaseLock();
+
+        } catch (e) {}
+
+
+        serialReader = null;
+    }
+}
+
+
+/* =====================================================
+   USB送信
+===================================================== */
+
+async function sendUSB(
+    command
+) {
+
+    if (!serialWriter) {
+
+        return false;
+    }
+
+
+    try {
+
+        const data =
+            new TextEncoder().encode(
+                command + "\n"
+            );
+
+
+        await serialWriter.write(
+            data
+        );
+
+
+        log(
+            "Web → USB : " +
+            command
+        );
+
+
+        return true;
+
+
+    } catch (error) {
+
+        log(
+            "USB送信エラー: " +
+            error.message
+        );
+
+
+        return false;
+    }
+}
+
+
+/* =====================================================
+   USB切断
+===================================================== */
+
+async function disconnectUSB() {
+
+    try {
+
+        if (serialWriter) {
+
+            try {
+
+                await sendUSB(
+                    "S"
+                );
+
+            } catch (e) {}
+        }
+
+
+        if (serialReader) {
+
+            try {
+
+                await serialReader.cancel();
+
+            } catch (e) {}
+        }
+
+
+        if (serialWriter) {
+
+            try {
+
+                serialWriter.releaseLock();
+
+            } catch (e) {}
+
+            serialWriter = null;
+        }
+
+
+        if (serialPort) {
+
+            try {
+
+                await serialPort.close();
+
+            } catch (e) {}
+
+            serialPort = null;
+        }
+
+
+        usbStatus.textContent =
+            "未接続";
+
+        usbStatus.className =
+            "disconnected";
+
+
+        usbButton.textContent =
+            "🔌 USB接続";
+
+
+        log(
+            "USB切断"
+        );
+
+
+    } catch (error) {
+
+        log(
+            "USB切断エラー"
+        );
+    }
+}
+
+
+/* =====================================================
+   USBボタン
+===================================================== */
+
+usbButton.addEventListener(
+    "click",
+    async function () {
+
+        if (serialPort) {
+
+            await disconnectUSB();
+
+        } else {
+
+            await connectUSB();
+        }
+    }
+);
+
+
+/* =====================================================
+   共通送信
+===================================================== */
+
+async function sendCommand(
+    command
+) {
+
+    const bluetoothAvailable =
+        bluetoothRX !== null;
+
+
+    const usbAvailable =
+        serialWriter !== null;
+
+
+    if (
+        !bluetoothAvailable &&
+        !usbAvailable
+    ) {
+
+        log(
+            "micro:bitが接続されていません"
+        );
+
+        return;
+    }
+
+
+    /*
+     * Bluetooth
+     */
+
+    if (bluetoothAvailable) {
+
+        await sendBluetooth(
+            command
+        );
+    }
+
+
+    /*
+     * USB
+     */
+
+    if (usbAvailable) {
+
+        await sendUSB(
+            command
+        );
+    }
+
+
+    /*
+     * 表示
+     */
+
+    const names = {
+
+        U: "↑ 前進",
+
+        D: "↓ 後退",
+
+        L: "← 左",
+
+        R: "→ 右",
+
+        S: "■ 停止"
+
+    };
+
+
+    lastAction.textContent =
+        names[command] ||
+        command;
+}
+
+
+/* =====================================================
+   押されているボタンを解除
+===================================================== */
+
+function removePressed() {
+
+    document
+        .querySelectorAll(
+            ".control.pressed"
+        )
+        .forEach(
+            function(button) {
+
+                button.classList.remove(
+                    "pressed"
+                );
+            }
+        );
+}
+
+
+/* =====================================================
+   移動開始
+===================================================== */
+
+function startMoving(
+    command,
+    button,
+    event
+) {
+
+    event.preventDefault();
+
+
+    if (
+        activeCommand === command
+    ) {
+
+        return;
+    }
+
+
+    /*
+     * 他の方向が動いていたら停止
+     */
+
+    if (
+        activeCommand !== null
+    ) {
+
+        sendCommand(
+            "S"
+        );
+    }
+
+
+    removePressed();
+
+
+    activeCommand =
+        command;
+
+    activeButton =
+        button;
+
+
+    /*
+     * Pointer Capture
+     */
+
+    try {
+
+        button.setPointerCapture(
+            event.pointerId
+        );
+
+    } catch (e) {}
+
+
+    button.classList.add(
+        "pressed"
+    );
+
+
+    /*
+     * micro:bitに1回だけ送信
+     *
+     * micro:bit側で
+     * モーターを連続運転する
+     */
+
+    sendCommand(
+        command
+    );
+}
+
+
+/* =====================================================
+   移動停止
+===================================================== */
+
+function stopMoving(
+    button,
+    event
+) {
+
+    if (event) {
+
+        event.preventDefault();
+    }
+
+
+    if (
+        activeCommand === null
+    ) {
+
+        return;
+    }
+
+
+    removePressed();
+
+
+    activeButton = null;
+
+    activeCommand = null;
+
+
+    /*
+     * 停止
+     */
+
+    sendCommand(
+        "S"
+    );
+}
+
+
+/* =====================================================
+   ボタン登録
+===================================================== */
+
+function setupMoveButton(
+    id,
+    command
+) {
+
+    const button =
+        document.getElementById(
+            id
+        );
+
+
+    /*
+     * 押した
+     */
+
+    button.addEventListener(
+        "pointerdown",
+        function(event) {
+
+            startMoving(
+                command,
+                button,
+                event
+            );
+        }
+    );
+
+
+    /*
+     * 離した
+     */
+
+    button.addEventListener(
+        "pointerup",
+        function(event) {
+
+            stopMoving(
+                button,
+                event
+            );
+        }
+    );
+
+
+    /*
+     * キャンセル
+     */
+
+    button.addEventListener(
+        "pointercancel",
+        function(event) {
+
+            stopMoving(
+                button,
+                event
+            );
+        }
+    );
+
+
+    /*
+     * Pointer Capture解除
+     */
+
+    button.addEventListener(
+        "lostpointercapture",
+        function() {
+
+            if (
+                activeButton === button &&
+                activeCommand !== null
+            ) {
+
+                stopMoving(
+                    button,
+                    null
+                );
+            }
+        }
+    );
+
+
+    /*
+     * 右クリック禁止
+     */
+
+    button.addEventListener(
+        "contextmenu",
+        function(event) {
+
+            event.preventDefault();
+        }
+    );
+}
+
+
+/* =====================================================
+   移動ボタン登録
+===================================================== */
+
+setupMoveButton(
+    "up",
+    "U"
+);
+
+setupMoveButton(
+    "down",
+    "D"
+);
+
+setupMoveButton(
+    "left",
+    "L"
+);
+
+setupMoveButton(
+    "right",
+    "R"
+);
+
+
+/* =====================================================
+   STOPボタン
+===================================================== */
+
+const stopButton =
+    document.getElementById(
+        "stop"
+    );
+
+
+stopButton.addEventListener(
+    "pointerdown",
+    function(event) {
+
+        event.preventDefault();
+
+
+        removePressed();
+
+
+        activeButton = null;
+
+        activeCommand = null;
+
+
+        stopButton.classList.add(
+            "pressed"
+        );
+
+
+        sendCommand(
+            "S"
+        );
+    }
+);
+
+
+stopButton.addEventListener(
+    "pointerup",
+    function() {
+
+        stopButton.classList.remove(
+            "pressed"
+        );
+    }
+);
+
+
+/* =====================================================
+   キーボード
+===================================================== */
+
+const keyboardCommands = {
+
+    ArrowUp: [
+        "U",
+        "up"
+    ],
+
+    ArrowDown: [
+        "D",
+        "down"
+    ],
+
+    ArrowLeft: [
+        "L",
+        "left"
+    ],
+
+    ArrowRight: [
+        "R",
+        "right"
+    ]
+};
+
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        const data =
+            keyboardCommands[
+                event.key
+            ];
+
+
+        if (!data) {
+
+            return;
+        }
+
+
+        event.preventDefault();
+
+
+        /*
+         * キーリピートは無視
+         */
+
+        if (event.repeat) {
+
+            return;
+        }
+
+
+        const button =
+            document.getElementById(
+                data[1]
+            );
+
+
+        startMoving(
+            data[0],
+            button,
+            event
+        );
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    function(event) {
+
+        const data =
+            keyboardCommands[
+                event.key
+            ];
+
+
+        if (!data) {
+
+            return;
+        }
+
+
+        event.preventDefault();
+
+
+        const button =
+            document.getElementById(
+                data[1]
+            );
+
+
+        stopMoving(
+            button,
+            event
+        );
+    }
+);
+
+
+/* =====================================================
+   ページから離れた
+===================================================== */
+
+window.addEventListener(
+    "blur",
+    function() {
+
+        if (
+            activeCommand !== null
+        ) {
+
+            removePressed();
+
+
+            activeButton = null;
+
+            activeCommand = null;
+
+
+            sendCommand(
+                "S"
+            );
+        }
+    }
+);
+
+
+/* =====================================================
+   タブを切り替えた
+===================================================== */
+
+document.addEventListener(
+    "visibilitychange",
+    function() {
+
+        if (
+            document.hidden
+        ) {
+
+            removePressed();
+
+
+            if (
+                activeCommand !== null
+            ) {
+
+                activeButton = null;
+
+                activeCommand = null;
+
+                sendCommand(
+                    "S"
+                );
+            }
+        }
+    }
+);
+
+
+/* =====================================================
+   ページ終了時
+===================================================== */
+
+window.addEventListener(
+    "beforeunload",
+    function() {
+
+        /*
+         * 可能な場合は停止
+         */
+
+        try {
+
+            sendCommand(
+                "S"
+            );
+
+        } catch (e) {}
+    }
+);
+
+
+/* =====================================================
+   起動ログ
+===================================================== */
+
+log(
+    "コントローラー起動"
+);
+
+log(
+    "Bluetooth / USB 待機中"
+);
+
+</script>
+
+</body>
+
+</html>
