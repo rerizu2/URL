@@ -2290,6 +2290,9 @@ class PortfolioApp {
     isPreview = false;
     lastSyncTime = 0;
     syncCollabDataTimeout = null;
+    // Japanese IME composition state for partner textareas
+    isPartnerComposing = false;
+    pendingRemotePagesDuringComposition = null;
     // Real-time user presence & selection tracking
     currentUserId = '';
     currentUserName = '';
@@ -2935,6 +2938,13 @@ class PortfolioApp {
     handleRemoteUpdate(pagesData) {
         if (!pagesData || pagesData.length === 0)
             return;
+        // Do not re-render a textarea while Japanese IME is composing.
+        // Replacing the DOM node during composition breaks the IME and can
+        // produce duplicated text such as "kこんにちは".
+        if (this.isPartnerComposing) {
+            this.pendingRemotePagesDuringComposition = pagesData;
+            return;
+        }
         this.isRemoteUpdate = true;
         // 1. Preserve local active element state so dragging doesn't rubber-band
         let localActiveEl = null;
@@ -5080,30 +5090,71 @@ class PortfolioApp {
         // Bind partner textarea input to model state
         const elementsContainer = document.getElementById('elements-container');
         if (elementsContainer) {
+            // IME-safe input handling. Japanese kana conversion fires multiple
+            // intermediate input events. Never sync/render the document during
+            // composition, otherwise the textarea is recreated and the IME can
+            // insert duplicated characters.
+            elementsContainer.addEventListener('compositionstart', (e) => {
+                const target = e.target;
+                if (target.tagName.toLowerCase() === 'textarea' && target.classList.contains('partner-input')) {
+                    this.isPartnerComposing = true;
+                    this.pendingRemotePagesDuringComposition = null;
+                }
+            });
             elementsContainer.addEventListener('input', (e) => {
                 const target = e.target;
                 if (target.tagName.toLowerCase() === 'textarea' && target.classList.contains('partner-input')) {
                     const id = target.dataset.id;
                     if (id) {
                         const page = this.getCurrentPage();
-                        const el = page.elements.find(el => el.id === id);
+                        const el = page?.elements.find(el => el.id === id);
                         if (el) {
                             el.content = target.value;
-                            // Synchronize with right inspector if selected
                             if (this.selectedElementId === id) {
                                 const propContent = document.getElementById('prop-content');
-                                if (propContent)
+                                if (propContent && document.activeElement !== propContent)
                                     propContent.value = el.content;
                             }
-                            this.syncCollabData();
+                            // Ignore intermediate IME input events.
+                            if (!this.isPartnerComposing && !e.isComposing && e.inputType !== 'insertCompositionText') {
+                                this.syncCollabData();
+                            }
                         }
+                    }
+                }
+            });
+            elementsContainer.addEventListener('compositionend', (e) => {
+                const target = e.target;
+                if (target.tagName.toLowerCase() === 'textarea' && target.classList.contains('partner-input')) {
+                    // compositionend is the first safe point to sync the final
+                    // converted Japanese text.
+                    const id = target.dataset.id;
+                    const page = this.getCurrentPage();
+                    const el = page?.elements.find(el => el.id === id);
+                    if (el) el.content = target.value;
+                    this.isPartnerComposing = false;
+                    this.syncCollabData(true);
+                    this.pushHistory();
+                    // A remote snapshot received during composition is normally
+                    // our own just-sent snapshot. Apply it after the final local
+                    // value has been persisted, but only when it differs.
+                    const pending = this.pendingRemotePagesDuringComposition;
+                    this.pendingRemotePagesDuringComposition = null;
+                    if (pending) {
+                        setTimeout(() => {
+                            if (!this.isPartnerComposing) {
+                                const current = JSON.stringify(this.pages);
+                                const remote = JSON.stringify(pending);
+                                if (current !== remote) this.handleRemoteUpdate(pending);
+                            }
+                        }, 120);
                     }
                 }
             });
             elementsContainer.addEventListener('change', (e) => {
                 const target = e.target;
-                if (target.tagName.toLowerCase() === 'textarea' && target.classList.contains('partner-input')) {
-                    this.pushHistory(); // Save to local storage on blur/change
+                if (target.tagName.toLowerCase() === 'textarea' && target.classList.contains('partner-input') && !this.isPartnerComposing) {
+                    this.pushHistory();
                 }
             });
         }
