@@ -2395,10 +2395,14 @@ class PortfolioApp {
             this.projects = [this.createDefaultProject()];
         }
         if (this.isCollab) {
-            // In collab, we don't open local project, we use the shared pages.
+            // 共同編集リンクで開いた場合は、ここで初期ページをFirestoreへ同期しない。
+            // 以前は pushHistory() が syncCollabData(true) を呼ぶため、
+            // 参加者がページを読み込む前に「空の初期ページ」で共有データを上書きしていました。
+            // Firestoreの既存データは listenToProject() から受信して表示します。
             this.pages = [];
             this.initDefaultPages();
-            this.pushHistory();
+            this.history = [];
+            this.historyIndex = -1;
         }
         else {
             // Open the first project by default, or just set it
@@ -2412,8 +2416,11 @@ class PortfolioApp {
         if (this.isCollab) {
             // Listen to real-time updates from Firestore immediately
             this.unsubscribeCollab = listenToProject(this.projectId, (pagesData) => this.handleRemoteUpdate(pagesData), () => {
-                // If the project doesn't exist on Firestore yet, push our initial pages
-                this.syncCollabData(true);
+                // 共有ドキュメントがまだ存在しない場合だけ初期ページを作成する。
+                // 既存ドキュメントを参加者側の初期状態で上書きしない。
+                if (this.pages && this.pages.length > 0) {
+                    this.syncCollabData(true);
+                }
             });
             // Initialize presence and selection broadcast
             this.initPresenceSession();
