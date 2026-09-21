@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LiveStream - 単一HTML ライブ配信プラットフォーム</title>
+  <title>LiveStream - クロスデバイスライブ配信</title>
   <meta name="description" content="1ファイルで動作するリアルタイムライブ配信＆視聴＆チャットWebアプリケーション" />
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -657,6 +657,9 @@
       closeLiveStreams();
       switchTab('browse');
       showOfflineViewer();
+      if (viewerPeer) { viewerPeer.close(); viewerPeer = null; }
+      sendServer({type:'register_viewer'});
+      sendServer({type:'watch', streamId});
       channel.postMessage({ type: 'viewer_join', streamId, viewerName: 'リスナー' });
     }
 
@@ -665,6 +668,8 @@
       const img = document.getElementById('viewerFallbackImage');
       if (offline) offline.style.display = 'flex';
       if (img) img.style.display = 'none';
+      const video = document.getElementById('viewerVideo');
+      if (video) { try { video.pause(); } catch(e){}; video.srcObject = null; }
     }
 
     setInterval(() => {
@@ -676,29 +681,188 @@
     }, 2000);
 
 
-    // WebSocket sync if running alongside a server
+    // Cross-device WebRTC signaling via the same-origin WebSocket server.
+    // The server only exchanges signaling data; video/audio flows directly between browsers.
     let ws = null;
-    try {
-      if (location.protocol === 'http:' || location.protocol === 'https:') {
-        const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        ws = new WebSocket(`${wsProto}//${location.host}/ws`);
-        ws.onopen = () => {
-          ws.send(JSON.stringify({ type: 'join_room', roomId: 'main-stream', role: 'viewer', userName: 'リスナー' }));
+    let wsClientId = null;
+    const peerConnections = new Map(); // broadcaster: viewerId -> RTCPeerConnection
+    let viewerPeer = null;
+    let viewerPeerId = null;
+    let connectedToServer = false;
+
+    function getWsUrl() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${proto}//${location.host}/ws`;
+    }
+
+    function sendServer(message) {
+      if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(message));
+    }
+
+    function createPeerConnection(streamId, remoteId, isBroadcaster) {
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.cloudflare.com:3478' },
+          { urls: 'stun:stun.l.google.com:19302' }
+        ]
+      });
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          sendServer({
+            type: 'webrtc', to: remoteId, streamId,
+            data: { type: 'ice-candidate', candidate: event.candidate }
+          });
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (['failed','closed','disconnected'].includes(pc.connectionState)) {
+          if (isBroadcaster) {
+            peerConnections.delete(remoteId);
+          } else if (viewerPeer === pc) {
+            viewerPeer = null;
+            showOfflineViewer();
+          }
+        }
+      };
+
+      if (!isBroadcaster) {
+        pc.ontrack = (event) => {
+          const video = document.getElementById('viewerVideo');
+          if (video && event.streams[0]) {
+            video.srcObject = event.streams[0];
+            video.play().catch(()=>{});
+          }
+          const offline = document.getElementById('viewerOfflineOverlay');
+          const img = document.getElementById('viewerFallbackImage');
+          if (offline) offline.style.display = 'none';
+          if (img) img.style.display = 'none';
+          lastFrameTime = Date.now();
+          document.getElementById('headerLiveDot').classList.remove('hidden');
+          document.getElementById('headerStatusBadge').textContent = 'LIVE NOW';
+          document.getElementById('headerStatusBadge').className = 'rounded bg-rose-600 px-1.5 py-0.5 text-[11px] font-black text-white shadow';
         };
-        ws.onmessage = (ev) => {
+      }
+      return pc;
+    }
+
+    async function handleViewerJoin(msg) {
+      if (!state.isBroadcasting || !state.localStream) return;
+      const old = peerConnections.get(msg.viewerId);
+      if (old) old.close();
+      const pc = createPeerConnection(msg.streamId, msg.viewerId, true);
+      peerConnections.set(msg.viewerId, pc);
+      state.localStream.getTracks().forEach(track => pc.addTrack(track, state.localStream));
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      sendServer({
+        type:'webrtc', to:msg.viewerId, streamId:msg.streamId,
+        data:{type:'offer', sdp:pc.localDescription}
+      });
+    }
+
+    async function handleWebRTC(msg) {
+      if (msg.data.type === 'offer') {
+        if (state.selectedStreamId && msg.streamId !== state.selectedStreamId) return;
+        if (viewerPeer) viewerPeer.close();
+        viewerPeerId = msg.from;
+        viewerPeer = createPeerConnection(msg.streamId, msg.from, false);
+        await viewerPeer.setRemoteDescription(msg.data.sdp);
+        const answer = await viewerPeer.createAnswer();
+        await viewerPeer.setLocalDescription(answer);
+        sendServer({
+          type:'webrtc', to:msg.from, streamId:msg.streamId,
+          data:{type:'answer', sdp:viewerPeer.localDescription}
+        });
+      } else if (msg.data.type === 'answer') {
+        const pc = peerConnections.get(msg.from);
+        if (pc) await pc.setRemoteDescription(msg.data.sdp);
+      } else if (msg.data.type === 'ice-candidate') {
+        if (state.isBroadcasting) {
+          const pc = peerConnections.get(msg.from);
+          if (pc && msg.data.candidate) await pc.addIceCandidate(msg.data.candidate).catch(()=>{});
+        } else if (viewerPeer && msg.data.candidate) {
+          await viewerPeer.addIceCandidate(msg.data.candidate).catch(()=>{});
+        }
+      }
+    }
+
+    function connectToServer() {
+      if (!['http:','https:'].includes(location.protocol)) return;
+      try {
+        ws = new WebSocket(getWsUrl());
+        ws.onopen = () => {
+          connectedToServer = true;
+          document.getElementById('headerStatusBadge').textContent = 'SERVER ONLINE';
+          document.getElementById('headerStatusBadge').className = 'rounded bg-emerald-600 px-1.5 py-0.5 text-[11px] font-black text-white shadow';
+          sendServer({type:'register_viewer'});
+          if (state.isBroadcasting) publishStreamToServer();
+        };
+        ws.onclose = () => {
+          connectedToServer = false;
+          if (!state.isBroadcasting) {
+            document.getElementById('headerStatusBadge').textContent = 'SERVER OFFLINE';
+            document.getElementById('headerStatusBadge').className = 'rounded bg-slate-800 px-1.5 py-0.5 text-[11px] font-semibold text-slate-400';
+          }
+          setTimeout(connectToServer, 2000);
+        };
+        ws.onerror = () => {};
+        ws.onmessage = async (ev) => {
           try {
             const data = JSON.parse(ev.data);
-            if (data.type === 'stream_frame' && data.frameData) {
-              renderReceivedFrame(data.frameData, data.streamId || data.roomId);
+            if (data.type === 'hello') wsClientId = data.clientId;
+            else if (data.type === 'stream_list') {
+              state.liveStreams = {};
+              data.streams.forEach(stream => state.liveStreams[stream.streamId] = {...stream, lastSeen:Date.now()});
+              renderLiveStreams();
+            } else if (data.type === 'viewer_join') {
+              await handleViewerJoin(data);
+            } else if (data.type === 'webrtc') {
+              await handleWebRTC(data);
+            } else if (data.type === 'stream_offline') {
+              delete state.liveStreams[data.streamId];
+              if (state.selectedStreamId === data.streamId) {
+                if (viewerPeer) viewerPeer.close();
+                viewerPeer = null;
+                showOfflineViewer();
+              }
+              renderLiveStreams();
+            } else if (data.type === 'watch_error') {
+              alert(data.message || '配信を視聴できませんでした。');
             } else if (data.type === 'chat_message') {
               appendChatMessage(data.message);
             } else if (data.type === 'reaction') {
-              showFloatingReaction(data.reaction.emoji);
+              showFloatingReaction(data.reaction?.emoji || data.emoji || '❤️');
+            } else if (data.type === 'like') {
+              state.likes = data.likes ?? state.likes;
+              document.getElementById('streamLikeCount').textContent = state.likes;
+              showFloatingReaction('❤️');
+            } else if (data.type === 'super_chat') {
+              appendSuperChatMessage(data.message);
             }
-          } catch(e) {}
+          } catch (e) { console.warn('WS message error', e); }
         };
+      } catch (e) {
+        setTimeout(connectToServer, 2000);
       }
-    } catch(e) {}
+    }
+
+    function publishStreamToServer() {
+      sendServer({
+        type:'publish', streamId:state.streamId, title:state.title,
+        broadcasterName:state.broadcasterName, category:state.category,
+        startedAt:state.broadcastStartTime || Date.now()
+      });
+    }
+
+    function unpublishStreamFromServer() {
+      sendServer({type:'unpublish', streamId:state.streamId});
+      peerConnections.forEach(pc => pc.close());
+      peerConnections.clear();
+    }
+
+    connectToServer();
 
     // Initialize UI
     function init() {
@@ -811,8 +975,10 @@
         telemetry.className = 'text-rose-400 font-semibold animate-pulse';
         state.broadcastStartTime = Date.now();
         broadcastPresence();
+        if (connectedToServer) publishStreamToServer();
       } else {
         clearInterval(broadcastInterval);
+        unpublishStreamFromServer();
         btn.className = 'flex items-center space-x-2 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 px-5 py-2.5 text-xs font-bold text-white shadow-lg';
         label.textContent = '配信を開始する';
         banner.classList.add('hidden');
@@ -824,28 +990,9 @@
     }
 
     function startBroadcastingLoop() {
-      clearInterval(broadcastInterval);
-      const canvas = document.createElement('canvas');
-      canvas.width = 640;
-      canvas.height = 360;
-      const ctx = canvas.getContext('2d');
-      const studioVid = document.getElementById('studioVideo');
-
-      // 150ms High-Frequency Frame Sync (6.6 FPS)
-      broadcastInterval = setInterval(() => {
-        if (!state.isBroadcasting || !studioVid || studioVid.videoWidth === 0) return;
-        try {
-          ctx.drawImage(studioVid, 0, 0, canvas.width, canvas.height);
-          const frameData = canvas.toDataURL('image/jpeg', 0.6);
-          renderReceivedFrame(frameData);
-
-          // Broadcast to other tabs & websocket
-          channel.postMessage({ type: 'stream_frame', streamId: state.streamId, frameData });
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'stream_frame', roomId: state.streamId, streamId: state.streamId, frameData }));
-          }
-        } catch(e) {}
-      }, 150);
+      // Cross-device version: video/audio are sent through WebRTC directly.
+      // Keep this function for compatibility with the original UI.
+      if (connectedToServer) publishStreamToServer();
     }
 
     // Audio Meter
@@ -939,6 +1086,8 @@
       state.category = document.getElementById('selectStudioCategory').value;
 
       updateUIWithMeta();
+
+      sendServer({type:'update_stream', streamId:state.streamId, title:state.title, broadcasterName:state.broadcasterName, category:state.category});
 
       channel.postMessage({
         type: 'meta_update',
