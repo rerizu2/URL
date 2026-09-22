@@ -56,7 +56,7 @@
           <div><div class="text-4xl mb-3">📺</div><div class="font-bold">現在ライブ配信はありません</div><div class="text-sm text-slate-500 mt-1">配信が開始されるとここに表示されます。</div></div>
         </div>
       </div>
-      <div class="mt-4 flex items-center justify-between gap-3"><div id="firebaseStatus" class="text-xs text-slate-500">Firebaseへ接続しています…</div><button id="refreshLiveBtn" class="shrink-0 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-bold">↻ 更新</button></div>
+      <div id="firebaseStatus" class="mt-4 text-xs text-slate-500">一覧サーバーへ接続しています…</div>
     </div>
 
     <div class="glass rounded-2xl p-5 sm:p-6 mb-6">
@@ -113,35 +113,26 @@
   </section>
 </main>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import { getDatabase, ref, set, update, remove, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
+</body>
+</html><script>
 /* ============================================================
-   Firebase設定
-   Firebase Console → プロジェクトの設定 → マイアプリ → Webアプリ
-   の設定値をここへ貼り付けてください。
+   Firebaseを使わないライブ配信一覧版
+   ・配信映像/音声 = PeerJS(WebRTC)
+   ・現在LIVE一覧   = WebSocketサーバー
+   GitHub Pages側では SIGNAL_SERVER_URL を自分のWebSocketサーバーURLに変更してください。
+   例: wss://your-live-list-server.example.com
    ============================================================ */
-const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.firebasestorage.app",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+const SIGNAL_SERVER_URL = "wss://YOUR-SERVER.example.com";
 
 const state={
   peer:null, peerId:"", localStream:null, screenStream:null,
   isBroadcasting:false, isCameraEnabled:true, isMicEnabled:true, isScreenSharing:false,
   viewerConnections:new Map(), viewerCalls:new Map(), viewerNames:new Map(),
   viewerConnection:null, viewerCall:null, currentBroadcasterId:"", currentMetadata:null,
-  firebaseApp:null, db:null, auth:null, firebaseReady:false, firebaseUser:null,
-  firebaseAuthPromise:null, liveUnsubscribe:null, ownStreamRef:null, ownDisconnectRef:null
+  socket:null, socketReady:false, socketReconnectTimer:null, socketReconnectCount:0,
+  streamToken:null, currentStreams:new Map()
 };
-
 const $=id=>document.getElementById(id);
 const PEER_CONFIG={config:{iceServers:[
   {urls:"stun:stun.l.google.com:19302"},
@@ -149,349 +140,175 @@ const PEER_CONFIG={config:{iceServers:[
   {urls:"stun:stun2.l.google.com:19302"}
 ]}};
 
-function validFirebaseConfig(){return FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith("YOUR_") && FIREBASE_CONFIG.projectId && !FIREBASE_CONFIG.projectId.startsWith("YOUR_") && FIREBASE_CONFIG.databaseURL && !FIREBASE_CONFIG.databaseURL.includes("YOUR_PROJECT");}
-function setFirebaseStatus(text,ok=false){$('firebaseStatus').textContent=text;$('firebaseStatus').className='mt-4 text-xs '+(ok?'text-emerald-400':'text-amber-400');$('studioFirebaseState').textContent=text;}
+function setListStatus(text,ok=false){
+  const a=$('firebaseStatus'); if(a){a.textContent=text;a.className='mt-4 text-xs '+(ok?'text-emerald-400':'text-amber-400');}
+  const b=$('studioFirebaseState'); if(b)b.textContent=text;
+}
+function validSignalUrl(){return /^wss?:\/\/(?!YOUR-SERVER)/i.test(SIGNAL_SERVER_URL);}
+function escapeHtml(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function createToken(){return crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);}
 
-async function initFirebase(){
-  if(!validFirebaseConfig()){
-    setFirebaseStatus('Firebase未設定：FIREBASE_CONFIGを自分のFirebase設定に変更すると、全端末でLIVE一覧が共有されます。');
-    return false;
+function connectListServer(){
+  if(!validSignalUrl()){
+    setListStatus('一覧サーバー未設定：SIGNAL_SERVER_URLを変更してください。');
+    renderLiveStreams([]);
+    return;
   }
+  if(state.socket && [WebSocket.OPEN,WebSocket.CONNECTING].includes(state.socket.readyState))return;
   try{
-    state.firebaseApp=initializeApp(FIREBASE_CONFIG);
-    state.db=getDatabase(state.firebaseApp);
-    state.auth=getAuth(state.firebaseApp);
-
-    state.firebaseAuthPromise=new Promise((resolve,reject)=>{
-      let settled=false;
-      const unsubscribe=onAuthStateChanged(state.auth,user=>{
-        state.firebaseUser=user;
-        if(user){
-          state.firebaseReady=true;
-          setFirebaseStatus('Firebase接続OK・ライブ一覧を監視中',true);
-          if(!settled){settled=true;unsubscribe();resolve(user);}
-          if(state.isBroadcasting) registerLiveStream();
-        }
-      },err=>{
-        if(!settled){settled=true;unsubscribe();reject(err);}
-      });
-    });
-
-    await signInAnonymously(state.auth);
-    await state.firebaseAuthPromise;
-    listenLiveStreams();
-    return true;
-  }catch(e){
-    console.error('Firebase初期化エラー',e);
-    state.firebaseReady=false;
-    setFirebaseStatus('Firebase接続エラー: '+(e.message||e));
-    return false;
+    const ws=new WebSocket(SIGNAL_SERVER_URL); state.socket=ws;
+    ws.onopen=()=>{
+      state.socketReady=true;state.socketReconnectCount=0;
+      setListStatus('一覧サーバー接続OK・LIVE一覧を監視中',true);
+      ws.send(JSON.stringify({type:'list'}));
+      if(state.isBroadcasting) registerLiveStream();
+    };
+    ws.onmessage=e=>{
+      try{handleListMessage(JSON.parse(e.data));}catch(err){console.error('一覧サーバー応答エラー',err);}
+    };
+    ws.onerror=()=>{state.socketReady=false;setListStatus('一覧サーバーに接続できません。URLを確認してください。');};
+    ws.onclose=()=>{
+      state.socketReady=false;
+      if(state.isBroadcasting)setListStatus('一覧サーバー切断中。再接続を試しています…');
+      else setListStatus('一覧サーバーから切断されました。');
+      clearTimeout(state.socketReconnectTimer);
+      state.socketReconnectTimer=setTimeout(connectListServer,Math.min(10000,1000+state.socketReconnectCount*1000));
+      state.socketReconnectCount++;
+    };
+  }catch(e){setListStatus('一覧サーバー接続エラー: '+e.message);}
+}
+function sendListMessage(message){
+  if(state.socket?.readyState===WebSocket.OPEN){state.socket.send(JSON.stringify(message));return true;}
+  return false;
+}
+function handleListMessage(msg){
+  if(msg.type==='snapshot'){
+    const list=Array.isArray(msg.streams)?msg.streams:[];
+    state.currentStreams.clear();list.forEach(s=>state.currentStreams.set(s.peerId,s));
+    renderLiveStreams(list);
   }
+  if(msg.type==='registered' && msg.ok){setListStatus('LIVE配信を一覧に登録しました。',true);}
+  if(msg.type==='error'){setListStatus('一覧サーバー: '+(msg.message||'エラー'));}
 }
-
-async function waitForFirebaseReady(){
-  if(state.firebaseReady)return true;
-  if(!state.firebaseAuthPromise)return false;
-  try{await state.firebaseAuthPromise;return state.firebaseReady;}catch{return false;}
-}
-
-function listenLiveStreams(){
-  if(!state.db)return;
-  if(state.liveUnsubscribe)state.liveUnsubscribe();
-  const liveRef=ref(state.db,'liveStreams');
-  state.liveUnsubscribe=onValue(liveRef,snap=>{
-    const data=snap.val()||{};
-    renderLiveStreams(data);
-    if(state.isBroadcasting && state.peerId && !data[state.peerId]) registerLiveStream();
-  },err=>setFirebaseStatus('ライブ一覧取得エラー: '+err.message));
-}
-
-function renderLiveStreams(data){
-  const list=$('liveList'); const empty=$('emptyLive');
-  [...list.querySelectorAll('.live-card')].forEach(e=>e.remove());
-  const streams=Object.entries(data||{}).filter(([id,s])=>s && id);
-  $('liveCount').textContent=streams.length+' LIVE';
-  if(!streams.length){empty.style.display='grid';return;}
-  empty.style.display='none';
-  streams.sort((a,b)=>(b[1].startedAt||0)-(a[1].startedAt||0));
-  for(const [peerId,s] of streams){
-    const card=document.createElement('button');
-    card.type='button'; card.className='live-card text-left rounded-2xl border border-slate-800 bg-slate-950/70 overflow-hidden w-full';
-    card.innerHTML=`
-      <div class="h-32 bg-gradient-to-br from-slate-900 via-indigo-950/40 to-rose-950/30 relative flex items-center justify-center">
-        <div class="text-5xl">📺</div>
-        <span class="absolute top-3 left-3 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-black">● LIVE</span>
-        <span class="absolute top-3 right-3 rounded-full bg-black/60 px-2 py-1 text-[11px]">${escapeHtml(s.category||'LIVE')}</span>
-      </div>
-      <div class="p-4">
-        <div class="font-black text-base truncate">${escapeHtml(s.title||'ライブ配信')}</div>
-        <div class="text-sm text-slate-400 mt-1 truncate">👤 ${escapeHtml(s.name||'配信者')}</div>
-        <div class="mt-3 rounded-xl bg-slate-900 border border-slate-800 px-3 py-2">
-          <div class="text-[10px] text-slate-500">配信ID</div>
-          <div class="font-mono text-xs text-indigo-300 break-all mt-0.5">${escapeHtml(peerId)}</div>
-        </div>
-        <div class="mt-3 flex items-center justify-between gap-2"><span class="text-xs text-slate-500">クリックして視聴</span><span class="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-black">▶ 視聴する</span></div>
-      </div>`;
-    card.addEventListener('click',()=>watchLiveStream(peerId,s));
-    list.appendChild(card);
+function renderLiveStreams(list){
+  const root=$('liveList'); if(!root)return;
+  const streams=(list||[]).filter(s=>s && s.peerId);
+  $('liveCount').textContent=`${streams.length} LIVE`;
+  root.innerHTML='';
+  if(!streams.length){
+    root.innerHTML=`<div id="emptyLive" class="md:col-span-2 xl:col-span-3 min-h-44 rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 grid place-items-center text-center p-8"><div><div class="text-4xl mb-3">📺</div><div class="font-bold">現在ライブ配信はありません</div><div class="text-sm text-slate-500 mt-1">誰かが配信を開始するとここに表示されます。</div></div></div>`;
+    return;
   }
-}
-
-function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
-
-async function registerLiveStream(){
-  if(!state.db || !state.peerId || !state.isBroadcasting)return false;
-  const ready=await waitForFirebaseReady();
-  if(!ready || !state.firebaseUser){
-    setFirebaseStatus('Firebase認証待ちのため配信一覧へ登録できません。');
-    return false;
-  }
-
-  const streamRef=ref(state.db,'liveStreams/'+state.peerId);
-  state.ownStreamRef=streamRef;
-  const metadata={
-    peerId:state.peerId,
-    title:$('streamTitle').value.trim()||'ライブ配信',
-    name:$('streamName').value.trim()||'配信者',
-    category:$('streamCategory').value.trim()||'雑談',
-    startedAt:Date.now(),
-    updatedAt:Date.now(),
-    ownerUid:state.firebaseUser.uid
-  };
-
-  try{
-    // ブラウザ/タブが切断されたらFirebase側で自動削除
-    await onDisconnect(streamRef).remove();
-    await set(streamRef,metadata);
-    state.ownDisconnectRef=streamRef;
-    setFirebaseStatus('● 現在ライブ配信中・一覧へ登録済み',true);
-    return true;
-  }catch(e){
-    console.error('配信登録エラー',e);
-    setFirebaseStatus('配信一覧への登録に失敗: '+(e.message||e));
-    return false;
-  }
-}
-
-async function unregisterLiveStream(){
-  if(!state.db||!state.peerId)return;
-  try{await remove(ref(state.db,'liveStreams/'+state.peerId));}catch(e){console.error(e);}
-  state.ownStreamRef=null;
-}
-
-async function updateLiveMetadata(){
-  if(!state.isBroadcasting||!state.db||!state.peerId)return;
-  const ready=await waitForFirebaseReady();
-  if(!ready)return;
-  try{
-    await update(ref(state.db,'liveStreams/'+state.peerId),{
-      peerId:state.peerId,
-      title:$('streamTitle').value.trim()||'ライブ配信',
-      name:$('streamName').value.trim()||'配信者',
-      category:$('streamCategory').value.trim()||'雑談',
-      updatedAt:Date.now()
-    });
-  }catch(e){console.error(e);}
-}
-
-function createPeer(){
-  return new Promise((resolve,reject)=>{
-    try{
-      const peer=new Peer(undefined,PEER_CONFIG); state.peer=peer;
-      peer.on('open',id=>{state.peerId=id;$('myPeerId').textContent=id;resolve(peer);});
-      peer.on('error',e=>{console.error('Peer error',e);if(e.type==='unavailable-id'){state.peer=null;} });
-      peer.on('connection',conn=>handleBroadcasterConnection(conn));
-      peer.on('call',call=>handleIncomingCall(call));
-      peer.on('disconnected',()=>{$('myPeerId').textContent=state.peerId+' (切断)';});
-      peer.on('close',()=>{state.peer=null;});
-    }catch(e){reject(e)}
+  streams.sort((a,b)=>(b.startedAt||0)-(a.startedAt||0));
+  streams.forEach(s=>{
+    const card=document.createElement('button');card.type='button';
+    card.className='live-card text-left glass rounded-2xl p-4 border border-slate-800 hover:border-rose-500/60 w-full';
+    card.innerHTML=`<div class="relative rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 to-indigo-950 h-32 grid place-items-center"><div class="text-5xl">📺</div><span class="absolute top-3 left-3 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-black">● LIVE</span></div><div class="mt-4"><div class="font-black text-lg truncate">${escapeHtml(s.title||'ライブ配信')}</div><div class="text-sm text-slate-400 mt-1">👤 ${escapeHtml(s.name||'配信者')}</div><div class="text-xs text-slate-500 mt-2">${escapeHtml(s.category||'LIVE')}</div><div class="mt-3 rounded-xl bg-slate-950/80 border border-slate-800 p-3"><div class="text-[11px] text-slate-500">配信ID</div><div class="font-mono text-xs break-all text-indigo-300 mt-1">${escapeHtml(s.peerId)}</div></div><div class="mt-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-center font-bold text-sm">▶ この配信を見る</div></div>`;
+    card.onclick=()=>watchLiveStream(s.peerId,s);
+    root.appendChild(card);
   });
 }
-
-async function ensurePeer(){if(state.peer && !state.peer.destroyed)return state.peer;return createPeer();}
-
-async function startCamera(){
-  stopLocalTracks();
-  const video=$('cameraSelect').value; const audio=$('micSelect').value;
-  const constraints={video:video?{deviceId:{exact:video}}:true,audio:audio?{deviceId:{exact:audio}}:true};
-  try{
-    state.localStream=await navigator.mediaDevices.getUserMedia(constraints);
-    $('localVideo').srcObject=state.localStream;$('localPlaceholder').classList.add('hidden');
-    state.isCameraEnabled=true;state.isMicEnabled=true;
-    updateTrackButtons();
-    await enumerateDevices();
-  }catch(e){alert('カメラ・マイクを取得できませんでした。\n'+e.message);}
+function registerLiveStream(){
+  if(!state.isBroadcasting||!state.peerId)return false;
+  if(!state.streamToken)state.streamToken=createToken();
+  return sendListMessage({type:'register',token:state.streamToken,stream:{peerId:state.peerId,title:$('streamTitle').value.trim()||'ライブ配信',name:$('streamName').value.trim()||'配信者',category:$('streamCategory').value.trim()||'雑談',startedAt:state.startedAt||Date.now()}});
 }
-function stopLocalTracks(){if(state.localStream){state.localStream.getTracks().forEach(t=>t.stop());state.localStream=null;}if(state.screenStream){state.screenStream.getTracks().forEach(t=>t.stop());state.screenStream=null;}}
-async function enumerateDevices(){
-  try{const devices=await navigator.mediaDevices.enumerateDevices();const cam=$('cameraSelect'),mic=$('micSelect');const oldC=cam.value,oldM=mic.value;cam.innerHTML='';mic.innerHTML='';let ci=0,mi=0;devices.forEach(d=>{if(d.kind==='videoinput'){const o=new Option(d.label||`カメラ ${++ci}`,d.deviceId);cam.add(o)}else if(d.kind==='audioinput'){const o=new Option(d.label||`マイク ${++mi}`,d.deviceId);mic.add(o)}});if(oldC)cam.value=oldC;if(oldM)mic.value=oldM;}catch(e){console.warn(e)}
+function updateLiveMetadata(){
+  if(!state.isBroadcasting)return;
+  sendListMessage({type:'update',token:state.streamToken,stream:{peerId:state.peerId,title:$('streamTitle').value.trim()||'ライブ配信',name:$('streamName').value.trim()||'配信者',category:$('streamCategory').value.trim()||'雑談'}});
 }
-function updateTrackButtons(){$('cameraBtn').textContent=state.isCameraEnabled?'📷 カメラON':'📷 カメラOFF';$('micBtn').textContent=state.isMicEnabled?'🎙️ マイクON':'🎙️ マイクOFF';}
-function toggleCamera(){if(!state.localStream)return;state.isCameraEnabled=!state.isCameraEnabled;const t=state.localStream.getVideoTracks()[0];if(t)t.enabled=state.isCameraEnabled;updateTrackButtons();}
-function toggleMic(){if(!state.localStream)return;state.isMicEnabled=!state.isMicEnabled;const t=state.localStream.getAudioTracks()[0];if(t)t.enabled=state.isMicEnabled;updateTrackButtons();}
-
-async function toggleScreen(){
-  if(state.isScreenSharing){stopScreenShare();return;}
-  try{
-    const ss=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true}); state.screenStream=ss; state.isScreenSharing=true;
-    const track=ss.getVideoTracks()[0]; track.onended=()=>stopScreenShare();
-    if(state.localStream){const senderVideo=state.localStream.getVideoTracks()[0];if(senderVideo)state.localStream.removeTrack(senderVideo);state.localStream.addTrack(track);}else{state.localStream=ss;}
-    $('localVideo').srcObject=state.localStream;$('localPlaceholder').classList.add('hidden');$('screenBtn').textContent='🛑 画面共有停止';
-    replaceVideoTrack(track);
-  }catch(e){console.warn(e)}
+function unregisterLiveStream(){
+  if(!state.peerId||!state.streamToken)return;
+  sendListMessage({type:'unregister',peerId:state.peerId,token:state.streamToken});
 }
-function stopScreenShare(){if(!state.isScreenSharing)return;state.isScreenSharing=false;if(state.screenStream){state.screenStream.getTracks().forEach(t=>t.stop());state.screenStream=null;}if(state.localStream){startCamera();} $('screenBtn').textContent='🖥️ 画面共有';}
-function replaceVideoTrack(track){for(const call of state.viewerCalls.values()){try{const sender=call.peerConnection?.getSenders?.().find(s=>s.track?.kind==='video');if(sender)sender.replaceTrack(track)}catch(e){console.warn(e)}}}
 
+function createPeer(){return new Promise((resolve,reject)=>{
+  if(state.peer?.open)return resolve(state.peer);
+  const peer=new Peer(undefined,PEER_CONFIG);state.peer=peer;
+  peer.on('open',id=>{state.peerId=id;$('myPeerId').textContent=id;resolve(peer);});
+  peer.on('error',err=>{console.error('PeerJS',err);if(!state.peerId)reject(err);});
+  peer.on('connection',conn=>handleBroadcasterConnection(conn));
+  peer.on('call',call=>handleIncomingCall(call));
+  peer.on('disconnected',()=>{if(state.isBroadcasting)try{peer.reconnect()}catch{}});
+});}
+async function ensurePeer(){if(state.peer?.open)return state.peer;return createPeer();}
 function handleBroadcasterConnection(conn){
-  state.viewerConnections.set(conn.peer,conn);
-  conn.on('open',()=>{conn.send({type:'metadata',metadata:getMetadata()});updateViewerCount();});
+  state.viewerConnections.set(conn.peer,conn);updateViewerCount();
+  conn.on('open',()=>conn.send({type:'metadata',metadata:{title:$('streamTitle').value,name:$('streamName').value,category:$('streamCategory').value}}));
   conn.on('data',data=>{
-    if(!data)return;
-    if(data.type==='watch'){state.viewerNames.set(conn.peer,data.name||'視聴者');if(state.isBroadcasting)callViewer(conn.peer);}
-    if(data.type==='chat'){broadcastData({type:'chat',name:data.name||state.viewerNames.get(conn.peer)||'視聴者',text:data.text});}
-    if(data.type==='reaction'){broadcastData({type:'reaction',reaction:data.reaction});}
+    if(data?.type==='watch'){state.viewerNames.set(conn.peer,data.name||'視聴者');conn.send({type:'metadata',metadata:{title:$('streamTitle').value,name:$('streamName').value,category:$('streamCategory').value}});if(state.isBroadcasting)callViewer(conn.peer);}
+    if(data?.type==='chat'&&state.isBroadcasting){broadcastData({type:'chat',name:data.name||'視聴者',text:data.text||''});}
+    if(data?.type==='reaction'&&state.isBroadcasting)broadcastData({type:'reaction',reaction:data.reaction||'❤️'});
   });
-  conn.on('close',()=>{state.viewerConnections.delete(conn.peer);state.viewerNames.delete(conn.peer);const c=state.viewerCalls.get(conn.peer);if(c){try{c.close()}catch{}}state.viewerCalls.delete(conn.peer);updateViewerCount();});
-  conn.on('error',()=>{});
+  conn.on('close',()=>{state.viewerConnections.delete(conn.peer);const c=state.viewerCalls.get(conn.peer);try{c?.close()}catch{}state.viewerCalls.delete(conn.peer);state.viewerNames.delete(conn.peer);updateViewerCount();});
+  conn.on('error',()=>{state.viewerConnections.delete(conn.peer);updateViewerCount();});
 }
 function callViewer(viewerId){
-  if(!state.peer||!state.localStream)return;
-  try{const call=state.peer.call(viewerId,state.localStream);state.viewerCalls.set(viewerId,call);call.on('close',()=>state.viewerCalls.delete(viewerId));call.on('error',()=>state.viewerCalls.delete(viewerId));}catch(e){console.error(e)}
+  if(!state.localStream||!state.peer||!state.isBroadcasting)return;
+  try{const old=state.viewerCalls.get(viewerId);old?.close();const call=state.peer.call(viewerId,state.localStream);state.viewerCalls.set(viewerId,call);call.on('close',()=>state.viewerCalls.delete(viewerId));call.on('error',()=>state.viewerCalls.delete(viewerId));}catch(e){console.error(e);}
 }
 function handleIncomingCall(call){
-  // 視聴者として受信した映像を受け取る
-  if(state.isBroadcasting)return;
-  try{
-    call.answer(); state.viewerCall=call;
-    call.on('stream',stream=>{const v=$('viewerVideo');v.srcObject=stream;v.play().catch(()=>{});$('viewerPlaceholder').classList.add('hidden');$('viewerConnBadge').textContent='接続済み';$('viewerStatus').textContent='LIVE配信を受信中';});
-    call.on('close',()=>viewerEnded('配信接続が終了しました'));
-    call.on('error',()=>viewerEnded('配信接続でエラーが発生しました'));
-  }catch(e){viewerEnded(e.message)}
+  call.answer();
+  call.on('stream',stream=>{if(state.currentBroadcasterId===call.peer){$('viewerVideo').srcObject=stream;$('viewerVideo').play().catch(()=>{});$('viewerPlaceholder').classList.add('hidden');$('viewerConnBadge').textContent='LIVE';$('viewerStatus').textContent='配信中';}});
+  call.on('close',()=>{if(state.currentBroadcasterId===call.peer)viewerEnded('配信接続が終了しました。');});
+  call.on('error',e=>{console.error(e);if(state.currentBroadcasterId===call.peer)viewerEnded('映像接続に失敗しました。');});
+  if(state.currentBroadcasterId===call.peer)state.viewerCall=call;
 }
-function getMetadata(){return{title:$('streamTitle').value.trim()||'ライブ配信',name:$('streamName').value.trim()||'配信者',category:$('streamCategory').value.trim()||'雑談',peerId:state.peerId};}
-function broadcastData(data){for(const conn of state.viewerConnections.values()){if(conn.open){try{conn.send(data)}catch{}}}}
-function updateViewerCount(){$('viewerCount').textContent=String(state.viewerConnections.size);}
-
+async function enumerateDevices(){
+  try{const devices=await navigator.mediaDevices.enumerateDevices();const cams=devices.filter(d=>d.kind==='videoinput'),mics=devices.filter(d=>d.kind==='audioinput');$('cameraSelect').innerHTML=cams.map((d,i)=>`<option value="${escapeHtml(d.deviceId)}">${escapeHtml(d.label||`カメラ ${i+1}`)}</option>`).join('');$('micSelect').innerHTML=mics.map((d,i)=>`<option value="${escapeHtml(d.deviceId)}">${escapeHtml(d.label||`マイク ${i+1}`)}</option>`).join('');}catch(e){console.error(e);}
+}
+async function startCamera(){
+  try{
+    const videoId=$('cameraSelect').value,audioId=$('micSelect').value;
+    const stream=await navigator.mediaDevices.getUserMedia({video:videoId?{deviceId:{exact:videoId}}:true,audio:audioId?{deviceId:{exact:audioId}}:true});
+    state.localStream?.getTracks().forEach(t=>t.stop());state.localStream=stream;$('localVideo').srcObject=stream;$('localPlaceholder').classList.add('hidden');state.isCameraEnabled=true;state.isMicEnabled=true;$('cameraBtn').textContent='📷 カメラON';$('micBtn').textContent='🎙️ マイクON';
+    if(state.isBroadcasting){for(const id of state.viewerConnections.keys())callViewer(id);}
+    return stream;
+  }catch(e){alert('カメラ・マイクを使用できません。ブラウザの権限を確認してください。\n'+e.message);throw e;}
+}
+async function toggleCamera(){if(!state.localStream)return startCamera();const t=state.localStream.getVideoTracks()[0];if(!t)return;t.enabled=!t.enabled;state.isCameraEnabled=t.enabled;$('cameraBtn').textContent=t.enabled?'📷 カメラON':'📷 カメラOFF';}
+async function toggleMic(){if(!state.localStream)return;const t=state.localStream.getAudioTracks()[0];if(!t)return;t.enabled=!t.enabled;state.isMicEnabled=t.enabled;$('micBtn').textContent=t.enabled?'🎙️ マイクON':'🔇 マイクOFF';}
+async function toggleScreen(){
+  if(state.isScreenSharing)return stopScreen();
+  try{const ss=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});state.screenStream=ss;state.isScreenSharing=true;const track=ss.getVideoTracks()[0];const old=state.localStream?.getVideoTracks()[0];if(state.localStream&&old){state.localStream.removeTrack(old);old.stop();state.localStream.addTrack(track);}else{state.localStream=ss;}$('localVideo').srcObject=state.localStream;$('screenBtn').textContent='⛔ 画面共有停止';for(const id of state.viewerConnections.keys())callViewer(id);track.onended=stopScreen;
+  }catch(e){console.error(e);}
+}
+async function stopScreen(){state.isScreenSharing=false;state.screenStream?.getTracks().forEach(t=>t.stop());state.screenStream=null;await startCamera();$('screenBtn').textContent='🖥️ 画面共有';}
 async function startBroadcast(){
   if(state.isBroadcasting)return;
-  if(!state.localStream)await startCamera();
-  if(!state.localStream)return;
-
-  try{await ensurePeer();}catch(e){alert('配信サーバーへの接続に失敗しました。\n'+e.message);return;}
-
-  state.isBroadcasting=true;
-  $('studioState').textContent='● LIVE';
-  $('studioState').className='rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/40 px-3 py-1 text-xs';
-  $('startBroadcastBtn').classList.add('hidden');
-  $('stopBroadcastBtn').classList.remove('hidden');
-
-  // Firebase認証完了を待ってから必ず一覧へ登録する
-  const registered=await registerLiveStream();
-  if(!registered){
-    setFirebaseStatus('配信は開始しましたが、ライブ一覧への登録に失敗しています。Firebase設定を確認してください。');
-  }
-
-  for(const id of state.viewerConnections.keys())callViewer(id);
+  try{await ensurePeer();if(!state.localStream)await startCamera();state.isBroadcasting=true;state.startedAt=Date.now();state.streamToken=createToken();$('studioState').textContent='LIVE';$('studioState').className='rounded-full bg-rose-600 px-3 py-1 text-xs font-black';$('startBroadcastBtn').classList.add('hidden');$('stopBroadcastBtn').classList.remove('hidden');
+    if(state.socketReady)registerLiveStream();else setListStatus('配信中ですが一覧サーバー未接続です。再接続後に自動登録します。');
+    for(const id of state.viewerConnections.keys())callViewer(id);
+  }catch(e){state.isBroadcasting=false;alert('配信を開始できませんでした。\n'+e.message);}
 }
-
 async function stopBroadcast(){
-  if(!state.isBroadcasting)return;
-  state.isBroadcasting=false;
-  await unregisterLiveStream();
-  broadcastData({type:'broadcastEnded'});
-  for(const c of state.viewerCalls.values()){try{c.close()}catch{}}state.viewerCalls.clear();
-  for(const c of state.viewerConnections.values()){try{c.close()}catch{}}state.viewerConnections.clear();state.viewerNames.clear();updateViewerCount();
-  $('studioState').textContent='OFFLINE';$('studioState').className='rounded-full bg-slate-800 px-3 py-1 text-xs';$('startBroadcastBtn').classList.remove('hidden');$('stopBroadcastBtn').classList.add('hidden');
-  setFirebaseStatus('配信を終了しました。',true);
+  if(!state.isBroadcasting)return;state.isBroadcasting=false;unregisterLiveStream();broadcastData({type:'broadcastEnded'});for(const c of state.viewerCalls.values()){try{c.close()}catch{}}state.viewerCalls.clear();for(const c of state.viewerConnections.values()){try{c.close()}catch{}}state.viewerConnections.clear();state.viewerNames.clear();updateViewerCount();$('studioState').textContent='OFFLINE';$('studioState').className='rounded-full bg-slate-800 px-3 py-1 text-xs';$('startBroadcastBtn').classList.remove('hidden');$('stopBroadcastBtn').classList.add('hidden');setListStatus('配信を終了しました。',true);
 }
-
-async function disconnectViewer(){
-  if(state.viewerConnection){try{state.viewerConnection.close()}catch{}}state.viewerConnection=null;
-  if(state.viewerCall){try{state.viewerCall.close()}catch{}}state.viewerCall=null;
-  $('viewerVideo').srcObject=null;$('viewerPanel').classList.add('hidden');
-}
-async function watchLiveStream(peerId,meta={}){
-  if(!peerId)return;
-  await disconnectViewer();
-  showPage('browse');
-  $('viewerPanel').classList.remove('hidden');
-  $('viewerTitle').textContent=meta.title||'ライブ配信';
-  $('viewerMeta').textContent=`${meta.name||'配信者'} / ${meta.category||'LIVE'} / 配信ID: ${peerId}`;
-  $('viewerStatus').textContent='配信に接続しています…';$('viewerPlaceholder').classList.remove('hidden');$('viewerConnBadge').textContent='接続中';$('commentList').innerHTML='';
-  state.currentBroadcasterId=peerId;state.currentMetadata=meta;
-  try{
-    await ensurePeer();
-    const conn=state.peer.connect(peerId,{reliable:true});state.viewerConnection=conn;
-    let opened=false;
-    const timeout=setTimeout(()=>{if(!opened && state.viewerConnection===conn){$('viewerStatus').textContent='接続できません。配信が終了した可能性があります。';}},10000);
-    conn.on('open',()=>{opened=true;clearTimeout(timeout);conn.send({type:'watch',name:'視聴者'});$('viewerStatus').textContent='映像を待っています…';});
-    conn.on('data',data=>handleViewerData(data));
-    conn.on('close',()=>{if(state.currentBroadcasterId===peerId)viewerEnded('配信接続が終了しました。');});
-    conn.on('error',e=>{console.error(e);if(state.currentBroadcasterId===peerId)viewerEnded('配信に接続できませんでした。');});
-  }catch(e){console.error(e);viewerEnded('Peer接続エラー: '+e.message)}
-  $('viewerPanel').scrollIntoView({behavior:'smooth',block:'start'});
-}
-function handleViewerData(data){
-  if(data.type==='metadata'){$('viewerTitle').textContent=data.metadata?.title||'ライブ配信';$('viewerMeta').textContent=`${data.metadata?.name||'配信者'} / ${data.metadata?.category||'LIVE'} / 配信ID: ${state.currentBroadcasterId}`;}
-  if(data.type==='chat')appendComment(data.name||'配信者',data.text||'');
-  if(data.type==='reaction')showReaction(data.reaction||'❤️');
-  if(data.type==='broadcastEnded')viewerEnded('配信が終了しました。');
-}
+function broadcastData(data){for(const c of state.viewerConnections.values())if(c.open)try{c.send(data)}catch{}}
+function updateViewerCount(){$('viewerCount').textContent=String(state.viewerConnections.size);}
+async function disconnectViewer(){if(state.viewerConnection){try{state.viewerConnection.close()}catch{}}state.viewerConnection=null;if(state.viewerCall){try{state.viewerCall.close()}catch{}}state.viewerCall=null;$('viewerVideo').srcObject=null;$('viewerPanel').classList.add('hidden');}
+async function watchLiveStream(peerId,meta={}){if(!peerId)return;await disconnectViewer();showPage('browse');$('viewerPanel').classList.remove('hidden');$('viewerTitle').textContent=meta.title||'ライブ配信';$('viewerMeta').textContent=`${meta.name||'配信者'} / ${meta.category||'LIVE'} / 配信ID: ${peerId}`;$('viewerStatus').textContent='配信に接続しています…';$('viewerPlaceholder').classList.remove('hidden');$('viewerConnBadge').textContent='接続中';$('commentList').innerHTML='';state.currentBroadcasterId=peerId;state.currentMetadata=meta;try{await ensurePeer();const conn=state.peer.connect(peerId,{reliable:true});state.viewerConnection=conn;let opened=false;const timeout=setTimeout(()=>{if(!opened&&state.viewerConnection===conn){$('viewerStatus').textContent='接続できません。配信が終了した可能性があります。';}},10000);conn.on('open',()=>{opened=true;clearTimeout(timeout);conn.send({type:'watch',name:'視聴者'});$('viewerStatus').textContent='映像を待っています…';});conn.on('data',handleViewerData);conn.on('close',()=>{if(state.currentBroadcasterId===peerId)viewerEnded('配信接続が終了しました。');});conn.on('error',e=>{console.error(e);if(state.currentBroadcasterId===peerId)viewerEnded('配信に接続できませんでした。');});}catch(e){console.error(e);viewerEnded('Peer接続エラー: '+e.message)}$('viewerPanel').scrollIntoView({behavior:'smooth',block:'start'});}
+function handleViewerData(data){if(data.type==='metadata'){$('viewerTitle').textContent=data.metadata?.title||'ライブ配信';$('viewerMeta').textContent=`${data.metadata?.name||'配信者'} / ${data.metadata?.category||'LIVE'} / 配信ID: ${state.currentBroadcasterId}`;}if(data.type==='chat')appendComment(data.name||'配信者',data.text||'');if(data.type==='reaction')showReaction(data.reaction||'❤️');if(data.type==='broadcastEnded')viewerEnded('配信が終了しました。');}
 function viewerEnded(message){$('viewerStatus').textContent=message;$('viewerPlaceholder').classList.remove('hidden');$('viewerConnBadge').textContent='終了';}
 function appendComment(name,text){if(!text)return;const d=document.createElement('div');d.className='rounded-lg bg-slate-900 px-3 py-2 text-sm';d.innerHTML=`<b class="text-indigo-300">${escapeHtml(name)}</b><span class="text-slate-300">：${escapeHtml(text)}</span>`;$('commentList').appendChild(d);$('commentList').scrollTop=$('commentList').scrollHeight;}
 function sendComment(){const text=$('commentInput').value.trim();if(!text)return;appendComment('あなた',text);if(state.viewerConnection?.open)state.viewerConnection.send({type:'chat',name:'視聴者',text});$('commentInput').value='';}
 function showReaction(r){const el=document.createElement('div');el.className='reaction';el.textContent=r;$('viewerReactions').appendChild(el);setTimeout(()=>el.remove(),1300);}
 function sendReaction(r){showReaction(r);if(state.viewerConnection?.open)state.viewerConnection.send({type:'reaction',reaction:r});}
-
-function refreshLiveList(){
-  if(!state.db){
-    setFirebaseStatus('Firebase未設定または未接続です。FIREBASE_CONFIGを確認してください。');
-    return;
-  }
-  listenLiveStreams();
-  setFirebaseStatus(state.firebaseReady?'● ライブ一覧を更新しました':'Firebase接続待ち…',state.firebaseReady);
-}
-
-function showPage(page){$('browsePage').classList.toggle('hidden-page',page!=='browse');$('studioPage').classList.toggle('hidden-page',page!=='studio');if(page==='browse' && state.db && !state.liveUnsubscribe)listenLiveStreams();if(page==='studio')enumerateDevices();}
+function showPage(page){$('browsePage').classList.toggle('hidden-page',page!=='browse');$('studioPage').classList.toggle('hidden-page',page!=='studio');if(page==='browse'&&!state.socketReady)connectListServer();if(page==='studio')enumerateDevices();}
 
 $('browseBtn').onclick=()=>{showPage('browse');$('liveListSection').scrollIntoView({behavior:'smooth'});};
-$('refreshLiveBtn').onclick=refreshLiveList;
 $('logoBtn').onclick=()=>showPage('browse');$('studioBtn').onclick=()=>showPage('studio');
-$('manualWatchBtn').onclick=()=>watchLiveStream($('manualPeerId').value.trim());
-$('closeViewerBtn').onclick=disconnectViewer;
-$('cameraBtn').onclick=toggleCamera;$('micBtn').onclick=toggleMic;$('screenBtn').onclick=toggleScreen;
-$('startBroadcastBtn').onclick=startBroadcast;$('stopBroadcastBtn').onclick=stopBroadcast;
-$('cameraSelect').onchange=startCamera;$('micSelect').onchange=startCamera;
-$('streamTitle').onchange=updateLiveMetadata;$('streamName').onchange=updateLiveMetadata;$('streamCategory').onchange=updateLiveMetadata;
+$('manualWatchBtn').onclick=()=>watchLiveStream($('manualPeerId').value.trim());$('closeViewerBtn').onclick=disconnectViewer;
+$('cameraBtn').onclick=toggleCamera;$('micBtn').onclick=toggleMic;$('screenBtn').onclick=toggleScreen;$('startBroadcastBtn').onclick=startBroadcast;$('stopBroadcastBtn').onclick=stopBroadcast;
+$('cameraSelect').onchange=startCamera;$('micSelect').onchange=startCamera;$('streamTitle').onchange=updateLiveMetadata;$('streamName').onchange=updateLiveMetadata;$('streamCategory').onchange=updateLiveMetadata;
 $('copyIdBtn').onclick=()=>navigator.clipboard?.writeText(state.peerId).then(()=>alert('配信IDをコピーしました。'));
 $('copyUrlBtn').onclick=()=>{const u=location.href.split('?')[0]+'?watch='+encodeURIComponent(state.peerId);navigator.clipboard?.writeText(u).then(()=>alert('視聴URLをコピーしました。'));};
 $('sendCommentBtn').onclick=sendComment;$('commentInput').onkeydown=e=>{if(e.key==='Enter')sendComment()};
 document.querySelectorAll('.reactionBtn').forEach(b=>b.onclick=()=>sendReaction(b.dataset.reaction));
 $('muteBtn').onclick=()=>{$('viewerVideo').muted=!$('viewerVideo').muted;$('muteBtn').textContent=$('viewerVideo').muted?'🔇 ミュート':'🔊 音声';};
-$('volumeSlider').oninput=e=>{$('viewerVideo').volume=Number(e.target.value);$('viewerVideo').muted=Number(e.target.value)===0};
-$('fullscreenBtn').onclick=()=>{$('viewerVideo').requestFullscreen?.()};
-
-setInterval(async()=>{
-  if(state.isBroadcasting && state.db && state.peerId && state.firebaseReady){
-    try{
-      const streamRef=ref(state.db,'liveStreams/'+state.peerId);
-      await update(streamRef,{updatedAt:Date.now()});
-    }catch(e){console.warn('LIVE heartbeat error',e);}
-  }
-},15000);
-
-window.addEventListener('beforeunload',()=>{if(state.isBroadcasting && state.db && state.peerId){try{remove(ref(state.db,'liveStreams/'+state.peerId))}catch{}}});
-
-async function init(){
-  await initFirebase();
-  await enumerateDevices();
-  try{await ensurePeer()}catch(e){console.error(e)}
-  const p=new URLSearchParams(location.search).get('watch');
-  if(p){showPage('browse');setTimeout(()=>watchLiveStream(p),500)}
-  navigator.mediaDevices?.addEventListener?.('devicechange',enumerateDevices);
-}
+$('volumeSlider').oninput=e=>{$('viewerVideo').volume=Number(e.target.value);$('viewerVideo').muted=Number(e.target.value)===0};$('fullscreenBtn').onclick=()=>{$('viewerVideo').requestFullscreen?.()};
+window.addEventListener('beforeunload',()=>{if(state.isBroadcasting)unregisterLiveStream();try{state.socket?.close()}catch{}});
+async function init(){connectListServer();await enumerateDevices();try{await ensurePeer()}catch(e){console.error(e)}const p=new URLSearchParams(location.search).get('watch');if(p){showPage('browse');setTimeout(()=>watchLiveStream(p),700);}}
 init();
 </script>
-</body>
-</html>
+</body></html>
