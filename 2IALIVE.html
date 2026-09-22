@@ -1,4144 +1,997 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-
-<title>LiveStream - WebRTCライブ配信</title>
-
-<meta
-  name="description"
-  content="WebRTCを使用したリアルタイムライブ配信プラットフォーム"
-/>
-
-<!-- ZIPのデザインと同じTailwind CSS -->
-<script src="https://cdn.tailwindcss.com"></script>
-
-<!-- PeerJS -->
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-
-<script>
-tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        brand: {
-          rose: "#f43f5e",
-          indigo: "#6366f1"
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LiveStream - 単一HTML ライブ配信プラットフォーム</title>
+  <meta name="description" content="1ファイルで動作するリアルタイムライブ配信＆視聴＆チャットWebアプリケーション" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-database-compat.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              rose: '#f43f5e',
+              indigo: '#6366f1',
+            }
+          }
         }
       }
     }
-  }
-};
-</script>
-
-<style>
-
-/* =========================================================
-   ZIPのデザインをベースにしたCSS
-========================================================= */
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  background: #020617;
-  color: #f8fafc;
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-}
-
-/* スクロールバー */
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #090d16;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-}
-
-/* 弾幕 */
-
-@keyframes danmaku-fly {
-
-  0% {
-    transform: translateX(100vw);
-  }
-
-  100% {
-    transform: translateX(-100%);
-  }
-
-}
-
-.danmaku-item {
-
-  position: absolute;
-
-  white-space: nowrap;
-
-  font-weight: 700;
-
-  text-shadow:
-    1px 1px 3px rgba(0,0,0,.8),
-    -1px -1px 3px rgba(0,0,0,.8),
-    1px -1px 3px rgba(0,0,0,.8),
-    -1px 1px 3px rgba(0,0,0,.8);
-
-  pointer-events: none;
-
-  animation:
-    danmaku-fly 6.5s linear forwards;
-
-  z-index: 30;
-}
-
-/* リアクション */
-
-@keyframes reaction-float {
-
-  0% {
-    transform:
-      translateY(0)
-      scale(.6);
-
-    opacity: 0;
-  }
-
-  15% {
-
-    transform:
-      translateY(-20px)
-      scale(1.2);
-
-    opacity: 1;
-  }
-
-  80% {
-    opacity: .9;
-  }
-
-  100% {
-
-    transform:
-      translateY(-160px)
-      scale(1.4)
-      rotate(15deg);
-
-    opacity: 0;
-  }
-
-}
-
-.reaction-item {
-
-  position: absolute;
-
-  bottom: 24px;
-
-  pointer-events: none;
-
-  animation:
-    reaction-float 2.5s ease-out forwards;
-
-  z-index: 40;
-}
-
-/* グラス */
-
-.glass {
-
-  background:
-    rgba(15,23,42,.65);
-
-  backdrop-filter:
-    blur(16px);
-
-  -webkit-backdrop-filter:
-    blur(16px);
-
-}
-
-/* ボタン */
-
-.btn {
-
-  transition:
-    transform .15s ease,
-    background .15s ease,
-    opacity .15s ease;
-
-}
-
-.btn:active {
-
-  transform:
-    scale(.96);
-
-}
-
-/* video */
-
-video {
-
-  background: #000;
-
-}
-
-/* 配信中の光 */
-
-.live-glow {
-
-  box-shadow:
-    0 0 25px rgba(244,63,94,.18);
-
-}
-
-/* モーダル */
-
-.modal-bg {
-
-  background:
-    rgba(0,0,0,.72);
-
-  backdrop-filter:
-    blur(8px);
-
-}
-
-/* コピー成功 */
-
-.copy-ok {
-
-  animation:
-    copySuccess .5s ease;
-
-}
-
-@keyframes copySuccess {
-
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.08);
-  }
-
-  100% {
-    transform: scale(1);
-  }
-
-}
-
-/* スマホ */
-
-@media(max-width:768px) {
-
-  .desktop-only {
-    display:none !important;
-  }
-
-}
-
-/* range */
-
-input[type="range"] {
-
-  accent-color:#f43f5e;
-
-}
-
-</style>
+  </script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    /* Danmaku Comment Animation */
+    @keyframes danmaku-fly {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+    .danmaku-item {
+      position: absolute;
+      white-space: nowrap;
+      font-weight: 700;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.8), -1px -1px 3px rgba(0,0,0,0.8), 1px -1px 3px rgba(0,0,0,0.8), -1px 1px 3px rgba(0,0,0,0.8);
+      pointer-events: none;
+      animation: danmaku-fly 6.5s linear forwards;
+      z-index: 30;
+    }
+
+    /* Floating Reaction Animation */
+    @keyframes reaction-float {
+      0% { transform: translateY(0) scale(0.6); opacity: 0; }
+      15% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+      80% { opacity: 0.9; }
+      100% { transform: translateY(-160px) scale(1.4) rotate(15deg); opacity: 0; }
+    }
+    .reaction-item {
+      position: absolute;
+      bottom: 24px;
+      pointer-events: none;
+      animation: reaction-float 2.5s ease-out forwards;
+      z-index: 40;
+    }
+  </style>
 </head>
-
-<body class="min-h-screen bg-slate-950 text-slate-100">
-
-<!-- =========================================================
-     HEADER
-========================================================= -->
-
-<header
-  class="
-    sticky top-0 z-50
-    w-full
-    border-b border-slate-800
-    bg-slate-950/95
-    backdrop-blur-md
-  "
->
-
-<div
-  class="
-    mx-auto
-    flex
-    h-16
-    max-w-7xl
-    items-center
-    justify-between
-    px-4
-    sm:px-6
-  "
->
-
-<!-- LOGO -->
-
-<div
-  class="flex items-center space-x-3 cursor-pointer"
-  onclick="showPage('browse')"
->
-
-<div
-  class="
-    relative
-    flex
-    h-10
-    w-10
-    items-center
-    justify-center
-    rounded-xl
-    bg-gradient-to-tr
-    from-rose-600
-    to-indigo-600
-    shadow-lg
-    shadow-rose-950/50
-  "
->
-
-<svg
-  class="h-5 w-5 text-white"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  viewBox="0 0 24 24"
->
-
-<path
-  stroke-linecap="round"
-  stroke-linejoin="round"
-  d="
-    M4.9 19.1A10 10 0 1 1 19.1 4.9
-    M7.8 16.2A6 6 0 1 1 16.2 7.8
-    M12 12h.01
-  "
-/>
-
-</svg>
-
-<span
-  id="headerLiveDot"
-  class="
-    hidden
-    absolute
-    -right-1
-    -top-1
-    h-3
-    w-3
-  "
->
-
-<span
-  class="
-    absolute
-    inline-flex
-    h-full
-    w-full
-    animate-ping
-    rounded-full
-    bg-rose-400
-    opacity-75
-  "
-></span>
-
-<span
-  class="
-    relative
-    inline-flex
-    h-3
-    w-3
-    rounded-full
-    bg-rose-500
-  "
-></span>
-
-</span>
-
-</div>
-
-<div class="hidden sm:block">
-
-<div class="font-bold">
-LiveStream
-<span class="text-slate-500 font-normal">
-Single
-</span>
-</div>
-
-<div class="text-[10px] text-slate-500">
-WebRTC LIVE PLATFORM
-</div>
-
-</div>
-
-</div>
-
-
-<!-- NAV -->
-
-<div class="flex items-center gap-2">
-
-<button
-  id="browseButton"
-  onclick="showPage('browse')"
-  class="
-    btn
-    flex
-    items-center
-    gap-2
-    rounded-lg
-    bg-indigo-600
-    px-3
-    py-2
-    text-sm
-    font-medium
-    text-white
-  "
->
-
-<span>📺</span>
-<span class="desktop-only">
-配信をみる
-</span>
-
-</button>
-
-
-<button
-  id="studioButton"
-  onclick="showPage('studio')"
-  class="
-    btn
-    flex
-    items-center
-    gap-2
-    rounded-lg
-    px-3
-    py-2
-    text-sm
-    font-medium
-    text-slate-300
-    hover:bg-slate-800
-  "
->
-
-<span>🎥</span>
-
-<span class="desktop-only">
-配信スタジオ
-</span>
-
-</button>
-
-</div>
-
-</div>
-
-</header>
-
-
-<!-- =========================================================
-     MAIN
-========================================================= -->
-
-<main
-  class="
-    mx-auto
-    w-full
-    max-w-7xl
-    flex-1
-    px-4
-    py-6
-    sm:px-6
-  "
->
-
-
-<!-- =========================================================
-     BROWSE
-========================================================= -->
-
-<section id="pageBrowse">
-
-<div class="mb-6">
-
-<h1
-  class="
-    text-2xl
-    font-bold
-    sm:text-3xl
-  "
->
-ライブ配信をみる
-</h1>
-
-<p class="mt-1 text-sm text-slate-400">
-WebRTCでリアルタイム配信を視聴できます
-</p>
-
-</div>
-
-
-<!-- 配信ID入力 -->
-
-<div
-  class="
-    mb-6
-    rounded-2xl
-    border
-    border-slate-800
-    bg-slate-900/70
-    p-5
-  "
->
-
-<div class="mb-3 flex items-center gap-2">
-
-<div
-  class="
-    flex
-    h-9
-    w-9
-    items-center
-    justify-center
-    rounded-lg
-    bg-indigo-500/10
-  "
->
-🔗
-</div>
-
-<div>
-
-<h2 class="font-bold">
-配信を見る
-</h2>
-
-<p class="text-xs text-slate-500">
-配信者から受け取った配信IDを入力してください
-</p>
-
-</div>
-
-</div>
-
-
-<div class="flex flex-col gap-2 sm:flex-row">
-
-<input
-  id="watchPeerId"
-  type="text"
-  placeholder="配信IDを入力"
-  class="
-    flex-1
-    rounded-xl
-    border
-    border-slate-700
-    bg-slate-950
-    px-4
-    py-3
-    text-sm
-    outline-none
-    placeholder:text-slate-600
-    focus:border-indigo-500
-  "
->
-
-<button
-  onclick="connectToBroadcast()"
-  class="
-    btn
-    rounded-xl
-    bg-gradient-to-r
-    from-indigo-600
-    to-indigo-500
-    px-6
-    py-3
-    font-bold
-    text-white
-    hover:from-indigo-500
-    hover:to-indigo-400
-  "
->
-視聴する
-</button>
-
-</div>
-
-</div>
-
-
-<!-- 配信プレイヤー -->
-
-<div
-  id="viewerArea"
-  class="
-    overflow-hidden
-    rounded-2xl
-    border
-    border-slate-800
-    bg-slate-900
-    shadow-2xl
-  "
->
-
-<div
-  id="viewerVideoContainer"
-  class="
-    relative
-    aspect-video
-    bg-black
-  "
->
-
-<video
-  id="remoteVideo"
-  class="
-    h-full
-    w-full
-    object-contain
-  "
-  autoplay
-  playsinline
-></video>
-
-
-<!-- 待機 -->
-
-<div
-  id="viewerPlaceholder"
-  class="
-    absolute
-    inset-0
-    flex
-    flex-col
-    items-center
-    justify-center
-    bg-gradient-to-br
-    from-slate-950
-    via-slate-900
-    to-indigo-950/30
-  "
->
-
-<div
-  class="
-    mb-4
-    flex
-    h-20
-    w-20
-    items-center
-    justify-center
-    rounded-3xl
-    bg-gradient-to-tr
-    from-rose-600
-    to-indigo-600
-    text-3xl
-    shadow-2xl
-  "
->
-▶
-</div>
-
-<h2 class="text-lg font-bold">
-配信を選択してください
-</h2>
-
-<p class="mt-1 text-sm text-slate-500">
-配信者のIDを入力すると視聴できます
-</p>
-
-</div>
-
-
-<!-- LIVE -->
-
-<div
-  id="viewerLiveBadge"
-  class="
-    absolute
-    left-4
-    top-4
-    hidden
-    items-center
-    gap-2
-    rounded-lg
-    bg-rose-600
-    px-3
-    py-1.5
-    text-xs
-    font-bold
-    shadow-lg
-  "
->
-
-<span
-  class="
-    h-2
-    w-2
-    animate-pulse
-    rounded-full
-    bg-white
-  "
-></span>
-
-LIVE
-
-</div>
-
-
-<!-- DANMAKU -->
-
-<div
-  id="danmakuLayer"
-  class="
-    pointer-events-none
-    absolute
-    inset-0
-    overflow-hidden
-  "
-></div>
-
-
-<!-- REACTIONS -->
-
-<div
-  id="reactionLayer"
-  class="
-    pointer-events-none
-    absolute
-    inset-0
-    overflow-hidden
-  "
-></div>
-
-
-<!-- PLAYER CONTROLS -->
-
-<div
-  id="viewerControls"
-  class="
-    absolute
-    bottom-0
-    left-0
-    right-0
-    hidden
-    items-center
-    gap-3
-    bg-gradient-to-t
-    from-black/90
-    to-transparent
-    px-4
-    pb-4
-    pt-10
-  "
->
-
-<button
-  onclick="toggleViewerMute()"
-  id="viewerMuteButton"
-  class="text-white"
->
-🔊
-</button>
-
-<input
-  id="viewerVolume"
-  type="range"
-  min="0"
-  max="1"
-  step="0.01"
-  value="1"
-  class="w-24"
-/>
-
-<div class="flex-1"></div>
-
-<button
-  onclick="toggleViewerFullscreen()"
-  class="text-white"
->
-⛶
-</button>
-
-</div>
-
-</div>
-
-
-<!-- VIDEO INFO -->
-
-<div class="p-5">
-
-<div class="flex flex-col gap-4 sm:flex-row sm:items-start">
-
-<div class="flex-1">
-
-<div
-  id="viewerTitle"
-  class="text-lg font-bold"
->
-配信を選択してください
-</div>
-
-<div
-  id="viewerBroadcaster"
-  class="mt-1 text-sm text-slate-400"
->
-配信者
-</div>
-
-</div>
-
-<div class="flex gap-2">
-
-<button
-  onclick="sendReaction('❤️')"
-  class="
-    btn
-    rounded-xl
-    bg-slate-800
-    px-4
-    py-2
-    hover:bg-slate-700
-  "
->
-❤️
-</button>
-
-<button
-  onclick="sendReaction('👍')"
-  class="
-    btn
-    rounded-xl
-    bg-slate-800
-    px-4
-    py-2
-    hover:bg-slate-700
-  "
->
-👍
-</button>
-
-<button
-  onclick="sendReaction('🔥')"
-  class="
-    btn
-    rounded-xl
-    bg-slate-800
-    px-4
-    py-2
-    hover:bg-slate-700
-  "
->
-🔥
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- CHAT -->
-
-<div
-  class="
-    mt-6
-    grid
-    gap-6
-    lg:grid-cols-[1fr_360px]
-  "
->
-
-
-<div
-  class="
-    rounded-2xl
-    border
-    border-slate-800
-    bg-slate-900/70
-    p-5
-  "
->
-
-<h2 class="mb-4 font-bold">
-💬 コメント
-</h2>
-
-<div
-  id="viewerComments"
-  class="
-    h-56
-    space-y-3
-    overflow-y-auto
-    rounded-xl
-    bg-slate-950/60
-    p-4
-  "
-></div>
-
-
-<div class="mt-3 flex gap-2">
-
-<input
-  id="viewerChatInput"
-  type="text"
-  placeholder="コメントを入力..."
-  class="
-    min-w-0
-    flex-1
-    rounded-xl
-    border
-    border-slate-700
-    bg-slate-950
-    px-4
-    py-3
-    text-sm
-    outline-none
-    focus:border-indigo-500
-  "
-  onkeydown="
-    if(event.key==='Enter'){
-      sendChatFromViewer();
-    }
-  "
->
-
-<button
-  onclick="sendChatFromViewer()"
-  class="
-    rounded-xl
-    bg-indigo-600
-    px-5
-    font-bold
-  "
->
-送信
-</button>
-
-</div>
-
-</div>
-
-
-<div
-  class="
-    rounded-2xl
-    border
-    border-slate-800
-    bg-gradient-to-br
-    from-indigo-950/50
-    to-slate-900
-    p-5
-  "
->
-
-<div class="text-xs text-slate-500">
-WEBRTC CONNECTION
-</div>
-
-<div
-  id="connectionStatus"
-  class="mt-2 font-bold text-slate-300"
->
-未接続
-</div>
-
-<div class="mt-4 text-sm text-slate-400">
-配信ID
-</div>
-
-<div
-  id="currentBroadcastId"
-  class="
-    mt-1
-    break-all
-    rounded-lg
-    bg-slate-950
-    p-3
-    font-mono
-    text-xs
-    text-indigo-300
-  "
->
--
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-
-<!-- =========================================================
-     STUDIO
-========================================================= -->
-
-<section
-  id="pageStudio"
-  class="hidden"
->
-
-<div class="mb-6">
-
-<h1 class="text-2xl font-bold sm:text-3xl">
-配信スタジオ
-</h1>
-
-<p class="mt-1 text-sm text-slate-400">
-カメラとマイクを選択してライブ配信を開始します
-</p>
-
-</div>
-
-
-<div
-  class="
-    grid
-    gap-6
-    lg:grid-cols-[1fr_360px]
-  "
->
-
-
-<!-- LEFT -->
-
-<div>
-
-<div
-  class="
-    relative
-    overflow-hidden
-    rounded-2xl
-    border
-    border-slate-800
-    bg-black
-    shadow-2xl
-  "
->
-
-<div class="relative aspect-video">
-
-<video
-  id="localVideo"
-  class="
-    h-full
-    w-full
-    object-contain
-  "
-  autoplay
-  muted
-  playsinline
-></video>
-
-
-<div
-  id="studioPlaceholder"
-  class="
-    absolute
-    inset-0
-    flex
-    flex-col
-    items-center
-    justify-center
-    bg-gradient-to-br
-    from-slate-950
-    to-slate-900
-  "
->
-
-<div class="mb-3 text-5xl">
-🎥
-</div>
-
-<div class="font-bold">
-カメラを起動してください
-</div>
-
-<div class="mt-1 text-xs text-slate-500">
-下のボタンからカメラ・マイクを開始
-</div>
-
-</div>
-
-
-<div
-  id="studioLiveBadge"
-  class="
-    absolute
-    left-4
-    top-4
-    hidden
-    items-center
-    gap-2
-    rounded-lg
-    bg-rose-600
-    px-3
-    py-1.5
-    text-xs
-    font-bold
-  "
->
-
-<span
-  class="
-    h-2
-    w-2
-    animate-pulse
-    rounded-full
-    bg-white
-  "
-></span>
-
-LIVE
-
-</div>
-
-</div>
-
-
-<!-- CONTROLS -->
-
-<div
-  class="
-    flex
-    flex-wrap
-    items-center
-    gap-2
-    border-t
-    border-slate-800
-    bg-slate-900
-    p-3
-  "
->
-
-<button
-  onclick="toggleCamera()"
-  id="cameraButton"
-  class="
-    rounded-xl
-    bg-slate-800
-    px-4
-    py-2
-    text-sm
-    hover:bg-slate-700
-  "
->
-📷 カメラ
-</button>
-
-<button
-  onclick="toggleMic()"
-  id="micButton"
-  class="
-    rounded-xl
-    bg-slate-800
-    px-4
-    py-2
-    text-sm
-    hover:bg-slate-700
-  "
->
-🎤 マイク
-</button>
-
-<button
-  onclick="toggleScreenShare()"
-  id="screenButton"
-  class="
-    rounded-xl
-    bg-slate-800
-    px-4
-    py-2
-    text-sm
-    hover:bg-slate-700
-  "
->
-🖥️ 画面共有
-</button>
-
-</div>
-
-</div>
-
-
-<!-- 配信情報 -->
-
-<div
-  class="
-    mt-6
-    rounded-2xl
-    border
-    border-slate-800
-    bg-slate-900/70
-    p-5
-  "
->
-
-<h2 class="mb-4 font-bold">
-配信情報
-</h2>
-
-<label class="text-xs text-slate-400">
-配信タイトル
-</label>
-
-<input
-  id="broadcastTitle"
-  type="text"
-  value="🌟 みんなで雑談＆ゲーム配信！"
-  class="
-    mt-2
-    w-full
-    rounded-xl
-    border
-    border-slate-700
-    bg-slate-950
-    px-4
-    py-3
-    outline-none
-    focus:border-rose-500
-  "
->
-
-<label class="mt-4 block text-xs text-slate-400">
-配信者名
-</label>
-
-<input
-  id="broadcasterName"
-  type="text"
-  value="ストリーマー"
-  class="
-    mt-2
-    w-full
-    rounded-xl
-    border
-    border-slate-700
-    bg-slate-950
-    px-4
-    py-3
-    outline-none
-    focus:border-rose-500
-  "
->
-
-</div>
-
-</div>
-
-
-<!-- RIGHT -->
-
-<div class="space-y-6">
-
-
-<!-- DEVICE -->
-
-<div
-  class="
-    rounded-2xl
-    border
-    border-slate-800
-    bg-slate-900/70
-    p-5
-  "
->
-
-<h2 class="mb-4 font-bold">
-⚙️ デバイス設定
-</h2>
-
-<label class="text-xs text-slate-400">
-カメラ
-</label>
-
-<select
-  id="cameraSelect"
-  class="
-    mt-2
-    w-full
-    rounded-xl
-    border
-    border-slate-700
-    bg-slate-950
-    px-3
-    py-3
-    text-sm
-    outline-none
-  "
-></select>
-
-
-<label class="mt-4 block text-xs text-slate-400">
-マイク
-</label>
-
-<select
-  id="micSelect"
-  class="
-    mt-2
-    w-full
-    rounded-xl
-    border
-    border-slate-700
-    bg-slate-950
-    px-3
-    py-3
-    text-sm
-    outline-none
-  "
-></select>
-
-<button
-  onclick="startCamera()"
-  class="
-    mt-5
-    w-full
-    rounded-xl
-    bg-indigo-600
-    py-3
-    font-bold
-    hover:bg-indigo-500
-  "
->
-カメラ・マイクを起動
-</button>
-
-</div>
-
-
-<!-- PEER -->
-
-<div
-  class="
-    rounded-2xl
-    border
-    border-slate-800
-    bg-gradient-to-br
-    from-rose-950/40
-    to-indigo-950/40
-    p-5
-  "
->
-
-<div class="text-xs text-slate-500">
-YOUR WEBRTC ID
-</div>
-
-<div
-  id="myPeerId"
-  class="
-    mt-2
-    min-h-10
-    break-all
-    rounded-xl
-    bg-slate-950
-    p-3
-    font-mono
-    text-sm
-    text-rose-300
-  "
->
-接続準備中...
-</div>
-
-<button
-  onclick="copyPeerId()"
-  class="
-    mt-3
-    w-full
-    rounded-xl
-    bg-slate-800
-    py-3
-    text-sm
-    font-bold
-    hover:bg-slate-700
-  "
->
-📋 配信IDをコピー
-</button>
-
-<button
-  onclick="copyWatchURL()"
-  class="
-    mt-2
-    w-full
-    rounded-xl
-    bg-slate-800
-    py-3
-    text-sm
-    font-bold
-    hover:bg-slate-700
-  "
->
-🔗 視聴URLをコピー
-</button>
-
-</div>
-
-
-<!-- START -->
-
-<div
-  class="
-    rounded-2xl
-    border
-    border-slate-800
-    bg-slate-900/70
-    p-5
-  "
->
-
-<div
-  id="studioStatus"
-  class="
-    mb-4
-    rounded-xl
-    bg-slate-950
-    p-4
-    text-center
-    text-sm
-    text-slate-400
-  "
->
-配信準備中
-</div>
-
-
-<button
-  id="broadcastButton"
-  onclick="toggleBroadcast()"
-  class="
-    w-full
-    rounded-xl
-    bg-gradient-to-r
-    from-rose-600
-    to-rose-500
-    py-4
-    font-bold
-    text-white
-    shadow-lg
-    shadow-rose-950/30
-    hover:from-rose-500
-    hover:to-rose-400
-  "
->
-🔴 配信開始
-</button>
-
-</div>
-
-
-<!-- VIEWERS -->
-
-<div
-  class="
-    rounded-2xl
-    border
-    border-slate-800
-    bg-slate-900/70
-    p-5
-  "
->
-
-<div class="flex items-center justify-between">
-
-<div class="text-sm text-slate-400">
-👥 接続視聴者
-</div>
-
-<div
-  id="viewerCount"
-  class="font-bold"
->
-0
-</div>
-
-</div>
-
-<div
-  id="viewerList"
-  class="
-    mt-3
-    max-h-40
-    space-y-2
-    overflow-y-auto
-  "
-></div>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-</main>
-
-
-<!-- =========================================================
-     FOOTER
-========================================================= -->
-
-<footer
-  class="
-    border-t
-    border-slate-800
-    bg-slate-950
-    py-6
-    text-center
-    text-xs
-    text-slate-600
-  "
->
-
-<div>
-LiveStream WebRTC
-</div>
-
-<div class="mt-1">
-Powered by WebRTC / PeerJS
-</div>
-
-</footer>
-
-
-<!-- =========================================================
-     JAVASCRIPT
-========================================================= -->
-
-<script>
-
-/* =========================================================
-   GLOBAL STATE
-========================================================= */
-
-const state = {
-
-  peer: null,
-
-  peerId: "",
-
-  localStream: null,
-
-  screenStream: null,
-
-  isBroadcasting: false,
-
-  isCameraEnabled: true,
-
-  isMicEnabled: true,
-
-  isScreenSharing: false,
-
-  broadcasterId: "",
-
-  viewerConnection: null,
-
-  viewerCall: null,
-
-  viewerConnections: new Map(),
-
-  viewerCalls: new Map(),
-
-  viewerNames: new Map(),
-
-  currentPage: "browse",
-
-  comments: [],
-
-  likes: 0,
-
-  metadata: {
-
-    title: "🌟 みんなで雑談＆ゲーム配信！",
-
-    broadcasterName: "ストリーマー"
-
-  }
-
-};
-
-
-/* =========================================================
-   PEERJS設定
-========================================================= */
-
-/*
-   PeerJSの公開サーバーを利用。
-
-   STUN:
-   Google公開STUN
-
-   TURNを使う場合はここへ追加できます。
-
-   例:
-
-   {
-     urls: "turn:YOUR_SERVER:3478",
-     username: "username",
-     credential: "password"
-   }
-*/
-
-const PEER_CONFIG = {
-
-  config: {
-
-    iceServers: [
-
-      {
-        urls: [
-          "stun:stun.l.google.com:19302",
-          "stun:stun1.l.google.com:19302"
-        ]
-      }
-
-    ]
-
-  }
-
-};
-
-
-/* =========================================================
-   初期化
-========================================================= */
-
-window.addEventListener("load", async () => {
-
-  await createPeer();
-
-  await enumerateDevices();
-
-  initURLWatch();
-
-});
-
-
-/* =========================================================
-   Peer作成
-========================================================= */
-
-function createPeer() {
-
-  return new Promise((resolve, reject) => {
-
-    try {
-
-      state.peer = new Peer(undefined, PEER_CONFIG);
-
-      state.peer.on("open", id => {
-
-        state.peerId = id;
-
-        document.getElementById("myPeerId").textContent = id;
-
-        console.log("Peer ID:", id);
-
-        resolve(id);
-
-      });
-
-
-      /* エラー */
-
-      state.peer.on("error", error => {
-
-        console.error("PeerJS Error:", error);
-
-        showConnectionStatus(
-          "接続エラー: " + error.type,
-          true
-        );
-
-      });
-
-
-      /* 視聴者からのDataConnection */
-
-      state.peer.on("connection", connection => {
-
-        handleIncomingConnection(connection);
-
-      });
-
-
-      /* 視聴者側で配信者からCallを受信 */
-
-      state.peer.on("call", call => {
-
-        handleIncomingCall(call);
-
-      });
-
-
-    } catch(error) {
-
-      reject(error);
-
-    }
-
-  });
-
-}
-
-
-/* =========================================================
-   Incoming DataConnection
-========================================================= */
-
-function handleIncomingConnection(connection) {
-
-  console.log(
-    "DataConnection:",
-    connection.peer
-  );
-
-
-  connection.on("open", () => {
-
-    state.viewerConnections.set(
-      connection.peer,
-      connection
-    );
-
-    updateViewerCount();
-
-    connection.send({
-
-      type: "metadata",
-
-      title: document.getElementById(
-        "broadcastTitle"
-      ).value,
-
-      broadcasterName: document.getElementById(
-        "broadcasterName"
-      ).value
-
-    });
-
-  });
-
-
-  connection.on("data", data => {
-
-    if (!data || !data.type) {
-      return;
-    }
-
-
-    /* 視聴開始 */
-
-    if (data.type === "watch") {
-
-      state.viewerNames.set(
-        connection.peer,
-        data.name || "視聴者"
-      );
-
-      updateViewerList();
-
-
-      if (state.localStream) {
-
-        callViewer(
-          connection.peer
-        );
-
-      }
-
-      return;
-
-    }
-
-
-    /* チャット */
-
-    if (data.type === "chat") {
-
-      const message = {
-
-        name:
-          data.name ||
-          state.viewerNames.get(
-            connection.peer
-          ) ||
-          "視聴者",
-
-        text:
-          data.text,
-
-        time:
-          new Date().toLocaleTimeString(
-            "ja-JP",
-            {
-              hour: "2-digit",
-              minute: "2-digit"
-            }
-          )
-
-      };
-
-
-      appendComment(
-        message,
-        true
-      );
-
-
-      broadcastData({
-
-        type: "chat",
-
-        message
-
-      }, connection.peer);
-
-      return;
-
-    }
-
-
-    /* リアクション */
-
-    if (data.type === "reaction") {
-
-      showReaction(
-        data.emoji
-      );
-
-      broadcastData(
-        data,
-        connection.peer
-      );
-
-      return;
-
-    }
-
-
-    /* いいね */
-
-    if (data.type === "like") {
-
-      state.likes++;
-
-      updateLikes();
-
-      broadcastData(
-        {
-          type: "like",
-          likes: state.likes
-        },
-        connection.peer
-      );
-
-    }
-
-  });
-
-
-  connection.on("close", () => {
-
-    state.viewerConnections.delete(
-      connection.peer
-    );
-
-    state.viewerCalls.delete(
-      connection.peer
-    );
-
-    state.viewerNames.delete(
-      connection.peer
-    );
-
-    updateViewerCount();
-
-    updateViewerList();
-
-  });
-
-
-  connection.on("error", error => {
-
-    console.error(
-      "Connection error:",
-      error
-    );
-
-  });
-
-}
-
-
-/* =========================================================
-   視聴者へWebRTC Call
-========================================================= */
-
-function callViewer(viewerId) {
-
-  if (!state.localStream) {
-
-    console.warn(
-      "localStreamがありません"
-    );
-
-    return;
-
-  }
-
-
-  if (!state.isBroadcasting) {
-
-    console.warn(
-      "配信中ではありません"
-    );
-
-    return;
-
-  }
-
-
-  /* 既存Call */
-
-  if (
-    state.viewerCalls.has(viewerId)
-  ) {
-
-    return;
-
-  }
-
-
-  console.log(
-    "Calling viewer:",
-    viewerId
-  );
-
-
-  const call = state.peer.call(
-    viewerId,
-    state.localStream
-  );
-
-
-  state.viewerCalls.set(
-    viewerId,
-    call
-  );
-
-
-  call.on("close", () => {
-
-    state.viewerCalls.delete(
-      viewerId
-    );
-
-  });
-
-
-  call.on("error", error => {
-
-    console.error(
-      "Call error:",
-      error
-    );
-
-    state.viewerCalls.delete(
-      viewerId
-    );
-
-  });
-
-}
-
-
-/* =========================================================
-   Incoming WebRTC Call
-========================================================= */
-
-function handleIncomingCall(call) {
-
-  console.log(
-    "Incoming call:",
-    call.peer
-  );
-
-
-  /*
-     視聴者は映像を送らないので
-     answer() にStreamを渡さない
-  */
-
-  call.answer();
-
-
-  call.on("stream", remoteStream => {
-
-    console.log(
-      "Remote stream received"
-    );
-
-    const video =
-      document.getElementById(
-        "remoteVideo"
-      );
-
-    video.srcObject =
-      remoteStream;
-
-    video.play().catch(() => {});
-
-
-    document
-      .getElementById(
-        "viewerPlaceholder"
-      )
-      .classList.add("hidden");
-
-
-    document
-      .getElementById(
-        "viewerLiveBadge"
-      )
-      .classList.remove("hidden");
-
-
-    document
-      .getElementById(
-        "viewerLiveBadge"
-      )
-      .classList.add("flex");
-
-
-    document
-      .getElementById(
-        "viewerControls"
-      )
-      .classList.remove("hidden");
-
-
-    document
-      .getElementById(
-        "viewerControls"
-      )
-      .classList.add("flex");
-
-
-    showConnectionStatus(
-      "LIVE配信に接続しました",
-      false
-    );
-
-  });
-
-
-  call.on("close", () => {
-
-    showConnectionStatus(
-      "配信が終了しました",
-      true
-    );
-
-    resetViewer();
-
-  });
-
-
-  call.on("error", error => {
-
-    console.error(
-      "Remote call error:",
-      error
-    );
-
-    showConnectionStatus(
-      "映像接続エラー",
-      true
-    );
-
-  });
-
-
-  state.viewerCall = call;
-
-}
-
-
-/* =========================================================
-   カメラ・マイク
-========================================================= */
-
-async function startCamera() {
-
-  try {
-
-    if (
-      !navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia
-    ) {
-
-      alert(
-        "このブラウザではカメラを使用できません。HTTPSまたはlocalhostで開いてください。"
-      );
-
-      return;
-
-    }
-
-
-    const cameraId =
-      document.getElementById(
-        "cameraSelect"
-      ).value;
-
-
-    const micId =
-      document.getElementById(
-        "micSelect"
-      ).value;
-
-
-    const constraints = {
-
-      video: cameraId
-        ? {
-            deviceId: {
-              exact: cameraId
-            },
-
-            width: {
-              ideal: 1280
-            },
-
-            height: {
-              ideal: 720
-            },
-
-            frameRate: {
-              ideal: 30
-            }
-
-          }
-        : {
-            width: {
-              ideal: 1280
-            },
-
-            height: {
-              ideal: 720
-            },
-
-            frameRate: {
-              ideal: 30
-            }
-          },
-
-
-      audio: micId
-        ? {
-            deviceId: {
-              exact: micId
-            },
-
-            echoCancellation: true,
-
-            noiseSuppression: true,
-
-            autoGainControl: true
-
-          }
-        : {
-
-            echoCancellation: true,
-
-            noiseSuppression: true,
-
-            autoGainControl: true
-
-          }
-
-    };
-
-
-    const stream =
-      await navigator.mediaDevices
-        .getUserMedia(
-          constraints
-        );
-
-
-    /* 古いStreamを停止 */
-
-    if (state.localStream) {
-
-      state.localStream
-        .getTracks()
-        .forEach(
-          track =>
-            track.stop()
-        );
-
-    }
-
-
-    state.localStream =
-      stream;
-
-
-    const video =
-      document.getElementById(
-        "localVideo"
-      );
-
-    video.srcObject =
-      stream;
-
-
-    document
-      .getElementById(
-        "studioPlaceholder"
-      )
-      .classList.add("hidden");
-
-
-    state.isCameraEnabled =
-      true;
-
-    state.isMicEnabled =
-      true;
-
-
-    updateControlButtons();
-
-
-    await enumerateDevices();
-
-
-    setStudioStatus(
-      "カメラ・マイク起動済み"
-    );
-
-
-  } catch(error) {
-
-    console.error(error);
-
-    alert(
-      "カメラ・マイクを取得できませんでした。\n\n" +
-      error.name +
-      "\n" +
-      error.message
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   デバイス一覧
-========================================================= */
-
-async function enumerateDevices() {
-
-  try {
-
-    const devices =
-      await navigator.mediaDevices
-        .enumerateDevices();
-
-
-    const cameras =
-      devices.filter(
-        d => d.kind === "videoinput"
-      );
-
-
-    const microphones =
-      devices.filter(
-        d => d.kind === "audioinput"
-      );
-
-
-    const cameraSelect =
-      document.getElementById(
-        "cameraSelect"
-      );
-
-
-    const micSelect =
-      document.getElementById(
-        "micSelect"
-      );
-
-
-    cameraSelect.innerHTML = "";
-
-    micSelect.innerHTML = "";
-
-
-    cameras.forEach(
-      (device, index) => {
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-        option.value =
-          device.deviceId;
-
-        option.textContent =
-          device.label ||
-          `カメラ ${index + 1}`;
-
-        cameraSelect.appendChild(
-          option
-        );
-
-      }
-    );
-
-
-    microphones.forEach(
-      (device, index) => {
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-        option.value =
-          device.deviceId;
-
-        option.textContent =
-          device.label ||
-          `マイク ${index + 1}`;
-
-        micSelect.appendChild(
-          option
-        );
-
-      }
-    );
-
-
-  } catch(error) {
-
-    console.error(
-      "Device enumeration error:",
-      error
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   カメラON/OFF
-========================================================= */
-
-function toggleCamera() {
-
-  if (!state.localStream) {
-
-    alert(
-      "先にカメラ・マイクを起動してください。"
-    );
-
-    return;
-
-  }
-
-
-  const tracks =
-    state.localStream
-      .getVideoTracks();
-
-
-  state.isCameraEnabled =
-    !state.isCameraEnabled;
-
-
-  tracks.forEach(
-    track => {
-      track.enabled =
-        state.isCameraEnabled;
-    }
-  );
-
-
-  updateControlButtons();
-
-}
-
-
-/* =========================================================
-   マイクON/OFF
-========================================================= */
-
-function toggleMic() {
-
-  if (!state.localStream) {
-
-    alert(
-      "先にカメラ・マイクを起動してください。"
-    );
-
-    return;
-
-  }
-
-
-  const tracks =
-    state.localStream
-      .getAudioTracks();
-
-
-  state.isMicEnabled =
-    !state.isMicEnabled;
-
-
-  tracks.forEach(
-    track => {
-      track.enabled =
-        state.isMicEnabled;
-    }
-  );
-
-
-  updateControlButtons();
-
-}
-
-
-/* =========================================================
-   画面共有
-========================================================= */
-
-async function toggleScreenShare() {
-
-  if (!state.isScreenSharing) {
-
-    try {
-
-      const screen =
-        await navigator.mediaDevices
-          .getDisplayMedia({
-
-            video: true,
-
-            audio: true
-
-          });
-
-
-      state.screenStream =
-        screen;
-
-
-      const screenTrack =
-        screen.getVideoTracks()[0];
-
-
-      if (!state.localStream) {
-
-        state.localStream =
-          new MediaStream([
-            screenTrack
-          ]);
-
-      } else {
-
-        const cameraTrack =
-          state.localStream
-            .getVideoTracks()[0];
-
-
-        if (cameraTrack) {
-
-          state.localStream
-            .removeTrack(
-              cameraTrack
-            );
-
-          cameraTrack.stop();
-
-        }
-
-
-        state.localStream
-          .addTrack(
-            screenTrack
-          );
-
-      }
-
-
-      document
-        .getElementById(
-          "localVideo"
-        )
-        .srcObject =
-        state.localStream;
-
-
-      state.isScreenSharing =
-        true;
-
-
-      screenTrack.onended =
-        () => {
-
-          stopScreenShare();
-
-        };
-
-
-      /*
-         配信中なら全視聴者の
-         WebRTC映像トラックを差し替える
-      */
-
-      if (
-        state.isBroadcasting
-      ) {
-
-        await replaceVideoTrackForViewers(
-          screenTrack
-        );
-
-      }
-
-
-      updateControlButtons();
-
-    } catch(error) {
-
-      console.error(error);
-
-    }
-
-  } else {
-
-    await stopScreenShare();
-
-  }
-
-}
-
-
-/* =========================================================
-   画面共有停止
-========================================================= */
-
-async function stopScreenShare() {
-
-  if (
-    state.screenStream
-  ) {
-
-    state.screenStream
-      .getTracks()
-      .forEach(
-        track =>
-          track.stop()
-      );
-
-  }
-
-
-  state.isScreenSharing =
-    false;
-
-
-  /*
-     カメラを再取得
-  */
-
-  await startCamera();
-
-
-  updateControlButtons();
-
-}
-
-
-/* =========================================================
-   WebRTCトラック交換
-========================================================= */
-
-async function replaceVideoTrackForViewers(
-  newTrack
-) {
-
-  for (
-    const call of state.viewerCalls.values()
-  ) {
-
-    try {
-
-      const sender =
-        call.peerConnection
-          .getSenders()
-          .find(
-            s =>
-              s.track &&
-              s.track.kind === "video"
-          );
-
-
-      if (sender) {
-
-        await sender.replaceTrack(
-          newTrack
-        );
-
-      }
-
-    } catch(error) {
-
-      console.error(
-        error
-      );
-
-    }
-
-  }
-
-}
-
-
-/* =========================================================
-   配信開始/停止
-========================================================= */
-
-function toggleBroadcast() {
-
-  if (
-    state.isBroadcasting
-  ) {
-
-    stopBroadcast();
-
-  } else {
-
-    startBroadcast();
-
-  }
-
-}
-
-
-/* =========================================================
-   配信開始
-========================================================= */
-
-function startBroadcast() {
-
-  if (!state.localStream) {
-
-    alert(
-      "先にカメラ・マイクを起動してください。"
-    );
-
-    return;
-
-  }
-
-
-  if (!state.peerId) {
-
-    alert(
-      "WebRTC接続の準備ができていません。"
-    );
-
-    return;
-
-  }
-
-
-  state.isBroadcasting =
-    true;
-
-
-  const title =
-    document.getElementById(
-      "broadcastTitle"
-    ).value.trim() ||
-    "ライブ配信";
-
-
-  const name =
-    document.getElementById(
-      "broadcasterName"
-    ).value.trim() ||
-    "ストリーマー";
-
-
-  state.metadata.title =
-    title;
-
-
-  state.metadata.broadcasterName =
-    name;
-
-
-  document
-    .getElementById(
-      "broadcastButton"
-    )
-    .textContent =
-    "⏹ 配信停止";
-
-
-  document
-    .getElementById(
-      "broadcastButton"
-    )
-    .classList.remove(
-      "from-rose-600",
-      "to-rose-500"
-    );
-
-
-  document
-    .getElementById(
-      "broadcastButton"
-    )
-    .classList.add(
-      "bg-slate-700"
-    );
-
-
-  document
-    .getElementById(
-      "studioLiveBadge"
-    )
-    .classList.remove(
-      "hidden"
-    );
-
-
-  document
-    .getElementById(
-      "studioLiveBadge"
-    )
-    .classList.add(
-      "flex"
-    );
-
-
-  document
-    .getElementById(
-      "headerLiveDot"
-    )
-    .classList.remove(
-      "hidden"
-    );
-
-
-  setStudioStatus(
-    "🔴 LIVE配信中"
-  );
-
-
-  /*
-     すでに接続している
-     視聴者に配信開始
-  */
-
-  state.viewerConnections.forEach(
-    (connection, id) => {
-
-      callViewer(id);
-
-    }
-  );
-
-
-  /*
-     URLにPeer IDを追加
-  */
-
-  updateWatchURL();
-
-}
-
-
-/* =========================================================
-   配信停止
-========================================================= */
-
-function stopBroadcast() {
-
-  state.isBroadcasting =
-    false;
-
-
-  state.viewerCalls.forEach(
-    call => {
-
-      try {
-        call.close();
-      } catch(e) {}
-
-    }
-  );
-
-
-  state.viewerCalls.clear();
-
-
-  state.viewerConnections.forEach(
-    connection => {
-
-      try {
-
-        connection.send({
-
-          type: "broadcastEnded"
-
-        });
-
-      } catch(e) {}
-
-    }
-  );
-
-
-  document
-    .getElementById(
-      "broadcastButton"
-    )
-    .textContent =
-    "🔴 配信開始";
-
-
-  document
-    .getElementById(
-      "broadcastButton"
-    )
-    .classList.remove(
-      "bg-slate-700"
-    );
-
-
-  document
-    .getElementById(
-      "broadcastButton"
-    )
-    .classList.add(
-      "from-rose-600",
-      "to-rose-500"
-    );
-
-
-  document
-    .getElementById(
-      "studioLiveBadge"
-    )
-    .classList.add(
-      "hidden"
-    );
-
-
-  document
-    .getElementById(
-      "headerLiveDot"
-    )
-    .classList.add(
-      "hidden"
-    );
-
-
-  setStudioStatus(
-    "配信停止中"
-  );
-
-}
-
-
-/* =========================================================
-   視聴者として接続
-========================================================= */
-
-async function connectToBroadcast() {
-
-  const id =
-    document
-      .getElementById(
-        "watchPeerId"
-      )
-      .value
-      .trim();
-
-
-  if (!id) {
-
-    alert(
-      "配信IDを入力してください。"
-    );
-
-    return;
-
-  }
-
-
-  if (!state.peer) {
-
-    alert(
-      "WebRTC接続の準備中です。少し待ってください。"
-    );
-
-    return;
-
-  }
-
-
-  if (
-    id === state.peerId
-  ) {
-
-    alert(
-      "自分自身の配信には接続できません。"
-    );
-
-    return;
-
-  }
-
-
-  state.broadcasterId =
-    id;
-
-
-  document
-    .getElementById(
-      "currentBroadcastId"
-    )
-    .textContent =
-    id;
-
-
-  showConnectionStatus(
-    "配信者へ接続しています...",
-    false
-  );
-
-
-  try {
-
-    /*
-       DataConnection
-    */
-
-    const connection =
-      state.peer.connect(
-        id,
-        {
-          reliable: true
-        }
-      );
-
-
-    state.viewerConnection =
-      connection;
-
-
-    connection.on("open", () => {
-
-      console.log(
-        "Connected to broadcaster"
-      );
-
-
-      showConnectionStatus(
-        "配信者へ接続しました。映像を待っています...",
-        false
-      );
-
-
-      connection.send({
-
-        type: "watch",
-
-        name: "視聴者"
-
-      });
-
-    });
-
-
-    connection.on("data", data => {
-
-      handleViewerData(
-        data
-      );
-
-    });
-
-
-    connection.on("close", () => {
-
-      showConnectionStatus(
-        "配信が終了しました",
-        true
-      );
-
-      resetViewer();
-
-    });
-
-
-    connection.on("error", error => {
-
-      console.error(error);
-
-      showConnectionStatus(
-        "接続エラー",
-        true
-      );
-
-    });
-
-  } catch(error) {
-
-    console.error(error);
-
-    showConnectionStatus(
-      "接続に失敗しました",
-      true
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   視聴者Data処理
-========================================================= */
-
-function handleViewerData(data) {
-
-  if (!data || !data.type) {
-    return;
-  }
-
-
-  if (data.type === "metadata") {
-
-    document
-      .getElementById(
-        "viewerTitle"
-      )
-      .textContent =
-      data.title;
-
-
-    document
-      .getElementById(
-        "viewerBroadcaster"
-      )
-      .textContent =
-      "配信者: " +
-      data.broadcasterName;
-
-    return;
-
-  }
-
-
-  if (data.type === "chat") {
-
-    appendComment(
-      data.message,
-      false
-    );
-
-    return;
-
-  }
-
-
-  if (data.type === "reaction") {
-
-    showReaction(
-      data.emoji
-    );
-
-    return;
-
-  }
-
-
-  if (data.type === "like") {
-
-    return;
-
-  }
-
-
-  if (data.type === "broadcastEnded") {
-
-    showConnectionStatus(
-      "配信が終了しました",
-      true
-    );
-
-    resetViewer();
-
-  }
-
-}
-
-
-/* =========================================================
-   全視聴者へデータ送信
-========================================================= */
-
-function broadcastData(
-  data,
-  excludePeer = null
-) {
-
-  state.viewerConnections
-    .forEach(
-      (connection, id) => {
-
-        if (
-          id === excludePeer
-        ) {
-          return;
-        }
-
-
-        try {
-
-          if (
-            connection.open
-          ) {
-
-            connection.send(
-              data
-            );
-
-          }
-
-        } catch(error) {
-
-          console.error(
-            error
-          );
-
-        }
-
-      }
-    );
-
-}
-
-
-/* =========================================================
-   Viewerチャット
-========================================================= */
-
-function sendChatFromViewer() {
-
-  const input =
-    document.getElementById(
-      "viewerChatInput"
-    );
-
-
-  const text =
-    input.value.trim();
-
-
-  if (!text) {
-    return;
-  }
-
-
-  const message = {
-
-    name: "視聴者",
-
-    text,
-
-    time:
-      new Date().toLocaleTimeString(
-        "ja-JP",
-        {
-          hour: "2-digit",
-          minute: "2-digit"
-        }
-      )
-
-  };
-
-
-  appendComment(
-    message,
-    false
-  );
-
-
-  if (
-    state.viewerConnection &&
-    state.viewerConnection.open
-  ) {
-
-    state.viewerConnection.send({
-
-      type: "chat",
-
-      name: "視聴者",
-
-      text
-
-    });
-
-  }
-
-
-  spawnDanmaku(
-    text
-  );
-
-
-  input.value = "";
-
-}
-
-
-/* =========================================================
-   コメント表示
-========================================================= */
-
-function appendComment(
-  message,
-  isBroadcaster
-) {
-
-  const container =
-    document.getElementById(
-      "viewerComments"
-    );
-
-
-  const div =
-    document.createElement(
-      "div"
-    );
-
-
-  div.className =
-    "rounded-xl bg-slate-950/70 p-3";
-
-
-  div.innerHTML = `
-
-    <div class="flex items-center justify-between">
-
-      <span class="text-xs font-bold ${
-        isBroadcaster
-          ? "text-rose-400"
-          : "text-indigo-300"
-      }">
-
-        ${escapeHTML(
-          message.name
-        )}
-
-      </span>
-
-      <span class="text-[10px] text-slate-600">
-
-        ${escapeHTML(
-          message.time || ""
-        )}
-
-      </span>
-
+<body class="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-rose-500 selection:text-white font-sans antialiased">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 w-full border-b border-slate-800 bg-slate-950/95 backdrop-blur-md">
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <!-- Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('browse')">
+        <div class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-rose-600 to-indigo-600 shadow-lg shadow-rose-950/50">
+          <svg class="h-5 w-5 text-white animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.9 19.1A10 10 0 1 1 19.1 4.9M7.8 16.2A6 6 0 1 1 16.2 7.8M12 12h.01"/></svg>
+          <span id="headerLiveDot" class="hidden absolute -top-1 -right-1 flex h-3 w-3">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75"></span>
+            <span class="relative inline-flex h-3 w-3 rounded-full bg-rose-500"></span>
+          </span>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-lg text-slate-100 tracking-tight">LiveStream Single</span>
+            <span id="headerStatusBadge" class="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] font-semibold text-slate-400">STANDALONE</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">1ファイル完結型 リアルタイム配信プラットフォーム</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center space-x-1 sm:space-x-2 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+        <button id="tabBtnBrowse" onclick="switchTab('browse')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all bg-indigo-600 text-white shadow-sm">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+          <span>配信をみる</span>
+          <span id="browseLiveCountBadge" class="hidden ml-1 text-[10px] bg-rose-600 text-white px-1.5 py-0.2 rounded-full font-bold">LIVE</span>
+        </button>
+
+        <button id="tabBtnBroadcast" onclick="switchTab('broadcast')" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
+          <span>配信スタジオ</span>
+        </button>
+
+        <button id="tabBtnDual" onclick="switchTab('dual')" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="9" height="18" x="3" y="3" rx="2"/><rect width="9" height="18" x="12" y="3" rx="2"/></svg>
+          <span>2画面テスト</span>
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1 py-0.2 rounded border border-emerald-500/30">便利</span>
+        </button>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-2">
+        <button onclick="downloadSelfHtml()" class="flex items-center space-x-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-all" title="このHTMLファイルをPCに保存">
+          <svg class="h-4 w-4 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="hidden sm:inline">HTML保存</span>
+        </button>
+        <button onclick="switchTab('broadcast')" class="flex items-center space-x-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-md shadow-rose-950/40 hover:from-rose-500 hover:to-pink-500 transition-all active:scale-95">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+          <span class="hidden sm:inline">今すぐ配信</span>
+          <span class="sm:hidden">配信</span>
+        </button>
+      </div>
     </div>
+  </header>
 
-    <div class="mt-1 text-sm text-slate-300">
-
-      ${escapeHTML(
-        message.text
-      )}
-
+  <!-- Notification Banner for Standalone Multi-tab Sync -->
+  <div class="bg-indigo-950/50 border-b border-indigo-500/20 px-4 py-2 text-xs text-indigo-300">
+    <div class="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="flex h-2 w-2 rounded-full bg-emerald-400"></span>
+        <span><strong>1ファイル完結・完全同期対応:</strong> ブラウザで別タブを開いて「配信スタジオ」と「配信をみる」に分けると、サーバー不要でP2Pリアルタイム中継が可能です。</span>
+      </div>
+      <div class="flex items-center space-x-3 text-xs">
+        <button onclick="openViewerInNewTab()" class="text-indigo-200 underline hover:text-white">新タブで視聴画面を開く ↗</button>
+      </div>
     </div>
-
-  `;
-
-
-  container.appendChild(
-    div
-  );
-
-
-  container.scrollTop =
-    container.scrollHeight;
-
-
-  spawnDanmaku(
-    message.text
-  );
-
-}
-
-
-/* =========================================================
-   リアクション
-========================================================= */
-
-function sendReaction(
-  emoji
-) {
-
-  showReaction(
-    emoji
-  );
-
-
-  if (
-    state.viewerConnection &&
-    state.viewerConnection.open
-  ) {
-
-    state.viewerConnection.send({
-
-      type: "reaction",
-
-      emoji
-
-    });
-
-  }
-
-}
-
-
-/* =========================================================
-   リアクション表示
-========================================================= */
-
-function showReaction(
-  emoji
-) {
-
-  const layer =
-    document.getElementById(
-      "reactionLayer"
-    );
-
-
-  const element =
-    document.createElement(
-      "div"
-    );
-
-
-  element.className =
-    "reaction-item text-4xl";
-
-
-  element.style.left =
-    Math.random() * 80 + 10 + "%";
-
-
-  element.textContent =
-    emoji;
-
-
-  layer.appendChild(
-    element
-  );
-
-
-  setTimeout(
-    () => element.remove(),
-    2600
-  );
-
-}
-
-
-/* =========================================================
-   弾幕
-========================================================= */
-
-function spawnDanmaku(
-  text
-) {
-
-  const layer =
-    document.getElementById(
-      "danmakuLayer"
-    );
-
-
-  const item =
-    document.createElement(
-      "div"
-    );
-
-
-  item.className =
-    "danmaku-item";
-
-
-  item.textContent =
-    text;
-
-
-  item.style.top =
-    Math.random() * 70 + 5 + "%";
-
-
-  item.style.color =
-    [
-      "#ffffff",
-      "#67e8f9",
-      "#fda4af",
-      "#a5b4fc",
-      "#fde68a"
-    ][
-      Math.floor(
-        Math.random() * 5
-      )
-    ];
-
-
-  layer.appendChild(
-    item
-  );
-
-
-  setTimeout(
-    () => item.remove(),
-    7000
-  );
-
-}
-
-
-/* =========================================================
-   いいね
-========================================================= */
-
-function sendLike() {
-
-  state.likes++;
-
-  updateLikes();
-
-}
-
-
-function updateLikes() {
-
-  /*
-     必要ならUIへ追加可能
-  */
-
-}
-
-
-/* =========================================================
-   Viewer Mute
-========================================================= */
-
-function toggleViewerMute() {
-
-  const video =
-    document.getElementById(
-      "remoteVideo"
-    );
-
-
-  video.muted =
-    !video.muted;
-
-
-  document
-    .getElementById(
-      "viewerMuteButton"
-    )
-    .textContent =
-    video.muted
-      ? "🔇"
-      : "🔊";
-
-}
-
-
-/* =========================================================
-   Viewer Volume
-========================================================= */
-
-document
-  .getElementById(
-    "viewerVolume"
-  )
-  .addEventListener(
-    "input",
-    event => {
-
-      document
-        .getElementById(
-          "remoteVideo"
-        )
-        .volume =
-        Number(
-          event.target.value
-        );
-
-    }
-  );
-
-
-/* =========================================================
-   Fullscreen
-========================================================= */
-
-function toggleViewerFullscreen() {
-
-  const container =
-    document.getElementById(
-      "viewerVideoContainer"
-    );
-
-
-  if (
-    document.fullscreenElement
-  ) {
-
-    document.exitFullscreen();
-
-  } else {
-
-    container.requestFullscreen();
-
-  }
-
-}
-
-
-/* =========================================================
-   Page切替
-========================================================= */
-
-function showPage(
-  page
-) {
-
-  state.currentPage =
-    page;
-
-
-  const browse =
-    document.getElementById(
-      "pageBrowse"
-    );
-
-
-  const studio =
-    document.getElementById(
-      "pageStudio"
-    );
-
-
-  browse.classList.toggle(
-    "hidden",
-    page !== "browse"
-  );
-
-
-  studio.classList.toggle(
-    "hidden",
-    page !== "studio"
-  );
-
-
-  const browseButton =
-    document.getElementById(
-      "browseButton"
-    );
-
-
-  const studioButton =
-    document.getElementById(
-      "studioButton"
-    );
-
-
-  if (
-    page === "browse"
-  ) {
-
-    browseButton.className =
-      `
-      btn
-      flex
-      items-center
-      gap-2
-      rounded-lg
-      bg-indigo-600
-      px-3
-      py-2
-      text-sm
-      font-medium
-      text-white
-      `;
-
-
-    studioButton.className =
-      `
-      btn
-      flex
-      items-center
-      gap-2
-      rounded-lg
-      px-3
-      py-2
-      text-sm
-      font-medium
-      text-slate-300
-      hover:bg-slate-800
-      `;
-
-  } else {
-
-    studioButton.className =
-      `
-      btn
-      flex
-      items-center
-      gap-2
-      rounded-lg
-      bg-rose-600
-      px-3
-      py-2
-      text-sm
-      font-medium
-      text-white
-      `;
-
-
-    browseButton.className =
-      `
-      btn
-      flex
-      items-center
-      gap-2
-      rounded-lg
-      px-3
-      py-2
-      text-sm
-      font-medium
-      text-slate-300
-      hover:bg-slate-800
-      `;
-
-  }
-
-}
-
-
-/* =========================================================
-   接続状態
-========================================================= */
-
-function showConnectionStatus(
-  text,
-  error
-) {
-
-  const element =
-    document.getElementById(
-      "connectionStatus"
-    );
-
-
-  element.textContent =
-    text;
-
-
-  element.className =
-    error
-      ? "mt-2 font-bold text-rose-400"
-      : "mt-2 font-bold text-emerald-400";
-
-}
-
-
-/* =========================================================
-   Studio状態
-========================================================= */
-
-function setStudioStatus(
-  text
-) {
-
-  document
-    .getElementById(
-      "studioStatus"
-    )
-    .textContent =
-    text;
-
-}
-
-
-/* =========================================================
-   Viewerリセット
-========================================================= */
-
-function resetViewer() {
-
-  const video =
-    document.getElementById(
-      "remoteVideo"
-    );
-
-
-  video.srcObject =
-    null;
-
-
-  document
-    .getElementById(
-      "viewerPlaceholder"
-    )
-    .classList.remove(
-      "hidden"
-    );
-
-
-  document
-    .getElementById(
-      "viewerLiveBadge"
-    )
-    .classList.add(
-      "hidden"
-    );
-
-
-  document
-    .getElementById(
-      "viewerControls"
-    )
-    .classList.add(
-      "hidden"
-    );
-
-}
-
-
-/* =========================================================
-   Viewer数
-========================================================= */
-
-function updateViewerCount() {
-
-  document
-    .getElementById(
-      "viewerCount"
-    )
-    .textContent =
-    state.viewerConnections.size;
-
-}
-
-
-/* =========================================================
-   Viewer一覧
-========================================================= */
-
-function updateViewerList() {
-
-  const container =
-    document.getElementById(
-      "viewerList"
-    );
-
-
-  container.innerHTML = "";
-
-
-  state.viewerNames.forEach(
-    (name, id) => {
-
-      const div =
-        document.createElement(
-          "div"
-        );
-
-
-      div.className =
-        `
-        flex
-        items-center
-        gap-2
-        rounded-lg
-        bg-slate-950
-        p-2
-        text-xs
-        `;
-
-
-      div.innerHTML = `
-
-        <span
-          class="
-            flex
-            h-7
-            w-7
-            items-center
-            justify-center
-            rounded-full
-            bg-indigo-600
-          "
-        >
-          👤
-        </span>
-
-        <div class="min-w-0">
-
-          <div class="truncate">
-            ${escapeHTML(name)}
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 pb-20">
+
+    <!-- TAB 1: BROWSE & WATCH VIEW -->
+    <div id="viewBrowse" class="space-y-6">
+      <!-- 現在ライブ配信中の一覧 -->
+      <section class="rounded-2xl bg-slate-900/70 border border-slate-800 p-4 sm:p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+              <h2 class="text-base sm:text-lg font-bold text-slate-100">現在ライブ配信中</h2>
+            </div>
+            <p class="mt-1 text-xs text-slate-400">現在配信している人を選ぶと、その配信を視聴できます。</p>
+          </div>
+          <span id="liveStreamCount" class="self-start sm:self-auto rounded-full bg-rose-600/15 border border-rose-500/30 px-3 py-1 text-xs font-bold text-rose-300">0 LIVE</span>
+        </div>
+        <div id="liveStreamList" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div id="liveStreamEmpty" class="col-span-full rounded-2xl border border-dashed border-slate-700 bg-slate-950/50 p-8 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 text-2xl">📺</div>
+            <div class="mt-3 text-sm font-bold text-slate-200">現在ライブ配信はありません</div>
+            <p class="mt-1 text-xs text-slate-500">配信が開始されるとここに表示されます。</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Live Player (Left 2 Cols) -->
+        <div class="lg:col-span-2 space-y-4">
+          <div class="flex flex-col sm:flex-row gap-2 rounded-2xl bg-slate-900/70 border border-slate-800 p-3">
+            <input id="watchPeerId" type="text" placeholder="配信IDを直接入力して視聴" class="min-w-0 flex-1 rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" />
+            <button onclick="connectToBroadcast()" class="rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white">配信IDで視聴</button>
+          </div>
+          <!-- Video Viewport Container -->
+          <div id="playerContainer" class="group relative aspect-video w-full overflow-hidden rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl flex items-center justify-center">
+            
+            <!-- Danmaku Comments Overlay Layer -->
+            <div id="danmakuContainer" class="absolute inset-0 overflow-hidden pointer-events-none z-30"></div>
+
+            <!-- Reaction Float Container -->
+            <div id="reactionContainer" class="absolute inset-0 overflow-hidden pointer-events-none z-40"></div>
+
+            <!-- Layer 1: Fallback Canvas / Image Relay Feed -->
+            <img id="viewerFallbackImage" class="absolute inset-0 h-full w-full object-contain bg-black transition-opacity duration-150 opacity-100 z-10" alt="Live stream relay feed" style="display:none;" />
+
+            <!-- Layer 2: WebRTC Video Stream -->
+            <video id="viewerVideo" autoplay playsinline class="absolute inset-0 h-full w-full object-contain bg-black z-20"></video>
+            <div id="viewerLiveBadge" class="hidden absolute top-4 right-4 z-40 rounded-md bg-rose-600 px-2.5 py-1 text-xs font-black text-white shadow-lg">LIVE</div>
+
+            <!-- Layer 3: Offline / Waiting Screen -->
+            <div id="viewerOfflineOverlay" class="flex flex-col items-center justify-center p-6 text-center z-10">
+              <div class="relative mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 border border-slate-800">
+                <svg class="h-8 w-8 text-slate-500 animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49"/></svg>
+              </div>
+              <h3 class="text-base font-bold text-slate-200">配信準備中またはオフラインです</h3>
+              <p class="mt-1 text-xs text-slate-400 max-w-sm">上部メニューの「配信スタジオ」からカメラ配信を開始するか、2画面テストをお試しください。</p>
+              <button onclick="switchTab('broadcast')" class="mt-4 rounded-xl bg-rose-600 hover:bg-rose-500 px-4 py-2 text-xs font-bold text-white transition-all shadow-lg shadow-rose-950/40">配信スタジオを開く</button>
+            </div>
+
+            <!-- Live Status Badges & Controls Overlay -->
+            <div class="absolute top-4 left-4 flex items-center space-x-2 z-30">
+              <span id="playerLiveBadge" class="flex items-center space-x-1.5 rounded-md bg-rose-600 px-2.5 py-1 text-xs font-black text-white shadow-lg uppercase tracking-wider">
+                <span class="h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                <span>LIVE</span>
+              </span>
+              <span id="playerConnectionBadge" class="flex items-center space-x-1 rounded-md bg-slate-900/90 border border-slate-700/80 px-2 py-1 text-[11px] font-medium text-slate-300 backdrop-blur-md">
+                <svg class="h-3 w-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                <span id="playerConnectionText">高安定リレー中継</span>
+              </span>
+              <span id="playerViewerCountBadge" class="flex items-center space-x-1 rounded-md bg-slate-900/80 px-2 py-1 text-[11px] text-slate-300">
+                <svg class="h-3 w-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span id="playerViewerCount">1</span>人視聴中
+              </span>
+            </div>
+
+            <!-- Bottom Video Control Bar -->
+            <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent flex items-center justify-between z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div class="flex items-center space-x-3">
+                <button onclick="toggleViewerPlay()" class="text-white hover:text-rose-400 transition-colors">
+                  <svg id="btnPlayIcon" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                </button>
+                <button onclick="toggleViewerMute()" class="text-white hover:text-rose-400 transition-colors">
+                  <svg id="btnMuteIcon" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                </button>
+                <input id="volumeSlider" type="range" min="0" max="1" step="0.05" value="1" oninput="changeViewerVolume(this.value)" class="w-20 accent-rose-500 h-1.5 rounded-lg cursor-pointer bg-slate-700" />
+              </div>
+              <div class="flex items-center space-x-3">
+                <button onclick="toggleDanmaku()" id="btnDanmakuToggle" class="text-xs px-2 py-1 rounded bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white font-medium">弾幕: ON</button>
+                <button onclick="toggleFullscreen()" class="text-white hover:text-rose-400 transition-colors">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="text-[9px] text-slate-600">
-            ${escapeHTML(id)}
-          </div>
+          <!-- Stream Meta & Like / Reaction Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2">
+                <h1 id="streamDisplayTitle" class="text-lg font-bold text-slate-100">🌟 みんなで雑談＆ゲーム配信！【初見歓迎】</h1>
+                <span id="streamDisplayCategory" class="rounded-full bg-indigo-500/20 px-2.5 py-0.5 text-xs font-semibold text-indigo-300 border border-indigo-500/30">雑談・トーク</span>
+              </div>
+              <div class="flex items-center space-x-2 text-xs text-slate-400">
+                <span id="streamDisplayBroadcaster" class="font-medium text-slate-300">配信者: ケンタ</span>
+                <span>•</span>
+                <span id="streamDisplayTimer">配信中 (00:00)</span>
+              </div>
+            </div>
 
+            <!-- Like & Emoji Reactions -->
+            <div class="flex items-center space-x-2">
+              <button onclick="sendLike()" class="flex items-center space-x-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/30 px-3.5 py-2 text-xs font-bold text-rose-300 transition-all active:scale-95 shadow-sm">
+                <svg class="h-4 w-4 text-rose-400 fill-rose-500" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                <span id="streamLikeCount">128</span>
+              </button>
+
+              <!-- Quick Reaction Emojis -->
+              <div class="flex items-center space-x-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700">
+                <button onclick="sendReaction('❤️')" class="hover:scale-125 transition-transform px-1 text-sm">❤️</button>
+                <button onclick="sendReaction('🔥')" class="hover:scale-125 transition-transform px-1 text-sm">🔥</button>
+                <button onclick="sendReaction('🎉')" class="hover:scale-125 transition-transform px-1 text-sm">🎉</button>
+                <button onclick="sendReaction('👏')" class="hover:scale-125 transition-transform px-1 text-sm">👏</button>
+                <button onclick="sendReaction('💯')" class="hover:scale-125 transition-transform px-1 text-sm">💯</button>
+                <button onclick="sendReaction('🤣')" class="hover:scale-125 transition-transform px-1 text-sm">🤣</button>
+              </div>
+            </div>
+          </div>
         </div>
 
-      `;
+        <!-- Live Chat Panel (Right 1 Col) -->
+        <div class="lg:col-span-1 flex flex-col h-[520px] rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl overflow-hidden">
+          <!-- Chat Header -->
+          <div class="p-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+            <div class="flex items-center space-x-2">
+              <svg class="h-4 w-4 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <h2 class="text-xs font-bold text-slate-200">リアルタイムチャット</h2>
+            </div>
+            <button onclick="openSuperChatModal()" class="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-rose-500 text-[11px] font-black text-white shadow hover:opacity-90 transition-opacity">
+              <span>¥</span>
+              <span>スパチャ</span>
+            </button>
+          </div>
 
+          <!-- Chat Message List -->
+          <div id="chatMessageList" class="flex-1 overflow-y-auto p-3 space-y-2.5 text-xs">
+            <!-- Messages inserted dynamically -->
+          </div>
 
-      container.appendChild(
-        div
-      );
+          <!-- Chat Input Form -->
+          <form id="chatForm" onsubmit="handleSendChat(event)" class="p-3 border-t border-slate-800 bg-slate-950/60 space-y-2">
+            <div class="flex items-center space-x-2">
+              <input id="chatInputName" type="text" placeholder="名前" value="リスナー" class="w-24 rounded-lg bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-rose-500" />
+              <input id="chatInputText" type="text" placeholder="コメントを入力..." class="flex-1 rounded-lg bg-slate-800 border border-slate-700 px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-rose-500" />
+              <button type="submit" class="rounded-lg bg-rose-600 hover:bg-rose-500 px-3 py-1.5 text-xs font-bold text-white transition-colors">送信</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
+    <!-- TAB 2: BROADCASTER STUDIO VIEW -->
+    <div id="viewBroadcast" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Studio Video Preview (Left 2 Cols) -->
+        <div class="lg:col-span-2 space-y-4">
+          <div class="relative aspect-video w-full overflow-hidden rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl flex items-center justify-center">
+            <video id="studioVideo" autoplay playsinline muted class="h-full w-full object-contain bg-black"></video>
+            
+            <!-- Inactive Overlay -->
+            <div id="studioInactiveOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 text-center p-6 z-20">
+              <div class="h-14 w-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-3">
+                <svg class="h-7 w-7 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
+              </div>
+              <h3 class="text-sm font-bold text-slate-200">カメラまたは画面共有を開始してください</h3>
+              <p class="text-xs text-slate-400 mt-1 max-w-sm">下の「カメラ開始」または「画面共有」ボタンをクリックして配信ソースを選択します。</p>
+              <div class="mt-4 flex items-center space-x-3">
+                <button onclick="startCamera()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-md">カメラを開始</button>
+                <button onclick="startScreenShare()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700">画面共有を開始</button>
+              </div>
+            </div>
+
+            <!-- Studio Live Banner -->
+            <div id="studioLiveBanner" class="hidden absolute top-4 left-4 z-30 flex items-center space-x-2">
+              <span class="flex items-center space-x-1.5 rounded-md bg-rose-600 px-2.5 py-1 text-xs font-black text-white shadow-lg animate-pulse">
+                <span class="h-2 w-2 rounded-full bg-white"></span>
+                <span>ON AIR</span>
+              </span>
+              <span id="studioElapsedBadge" class="rounded-md bg-slate-900/80 px-2 py-1 text-xs font-mono text-slate-300">00:00:00</span>
+            </div>
+          </div>
+
+          <!-- Studio Toolbar Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-slate-900/70 border border-slate-800">
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="btnToggleCam" onclick="toggleCameraTrack()" class="flex items-center space-x-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 px-3 py-2 text-xs font-semibold text-slate-200 border border-slate-700">
+                <svg class="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
+                <span id="camBtnLabel">カメラ ON</span>
+              </button>
+
+              <button id="btnToggleMic" onclick="toggleMicrophoneTrack()" class="flex items-center space-x-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 px-3 py-2 text-xs font-semibold text-slate-200 border border-slate-700">
+                <svg class="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                <span id="micBtnLabel">マイク ON</span>
+              </button>
+
+              <button onclick="startScreenShare()" class="flex items-center space-x-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 px-3 py-2 text-xs font-semibold text-slate-200 border border-slate-700">
+                <svg class="h-4 w-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                <span>画面共有</span>
+              </button>
+
+              <!-- Audio Level Visualizer Canvas -->
+              <div class="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+                <span class="text-[10px] font-bold text-slate-500">MIC</span>
+                <canvas id="audioMeterCanvas" width="60" height="12" class="rounded bg-slate-900"></canvas>
+              </div>
+            </div>
+
+            <!-- Start / Stop Broadcast Button -->
+            <button id="btnStartBroadcast" onclick="toggleBroadcastState()" class="flex items-center space-x-2 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-rose-950/50 transition-all active:scale-95">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49"/></svg>
+              <span id="broadcastBtnText">配信を開始する</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Studio Settings & Info (Right 1 Col) -->
+        <div class="lg:col-span-1 space-y-4">
+          <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
+            <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center space-x-1.5">
+              <svg class="h-4 w-4 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span>配信設定</span>
+            </h2>
+
+            <div class="space-y-3">
+              <div>
+                <label class="text-[11px] font-semibold text-slate-400">配信タイトル</label>
+                <input id="inputStudioTitle" type="text" value="🌟 みんなで雑談＆ゲーム配信！【初見歓迎】" onchange="updateBroadcastMeta()" class="mt-1 w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-rose-500" />
+              </div>
+
+              <div>
+                <label class="text-[11px] font-semibold text-slate-400">配信者名</label>
+                <input id="inputStudioBroadcaster" type="text" value="ストリーマー ケンタ" onchange="updateBroadcastMeta()" class="mt-1 w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-rose-500" />
+              </div>
+
+              <div>
+                <label class="text-[11px] font-semibold text-slate-400">カテゴリー</label>
+                <select id="selectStudioCategory" onchange="updateBroadcastMeta()" class="mt-1 w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-rose-500">
+                  <option value="雑談・トーク">雑談・トーク</option>
+                  <option value="ゲーム実況">ゲーム実況</option>
+                  <option value="プログラミング・作業">プログラミング・作業</option>
+                  <option value="音楽・ライブ">音楽・ライブ</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- WebRTC配信ID -->
+            <div class="pt-3 border-t border-slate-800 space-y-2 text-xs">
+              <div class="flex justify-between text-slate-400">
+                <span>WebRTC配信ID:</span>
+                <button onclick="navigator.clipboard.writeText(state.peerId || '')" class="text-indigo-300 hover:text-white">コピー</button>
+              </div>
+              <div id="peerIdDisplay" class="break-all rounded-lg bg-slate-950 border border-slate-800 px-2.5 py-2 font-mono text-[10px] text-indigo-300">接続準備中...</div>
+            </div>
+
+            <!-- Broadcaster Telemetry Stats -->
+            <div class="pt-3 border-t border-slate-800 space-y-2 text-xs">
+              <div class="flex justify-between text-slate-400">
+                <span>中継状態:</span>
+                <span id="telemetryStatus" class="text-emerald-400 font-semibold">待機中</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>同期フレームレート:</span>
+                <span class="text-slate-200">約 6.6 FPS (150ms リレー)</span>
+              </div>
+              <div class="flex justify-between text-slate-400">
+                <span>マルチタブ P2P:</span>
+                <span class="text-slate-200">BroadcastChannel 自動中継</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: DUAL SCREEN SPLIT VIEW -->
+    <div id="viewDual" class="hidden space-y-6">
+      <div class="p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between text-xs text-indigo-200">
+        <span>💡 <strong>2画面分割プレビュー:</strong> 左側でカメラを動かすと、右側の視聴者画面にリアルタイムで映像とチャットが反映されます。</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Dual Left: Studio -->
+        <div class="space-y-3 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <h3 class="text-xs font-bold text-rose-400 flex items-center space-x-1.5">
+            <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+            <span>【配信者視点】配信スタジオ</span>
+          </h3>
+          <div class="relative aspect-video w-full overflow-hidden rounded-xl bg-slate-950 border border-slate-800">
+            <video id="dualStudioVideo" autoplay playsinline muted class="h-full w-full object-contain bg-black"></video>
+          </div>
+          <div class="flex items-center justify-between">
+            <button onclick="startCamera()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white">カメラ起動</button>
+            <button onclick="toggleBroadcastState()" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white">配信開始 / 停止</button>
+          </div>
+        </div>
+
+        <!-- Dual Right: Viewer -->
+        <div class="space-y-3 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <h3 class="text-xs font-bold text-indigo-400 flex items-center space-x-1.5">
+            <span class="h-2 w-2 rounded-full bg-indigo-500"></span>
+            <span>【視聴者視点】リアルタイム視聴</span>
+          </h3>
+          <div class="relative aspect-video w-full overflow-hidden rounded-xl bg-slate-950 border border-slate-800">
+            <img id="dualViewerImage" class="absolute inset-0 h-full w-full object-contain bg-black" alt="Relay Preview" />
+            <video id="dualViewerVideo" autoplay playsinline muted class="absolute inset-0 h-full w-full object-contain bg-black"></video>
+          </div>
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span>遅延: 約 0.1秒 (即時反映)</span>
+            <button onclick="sendLike()" class="px-3 py-1 rounded-lg bg-rose-600/20 text-rose-300 font-bold border border-rose-500/30">❤️ いいねを送る</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Super Chat Modal -->
+  <div id="superChatModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
+          <span class="rounded-full bg-amber-500/20 p-1 text-amber-400">¥</span>
+          <span>スーパーチャットを送信</span>
+        </h3>
+        <button onclick="closeSuperChatModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <!-- Presets -->
+      <div class="grid grid-cols-4 gap-2">
+        <button onclick="selectSuperChatAmount(500, 'bg-blue-600', '#2563eb')" class="p-2 rounded-xl bg-blue-600/20 border border-blue-500/40 text-blue-300 text-xs font-bold hover:bg-blue-600/30">¥500</button>
+        <button onclick="selectSuperChatAmount(1000, 'bg-cyan-600', '#0891b2')" class="p-2 rounded-xl bg-cyan-600/20 border border-cyan-500/40 text-cyan-300 text-xs font-bold hover:bg-cyan-600/30">¥1,000</button>
+        <button onclick="selectSuperChatAmount(3000, 'bg-amber-600', '#d97706')" class="p-2 rounded-xl bg-amber-600/20 border border-amber-500/40 text-amber-300 text-xs font-bold hover:bg-amber-600/30">¥3,000</button>
+        <button onclick="selectSuperChatAmount(10000, 'bg-rose-600', '#e11d48')" class="p-2 rounded-xl bg-rose-600/20 border border-rose-500/40 text-rose-300 text-xs font-bold hover:bg-rose-600/30">¥10,000</button>
+      </div>
+
+      <div>
+        <label class="text-xs font-medium text-slate-400">応援メッセージ</label>
+        <textarea id="superChatMessageInput" rows="3" placeholder="配信者を応援するメッセージ..." class="mt-1 w-full rounded-xl bg-slate-800 border border-slate-700 p-2.5 text-xs text-slate-100 focus:outline-none focus:border-amber-500"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-2">
+        <button onclick="closeSuperChatModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs font-semibold text-slate-300">キャンセル</button>
+        <button onclick="submitSuperChat()" id="btnSubmitSuperChat" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 text-xs font-bold text-white shadow-lg">¥1,000 で送信</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 bg-slate-950/80 py-6 text-xs text-slate-500 mt-auto">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-2">
+        <span class="font-semibold text-slate-300">LiveStream Standalone</span>
+        <span>—</span>
+        <span>HTML1つで動くリアルタイム配信</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span>WebRTC ＆ BroadcastChannel 同期</span>
+        <span>弾幕コメント・スーパーチャット</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- WebRTC + Firebase LIVE LIST ENGINE -->
+<script>
+/* =========================================================
+   WebRTC + Firebase LIVE LIST ENGINE
+   ZIP design preserved; functionality replaced with real WebRTC.
+========================================================= */
+
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.firebasestorage.app",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const state = {
+  currentTab: 'browse',
+  isBroadcasting: false,
+  isLive: false,
+  broadcastStartTime: 0,
+  localStream: null,
+  viewerStream: null,
+  peer: null,
+  peerId: '',
+  viewerConnection: null,
+  viewerCall: null,
+  viewerConnections: new Map(),
+  viewerCalls: new Map(),
+  viewerNames: new Map(),
+  liveStreams: {},
+  danmakuEnabled: true,
+  viewerCount: 0,
+  likes: 0,
+  title: '🌟 みんなで雑談＆ゲーム配信！【初見歓迎】',
+  broadcasterName: 'ストリーマー ケンタ',
+  category: '雑談・トーク',
+  selectedSuperChat: { amount: 1000, bg: 'bg-cyan-600', color: '#0891b2' },
+  isMuted: false,
+  volume: 1,
+  comments: []
+};
+
+let firebaseReady = false;
+let liveStreamsRef = null;
+let broadcastStreamRef = null;
+let broadcastStartedAt = 0;
+let elapsedTimer = null;
+let audioContext = null;
+let analyser = null;
+let audioMeterFrame = null;
+
+const PEER_OPTIONS = {
+  config: {
+    iceServers: [
+      { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }
+    ]
+  }
+};
+
+function firebaseConfigured() {
+  return FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY' &&
+         FIREBASE_CONFIG.projectId !== 'YOUR_PROJECT';
+}
+
+async function initFirebase() {
+  if (!firebaseConfigured()) {
+    console.warn('Firebase設定が未入力です。LIVE一覧は利用できません。');
+    renderLiveStreams({});
+    return;
+  }
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    if (firebase.auth) {
+      try { await firebase.auth().signInAnonymously(); } catch (e) { console.warn('匿名認証:', e); }
     }
-  );
-
-}
-
-
-/* =========================================================
-   コントロールUI
-========================================================= */
-
-function updateControlButtons() {
-
-  const cameraButton =
-    document.getElementById(
-      "cameraButton"
-    );
-
-
-  const micButton =
-    document.getElementById(
-      "micButton"
-    );
-
-
-  const screenButton =
-    document.getElementById(
-      "screenButton"
-    );
-
-
-  cameraButton.textContent =
-    state.isCameraEnabled
-      ? "📷 カメラ"
-      : "🚫 カメラOFF";
-
-
-  micButton.textContent =
-    state.isMicEnabled
-      ? "🎤 マイク"
-      : "🔇 マイクOFF";
-
-
-  screenButton.textContent =
-    state.isScreenSharing
-      ? "⏹️ 画面共有停止"
-      : "🖥️ 画面共有";
-
-}
-
-
-/* =========================================================
-   Peer ID コピー
-========================================================= */
-
-async function copyPeerId() {
-
-  if (!state.peerId) {
-
-    alert(
-      "まだ配信IDがありません。"
-    );
-
-    return;
-
+    liveStreamsRef = firebase.database().ref('liveStreams');
+    firebaseReady = true;
+    firebase.database().ref('.info/connected').on('value', snap => {
+      if (snap.val() === true) console.log('Firebase Realtime Database connected');
+    });
+    liveStreamsRef.on('value', snap => renderLiveStreams(snap.val() || {}));
+  } catch (e) {
+    console.error('Firebase initialization failed:', e);
+    renderLiveStreams({});
   }
-
-
-  await navigator.clipboard.writeText(
-    state.peerId
-  );
-
-
-  const button =
-    event?.currentTarget;
-
-
-  if (button) {
-
-    button.classList.add(
-      "copy-ok"
-    );
-
-    setTimeout(
-      () =>
-        button.classList.remove(
-          "copy-ok"
-        ),
-      600
-    );
-
-  }
-
-
-  alert(
-    "配信IDをコピーしました。"
-  );
-
 }
 
-
-/* =========================================================
-   視聴URL
-========================================================= */
-
-function getWatchURL() {
-
-  return (
-    location.origin +
-    location.pathname +
-    "?watch=" +
-    encodeURIComponent(
-      state.peerId
-    )
-  );
-
+function initPeer() {
+  return new Promise((resolve) => {
+    if (state.peer) return resolve();
+    try {
+      state.peer = new Peer(undefined, PEER_OPTIONS);
+      state.peer.on('open', id => {
+        state.peerId = id;
+        const el = document.getElementById('peerIdDisplay');
+        if (el) el.textContent = id;
+        resolve();
+      });
+      state.peer.on('connection', handleIncomingConnection);
+      state.peer.on('call', handleIncomingCall);
+      state.peer.on('error', err => {
+        console.error('PeerJS:', err);
+        setTelemetry('WebRTCエラー: ' + (err.type || 'unknown'), 'text-rose-400');
+      });
+      state.peer.on('disconnected', () => {
+        setTelemetry('WebRTC再接続中...', 'text-amber-400');
+        try { state.peer.reconnect(); } catch (_) {}
+      });
+    } catch (e) {
+      console.error(e);
+      resolve();
+    }
+  });
 }
 
+function handleIncomingConnection(conn) {
+  state.viewerConnections.set(conn.peer, conn);
+  updateViewerCount();
+  conn.on('open', () => {
+    conn.send({ type: 'metadata', title: state.title, broadcasterName: state.broadcasterName, category: state.category, isLive: state.isBroadcasting });
+  });
+  conn.on('data', data => {
+    if (!data || !data.type) return;
+    if (data.type === 'watch') {
+      state.viewerNames.set(conn.peer, data.name || 'リスナー');
+      updateViewerCount();
+      updateViewerList();
+      if (state.isBroadcasting && state.localStream) callViewer(conn.peer);
+    } else if (data.type === 'chat_message') {
+      appendChatMessage(data.message, false);
+      broadcastData({ type: 'chat_message', message: data.message }, conn.peer);
+    } else if (data.type === 'reaction') {
+      showFloatingReaction(data.emoji);
+      broadcastData(data, conn.peer);
+    } else if (data.type === 'like') {
+      state.likes++;
+      document.getElementById('streamLikeCount').textContent = state.likes;
+      broadcastData({ type: 'like', likes: state.likes }, conn.peer);
+    } else if (data.type === 'super_chat') {
+      appendSuperChatMessage(data.message);
+      broadcastData(data, conn.peer);
+    }
+  });
+  conn.on('close', () => {
+    state.viewerConnections.delete(conn.peer);
+    state.viewerNames.delete(conn.peer);
+    const call = state.viewerCalls.get(conn.peer);
+    if (call) { try { call.close(); } catch (_) {} }
+    state.viewerCalls.delete(conn.peer);
+    updateViewerCount();
+    updateViewerList();
+  });
+  conn.on('error', e => console.warn('Data connection:', e));
+}
 
-function updateWatchURL() {
+function callViewer(viewerId) {
+  if (!state.localStream || !state.isBroadcasting || state.viewerCalls.has(viewerId)) return;
+  const call = state.peer.call(viewerId, state.localStream);
+  state.viewerCalls.set(viewerId, call);
+  call.on('close', () => state.viewerCalls.delete(viewerId));
+  call.on('error', e => { console.warn('Call:', e); state.viewerCalls.delete(viewerId); });
+}
 
-  if (!state.peerId) {
+function handleIncomingCall(call) {
+  call.answer();
+  state.viewerCall = call;
+  call.on('stream', stream => {
+    state.viewerStream = stream;
+    const video = document.getElementById('viewerVideo');
+    const dual = document.getElementById('dualViewerVideo');
+    video.srcObject = stream;
+    if (dual) dual.srcObject = stream;
+    video.play().catch(() => {});
+    document.getElementById('viewerOfflineOverlay').classList.add('hidden');
+    const liveBadge = document.getElementById('viewerLiveBadge');
+    if (liveBadge) liveBadge.classList.remove('hidden');
+    setTelemetry('LIVE接続済み', 'text-emerald-400');
+  });
+  call.on('close', () => resetViewer());
+  call.on('error', e => { console.warn('Viewer call:', e); setTelemetry('映像接続エラー', 'text-rose-400'); });
+}
+
+function connectToBroadcast(peerId, streamMeta) {
+  const id = peerId || document.getElementById('watchPeerId')?.value.trim();
+  if (!id || !state.peer || !state.peer.open) {
+    if (!id) alert('配信IDがありません。');
     return;
   }
-
-  /*
-     配信者が配信開始したときに
-     URLを作成
-  */
-
+  state.viewerConnection?.close();
+  state.viewerConnection = state.peer.connect(id, { reliable: true });
+  document.getElementById('viewerOfflineOverlay')?.classList.add('hidden');
+  setTelemetry('配信者へ接続中...', 'text-amber-400');
+  state.viewerConnection.on('open', () => {
+    state.viewerConnection.send({ type: 'watch', name: document.getElementById('chatInputName')?.value.trim() || 'リスナー' });
+    if (streamMeta) applyRemoteMeta(streamMeta);
+    setTelemetry('シグナリング接続済み・映像待機中', 'text-indigo-400');
+  });
+  state.viewerConnection.on('data', data => handleViewerData(data));
+  state.viewerConnection.on('close', resetViewer);
+  state.viewerConnection.on('error', e => { console.warn(e); setTelemetry('接続エラー', 'text-rose-400'); });
 }
 
-
-async function copyWatchURL() {
-
-  if (!state.peerId) {
-
-    alert(
-      "先にWebRTC接続を準備してください。"
-    );
-
-    return;
-
+function handleViewerData(data) {
+  if (!data || !data.type) return;
+  if (data.type === 'metadata') applyRemoteMeta(data);
+  if (data.type === 'chat_message') appendChatMessage(data.message, false);
+  if (data.type === 'reaction') showFloatingReaction(data.emoji);
+  if (data.type === 'like') {
+    state.likes = data.likes;
+    document.getElementById('streamLikeCount').textContent = state.likes;
   }
-
-
-  const url =
-    getWatchURL();
-
-
-  await navigator.clipboard.writeText(
-    url
-  );
-
-
-  alert(
-    "視聴URLをコピーしました。\n\n" +
-    url
-  );
-
+  if (data.type === 'super_chat') appendSuperChatMessage(data.message);
+  if (data.type === 'broadcast_ended') resetViewer();
 }
 
+function applyRemoteMeta(meta) {
+  document.getElementById('streamDisplayTitle').textContent = meta.title || 'ライブ配信';
+  document.getElementById('streamDisplayBroadcaster').textContent = '配信者: ' + (meta.broadcasterName || '配信者');
+  document.getElementById('streamDisplayCategory').textContent = meta.category || 'ライブ配信';
+}
 
-/* =========================================================
-   URLから自動視聴
-========================================================= */
-
-function initURLWatch() {
-
-  const params =
-    new URLSearchParams(
-      location.search
-    );
-
-
-  const watch =
-    params.get(
-      "watch"
-    );
-
-
-  if (!watch) {
-    return;
+async function startCamera() {
+  try {
+    const old = state.localStream;
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+    if (old) old.getTracks().forEach(t => t.stop());
+    attachLocalStream(stream);
+  } catch (err) {
+    console.error(err);
+    alert('カメラ・マイクの起動に失敗しました。HTTPSで開き、利用権限を許可してください。\n\n' + err.message);
   }
-
-
-  document
-    .getElementById(
-      "watchPeerId"
-    )
-    .value =
-    watch;
-
-
-  showPage(
-    "browse"
-  );
-
-
-  /*
-     PeerJSの初期化完了後に接続
-  */
-
-  const timer =
-    setInterval(
-      () => {
-
-        if (
-          state.peer &&
-          state.peer.open
-        ) {
-
-          clearInterval(
-            timer
-          );
-
-          connectToBroadcast();
-
-        }
-
-      },
-      300
-    );
-
 }
 
-
-/* =========================================================
-   HTMLエスケープ
-========================================================= */
-
-function escapeHTML(
-  text
-) {
-
-  return String(text)
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
-
+async function startScreenShare() {
+  try {
+    const screen = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    if (!state.localStream) {
+      attachLocalStream(screen);
+    } else {
+      const oldVideo = state.localStream.getVideoTracks()[0];
+      const newVideo = screen.getVideoTracks()[0];
+      if (oldVideo) state.localStream.removeTrack(oldVideo);
+      state.localStream.addTrack(newVideo);
+      document.getElementById('studioVideo').srcObject = state.localStream;
+      const dual = document.getElementById('dualStudioVideo');
+      if (dual) dual.srcObject = state.localStream;
+      for (const call of state.viewerCalls.values()) {
+        try {
+          const sender = call.peerConnection?.getSenders().find(s => s.track?.kind === 'video');
+          if (sender) await sender.replaceTrack(newVideo);
+        } catch (e) { console.warn(e); }
+      }
+    }
+    const track = screen.getVideoTracks()[0];
+    track.onended = async () => { if (state.isBroadcasting) await startCamera(); };
+  } catch (err) { console.warn('Screen share:', err); }
 }
 
-
-/* =========================================================
-   カメラ許可後にデバイス名を取得
-========================================================= */
-
-if (
-  navigator.mediaDevices
-) {
-
-  navigator.mediaDevices
-    .addEventListener(
-      "devicechange",
-      enumerateDevices
-    );
-
+function attachLocalStream(stream) {
+  state.localStream = stream;
+  const studioVid = document.getElementById('studioVideo');
+  const dual = document.getElementById('dualStudioVideo');
+  studioVid.srcObject = stream;
+  if (dual) dual.srcObject = stream;
+  document.getElementById('studioInactiveOverlay').classList.add('hidden');
+  setupAudioAnalyser(stream);
 }
 
+function toggleCameraTrack() {
+  const track = state.localStream?.getVideoTracks()[0];
+  if (!track) return;
+  track.enabled = !track.enabled;
+  document.getElementById('camBtnLabel').textContent = track.enabled ? 'カメラ ON' : 'カメラ OFF';
+}
+
+function toggleMicrophoneTrack() {
+  const track = state.localStream?.getAudioTracks()[0];
+  if (!track) return;
+  track.enabled = !track.enabled;
+  document.getElementById('micBtnLabel').textContent = track.enabled ? 'マイク ON' : 'マイク OFF';
+}
+
+async function toggleBroadcastState() {
+  if (state.isBroadcasting) return stopBroadcast();
+  if (!state.localStream) await startCamera();
+  if (!state.localStream) return;
+  state.isBroadcasting = true;
+  state.isLive = true;
+  state.broadcastStartTime = Date.now();
+  state.title = document.getElementById('inputStudioTitle').value.trim() || 'ライブ配信';
+  state.broadcasterName = document.getElementById('inputStudioBroadcaster').value.trim() || '配信者';
+  state.category = document.getElementById('selectStudioCategory').value;
+  updateUIWithMeta();
+  document.getElementById('studioLiveBanner').classList.remove('hidden');
+  document.getElementById('headerLiveDot').classList.remove('hidden');
+  document.getElementById('headerStatusBadge').textContent = 'LIVE';
+  document.getElementById('headerStatusBadge').className = 'rounded bg-rose-600/20 px-1.5 py-0.5 text-[11px] font-semibold text-rose-300';
+  document.getElementById('broadcastBtnText').textContent = '配信を停止する';
+  document.getElementById('btnStartBroadcast').className = 'flex items-center space-x-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-5 py-2.5 text-xs font-bold text-rose-400 shadow-lg';
+  setTelemetry('配信中・WebRTC待機中', 'text-emerald-400');
+  updateElapsed();
+  elapsedTimer = setInterval(updateElapsed, 1000);
+  await registerLiveStream();
+  state.viewerConnections.forEach((_, id) => callViewer(id));
+}
+
+async function stopBroadcast() {
+  if (!state.isBroadcasting) return;
+  await unregisterLiveStream();
+  state.isBroadcasting = false;
+  state.isLive = false;
+  clearInterval(elapsedTimer);
+  elapsedTimer = null;
+  state.viewerCalls.forEach(call => { try { call.close(); } catch (_) {} });
+  state.viewerCalls.clear();
+  broadcastData({ type: 'broadcast_ended' });
+  document.getElementById('studioLiveBanner').classList.add('hidden');
+  document.getElementById('headerLiveDot').classList.add('hidden');
+  document.getElementById('headerStatusBadge').textContent = 'STANDALONE';
+  document.getElementById('headerStatusBadge').className = 'rounded bg-slate-800 px-1.5 py-0.5 text-[11px] font-semibold text-slate-400';
+  document.getElementById('broadcastBtnText').textContent = '配信を開始する';
+  document.getElementById('btnStartBroadcast').className = 'flex items-center space-x-2 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-rose-950/50 transition-all active:scale-95';
+  setTelemetry('待機中', 'text-slate-400');
+}
+
+async function registerLiveStream() {
+  if (!firebaseReady || !state.peerId) return;
+  broadcastStreamRef = firebase.database().ref('liveStreams/' + state.peerId);
+  const data = {
+    peerId: state.peerId,
+    title: state.title,
+    broadcasterName: state.broadcasterName,
+    category: state.category,
+    startedAt: firebase.database.ServerValue.TIMESTAMP
+  };
+  await broadcastStreamRef.set(data);
+  broadcastStreamRef.onDisconnect().remove();
+}
+
+async function unregisterLiveStream() {
+  if (!broadcastStreamRef) return;
+  try { await broadcastStreamRef.remove(); } catch (e) { console.warn(e); }
+  broadcastStreamRef = null;
+}
+
+function renderLiveStreams(streams) {
+  state.liveStreams = streams || {};
+  const list = document.getElementById('liveStreamList');
+  const empty = document.getElementById('liveStreamEmpty');
+  const count = document.getElementById('liveStreamCount');
+  const badge = document.getElementById('browseLiveCountBadge');
+  if (!list) return;
+  list.querySelectorAll('.live-stream-card').forEach(el => el.remove());
+  const arr = Object.values(state.liveStreams).filter(s => s?.peerId);
+  arr.sort((a,b) => (b.startedAt || 0) - (a.startedAt || 0));
+  count.textContent = arr.length + ' LIVE';
+  badge.textContent = arr.length > 0 ? arr.length + ' LIVE' : '';
+  badge.classList.toggle('hidden', arr.length === 0);
+  empty.classList.toggle('hidden', arr.length > 0);
+  arr.forEach(stream => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'live-stream-card group overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-left transition-all hover:-translate-y-1 hover:border-rose-500/50 hover:shadow-xl hover:shadow-rose-950/20';
+    card.onclick = () => watchLiveStream(stream);
+    card.innerHTML = `
+      <div class="relative aspect-video overflow-hidden bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950">
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-tr from-rose-600 to-indigo-600 text-3xl shadow-2xl">▶</div>
+        </div>
+        <div class="absolute left-3 top-3 flex items-center gap-2 rounded-lg bg-rose-600 px-2.5 py-1 text-[10px] font-bold"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-white"></span>LIVE</div>
+        <div class="absolute bottom-3 right-3 rounded-lg bg-black/60 px-2 py-1 text-[10px] text-slate-300">WebRTC</div>
+      </div>
+      <div class="p-4">
+        <div class="min-h-[3rem] line-clamp-2 font-bold text-slate-100">${escapeHtml(stream.title || 'ライブ配信')}</div>
+        <div class="mt-3 flex items-center gap-2 text-sm text-slate-400"><span class="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600">👤</span><span>${escapeHtml(stream.broadcasterName || '配信者')}</span></div>
+        <div class="mt-2 text-[11px] text-indigo-300">${escapeHtml(stream.category || 'ライブ配信')}</div>
+        <div class="mt-4 flex items-center justify-between"><span class="text-xs text-rose-400">🔴 配信中</span><span class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white group-hover:bg-indigo-500">▶ 視聴する</span></div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function watchLiveStream(stream) {
+  if (!stream?.peerId) return;
+  document.getElementById('watchPeerId').value = stream.peerId;
+  applyRemoteMeta(stream);
+  switchTab('browse');
+  connectToBroadcast(stream.peerId, stream);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function broadcastData(data, excludePeer) {
+  state.viewerConnections.forEach((conn, id) => {
+    if (id === excludePeer) return;
+    if (conn.open) { try { conn.send(data); } catch (_) {} }
+  });
+}
+
+function handleSendChat(e) {
+  e.preventDefault();
+  const text = document.getElementById('chatInputText').value.trim();
+  if (!text) return;
+  const msg = { id: Date.now().toString(), senderName: document.getElementById('chatInputName').value.trim() || 'リスナー', text, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), isBroadcaster: state.isBroadcasting };
+  appendChatMessage(msg, true);
+  if (state.isBroadcasting) broadcastData({ type: 'chat_message', message: msg });
+  else if (state.viewerConnection?.open) state.viewerConnection.send({ type: 'chat_message', message: msg });
+  document.getElementById('chatInputText').value = '';
+}
+
+function appendChatMessage(msg, local = false) {
+  state.comments.push(msg);
+  renderChatMessages();
+  if (state.danmakuEnabled) spawnDanmaku(msg.text);
+}
+
+function renderChatMessages() {
+  const container = document.getElementById('chatMessageList');
+  if (!container) return;
+  container.innerHTML = '';
+  state.comments.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'flex flex-col space-y-0.5 p-2 rounded-xl bg-slate-800/40 border border-slate-700/40';
+    el.innerHTML = `<div class="flex items-center space-x-1.5"><span class="font-bold text-slate-200 ${c.isBroadcaster ? 'text-rose-400 font-black' : ''}">${escapeHtml(c.senderName)}</span>${c.isBroadcaster ? '<span class="text-[9px] bg-rose-600/30 text-rose-300 px-1 rounded border border-rose-500/40">配信者</span>' : ''}<span class="text-[10px] text-slate-500">${escapeHtml(c.time)}</span></div><p class="text-slate-300 text-xs">${escapeHtml(c.text)}</p>`;
+    container.appendChild(el);
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+function openSuperChatModal(){ document.getElementById('superChatModal').classList.remove('hidden'); }
+function closeSuperChatModal(){ document.getElementById('superChatModal').classList.add('hidden'); }
+function selectSuperChatAmount(amount,bg,color){ state.selectedSuperChat={amount,bg,color}; document.getElementById('btnSubmitSuperChat').textContent=`¥${amount.toLocaleString()} で送信`; }
+function submitSuperChat(){
+  const sc={id:Date.now().toString(),senderName:document.getElementById('chatInputName').value.trim()||'リスナー',text:document.getElementById('superChatMessageInput').value.trim()||'応援しています！',amount:state.selectedSuperChat.amount,color:state.selectedSuperChat.color,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})};
+  appendSuperChatMessage(sc);
+  if(state.isBroadcasting) broadcastData({type:'super_chat',message:sc}); else if(state.viewerConnection?.open) state.viewerConnection.send({type:'super_chat',message:sc});
+  closeSuperChatModal(); document.getElementById('superChatMessageInput').value='';
+}
+function appendSuperChatMessage(sc){
+  const container=document.getElementById('chatMessageList'); const el=document.createElement('div'); el.className='p-2.5 rounded-xl border border-amber-500/50 shadow-lg text-white space-y-1'; el.style.backgroundColor=sc.color||'#d97706'; el.innerHTML=`<div class="flex items-center justify-between text-xs font-black"><span>${escapeHtml(sc.senderName)}</span><span class="rounded bg-black/30 px-1.5 py-0.5">¥${(sc.amount||1000).toLocaleString()}</span></div><p class="text-xs font-semibold">${escapeHtml(sc.text)}</p>`; container.appendChild(el); container.scrollTop=container.scrollHeight; spawnDanmaku(`💰 [スーパーチャット ¥${sc.amount.toLocaleString()}] ${sc.text}`);
+}
+
+function sendLike(){
+  state.likes++; document.getElementById('streamLikeCount').textContent=state.likes; showFloatingReaction('❤️');
+  if(state.isBroadcasting) broadcastData({type:'like',likes:state.likes}); else if(state.viewerConnection?.open) state.viewerConnection.send({type:'like'});
+}
+function sendReaction(emoji){
+  showFloatingReaction(emoji);
+  if(state.isBroadcasting) broadcastData({type:'reaction',emoji}); else if(state.viewerConnection?.open) state.viewerConnection.send({type:'reaction',emoji});
+}
+function showFloatingReaction(emoji){const c=document.getElementById('reactionContainer'); if(!c)return; const e=document.createElement('div'); e.className='reaction-item text-2xl select-none'; e.textContent=emoji; e.style.left=(70+Math.random()*25)+'%'; c.appendChild(e); setTimeout(()=>e.remove(),2500);}
+function spawnDanmaku(text){if(!state.danmakuEnabled)return; const c=document.getElementById('danmakuContainer'); if(!c)return; const e=document.createElement('div'); e.className='danmaku-item text-white text-sm sm:text-base'; e.textContent=text; e.style.top=(10+Math.random()*70)+'%'; c.appendChild(e); setTimeout(()=>e.remove(),6500);}
+function toggleDanmaku(){state.danmakuEnabled=!state.danmakuEnabled; document.getElementById('btnDanmakuToggle').textContent=`弾幕: ${state.danmakuEnabled?'ON':'OFF'}`; document.getElementById('danmakuContainer').style.display=state.danmakuEnabled?'block':'none';}
+function toggleViewerPlay(){const v=document.getElementById('viewerVideo'); if(v.paused)v.play().catch(()=>{});else v.pause();}
+function toggleViewerMute(){const v=document.getElementById('viewerVideo'); state.isMuted=!state.isMuted; v.muted=state.isMuted;}
+function changeViewerVolume(val){document.getElementById('viewerVideo').volume=parseFloat(val);}
+function toggleFullscreen(){const c=document.getElementById('playerContainer'); if(!document.fullscreenElement)c.requestFullscreen?.().catch(()=>{});else document.exitFullscreen?.().catch(()=>{});}
+function openViewerInNewTab(){window.open(window.location.href,'_blank');}
+function downloadSelfHtml(){const html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;const blob=new Blob([html],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='index.html';a.click();URL.revokeObjectURL(url);}
+function escapeHtml(str){return String(str??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function updateBroadcastMeta(){state.title=document.getElementById('inputStudioTitle').value;state.broadcasterName=document.getElementById('inputStudioBroadcaster').value;state.category=document.getElementById('selectStudioCategory').value;updateUIWithMeta();if(broadcastStreamRef)broadcastStreamRef.update({title:state.title,broadcasterName:state.broadcasterName,category:state.category});broadcastData({type:'metadata',title:state.title,broadcasterName:state.broadcasterName,category:state.category});}
+function updateUIWithMeta(){document.getElementById('streamDisplayTitle').textContent=state.title;document.getElementById('streamDisplayBroadcaster').textContent='配信者: '+state.broadcasterName;document.getElementById('streamDisplayCategory').textContent=state.category;}
+function switchTab(tab){state.currentTab=tab;document.getElementById('viewBrowse').classList.toggle('hidden',tab!=='browse');document.getElementById('viewBroadcast').classList.toggle('hidden',tab!=='broadcast');document.getElementById('viewDual').classList.toggle('hidden',tab!=='dual');const b=document.getElementById('tabBtnBrowse'),s=document.getElementById('tabBtnBroadcast'),d=document.getElementById('tabBtnDual');b.className=tab==='browse'?'flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all bg-indigo-600 text-white shadow-sm':'flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all';s.className=tab==='broadcast'?'flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all bg-rose-600 text-white shadow-sm':'flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all';if(d)d.className=tab==='dual'?'hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all bg-emerald-600 text-white shadow-sm':'hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all';}
+function updateViewerCount(){const el=document.getElementById('telemetryStatus');if(state.isBroadcasting)el.textContent=`配信中・視聴者 ${state.viewerConnections.size}人`;updateViewerList();}
+function updateViewerList(){/* ZIPデザインには一覧枠がないためtelemetryへ反映 */ updateViewerCountText();}
+function updateViewerCountText(){const el=document.getElementById('viewerCountText');if(el)el.textContent=String(state.viewerConnections.size);}
+function setTelemetry(text, cls){const el=document.getElementById('telemetryStatus');if(el){el.textContent=text;el.className=cls+' font-semibold';}}
+function resetViewer(){state.viewerCall=null;state.viewerStream=null;const v=document.getElementById('viewerVideo');v.srcObject=null;document.getElementById('viewerOfflineOverlay').classList.remove('hidden');document.getElementById('viewerLiveBadge')?.classList.add('hidden');setTelemetry('待機中','text-slate-400');}
+function updateElapsed(){if(!state.broadcastStartTime)return;const sec=Math.floor((Date.now()-state.broadcastStartTime)/1000);const h=String(Math.floor(sec/3600)).padStart(2,'0'),m=String(Math.floor(sec/60)%60).padStart(2,'0'),s=String(sec%60).padStart(2,'0');const e=document.getElementById('studioElapsedBadge');const t=document.getElementById('streamDisplayTimer');if(e)e.textContent=`${h}:${m}:${s}`;if(t)t.textContent=`配信中 (${h}:${m}:${s})`;}
+function setupAudioAnalyser(stream){try{audioContext?.close();audioContext=new (window.AudioContext||window.webkitAudioContext)();analyser=audioContext.createAnalyser();analyser.fftSize=64;audioContext.createMediaStreamSource(stream).connect(analyser);drawAudioMeter();}catch(e){}}
+function drawAudioMeter(){const c=document.getElementById('audioMeterCanvas');if(!c||!analyser)return;const x=c.getContext('2d');const data=new Uint8Array(analyser.frequencyBinCount);const draw=()=>{analyser.getByteFrequencyData(data);x.clearRect(0,0,c.width,c.height);const avg=data.reduce((a,b)=>a+b,0)/data.length;x.fillStyle='#f43f5e';x.fillRect(0,0,Math.min(c.width,avg/255*c.width),c.height);audioMeterFrame=requestAnimationFrame(draw)};cancelAnimationFrame(audioMeterFrame);draw();}
+
+function init(){
+  renderChatMessages();
+  updateUIWithMeta();
+  initPeer();
+  initFirebase();
+  const params=new URLSearchParams(location.search); const watch=params.get('watch');
+  if(watch){switchTab('browse');const wait=setInterval(()=>{if(state.peer?.open){clearInterval(wait);document.getElementById('watchPeerId').value=watch;connectToBroadcast(watch);}},250);}
+}
+
+window.addEventListener('beforeunload',()=>{try{if(broadcastStreamRef)broadcastStreamRef.remove();}catch(_){} try{state.localStream?.getTracks().forEach(t=>t.stop());}catch(_){} });
+window.addEventListener('DOMContentLoaded',init);
 </script>
-
 </body>
 </html>
