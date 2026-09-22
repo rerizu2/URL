@@ -149,14 +149,15 @@
               <h2 class="text-base sm:text-lg font-bold text-slate-100">現在ライブ配信中</h2>
             </div>
             <p class="mt-1 text-xs text-slate-400">現在配信している人を選ぶと、その配信を視聴できます。</p>
+            <p id="firebaseStatus" class="mt-2 text-[11px] text-amber-400">Firebase LIVE一覧を接続中...</p>
           </div>
           <span id="liveStreamCount" class="self-start sm:self-auto rounded-full bg-rose-600/15 border border-rose-500/30 px-3 py-1 text-xs font-bold text-rose-300">0 LIVE</span>
         </div>
         <div id="liveStreamList" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           <div id="liveStreamEmpty" class="col-span-full rounded-2xl border border-dashed border-slate-700 bg-slate-950/50 p-8 text-center">
             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 text-2xl">📺</div>
-            <div class="mt-3 text-sm font-bold text-slate-200">現在ライブ配信はありません</div>
-            <p class="mt-1 text-xs text-slate-500">配信が開始されるとここに表示されます。</p>
+            <div data-live-empty-title class="mt-3 text-sm font-bold text-slate-200">現在ライブ配信はありません</div>
+            <p data-live-empty-desc class="mt-1 text-xs text-slate-500">配信が開始されるとここに表示されます。</p>
           </div>
         </div>
       </section>
@@ -550,6 +551,8 @@ const state = {
 };
 
 let firebaseReady = false;
+let firebaseInitPromise = null;
+let firebaseInitError = '';
 let liveStreamsRef = null;
 let broadcastStreamRef = null;
 let broadcastStartedAt = 0;
@@ -571,27 +574,65 @@ function firebaseConfigured() {
          FIREBASE_CONFIG.projectId !== 'YOUR_PROJECT';
 }
 
-async function initFirebase() {
-  if (!firebaseConfigured()) {
-    console.warn('Firebase設定が未入力です。LIVE一覧は利用できません。');
-    renderLiveStreams({});
-    return;
-  }
-  try {
-    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    if (firebase.auth) {
-      try { await firebase.auth().signInAnonymously(); } catch (e) { console.warn('匿名認証:', e); }
+function initFirebase() {
+  if (firebaseInitPromise) return firebaseInitPromise;
+  firebaseInitPromise = (async () => {
+    if (!firebaseConfigured()) {
+      firebaseInitError = 'Firebase設定が未入力です。FIREBASE_CONFIGを自分のFirebase設定に変更してください。';
+      console.warn(firebaseInitError);
+      renderLiveStreams({});
+      updateFirebaseStatus(false, firebaseInitError);
+      return false;
     }
-    liveStreamsRef = firebase.database().ref('liveStreams');
-    firebaseReady = true;
-    firebase.database().ref('.info/connected').on('value', snap => {
-      if (snap.val() === true) console.log('Firebase Realtime Database connected');
-    });
-    liveStreamsRef.on('value', snap => renderLiveStreams(snap.val() || {}));
-  } catch (e) {
-    console.error('Firebase initialization failed:', e);
-    renderLiveStreams({});
-  }
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+
+      // 匿名認証を有効にしている場合はログインします。
+      // 匿名認証を使用しない公開DBルールでも一覧機能は動作できます。
+      if (firebase.auth) {
+        try {
+          if (!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+        } catch (e) {
+          console.warn('匿名認証に失敗しました。Realtime Databaseのルールが公開書き込みを許可している場合は続行します。', e);
+        }
+      }
+
+      liveStreamsRef = firebase.database().ref('liveStreams');
+      firebaseReady = true;
+      updateFirebaseStatus(true, 'Firebase LIVE一覧に接続済み');
+
+      firebase.database().ref('.info/connected').on('value', snap => {
+        const connected = snap.val() === true;
+        updateFirebaseStatus(connected, connected ? 'Firebase LIVE一覧に接続済み' : 'Firebaseへ再接続中...');
+      });
+
+      liveStreamsRef.on('value', snap => {
+        renderLiveStreams(snap.val() || {});
+      }, error => {
+        console.error('LIVE一覧読み込みエラー:', error);
+        firebaseInitError = 'Realtime Databaseを読み込めません。FirebaseのDatabase URLとルールを確認してください。';
+        updateFirebaseStatus(false, firebaseInitError);
+      });
+      return true;
+    } catch (e) {
+      console.error('Firebase initialization failed:', e);
+      firebaseInitError = e?.message || 'Firebaseの初期化に失敗しました。';
+      firebaseReady = false;
+      renderLiveStreams({});
+      updateFirebaseStatus(false, firebaseInitError);
+      return false;
+    }
+  })();
+  return firebaseInitPromise;
+}
+
+function updateFirebaseStatus(ok, message) {
+  const el = document.getElementById('firebaseStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.className = ok
+    ? 'mt-2 text-[11px] text-emerald-400'
+    : 'mt-2 text-[11px] text-amber-400';
 }
 
 function initPeer() {
@@ -836,17 +877,39 @@ async function stopBroadcast() {
 }
 
 async function registerLiveStream() {
-  if (!firebaseReady || !state.peerId) return;
-  broadcastStreamRef = firebase.database().ref('liveStreams/' + state.peerId);
-  const data = {
-    peerId: state.peerId,
-    title: state.title,
-    broadcasterName: state.broadcasterName,
-    category: state.category,
-    startedAt: firebase.database.ServerValue.TIMESTAMP
-  };
-  await broadcastStreamRef.set(data);
-  broadcastStreamRef.onDisconnect().remove();
+  // 配信開始時点でFirebase初期化が終わっていない場合も待ちます。
+  await initFirebase();
+
+  if (!firebaseReady || !state.peerId) {
+    alert('ライブ配信一覧へ登録できません。\n\nFirebaseの設定が正しいか確認してください。\nFIREBASE_CONFIG にFirebaseコンソールの設定値を入れてください。');
+    return false;
+  }
+
+  try {
+    broadcastStreamRef = firebase.database().ref('liveStreams/' + state.peerId);
+
+    // 切断時に自動削除する設定を先に登録します。
+    await broadcastStreamRef.onDisconnect().remove();
+
+    const data = {
+      peerId: state.peerId,
+      title: state.title || 'ライブ配信',
+      broadcasterName: state.broadcasterName || '配信者',
+      category: state.category || 'ライブ配信',
+      startedAt: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    await broadcastStreamRef.set(data);
+    console.log('LIVE一覧へ登録しました:', data);
+    updateFirebaseStatus(true, '● 現在ライブ配信中・一覧へ登録済み');
+    return true;
+  } catch (e) {
+    console.error('LIVE一覧登録エラー:', e);
+    broadcastStreamRef = null;
+    updateFirebaseStatus(false, 'LIVE一覧への登録に失敗しました: ' + (e?.message || '権限エラー'));
+    alert('配信は開始しましたが、ライブ配信一覧への登録に失敗しました。\n\nFirebase Realtime Databaseのルールを確認してください。');
+    return false;
+  }
 }
 
 async function unregisterLiveStream() {
@@ -869,6 +932,19 @@ function renderLiveStreams(streams) {
   badge.textContent = arr.length > 0 ? arr.length + ' LIVE' : '';
   badge.classList.toggle('hidden', arr.length === 0);
   empty.classList.toggle('hidden', arr.length > 0);
+  if (arr.length === 0) {
+    const title = empty.querySelector('[data-live-empty-title]');
+    const desc = empty.querySelector('[data-live-empty-desc]');
+    if (title && desc) {
+      if (!firebaseConfigured()) {
+        title.textContent = 'Firebaseが未設定です';
+        desc.textContent = 'index.html の FIREBASE_CONFIG にFirebaseの設定値を入力すると、別端末の配信一覧が表示されます。';
+      } else {
+        title.textContent = '現在ライブ配信はありません';
+        desc.textContent = '配信が開始されるとここに表示されます。';
+      }
+    }
+  }
   arr.forEach(stream => {
     const card = document.createElement('button');
     card.type = 'button';
