@@ -56,7 +56,7 @@
           <div><div class="text-4xl mb-3">📺</div><div class="font-bold">現在ライブ配信はありません</div><div class="text-sm text-slate-500 mt-1">配信が開始されるとここに表示されます。</div></div>
         </div>
       </div>
-      <div id="firebaseStatus" class="mt-4 text-xs text-slate-500">Firebaseへ接続しています…</div>
+      <div class="mt-4 flex items-center justify-between gap-3"><div id="firebaseStatus" class="text-xs text-slate-500">Firebaseへ接続しています…</div><button id="refreshLiveBtn" class="shrink-0 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-bold">↻ 更新</button></div>
     </div>
 
     <div class="glass rounded-2xl p-5 sm:p-6 mb-6">
@@ -154,7 +154,7 @@ function setFirebaseStatus(text,ok=false){$('firebaseStatus').textContent=text;$
 
 async function initFirebase(){
   if(!validFirebaseConfig()){
-    setFirebaseStatus('Firebase未設定：FIREBASE_CONFIGを自分のFirebase設定に変更してください。');
+    setFirebaseStatus('Firebase未設定：FIREBASE_CONFIGを自分のFirebase設定に変更すると、全端末でLIVE一覧が共有されます。');
     return false;
   }
   try{
@@ -255,6 +255,7 @@ async function registerLiveStream(){
     name:$('streamName').value.trim()||'配信者',
     category:$('streamCategory').value.trim()||'雑談',
     startedAt:Date.now(),
+    updatedAt:Date.now(),
     ownerUid:state.firebaseUser.uid
   };
 
@@ -287,7 +288,8 @@ async function updateLiveMetadata(){
       peerId:state.peerId,
       title:$('streamTitle').value.trim()||'ライブ配信',
       name:$('streamName').value.trim()||'配信者',
-      category:$('streamCategory').value.trim()||'雑談'
+      category:$('streamCategory').value.trim()||'雑談',
+      updatedAt:Date.now()
     });
   }catch(e){console.error(e);}
 }
@@ -442,9 +444,19 @@ function sendComment(){const text=$('commentInput').value.trim();if(!text)return
 function showReaction(r){const el=document.createElement('div');el.className='reaction';el.textContent=r;$('viewerReactions').appendChild(el);setTimeout(()=>el.remove(),1300);}
 function sendReaction(r){showReaction(r);if(state.viewerConnection?.open)state.viewerConnection.send({type:'reaction',reaction:r});}
 
+function refreshLiveList(){
+  if(!state.db){
+    setFirebaseStatus('Firebase未設定または未接続です。FIREBASE_CONFIGを確認してください。');
+    return;
+  }
+  listenLiveStreams();
+  setFirebaseStatus(state.firebaseReady?'● ライブ一覧を更新しました':'Firebase接続待ち…',state.firebaseReady);
+}
+
 function showPage(page){$('browsePage').classList.toggle('hidden-page',page!=='browse');$('studioPage').classList.toggle('hidden-page',page!=='studio');if(page==='browse' && state.db && !state.liveUnsubscribe)listenLiveStreams();if(page==='studio')enumerateDevices();}
 
 $('browseBtn').onclick=()=>{showPage('browse');$('liveListSection').scrollIntoView({behavior:'smooth'});};
+$('refreshLiveBtn').onclick=refreshLiveList;
 $('logoBtn').onclick=()=>showPage('browse');$('studioBtn').onclick=()=>showPage('studio');
 $('manualWatchBtn').onclick=()=>watchLiveStream($('manualPeerId').value.trim());
 $('closeViewerBtn').onclick=disconnectViewer;
@@ -459,6 +471,15 @@ document.querySelectorAll('.reactionBtn').forEach(b=>b.onclick=()=>sendReaction(
 $('muteBtn').onclick=()=>{$('viewerVideo').muted=!$('viewerVideo').muted;$('muteBtn').textContent=$('viewerVideo').muted?'🔇 ミュート':'🔊 音声';};
 $('volumeSlider').oninput=e=>{$('viewerVideo').volume=Number(e.target.value);$('viewerVideo').muted=Number(e.target.value)===0};
 $('fullscreenBtn').onclick=()=>{$('viewerVideo').requestFullscreen?.()};
+
+setInterval(async()=>{
+  if(state.isBroadcasting && state.db && state.peerId && state.firebaseReady){
+    try{
+      const streamRef=ref(state.db,'liveStreams/'+state.peerId);
+      await update(streamRef,{updatedAt:Date.now()});
+    }catch(e){console.warn('LIVE heartbeat error',e);}
+  }
+},15000);
 
 window.addEventListener('beforeunload',()=>{if(state.isBroadcasting && state.db && state.peerId){try{remove(ref(state.db,'liveStreams/'+state.peerId))}catch{}}});
 
