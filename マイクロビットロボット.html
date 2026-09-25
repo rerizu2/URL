@@ -5,721 +5,451 @@
 
 <meta charset="UTF-8">
 
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"
->
+<meta name="viewport"
+content="width=device-width,
+initial-scale=1.0,
+maximum-scale=1.0,
+user-scalable=no">
 
-<title>幻想クロニクル</title>
-
-<link
-  href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Noto+Sans+JP:wght@400;700;900&display=swap"
-  rel="stylesheet"
->
+<title>micro:bit Robot Controller</title>
 
 <style>
 
-:root{
-  --teal:#33ffcc;
-  --pink:#ff3399;
-  --glass:rgba(0,0,0,.8);
-  --border:rgba(255,255,255,.4);
+* {
+    box-sizing: border-box;
+
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
-*{
-  box-sizing:border-box;
-}
 
 html,
-body{
+body {
 
-  margin:0;
-  padding:0;
+    margin: 0;
+    padding: 0;
 
-  width:100%;
-  height:100%;
+    width: 100%;
+    height: 100%;
 
-  overflow:hidden;
+    overflow: hidden;
 
-  background:#000;
+    font-family:
+        Arial,
+        "Noto Sans JP",
+        sans-serif;
 
-  color:#fff;
+    background:
+        linear-gradient(
+            135deg,
+            #08111f,
+            #172554
+        );
 
-  font-family:
-    "Noto Sans JP",
-    sans-serif;
-
-  touch-action:manipulation;
-
-}
-
-button,
-input{
-
-  font-family:inherit;
-
-}
-
-.hidden{
-
-  display:none !important;
-
+    color: white;
 }
 
 
-/* =========================================================
-   背景
-========================================================= */
+body {
 
-.bg-sekai{
+    display: flex;
 
-  position:fixed;
+    justify-content: center;
 
-  inset:0;
-
-  width:100%;
-  height:100%;
-
-  background:
-
-    url(
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=2000"
-    )
-
-    center/cover no-repeat;
-
-  filter:brightness(.4);
-
-  z-index:-2;
-
-  pointer-events:none;
-
+    align-items: center;
 }
 
-.bg-overlay{
 
-  position:fixed;
+.container {
 
-  inset:0;
+    width: 100%;
 
-  background:
-    radial-gradient(
-      circle at center,
-      transparent 0%,
-      #000 100%
-    );
+    max-width: 650px;
 
-  z-index:-1;
+    height: 100%;
 
-  pointer-events:none;
+    padding: 12px;
 
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+h1 {
+
+    margin: 0;
+
+    font-size: 25px;
+
+    text-align: center;
+}
+
+
+.subtitle {
+
+    font-size: 11px;
+
+    opacity: .75;
+
+    text-align: center;
 }
 
 
 /* =========================================================
-   画面
+   接続ボタン
 ========================================================= */
 
-.screen{
+.connection {
 
-  position:absolute;
+    width: 100%;
 
-  inset:0;
+    display: flex;
 
-  width:100%;
-  height:100%;
+    gap: 6px;
+}
 
-  display:flex;
 
-  justify-content:center;
+.connect-button {
 
-  align-items:center;
+    flex: 1;
 
-  flex-direction:column;
+    border: none;
 
-  padding:20px;
+    border-radius: 11px;
 
-  z-index:100;
+    padding: 11px 4px;
 
+    color: white;
+
+    font-size: 11px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    touch-action: manipulation;
+}
+
+
+.bluetooth-button {
+
+    background: #2563eb;
+}
+
+
+.reconnect-button {
+
+    background: #7c3aed;
+}
+
+
+.usb-button {
+
+    background: #059669;
 }
 
 
 /* =========================================================
-   ボタン
+   ステータス
 ========================================================= */
 
-.btn-pro{
+.status {
 
-  border:none;
+    width: 100%;
 
-  background:#fff;
+    padding: 8px;
 
-  color:#111;
+    background:
+        rgba(0,0,0,.25);
 
-  padding:16px 40px;
-
-  margin:12px;
-
-  width:85%;
-
-  max-width:320px;
-
-  border-radius:4px;
-
-  font-weight:900;
-
-  cursor:pointer;
-
-  transform:skewX(-15deg);
-
-  box-shadow:
-    5px 5px 0 var(--teal);
-
+    border-radius: 11px;
 }
 
-.btn-pro span{
 
-  display:inline-block;
+.status-row {
 
-  transform:skewX(15deg);
+    display: flex;
 
+    justify-content: space-between;
+
+    padding: 2px 0;
+
+    font-size: 12px;
 }
 
-.btn-pro.pink{
 
-  background:var(--pink);
+.connected {
 
-  color:#fff;
+    color: #4ade80;
 
-  box-shadow:
-    5px 5px 0 var(--pink);
-
+    font-weight: bold;
 }
 
-.btn-pro.gray{
 
-  background:#777;
+.disconnected {
 
-  color:#fff;
+    color: #f87171;
 
+    font-weight: bold;
 }
 
 
 /* =========================================================
-   ヘッダー
+   速度
 ========================================================= */
 
-.header-minimal{
+.speed-panel {
 
-  position:absolute;
+    width: 100%;
 
-  top:15px;
+    display: flex;
 
-  left:15px;
+    align-items: center;
 
-  display:flex;
+    gap: 7px;
 
-  align-items:center;
+    background:
+        rgba(0,0,0,.25);
 
-  gap:8px;
+    padding: 8px;
 
-  z-index:300;
-
+    border-radius: 12px;
 }
 
-.av-mini{
 
-  width:38px;
-  height:38px;
+.speed-button {
 
-  border-radius:50%;
+    width: 55px;
 
-  overflow:hidden;
+    height: 42px;
 
-  border:2px solid #fff;
+    border: none;
 
-  cursor:pointer;
+    border-radius: 10px;
 
+    background: #334155;
+
+    color: white;
+
+    font-size: 24px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    touch-action: manipulation;
 }
 
-.av-mini img{
 
-  width:100%;
-  height:100%;
+.speed-button:active {
 
-  object-fit:cover;
+    transform: scale(.94);
 
+    background: #475569;
 }
 
-.iro-coin-disp{
 
-  color:var(--teal);
+.speed-reset {
 
-  font-weight:900;
+    width: 70px;
 
-  margin-left:10px;
+    font-size: 11px;
+}
 
+
+.speed-display {
+
+    flex: 1;
+
+    text-align: center;
+}
+
+
+.speed-title {
+
+    font-size: 10px;
+
+    opacity: .7;
+}
+
+
+.speed-value {
+
+    font-size: 22px;
+
+    font-weight: bold;
+
+    color: #60a5fa;
 }
 
 
 /* =========================================================
-   ホーム
+   コントローラー
 ========================================================= */
 
-.main-console-text{
+.controller {
 
-  font-family:Montserrat,sans-serif;
+    width: min(88vw, 400px);
 
-  font-size:
-    clamp(
-      2rem,
-      10vw,
-      5.5rem
-    );
+    aspect-ratio: 1;
 
-  letter-spacing:12px;
+    display: grid;
 
-  text-align:center;
+    grid-template-columns:
+        repeat(3, 1fr);
 
-  pointer-events:none;
+    grid-template-rows:
+        repeat(3, 1fr);
 
+    gap: 9px;
 }
 
-.nav-container{
 
-  position:absolute;
+.control {
 
-  bottom:25px;
+    border: none;
 
-  left:2.5%;
+    border-radius: 21px;
 
-  width:95%;
+    background: #1e3a5f;
 
-  display:flex;
+    color: white;
 
-  gap:10px;
+    font-size: 50px;
 
-  z-index:400;
+    font-weight: bold;
 
+    cursor: pointer;
+
+    touch-action: none;
+
+    -webkit-tap-highlight-color:
+        transparent;
+
+    box-shadow:
+        0 7px 0 #0b1e33;
+
+    transition:
+        transform .03s,
+        background .03s;
 }
 
-.nav-card{
 
-  flex:1;
+.control.pressed {
 
-  padding:18px 5px;
+    transform:
+        translateY(7px);
 
-  background:rgba(0,0,0,.65);
+    box-shadow: none;
 
-  border:
-    1px solid
-    rgba(255,255,255,.2);
-
-  border-radius:12px;
-
-  text-align:center;
-
-  font-weight:900;
-
-  cursor:pointer;
-
+    background: #3b82f6;
 }
 
-.nav-card.main{
 
-  background:var(--pink);
+.up {
 
+    grid-column: 2;
+    grid-row: 1;
+}
+
+
+.left {
+
+    grid-column: 1;
+    grid-row: 2;
+}
+
+
+.stop {
+
+    grid-column: 2;
+    grid-row: 2;
+
+    background: #991b1b;
+
+    box-shadow:
+        0 7px 0 #5f1111;
+}
+
+
+.stop.pressed {
+
+    background: #dc2626;
+
+    box-shadow: none;
+}
+
+
+.right {
+
+    grid-column: 3;
+    grid-row: 2;
+}
+
+
+.down {
+
+    grid-column: 2;
+    grid-row: 3;
 }
 
 
 /* =========================================================
-   プレゼント
+   最終操作
 ========================================================= */
 
-.present-btn{
+.last-action {
 
-  position:absolute;
+    width: 100%;
 
-  top:75px;
+    padding: 7px;
 
-  left:15px;
+    background:
+        rgba(0,0,0,.25);
 
-  width:48px;
-  height:48px;
+    border-radius: 9px;
 
-  border-radius:50%;
+    text-align: center;
 
-  display:flex;
+    font-weight: bold;
 
-  align-items:center;
-
-  justify-content:center;
-
-  background:rgba(255,255,255,.08);
-
-  border:1px solid #555;
-
-  cursor:pointer;
-
-  z-index:300;
-
-}
-
-.present-badge{
-
-  position:absolute;
-
-  right:-3px;
-
-  top:-3px;
-
-  width:19px;
-  height:19px;
-
-  display:none;
-
-  align-items:center;
-
-  justify-content:center;
-
-  border-radius:50%;
-
-  background:red;
-
-  font-size:.65rem;
-
-  font-weight:bold;
-
+    font-size: 12px;
 }
 
 
 /* =========================================================
-   シート
+   ログ
 ========================================================= */
 
-#sheetOverlay{
+.log {
 
-  position:fixed;
+    width: 100%;
 
-  inset:0;
+    height: 65px;
 
-  background:rgba(0,0,0,.8);
+    overflow-y: auto;
 
-  backdrop-filter:blur(5px);
+    padding: 7px;
 
-  z-index:49000;
+    border-radius: 9px;
 
-  display:none;
+    background: #030712;
 
-}
+    color: #a5b4fc;
 
-.bottom-sheet{
+    font-family: monospace;
 
-  position:fixed;
+    font-size: 9px;
 
-  left:0;
-
-  bottom:-100%;
-
-  width:100%;
-
-  height:94%;
-
-  overflow-y:auto;
-
-  background:#0a0b12;
-
-  border-radius:
-    30px 30px 0 0;
-
-  border-top:
-    1px solid var(--border);
-
-  z-index:50000;
-
-  transition:
-    .4s ease;
-
-}
-
-.bottom-sheet.open{
-
-  bottom:0;
-
-}
-
-.sheet-content{
-
-  max-width:800px;
-
-  margin:auto;
-
-  padding:25px;
-
-  padding-bottom:120px;
-
-}
-
-
-/* =========================================================
-   メンバー
-========================================================= */
-
-.member-grid{
-
-  display:grid;
-
-  grid-template-columns:
-    repeat(
-      auto-fill,
-      minmax(100px,1fr)
-    );
-
-  gap:12px;
-
-}
-
-.member-card{
-
-  position:relative;
-
-  padding:10px;
-
-  background:
-    rgba(255,255,255,.08);
-
-  border-radius:12px;
-
-  text-align:center;
-
-  cursor:pointer;
-
-}
-
-.member-card img{
-
-  width:100%;
-  height:110px;
-
-  object-fit:cover;
-
-  border-radius:6px;
-
-}
-
-.count-badge{
-
-  position:absolute;
-
-  right:5px;
-  top:5px;
-
-  background:var(--pink);
-
-  padding:2px 7px;
-
-  border-radius:10px;
-
-}
-
-
-/* =========================================================
-   設定
-========================================================= */
-
-.student-id-card{
-
-  background:#fff;
-
-  color:#333;
-
-  border-radius:15px;
-
-  padding:25px;
-
-  max-width:350px;
-
-  margin:auto;
-
-}
-
-.student-input{
-
-  width:100%;
-
-  border:none;
-
-  border-bottom:
-    2px solid #333;
-
-  padding:10px 0;
-
-  margin-bottom:15px;
-
-  font-size:1.1rem;
-
-  color:#000;
-
-  background:transparent;
-
-}
-
-
-/* =========================================================
-   クエスト
-========================================================= */
-
-#questScreen{
-
-  overflow-y:auto;
-
-}
-
-#gameListContainer{
-
-  display:flex;
-
-  flex-wrap:wrap;
-
-  justify-content:center;
-
-  gap:15px;
-
-  width:100%;
-
-}
-
-
-/* =========================================================
-   ゲーム
-========================================================= */
-
-#gameLayer{
-
-  position:fixed;
-
-  inset:0;
-
-  display:none;
-
-  z-index:10000;
-
-  background:#000;
-
-}
-
-#gameFrame{
-
-  width:100%;
-  height:100%;
-
-  border:none;
-
-}
-
-
-/* =========================================================
-   ポーズ
-========================================================= */
-
-#pauseOverlay{
-
-  position:fixed;
-
-  inset:0;
-
-  display:none;
-
-  flex-direction:column;
-
-  align-items:center;
-
-  justify-content:center;
-
-  background:rgba(0,0,0,.96);
-
-  z-index:60000;
-
-}
-
-
-/* =========================================================
-   履歴
-========================================================= */
-
-.history-item{
-
-  background:
-    rgba(255,255,255,.06);
-
-  padding:12px;
-
-  margin-bottom:8px;
-
-  border-radius:10px;
-
-  display:flex;
-
-  justify-content:space-between;
-
-}
-
-
-/* =========================================================
-   プレゼント
-========================================================= */
-
-.present-item{
-
-  background:#fff;
-
-  color:#333;
-
-  border-radius:12px;
-
-  padding:15px;
-
-  margin-bottom:10px;
-
-  display:flex;
-
-  align-items:center;
-
-  justify-content:space-between;
-
-}
-
-
-/* =========================================================
-   モーダル
-========================================================= */
-
-dialog{
-
-  background:#111;
-
-  color:#fff;
-
-  border:none;
-
-  border-radius:20px;
-
-  padding:30px;
-
-  width:90%;
-
-  max-width:350px;
-
-}
-
-dialog input{
-
-  width:100%;
-
-  padding:12px;
-
-  margin:8px 0;
-
+    white-space: pre-wrap;
 }
 
 
@@ -727,28 +457,59 @@ dialog input{
    スマホ
 ========================================================= */
 
-@media(max-width:600px){
+@media (max-width: 500px) {
 
-  .nav-container{
+    .container {
 
-    gap:5px;
+        padding: 7px;
 
-  }
+        gap: 5px;
+    }
 
-  .nav-card{
 
-    font-size:.7rem;
+    h1 {
 
-    padding:15px 3px;
+        font-size: 20px;
+    }
 
-  }
 
-  .main-console-text{
+    .controller {
 
-    letter-spacing:5px;
+        width:
+            min(92vw, 355px);
 
-  }
+        gap: 7px;
+    }
 
+
+    .control {
+
+        font-size: 42px;
+
+        border-radius: 17px;
+    }
+
+
+    .speed-button {
+
+        width: 50px;
+
+        height: 38px;
+    }
+
+
+    .speed-reset {
+
+        width: 62px;
+
+        font-size: 9px;
+    }
+
+
+    .log {
+
+        height: 45px;
+    }
 }
 
 </style>
@@ -759,4104 +520,1869 @@ dialog input{
 <body>
 
 
-<!-- ========================================================
-     背景
-========================================================= -->
-
-<div class="bg-sekai"></div>
-<div class="bg-overlay"></div>
+<div class="container">
 
 
-<!-- ========================================================
-     シートオーバーレイ
-========================================================= -->
+<h1>
+🤖 micro:bit ロボット
+</h1>
+
+
+<div class="subtitle">
+USB / Bluetooth対応
+</div>
+
+
+<!-- =====================================================
+     接続
+===================================================== -->
+
+<div class="connection">
+
+
+<button
+id="bluetoothButton"
+class="connect-button bluetooth-button">
+
+📡 Bluetooth
+
+</button>
+
+
+<button
+id="reconnectButton"
+class="connect-button reconnect-button">
+
+🔄 再接続
+
+</button>
+
+
+<button
+id="usbButton"
+class="connect-button usb-button">
+
+🔌 USB
+
+</button>
+
+
+</div>
+
+
+<!-- =====================================================
+     状態
+===================================================== -->
+
+<div class="status">
+
+
+<div class="status-row">
+
+<span>
+Bluetooth
+</span>
+
+<span
+id="bluetoothStatus"
+class="disconnected">
+
+未接続
+
+</span>
+
+</div>
+
+
+<div class="status-row">
+
+<span>
+USB
+</span>
+
+<span
+id="usbStatus"
+class="disconnected">
+
+未接続
+
+</span>
+
+</div>
+
+
+<div class="status-row">
+
+<span>
+通信
+</span>
+
+<span id="modeStatus">
+未接続
+</span>
+
+</div>
+
+
+</div>
+
+
+<!-- =====================================================
+     速度
+===================================================== -->
+
+<div class="speed-panel">
+
+
+<button
+id="speedDown"
+class="speed-button">
+
+−
+
+</button>
+
+
+<div class="speed-display">
+
+<div class="speed-title">
+現在の速度
+</div>
 
 <div
-  id="sheetOverlay"
-  onclick="closeAllSheets()"
-></div>
+id="speedValue"
+class="speed-value">
+
+50%
+
+</div>
+
+</div>
 
 
-<!-- ========================================================
-     ポーズ
-========================================================= -->
+<button
+id="speedUp"
+class="speed-button">
+
+＋
+
+</button>
+
+
+<button
+id="speedReset"
+class="speed-button speed-reset">
+
+50%<br>
+RESET
+
+</button>
+
+
+</div>
+
+
+<!-- =====================================================
+     コントローラー
+===================================================== -->
+
+<div class="controller">
+
+
+<button
+id="up"
+class="control up">
+
+↑
+
+</button>
+
+
+<button
+id="left"
+class="control left">
+
+←
+
+</button>
+
+
+<button
+id="stop"
+class="control stop">
+
+■
+
+</button>
+
+
+<button
+id="right"
+class="control right">
+
+→
+
+</button>
+
+
+<button
+id="down"
+class="control down">
+
+↓
+
+</button>
+
+
+</div>
+
 
 <div
-  id="mobilePauseBtn"
-  style="
-    position:fixed;
-    top:15px;
-    right:15px;
-    width:45px;
-    height:45px;
-    border-radius:50%;
-    background:#111;
-    border:1px solid #fff;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:15000;
-    cursor:pointer;
-  "
-  onclick="showPauseMenu()"
->
-  II
-</div>
+id="lastAction"
+class="last-action">
 
-
-<div id="pauseOverlay">
-
-  <h1
-    style="
-      color:var(--teal);
-      font-family:Montserrat;
-    "
-  >
-    PAUSE
-  </h1>
-
-  <button
-    class="btn-pro"
-    onclick="resumeGame()"
-  >
-    <span>再開</span>
-  </button>
-
-  <button
-    class="btn-pro pink"
-    onclick="exitGame()"
-  >
-    <span>終了</span>
-  </button>
+操作なし
 
 </div>
 
-
-<!-- ========================================================
-     タイトル
-========================================================= -->
 
 <div
-  id="titleScreen"
-  class="screen"
->
+id="log"
+class="log">
 
-  <h1
-    style="
-      font-family:Montserrat;
-      font-size:clamp(3.5rem,15vw,8rem);
-      margin:0;
-      text-shadow:0 0 30px var(--teal);
-    "
-  >
-    GENSOU
-  </h1>
-
-  <p
-    style="
-      letter-spacing:8px;
-      color:var(--pink);
-      font-weight:900;
-    "
-  >
-    COLORFUL STAGE
-  </p>
-
-  <button
-    class="btn-pro"
-    onclick="handleLoginClick()"
-  >
-    <span>ログイン</span>
-  </button>
-
-  <button
-    class="btn-pro pink"
-    onclick="openTransfer()"
-  >
-    <span>データ復元</span>
-  </button>
+起動しました
 
 </div>
 
 
-<!-- ========================================================
-     登録
-========================================================= -->
-
-<div
-  id="registrationScreen"
-  class="screen hidden"
->
-
-  <h2
-    style="
-      color:var(--teal);
-      font-family:Montserrat;
-    "
-  >
-    NEW REGISTRATION
-  </h2>
-
-  <div class="student-id-card">
-
-    <h3>学生証作成</h3>
-
-    <input
-      id="regName"
-      class="student-input"
-      type="text"
-      placeholder="なまえ（公開）"
-    >
-
-    <input
-      id="regPass"
-      class="student-input"
-      type="password"
-      placeholder="合言葉（復元用）"
-    >
-
-    <p
-      style="
-        font-size:.7rem;
-        color:#f39;
-        font-weight:bold;
-      "
-    >
-      ※IDと合言葉でデータ復元できます。
-    </p>
-
-  </div>
-
-  <button
-    class="btn-pro"
-    onclick="saveRegistration()"
-  >
-    <span>作成してログイン！</span>
-  </button>
-
 </div>
 
-
-<!-- ========================================================
-     ローディング
-========================================================= -->
-
-<div
-  id="loadingScreen"
-  class="screen hidden"
->
-
-  <p
-    style="
-      color:var(--teal);
-      font-size:1.4rem;
-    "
-  >
-    同期中...
-  </p>
-
-</div>
-
-
-<!-- ========================================================
-     ホーム
-========================================================= -->
-
-<div
-  id="gameScreen"
-  class="screen hidden"
->
-
-  <div class="header-minimal">
-
-    <div
-      class="av-mini"
-      onclick="openSheet('sheetConfig')"
-    >
-      <img id="hAv">
-    </div>
-
-    <div>
-      <span id="hName">---</span>
-      <span id="hVerified"></span>
-    </div>
-
-    <div class="iro-coin-disp">
-
-      🪙
-      <span id="hIroCoin">0</span>
-
-    </div>
-
-  </div>
-
-
-  <div
-    class="present-btn"
-    onclick="openSheet('sheetPresent')"
-  >
-
-    🎁
-
-    <div
-      id="pBadge"
-      class="present-badge"
-    >
-      0
-    </div>
-
-  </div>
-
-
-  <h1 class="main-console-text">
-    MAIN CONSOLE
-  </h1>
-
-
-  <nav class="nav-container">
-
-    <div
-      class="nav-card"
-      onclick="openSheet('sheetFriend')"
-    >
-      フレンド
-    </div>
-
-    <div
-      class="nav-card"
-      onclick="launchGachaUI()"
-    >
-      ガチャ
-    </div>
-
-    <div
-      class="nav-card main"
-      onclick="
-        transition(
-          'gameScreen',
-          'questScreen'
-        );
-        loadGameList();
-      "
-    >
-      クエスト
-    </div>
-
-    <div
-      class="nav-card"
-      onclick="openSheet('sheetMember')"
-    >
-      メンバー
-    </div>
-
-    <div
-      class="nav-card"
-      onclick="openSheet('sheetConfig')"
-    >
-      設定
-    </div>
-
-  </nav>
-
-</div>
-
-
-<!-- ========================================================
-     メンバー
-========================================================= -->
-
-<div
-  id="sheetMember"
-  class="bottom-sheet"
->
-
-  <div class="sheet-content">
-
-    <h2 style="color:var(--teal)">
-      MY MEMBERS
-    </h2>
-
-    <div
-      id="memberListContainer"
-      class="member-grid"
-    >
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- ========================================================
-     メンバー詳細
-========================================================= -->
-
-<div
-  id="sheetMemberDetail"
-  class="bottom-sheet"
->
-
-  <div
-    class="sheet-content"
-    style="text-align:center"
-  >
-
-    <div
-      id="memberDetailContent"
-    >
-    </div>
-
-    <div
-      id="giftSelectionArea"
-      style="display:none"
-    >
-
-      <h3
-        style="color:var(--pink)"
-      >
-        贈るフレンドを選択
-      </h3>
-
-      <div
-        id="giftFriendList"
-        style="
-          background:#fff;
-          color:#333;
-          border-radius:15px;
-          padding:15px;
-        "
-      >
-      </div>
-
-    </div>
-
-    <button
-      id="startGiftBtn"
-      class="btn-pro pink"
-    >
-      <span>フレンドにあげる</span>
-    </button>
-
-    <button
-      class="btn-pro gray"
-      onclick="
-        closeSheet(
-          'sheetMemberDetail'
-        )
-      "
-    >
-      <span>戻る</span>
-    </button>
-
-  </div>
-
-</div>
-
-
-<!-- ========================================================
-     プレゼント
-========================================================= -->
-
-<div
-  id="sheetPresent"
-  class="bottom-sheet"
->
-
-  <div class="sheet-content">
-
-    <h2 style="color:var(--teal)">
-      PRESENTS
-    </h2>
-
-    <div id="pListContainer">
-    </div>
-
-    <h2 style="color:var(--pink)">
-      COIN HISTORY
-    </h2>
-
-    <div id="historyContainer">
-    </div>
-
-  </div>
-
-</div>
-
-
-<!-- ========================================================
-     設定
-========================================================= -->
-
-<div
-  id="sheetConfig"
-  class="bottom-sheet"
->
-
-  <div
-    class="sheet-content"
-    style="text-align:center"
-  >
-
-    <div class="student-id-card">
-
-      <h3>
-        学生証設定
-      </h3>
-
-      <img
-        id="mAv"
-        style="
-          width:105px;
-          height:140px;
-          object-fit:cover;
-          border:3px solid #333;
-          border-radius:10px;
-          cursor:pointer;
-        "
-        onclick="
-          document
-            .getElementById('fileIn')
-            .click()
-        "
-      >
-
-      <p>
-        ID:
-        <span id="myIdDisplay">
-          ---
-        </span>
-      </p>
-
-      <input
-        id="nIn"
-        class="student-input"
-        placeholder="なまえ"
-      >
-
-      <input
-        id="pIn"
-        class="student-input"
-        type="password"
-        placeholder="合言葉"
-      >
-
-      <input
-        id="fileIn"
-        type="file"
-        accept="image/*"
-        style="display:none"
-        onchange="uploadIcon(this)"
-      >
-
-    </div>
-
-    <button
-      class="btn-pro"
-      onclick="saveSettings()"
-    >
-      <span>保存して同期</span>
-    </button>
-
-  </div>
-
-</div>
-
-
-<!-- ========================================================
-     フレンド
-========================================================= -->
-
-<div
-  id="sheetFriend"
-  class="bottom-sheet"
->
-
-  <div class="sheet-content">
-
-    <h2 style="color:var(--pink)">
-      FRIENDS
-    </h2>
-
-    <h3>
-      承認待ち
-    </h3>
-
-    <div
-      id="reqList"
-      style="color:#333"
-    >
-    </div>
-
-    <h3>
-      フレンド
-    </h3>
-
-    <div
-      id="fList"
-      style="color:#333"
-    >
-    </div>
-
-    <input
-      id="fIdIn"
-      placeholder="10桁ID"
-      style="
-        width:60%;
-        padding:14px;
-        color:#000;
-      "
-    >
-
-    <button
-      class="btn-pro pink"
-      style="width:auto"
-      onclick="sendReq()"
-    >
-      <span>申請</span>
-    </button>
-
-  </div>
-
-</div>
-
-
-<!-- ========================================================
-     クエスト
-========================================================= -->
-
-<div
-  id="questScreen"
-  class="screen hidden"
->
-
-  <h2
-    style="
-      color:var(--teal);
-      font-family:Montserrat;
-    "
-  >
-    QUEST SELECT
-  </h2>
-
-  <div
-    id="gameListContainer"
-  >
-  </div>
-
-  <button
-    class="btn-pro gray"
-    onclick="
-      transition(
-        'questScreen',
-        'gameScreen'
-      )
-    "
-  >
-    <span>戻る</span>
-  </button>
-
-</div>
-
-
-<!-- ========================================================
-     データ復元
-========================================================= -->
-
-<dialog id="modalTransfer">
-
-  <h3>
-    データ復元
-  </h3>
-
-  <input
-    id="tIdIn"
-    placeholder="ID"
-  >
-
-  <input
-    id="tPassIn"
-    type="password"
-    placeholder="合言葉"
-  >
-
-  <button
-    class="btn-pro pink"
-    onclick="executeTransfer()"
-  >
-    <span>復元実行</span>
-  </button>
-
-  <button
-    class="btn-pro gray"
-    onclick="
-      document
-        .getElementById(
-          'modalTransfer'
-        )
-        .close()
-    "
-  >
-    <span>閉じる</span>
-  </button>
-
-</dialog>
-
-
-<!-- ========================================================
-     ゲーム
-========================================================= -->
-
-<div id="gameLayer">
-
-  <iframe
-    id="gameFrame"
-    src="about:blank"
-  >
-  </iframe>
-
-</div>
-
-
-<!-- ========================================================
-     JavaScript
-========================================================= -->
 
 <script>
 
-/* =========================================================
-   GAS
-========================================================= */
 
-const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbxPh-uEHaAV57Oo3xvYc-FCFEI_dZkaz7_iHsly-Wbm7nZJHqlmdBMXqGVFjvq6mVLw/exec";
+// =========================================================
+// Bluetooth UUID
+// =========================================================
 
-
-/* =========================================================
-   グローバル
-========================================================= */
-
-let myId =
-  localStorage.getItem("gID") ||
-  generateId();
-
-let iroCoins =
-  Number(
-    localStorage.getItem("gCoins") || 0
-  );
-
-let myChars = "";
-
-let globalCharaPool = {
-
-  star2: [],
-  star3: [],
-  star4: []
-
-};
-
-let friendsData = [];
-
-let claimedPresents = [];
-
-let syncTimer = null;
+const UART_SERVICE_UUID =
+"6e400001-b5a3-f393-e0a9-e50e24dcca9e";
 
 
-/* =========================================================
-   ID生成
-========================================================= */
+const UART_RX_UUID =
+"6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 
-function generateId(){
 
-  return Math
-    .random()
-    .toString(36)
-    .substring(2,12)
-    .toUpperCase();
+const UART_TX_UUID =
+"6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
+
+// =========================================================
+// Bluetooth
+// =========================================================
+
+let bluetoothDevice = null;
+
+let bluetoothServer = null;
+
+let bluetoothService = null;
+
+let bluetoothRX = null;
+
+let bluetoothTX = null;
+
+
+// =========================================================
+// USB
+// =========================================================
+
+let serialPort = null;
+
+let serialWriter = null;
+
+let serialReader = null;
+
+
+// =========================================================
+// 操作
+// =========================================================
+
+let activeCommand = null;
+
+let activeButton = null;
+
+
+// =========================================================
+// 速度
+// =========================================================
+
+let currentSpeed = 50;
+
+
+// =========================================================
+// DOM
+// =========================================================
+
+const bluetoothButton =
+document.getElementById(
+    "bluetoothButton"
+);
+
+
+const reconnectButton =
+document.getElementById(
+    "reconnectButton"
+);
+
+
+const usbButton =
+document.getElementById(
+    "usbButton"
+);
+
+
+const bluetoothStatus =
+document.getElementById(
+    "bluetoothStatus"
+);
+
+
+const usbStatus =
+document.getElementById(
+    "usbStatus"
+);
+
+
+const modeStatus =
+document.getElementById(
+    "modeStatus"
+);
+
+
+const speedValue =
+document.getElementById(
+    "speedValue"
+);
+
+
+const speedDown =
+document.getElementById(
+    "speedDown"
+);
+
+
+const speedUp =
+document.getElementById(
+    "speedUp"
+);
+
+
+const speedReset =
+document.getElementById(
+    "speedReset"
+);
+
+
+const lastAction =
+document.getElementById(
+    "lastAction"
+);
+
+
+const logElement =
+document.getElementById(
+    "log"
+);
+
+
+// =========================================================
+// ログ
+// =========================================================
+
+function log(message) {
+
+    const time =
+        new Date()
+        .toLocaleTimeString();
+
+
+    logElement.textContent =
+        "[" +
+        time +
+        "] " +
+        message +
+        "\n" +
+        logElement.textContent;
 }
 
 
-/* =========================================================
-   HTMLエスケープ
-========================================================= */
+// =========================================================
+// Bluetooth接続確認
+// =========================================================
 
-function escapeHTML(value){
+function isBluetoothConnected() {
 
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-
-}
-
-
-/* =========================================================
-   GAS GET
-========================================================= */
-
-async function getGAS(
-  action = "",
-  params = {}
-){
-
-  const query =
-    new URLSearchParams();
-
-  if(action){
-
-    query.set(
-      "action",
-      action
+    return (
+        bluetoothDevice !== null &&
+        bluetoothDevice.gatt !== null &&
+        bluetoothDevice.gatt.connected &&
+        bluetoothRX !== null
     );
+}
 
-  }
 
-  Object
-    .entries(params)
-    .forEach(
-      ([key,value]) => {
+// =========================================================
+// USB接続確認
+// =========================================================
 
-        query.set(
-          key,
-          value
+function isUSBConnected() {
+
+    return (
+        serialPort !== null &&
+        serialWriter !== null
+    );
+}
+
+
+// =========================================================
+// 状態更新
+// =========================================================
+
+function updateStatus() {
+
+    if (
+        isBluetoothConnected()
+    ) {
+
+        bluetoothStatus.textContent =
+            "接続済み";
+
+        bluetoothStatus.className =
+            "connected";
+
+        bluetoothButton.textContent =
+            "📡 BT切断";
+
+    } else {
+
+        bluetoothStatus.textContent =
+            "未接続";
+
+        bluetoothStatus.className =
+            "disconnected";
+
+        bluetoothButton.textContent =
+            "📡 Bluetooth";
+    }
+
+
+    if (
+        isUSBConnected()
+    ) {
+
+        usbStatus.textContent =
+            "接続済み";
+
+        usbStatus.className =
+            "connected";
+
+        usbButton.textContent =
+            "🔌 USB切断";
+
+    } else {
+
+        usbStatus.textContent =
+            "未接続";
+
+        usbStatus.className =
+            "disconnected";
+
+        usbButton.textContent =
+            "🔌 USB";
+    }
+
+
+    if (
+        isBluetoothConnected()
+    ) {
+
+        modeStatus.textContent =
+            "📡 Bluetooth";
+
+    } else if (
+        isUSBConnected()
+    ) {
+
+        modeStatus.textContent =
+            "🔌 USB";
+
+    } else {
+
+        modeStatus.textContent =
+            "未接続";
+    }
+}
+
+
+// =========================================================
+// 速度表示
+// =========================================================
+
+function updateSpeedDisplay() {
+
+    speedValue.textContent =
+        currentSpeed +
+        "%";
+}
+
+
+// =========================================================
+// Bluetooth接続
+// =========================================================
+
+async function connectBluetooth() {
+
+    try {
+
+        if (
+            !navigator.bluetooth
+        ) {
+
+            throw new Error(
+                "Web Bluetooth非対応ブラウザです"
+            );
+        }
+
+
+        log(
+            "Bluetoothデバイスを選択してください"
         );
 
-      }
-    );
 
+        bluetoothDevice =
+        await navigator.bluetooth.requestDevice({
 
-  const url =
-    GAS_URL +
-    "?" +
-    query.toString();
+            filters: [
 
+                {
+                    services: [
+                        UART_SERVICE_UUID
+                    ]
+                }
 
-  const response =
-    await fetch(url);
+            ],
 
+            optionalServices: [
 
-  return await response.json();
+                UART_SERVICE_UUID
 
-}
+            ]
 
+        });
 
-/* =========================================================
-   GAS POST
-========================================================= */
 
-async function postGAS(data){
-
-  try{
-
-    const response =
-      await fetch(
-        GAS_URL,
-        {
-
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "text/plain;charset=utf-8"
-          },
-
-          body:
-            JSON.stringify(data)
-
-        }
-      );
-
-
-    return await response.json();
-
-  }catch(error){
-
-    console.error(
-      "POST ERROR",
-      error
-    );
-
-
-    return {
-
-      result:"error",
-
-      message:
-        error.message
-
-    };
-
-  }
-
-}
-
-
-/* =========================================================
-   Web操作記録
-========================================================= */
-
-async function logWebAction(
-  action,
-  detail = "",
-  value = ""
-){
-
-  try{
-
-    await postGAS({
-
-      type:
-        "webAction",
-
-      id:
-        myId,
-
-      action:
-        action,
-
-      detail:
-        detail,
-
-      value:
-        value
-
-    });
-
-  }catch(error){
-
-    console.warn(
-      "操作履歴保存失敗",
-      error
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   ログイン
-========================================================= */
-
-function handleLoginClick(){
-
-  logWebAction(
-    "ログインボタン"
-  );
-
-
-  if(
-    !localStorage.getItem(
-      "gName"
-    )
-  ){
-
-    transition(
-      "titleScreen",
-      "registrationScreen"
-    );
-
-  }else{
-
-    beginPortalSync();
-
-  }
-
-}
-
-
-/* =========================================================
-   登録
-========================================================= */
-
-async function saveRegistration(){
-
-  const name =
-    document
-      .getElementById(
-        "regName"
-      )
-      .value
-      .trim();
-
-  const pass =
-    document
-      .getElementById(
-        "regPass"
-      )
-      .value;
-
-
-  if(!name || !pass){
-
-    alert(
-      "名前と合言葉を入力してください"
-    );
-
-    return;
-
-  }
-
-
-  localStorage.setItem(
-    "gName",
-    name
-  );
-
-  localStorage.setItem(
-    "gPass",
-    pass
-  );
-
-  localStorage.setItem(
-    "gID",
-    myId
-  );
-
-
-  await postGAS({
-
-    type:"sync",
-
-    id:myId,
-
-    name:name,
-
-    pass:pass,
-
-    iroCoin:iroCoins,
-
-    chars:myChars,
-
-    avatar:
-      localStorage.getItem(
-        "gAv"
-      ) || ""
-
-  });
-
-
-  logWebAction(
-    "新規登録"
-  );
-
-
-  await beginPortalSync();
-
-}
-
-
-/* =========================================================
-   ポータル同期
-========================================================= */
-
-async function beginPortalSync(){
-
-  transition(
-    "titleScreen",
-    "loadingScreen"
-  );
-
-  transition(
-    "registrationScreen",
-    "loadingScreen"
-  );
-
-
-  try{
-
-    const charResult =
-      await getGAS(
-        "getCharaPools"
-      );
-
-
-    if(
-      charResult.result ===
-      "success"
-    ){
-
-      globalCharaPool =
-        charResult.data || {
-
-          star2:[],
-          star3:[],
-          star4:[]
-
-        };
-
-    }
-
-
-    const ok =
-      await fetchSync();
-
-
-    if(!ok){
-
-      alert(
-        "サーバーとの同期に失敗しました"
-      );
-
-      transition(
-        "loadingScreen",
-        "titleScreen"
-      );
-
-      return;
-
-    }
-
-
-    transition(
-      "loadingScreen",
-      "gameScreen"
-    );
-
-
-    if(!syncTimer){
-
-      syncTimer =
-        setInterval(
-          fetchSync,
-          15000
+        bluetoothDevice.addEventListener(
+            "gattserverdisconnected",
+            bluetoothDisconnected
         );
 
+
+        bluetoothServer =
+        await bluetoothDevice.gatt.connect();
+
+
+        bluetoothService =
+        await bluetoothServer.getPrimaryService(
+            UART_SERVICE_UUID
+        );
+
+
+        bluetoothRX =
+        await bluetoothService.getCharacteristic(
+            UART_RX_UUID
+        );
+
+
+        try {
+
+            bluetoothTX =
+            await bluetoothService.getCharacteristic(
+                UART_TX_UUID
+            );
+
+
+            await bluetoothTX.startNotifications();
+
+
+            bluetoothTX.addEventListener(
+                "characteristicvaluechanged",
+                receiveBluetooth
+            );
+
+        } catch (error) {
+
+            bluetoothTX = null;
+        }
+
+
+        updateStatus();
+
+
+        log(
+            "Bluetooth接続完了"
+        );
+
+
+        await sendBluetooth(
+            "STATUS"
+        );
+
+
+    } catch (error) {
+
+        bluetoothRX = null;
+
+        bluetoothTX = null;
+
+
+        updateStatus();
+
+
+        log(
+            "Bluetoothエラー: " +
+            error.message
+        );
     }
-
-  }catch(error){
-
-    console.error(error);
-
-    alert(
-      "初期化に失敗しました"
-    );
-
-    transition(
-      "loadingScreen",
-      "titleScreen"
-    );
-
-  }
-
 }
 
 
-/* =========================================================
-   同期
-========================================================= */
+// =========================================================
+// Bluetooth再接続
+// =========================================================
 
-async function fetchSync(){
+async function reconnectBluetooth() {
 
-  try{
+    try {
 
-    const json =
-      await getGAS(
-        "",
-        {
-          id:myId
+        if (
+            bluetoothDevice &&
+            bluetoothDevice.gatt &&
+            !bluetoothDevice.gatt.connected
+        ) {
+
+            bluetoothServer =
+            await bluetoothDevice.gatt.connect();
+
+
+            bluetoothService =
+            await bluetoothServer.getPrimaryService(
+                UART_SERVICE_UUID
+            );
+
+
+            bluetoothRX =
+            await bluetoothService.getCharacteristic(
+                UART_RX_UUID
+            );
+
+
+            updateStatus();
+
+
+            log(
+                "Bluetooth再接続完了"
+            );
+
+
+            await sendBluetooth(
+                "STATUS"
+            );
+
+
+            return;
         }
-      );
 
 
-    if(
-      json.result !==
-      "success"
-    ){
+        await connectBluetooth();
 
-      return false;
+    } catch (error) {
 
+        bluetoothRX = null;
+
+        bluetoothTX = null;
+
+
+        updateStatus();
+
+
+        log(
+            "再接続失敗: " +
+            error.message
+        );
+    }
+}
+
+
+// =========================================================
+// Bluetooth受信
+// =========================================================
+
+function receiveBluetooth(event) {
+
+    try {
+
+        const decoder =
+        new TextDecoder();
+
+
+        const text =
+        decoder.decode(
+            event.target.value
+        );
+
+
+        log(
+            "BT ← " +
+            text.trim()
+        );
+
+
+        parseMicrobitMessage(
+            text
+        );
+
+    } catch (error) {
+
+        console.log(error);
+    }
+}
+
+
+// =========================================================
+// micro:bitからの情報
+// =========================================================
+
+function parseMicrobitMessage(
+    text
+) {
+
+    const match =
+        text.match(
+            /SPEED:(\d+)/
+        );
+
+
+    if (match) {
+
+        currentSpeed =
+            Number(
+                match[1]
+            );
+
+
+        updateSpeedDisplay();
+    }
+}
+
+
+// =========================================================
+// Bluetooth切断
+// =========================================================
+
+function bluetoothDisconnected() {
+
+    bluetoothRX = null;
+
+    bluetoothTX = null;
+
+    bluetoothServer = null;
+
+    bluetoothService = null;
+
+
+    updateStatus();
+
+
+    removePressed();
+
+
+    activeCommand = null;
+
+    activeButton = null;
+
+
+    if (
+        isUSBConnected()
+    ) {
+
+        log(
+            "Bluetooth切断 → USBを使用"
+        );
+
+    } else {
+
+        log(
+            "Bluetooth切断"
+        );
+    }
+}
+
+
+// =========================================================
+// Bluetooth送信
+// =========================================================
+
+async function sendBluetooth(
+    command
+) {
+
+    if (
+        !isBluetoothConnected()
+    ) {
+
+        return false;
     }
 
 
-    iroCoins =
-      Number(
-        json.iroCoin || 0
-      );
+    try {
+
+        const data =
+        new TextEncoder()
+        .encode(
+            command +
+            "\n"
+        );
 
 
-    localStorage.setItem(
-      "gCoins",
-      iroCoins
+        if (
+            bluetoothRX.writeValueWithResponse
+        ) {
+
+            await bluetoothRX
+            .writeValueWithResponse(
+                data
+            );
+
+        } else {
+
+            await bluetoothRX
+            .writeValue(
+                data
+            );
+        }
+
+
+        log(
+            "BT → " +
+            command
+        );
+
+
+        return true;
+
+    } catch (error) {
+
+        log(
+            "BT送信失敗"
+        );
+
+
+        return false;
+    }
+}
+
+
+// =========================================================
+// USB接続
+// =========================================================
+
+async function connectUSB() {
+
+    try {
+
+        if (
+            !("serial" in navigator)
+        ) {
+
+            throw new Error(
+                "Web Serial非対応ブラウザです"
+            );
+        }
+
+
+        log(
+            "USBデバイスを選択してください"
+        );
+
+
+        serialPort =
+        await navigator.serial.requestPort();
+
+
+        await serialPort.open({
+
+            baudRate: 115200
+
+        });
+
+
+        serialWriter =
+        serialPort.writable
+        .getWriter();
+
+
+        updateStatus();
+
+
+        log(
+            "USB接続完了"
+        );
+
+
+        readUSB();
+
+
+        await sendUSB(
+            "STATUS"
+        );
+
+    } catch (error) {
+
+        serialPort = null;
+
+        serialWriter = null;
+
+
+        updateStatus();
+
+
+        log(
+            "USBエラー: " +
+            error.message
+        );
+    }
+}
+
+
+// =========================================================
+// USB受信
+// =========================================================
+
+async function readUSB() {
+
+    if (
+        !serialPort ||
+        !serialPort.readable
+    ) {
+
+        return;
+    }
+
+
+    serialReader =
+    serialPort.readable
+    .getReader();
+
+
+    const decoder =
+    new TextDecoder();
+
+
+    try {
+
+        while (true) {
+
+            const result =
+            await serialReader.read();
+
+
+            if (
+                result.done
+            ) {
+
+                break;
+            }
+
+
+            if (
+                result.value
+            ) {
+
+                const text =
+                decoder.decode(
+                    result.value
+                );
+
+
+                log(
+                    "USB ← " +
+                    text.trim()
+                );
+
+
+                parseMicrobitMessage(
+                    text
+                );
+            }
+        }
+
+    } catch (error) {
+
+        console.log(error);
+
+    } finally {
+
+        try {
+
+            serialReader.releaseLock();
+
+        } catch (e) {}
+
+
+        serialReader = null;
+    }
+}
+
+
+// =========================================================
+// USB送信
+// =========================================================
+
+async function sendUSB(
+    command
+) {
+
+    if (
+        !isUSBConnected()
+    ) {
+
+        return false;
+    }
+
+
+    try {
+
+        const data =
+        new TextEncoder()
+        .encode(
+            command +
+            "\n"
+        );
+
+
+        await serialWriter.write(
+            data
+        );
+
+
+        log(
+            "USB → " +
+            command
+        );
+
+
+        return true;
+
+    } catch (error) {
+
+        log(
+            "USB送信失敗"
+        );
+
+
+        return false;
+    }
+}
+
+
+// =========================================================
+// USB切断
+// =========================================================
+
+async function disconnectUSB() {
+
+    try {
+
+        if (
+            isUSBConnected()
+        ) {
+
+            await sendUSB(
+                "S"
+            );
+        }
+
+
+        if (
+            serialReader
+        ) {
+
+            try {
+
+                await serialReader.cancel();
+
+            } catch (e) {}
+        }
+
+
+        if (
+            serialWriter
+        ) {
+
+            try {
+
+                serialWriter.releaseLock();
+
+            } catch (e) {}
+
+            serialWriter = null;
+        }
+
+
+        if (
+            serialPort
+        ) {
+
+            try {
+
+                await serialPort.close();
+
+            } catch (e) {}
+
+            serialPort = null;
+        }
+
+
+        updateStatus();
+
+
+        log(
+            "USB切断"
+        );
+
+    } catch (error) {
+
+        log(
+            "USB切断エラー"
+        );
+    }
+}
+
+
+// =========================================================
+// 共通送信
+// =========================================================
+
+async function sendCommand(
+    command
+) {
+
+    /*
+     * Bluetooth優先
+     */
+
+    if (
+        isBluetoothConnected()
+    ) {
+
+        const result =
+        await sendBluetooth(
+            command
+        );
+
+
+        if (result) {
+
+            updateLastAction(
+                command,
+                "Bluetooth"
+            );
+
+
+            return true;
+        }
+    }
+
+
+    /*
+     * BluetoothがなければUSB
+     */
+
+    if (
+        isUSBConnected()
+    ) {
+
+        const result =
+        await sendUSB(
+            command
+        );
+
+
+        if (result) {
+
+            updateLastAction(
+                command,
+                "USB"
+            );
+
+
+            return true;
+        }
+    }
+
+
+    log(
+        "接続されていません"
     );
 
-
-    myChars =
-      json.chars || "";
-
-
-    friendsData =
-      json.friendsData || [];
-
-
-    document
-      .getElementById(
-        "hIroCoin"
-      )
-      .innerText =
-        iroCoins.toLocaleString();
-
-
-    document
-      .getElementById(
-        "hName"
-      )
-      .innerText =
-        json.name || "USER";
-
-
-    document
-      .getElementById(
-        "myIdDisplay"
-      )
-      .innerText =
-        myId;
-
-
-    document
-      .getElementById(
-        "hVerified"
-      )
-      .innerHTML =
-        json.isOfficial
-          ? '<span class="badge-verify">✔</span>'
-          : "";
-
-
-    const avatar =
-      json.avatar ||
-      "https://api.dicebear.com/7.x/avataaars/svg?seed=" +
-      encodeURIComponent(myId);
-
-
-    document
-      .getElementById(
-        "hAv"
-      )
-      .src =
-        avatar;
-
-
-    document
-      .getElementById(
-        "mAv"
-      )
-      .src =
-        avatar;
-
-
-    document
-      .getElementById(
-        "nIn"
-      )
-      .value =
-        json.name || "";
-
-
-    document
-      .getElementById(
-        "pIn"
-      )
-      .value =
-        localStorage.getItem(
-          "gPass"
-        ) || "";
-
-
-    updatePresentUI(
-      json.pendingGifts || []
-    );
-
-
-    updateHistoryUI(
-      json.history || []
-    );
-
-
-    renderMembers();
-
-    renderFriends(
-      json.pending || ""
-    );
-
-
-    return true;
-
-  }catch(error){
-
-    console.error(
-      "同期エラー",
-      error
-    );
 
     return false;
-
-  }
-
 }
 
 
-/* =========================================================
-   画面切替
-========================================================= */
+// =========================================================
+// 最終操作
+// =========================================================
 
-function transition(
-  from,
-  to
-){
+function updateLastAction(
+    command,
+    connection
+) {
 
-  const a =
-    document.getElementById(
-      from
-    );
+    const names = {
 
-  const b =
-    document.getElementById(
-      to
-    );
+        U: "↑ 前進",
 
+        D: "↓ 後退",
 
-  if(a){
+        L: "← 左",
 
-    a.classList.add(
-      "hidden"
-    );
+        R: "→ 右",
 
-  }
+        S: "■ 停止",
 
+        "SPEED+": "速度アップ",
 
-  if(b){
+        "SPEED-": "速度ダウン",
 
-    b.style.display =
-      "flex";
-
-    b.classList.remove(
-      "hidden"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   メンバー
-========================================================= */
-
-function renderMembers(){
-
-  const container =
-    document.getElementById(
-      "memberListContainer"
-    );
-
-
-  if(!myChars){
-
-    container.innerHTML =
-      "キャラクターなし";
-
-    return;
-
-  }
-
-
-  const counts = {};
-
-
-  myChars
-    .split(",")
-    .filter(Boolean)
-    .forEach(
-      name => {
-
-        counts[name] =
-          (
-            counts[name] || 0
-          ) + 1;
-
-      }
-    );
-
-
-  const master = [
-
-    ...(globalCharaPool.star2 || []),
-    ...(globalCharaPool.star3 || []),
-    ...(globalCharaPool.star4 || [])
-
-  ];
-
-
-  container.innerHTML =
-    Object
-      .keys(counts)
-      .map(
-        name => {
-
-          const char =
-            master.find(
-              c =>
-                c.name === name
-            );
-
-
-          if(!char){
-
-            return "";
-
-          }
-
-
-          return `
-
-            <div
-              class="member-card"
-              onclick="showMemberDetail(
-                '${escapeHTML(name)}'
-              )"
-            >
-
-              <div class="count-badge">
-                x${counts[name]}
-              </div>
-
-              <img
-                src="${escapeHTML(char.img)}"
-              >
-
-              <small>
-                ${escapeHTML(char.name)}
-              </small>
-
-            </div>
-
-          `;
-
-        }
-      )
-      .join("");
-
-}
-
-
-/* =========================================================
-   メンバー詳細
-========================================================= */
-
-function showMemberDetail(
-  name
-){
-
-  const master = [
-
-    ...(globalCharaPool.star2 || []),
-    ...(globalCharaPool.star3 || []),
-    ...(globalCharaPool.star4 || [])
-
-  ];
-
-
-  const char =
-    master.find(
-      c =>
-        c.name === name
-    );
-
-
-  if(!char){
-
-    return;
-
-  }
-
-
-  let stars = 2;
-
-
-  if(
-    globalCharaPool.star4
-      .some(
-        c => c.name === name
-      )
-  ){
-
-    stars = 4;
-
-  }else if(
-    globalCharaPool.star3
-      .some(
-        c => c.name === name
-      )
-  ){
-
-    stars = 3;
-
-  }
-
-
-  document
-    .getElementById(
-      "memberDetailContent"
-    )
-    .innerHTML = `
-
-      <img
-        src="${escapeHTML(char.img)}"
-        style="
-          width:220px;
-          max-width:80%;
-          border-radius:20px;
-        "
-      >
-
-      <div
-        style="
-          color:#ffcc00;
-          font-size:2rem;
-        "
-      >
-        ${"★".repeat(stars)}
-      </div>
-
-      <h2>
-        ${escapeHTML(char.name)}
-      </h2>
-
-    `;
-
-
-  document
-    .getElementById(
-      "giftSelectionArea"
-    )
-    .style.display =
-      "none";
-
-
-  document
-    .getElementById(
-      "startGiftBtn"
-    )
-    .onclick =
-      function(){
-
-        document
-          .getElementById(
-            "giftFriendList"
-          )
-          .innerHTML =
-            friendsData
-              .map(
-                friend => `
-
-                  <div
-                    style="
-                      padding:12px;
-                      border-bottom:
-                        1px solid #ddd;
-                      cursor:pointer;
-                    "
-                    onclick="
-                      executeMemberGift(
-                        '${escapeHTML(friend.id)}',
-                        '${escapeHTML(friend.name)}',
-                        '${escapeHTML(char.name)}'
-                      )
-                    "
-                  >
-                    ${escapeHTML(friend.name)}
-                    ➜ 贈る
-                  </div>
-
-                `
-              )
-              .join("");
-
-
-        document
-          .getElementById(
-            "giftSelectionArea"
-          )
-          .style.display =
-            "block";
-
-      };
-
-
-  openSheet(
-    "sheetMemberDetail"
-  );
-
-}
-
-
-/* =========================================================
-   キャラクター送信
-========================================================= */
-
-async function executeMemberGift(
-  targetId,
-  targetName,
-  charName
-){
-
-  if(
-    !confirm(
-      targetName +
-      "さんに" +
-      charName +
-      "を贈りますか？"
-    )
-  ){
-
-    return;
-
-  }
-
-
-  const result =
-    await postGAS({
-
-      type:
-        "friendMemberGift",
-
-      fromId:
-        myId,
-
-      fromName:
-        document
-          .getElementById(
-            "hName"
-          )
-          .innerText,
-
-      toId:
-        targetId,
-
-      charName:
-        charName
-
-    });
-
-
-  if(
-    result.result !==
-    "success"
-  ){
-
-    alert(
-      result.message ||
-      "送信に失敗しました"
-    );
-
-    return;
-
-  }
-
-
-  alert(
-    "送信しました"
-  );
-
-
-  closeSheet(
-    "sheetMemberDetail"
-  );
-
-
-  await fetchSync();
-
-}
-
-
-/* =========================================================
-   ガチャ
-========================================================= */
-
-async function launchGachaUI(){
-
-  logWebAction(
-    "ガチャ開始"
-  );
-
-
-  document
-    .getElementById(
-      "gameLayer"
-    )
-    .style.display =
-      "block";
-
-
-  document
-    .getElementById(
-      "mobilePauseBtn"
-    )
-    .style.display =
-      "flex";
-
-
-  try{
-
-    const [
-      settingsRes,
-      charsRes
-    ] =
-      await Promise.all([
-
-        getGAS(
-          "getGachaSettings"
-        ),
-
-        getGAS(
-          "getCharaPools"
-        )
-
-      ]);
-
-
-    const gData =
-      settingsRes.data || [];
-
-    const pools =
-      charsRes.data || {
-
-        star2:[],
-        star3:[],
-        star4:[]
-
-      };
-
-
-    if(!gData.length){
-
-      alert(
-        "ガチャ設定がありません"
-      );
-
-      closeGame();
-
-      return;
-
-    }
-
-
-    const safeData =
-      JSON.stringify(
-        gData
-      )
-      .replaceAll(
-        "</",
-        "<\\/"
-      );
-
-
-    const safePools =
-      JSON.stringify(
-        pools
-      )
-      .replaceAll(
-        "</",
-        "<\\/"
-      );
-
-
-    const first =
-      gData[0];
-
-
-    const html = `
-
-<!DOCTYPE html>
-
-<html lang="ja">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1.0"
->
-
-<style>
-
-html,
-body{
-
-  margin:0;
-  width:100%;
-  height:100%;
-
-  overflow:hidden;
-
-  background:#000;
-
-  color:#fff;
-
-  font-family:sans-serif;
-
-}
-
-#bg{
-
-  position:fixed;
-
-  inset:0;
-
-  background:
-    url("${escapeAttribute(first.bg)}")
-    center/cover no-repeat;
-
-  filter:brightness(.75);
-
-}
-
-.ui{
-
-  position:relative;
-
-  z-index:5;
-
-  width:100%;
-  height:100%;
-
-  padding:25px;
-
-  box-sizing:border-box;
-
-}
-
-.coin{
-
-  display:inline-block;
-
-  padding:10px 20px;
-
-  border-radius:30px;
-
-  background:rgba(0,0,0,.7);
-
-  color:#33ffcc;
-
-  border:1px solid #33ffcc;
-
-}
-
-.sidebar{
-
-  position:absolute;
-
-  left:20px;
-
-  top:90px;
-
-  display:flex;
-
-  flex-direction:column;
-
-  gap:10px;
-
-}
-
-.tab{
-
-  width:120px;
-
-  height:60px;
-
-  background-size:cover;
-
-  background-position:center;
-
-  border:2px solid transparent;
-
-  border-radius:10px;
-
-  opacity:.6;
-
-  cursor:pointer;
-
-}
-
-.tab.active{
-
-  border-color:#ffcc00;
-
-  opacity:1;
-
-}
-
-.controls{
-
-  position:absolute;
-
-  right:30px;
-
-  bottom:30px;
-
-  display:flex;
-
-  flex-direction:column;
-
-  gap:10px;
-
-}
-
-.pull-btn{
-
-  width:180px;
-
-  padding:18px;
-
-  border:none;
-
-  border-radius:15px;
-
-  color:#fff;
-
-  font-weight:bold;
-
-  cursor:pointer;
-
-}
-
-.b-1{
-
-  background:#555;
-
-}
-
-.b-10{
-
-  background:#ff3399;
-
-}
-
-.b-100{
-
-  background:#ff6600;
-
-}
-
-#reveal{
-
-  position:fixed;
-
-  inset:0;
-
-  display:none;
-
-  flex-direction:column;
-
-  align-items:center;
-
-  justify-content:flex-end;
-
-  background:#000;
-
-  z-index:100;
-
-  cursor:pointer;
-
-}
-
-#rev-img{
-
-  position:absolute;
-
-  inset:0;
-
-  width:100%;
-
-  height:100%;
-
-  object-fit:contain;
-
-}
-
-.rev-content{
-
-  position:relative;
-
-  z-index:5;
-
-  text-align:center;
-
-  padding-bottom:80px;
-
-}
-
-#summary{
-
-  position:fixed;
-
-  inset:0;
-
-  display:none;
-
-  flex-direction:column;
-
-  align-items:center;
-
-  justify-content:center;
-
-  background:rgba(0,0,0,.95);
-
-  z-index:200;
-
-}
-
-.summary-grid{
-
-  display:flex;
-
-  flex-wrap:wrap;
-
-  justify-content:center;
-
-  gap:8px;
-
-  max-width:90%;
-
-  max-height:70%;
-
-  overflow:auto;
-
-}
-
-.summary-card{
-
-  width:75px;
-
-  padding:5px;
-
-  background:#222;
-
-  text-align:center;
-
-  border-radius:8px;
-
-}
-
-.summary-card img{
-
-  width:60px;
-
-  height:80px;
-
-  object-fit:cover;
-
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div id="bg"></div>
-
-<div class="ui">
-
-  <div class="coin">
-    🪙
-    <span id="c">
-      ${iroCoins.toLocaleString()}
-    </span>
-  </div>
-
-  <div
-    id="sb"
-    class="sidebar"
-  ></div>
-
-  <h1>
-    ${escapeHTML(first.title)}
-  </h1>
-
-  <div
-    id="btn-container"
-    class="controls"
-  ></div>
-
-</div>
-
-
-<div
-  id="reveal"
-  onclick="nextReveal()"
->
-
-  <img id="rev-img">
-
-  <div
-    class="rev-content"
-  >
-
-    <div
-      id="rev-stars"
-      style="
-        font-size:2rem;
-        color:#ffcc00;
-      "
-    ></div>
-
-    <h1
-      id="rev-name"
-    ></h1>
-
-    <p>
-      TAP TO NEXT
-    </p>
-
-  </div>
-
-</div>
-
-
-<div id="summary">
-
-  <h2>
-    RESULT
-  </h2>
-
-  <div
-    id="sum-grid"
-    class="summary-grid"
-  ></div>
-
-  <button
-    onclick="
-      document
-        .getElementById('summary')
-        .style.display='none'
-    "
-    style="
-      padding:15px 60px;
-      border:none;
-      border-radius:30px;
-    "
-  >
-    とじる
-  </button>
-
-</div>
-
-
-<script>
-
-const gData =
-  ${safeData};
-
-const pools =
-  ${safePools};
-
-let coins =
-  ${Number(iroCoins)};
-
-let results = [];
-
-let current = 0;
-
-
-function renderButtons(index){
-
-  const box =
-    document
-      .getElementById(
-        "btn-container"
-      );
-
-  box.innerHTML = "";
-
-
-  String(
-    gData[index].buttons ||
-    "1回,10回"
-  )
-  .split(",")
-  .map(
-    x => x.trim()
-  )
-  .forEach(
-    button => {
-
-      if(button === "1回"){
-
-        box.innerHTML +=
-          '<button class="pull-btn b-1" onclick="startPull(1)">1回引く</button>';
-
-      }
-
-      if(button === "10回"){
-
-        box.innerHTML +=
-          '<button class="pull-btn b-10" onclick="startPull(10)">10回引く</button>';
-
-      }
-
-      if(button === "100回"){
-
-        box.innerHTML +=
-          '<button class="pull-btn b-100" onclick="startPull(100)">100回引く</button>';
-
-      }
-
-    }
-  );
-
-}
-
-
-function startPull(n){
-
-  const cost =
-    n * 300;
-
-
-  if(
-    coins < cost
-  ){
-
-    alert(
-      "コインが不足しています"
-    );
-
-    return;
-
-  }
-
-
-  const allPool = {
-
-    star2:
-      pools.star2 || [],
-
-    star3:
-      pools.star3 || [],
-
-    star4:
-      pools.star4 || []
-
-  };
-
-
-  if(
-    !allPool.star2.length ||
-    !allPool.star3.length ||
-    !allPool.star4.length
-  ){
-
-    alert(
-      "キャラクターデータが不足しています"
-    );
-
-    return;
-
-  }
-
-
-  coins -= cost;
-
-
-  document
-    .getElementById(
-      "c"
-    )
-    .innerText =
-      coins.toLocaleString();
-
-
-  results = [];
-
-  const names = [];
-
-
-  let has4 = false;
-  let has3 = false;
-
-
-  for(
-    let i=0;
-    i<n;
-    i++
-  ){
-
-    let rank = 2;
-
-    const r =
-      Math.random() * 100;
-
-
-    if(
-      r < 3.5
-    ){
-
-      rank = 4;
-
-    }else if(
-      r < 16
-    ){
-
-      rank = 3;
-
-    }
-
-
-    if(
-      n >= 100 &&
-      i === n - 1 &&
-      !has4
-    ){
-
-      rank = 4;
-
-    }else if(
-      n >= 10 &&
-      i === n - 1 &&
-      !has3 &&
-      rank < 3
-    ){
-
-      rank = 3;
-
-    }
-
-
-    if(rank >= 4){
-      has4 = true;
-    }
-
-    if(rank >= 3){
-      has3 = true;
-    }
-
-
-    const pool =
-      allPool[
-        "star" + rank
-      ];
-
-
-    const char =
-      pool[
-        Math.floor(
-          Math.random() *
-          pool.length
-        )
-      ];
-
-
-    results.push({
-
-      ...char,
-
-      rank:rank
-
-    });
-
-
-    names.push(
-      char.name
-    );
-
-  }
-
-
-  window.parent.postMessage(
-
-    {
-
-      type:
-        "gachaPull",
-
-      value:
-        coins,
-
-      pulls:
-        n,
-
-      chars:
-        names.join(",")
-
-    },
-
-    "*"
-
-  );
-
-
-  current = 0;
-
-  showReveal();
-
-}
-
-
-function showReveal(){
-
-  const char =
-    results[current];
-
-
-  document
-    .getElementById(
-      "reveal"
-    )
-    .style.display =
-      "flex";
-
-
-  document
-    .getElementById(
-      "rev-img"
-    )
-    .src =
-      char.img;
-
-
-  document
-    .getElementById(
-      "rev-name"
-    )
-    .innerText =
-      char.name;
-
-
-  document
-    .getElementById(
-      "rev-stars"
-    )
-    .innerText =
-      "★".repeat(
-        char.rank
-      );
-
-}
-
-
-function nextReveal(){
-
-  current++;
-
-
-  if(
-    current <
-    results.length
-  ){
-
-    showReveal();
-
-  }else{
-
-    showSummary();
-
-  }
-
-}
-
-
-function showSummary(){
-
-  document
-    .getElementById(
-      "reveal"
-    )
-    .style.display =
-      "none";
-
-
-  const box =
-    document
-      .getElementById(
-        "sum-grid"
-      );
-
-
-  box.innerHTML = "";
-
-
-  results.forEach(
-    char => {
-
-      const div =
-        document.createElement(
-          "div"
-        );
-
-
-      div.className =
-        "summary-card";
-
-
-      div.innerHTML = `
-
-        <img
-          src="${char.img}"
-        >
-
-        <br>
-
-        ${"★".repeat(
-          char.rank
-        )}
-
-      `;
-
-
-      box.appendChild(
-        div
-      );
-
-    }
-  );
-
-
-  document
-    .getElementById(
-      "summary"
-    )
-    .style.display =
-      "flex";
-
-}
-
-
-gData.forEach(
-  (g,index) => {
-
-    const tab =
-      document.createElement(
-        "div"
-      );
-
-
-    tab.className =
-      "tab" +
-      (
-        index === 0
-          ? " active"
-          : ""
-      );
-
-
-    tab.style.backgroundImage =
-      "url('" +
-      g.thumbnail +
-      "')";
-
-
-    tab.onclick =
-      function(){
-
-        document
-          .getElementById(
-            "bg"
-          )
-          .style.backgroundImage =
-            "url('" +
-            g.bg +
-            "')";
-
-
-        renderButtons(
-          index
-        );
-
-
-        document
-          .querySelectorAll(
-            ".tab"
-          )
-          .forEach(
-            (el,i) => {
-
-              el.classList.toggle(
-                "active",
-                i === index
-              );
-
-            }
-          );
-
-      };
-
-
-    document
-      .getElementById(
-        "sb"
-      )
-      .appendChild(
-        tab
-      );
-
-  }
-);
-
-
-renderButtons(0);
-
-<\/script>
-
-</body>
-
-</html>
-
-`;
-
-
-    document
-      .getElementById(
-        "gameFrame"
-      )
-      .srcdoc =
-        html;
-
-
-  }catch(error){
-
-    console.error(error);
-
-    alert(
-      "ガチャの読み込みに失敗しました"
-    );
-
-    closeGame();
-
-  }
-
-}
-
-
-/* =========================================================
-   ガチャ結果受信
-========================================================= */
-
-window.addEventListener(
-  "message",
-  async function(event){
-
-    if(
-      !event.data ||
-      event.data.type !==
-      "gachaPull"
-    ){
-
-      return;
-
-    }
-
-
-    iroCoins =
-      Number(
-        event.data.value
-      );
-
-
-    localStorage.setItem(
-      "gCoins",
-      iroCoins
-    );
-
-
-    document
-      .getElementById(
-        "hIroCoin"
-      )
-      .innerText =
-        iroCoins.toLocaleString();
-
-
-    const result =
-      await postGAS({
-
-        type:
-          "gachaLog",
-
-        id:
-          myId,
-
-        userId:
-          myId,
-
-        newCoins:
-          iroCoins,
-
-        pulls:
-          event.data.pulls,
-
-        newChars:
-          event.data.chars
-
-      });
-
-
-    if(
-      result.result !==
-      "success"
-    ){
-
-      console.warn(
-        "ガチャ記録失敗",
-        result
-      );
-
-    }
-
-
-    await fetchSync();
-
-  }
-);
-
-
-/* =========================================================
-   設定保存
-========================================================= */
-
-async function saveSettings(){
-
-  const name =
-    document
-      .getElementById(
-        "nIn"
-      )
-      .value
-      .trim();
-
-  const pass =
-    document
-      .getElementById(
-        "pIn"
-      )
-      .value;
-
-
-  if(!name){
-
-    alert(
-      "名前を入力してください"
-    );
-
-    return;
-
-  }
-
-
-  localStorage.setItem(
-    "gName",
-    name
-  );
-
-  localStorage.setItem(
-    "gPass",
-    pass
-  );
-
-
-  const result =
-    await postGAS({
-
-      type:
-        "setting",
-
-      id:
-        myId,
-
-      name:
-        name,
-
-      pass:
-        pass
-
-    });
-
-
-  if(
-    result.result !==
-    "success"
-  ){
-
-    alert(
-      result.message ||
-      "設定保存に失敗しました"
-    );
-
-    return;
-
-  }
-
-
-  await postGAS({
-
-    type:
-      "sync",
-
-    id:
-      myId,
-
-    name:
-      name,
-
-    pass:
-      pass,
-
-    iroCoin:
-      iroCoins,
-
-    chars:
-      myChars,
-
-    avatar:
-      localStorage.getItem(
-        "gAv"
-      ) || ""
-
-  });
-
-
-  logWebAction(
-    "設定保存"
-  );
-
-
-  alert(
-    "保存しました"
-  );
-
-
-  closeAllSheets();
-
-  await fetchSync();
-
-}
-
-
-/* =========================================================
-   アイコン
-========================================================= */
-
-function uploadIcon(input){
-
-  if(
-    !input.files ||
-    !input.files[0]
-  ){
-
-    return;
-
-  }
-
-
-  const reader =
-    new FileReader();
-
-
-  reader.onload =
-    async function(event){
-
-      const data =
-        event.target.result;
-
-
-      localStorage.setItem(
-        "gAv",
-        data
-      );
-
-
-      document
-        .getElementById(
-          "hAv"
-        )
-        .src =
-          data;
-
-
-      document
-        .getElementById(
-          "mAv"
-        )
-        .src =
-          data;
-
-
-      await postGAS({
-
-        type:
-          "setting",
-
-        id:
-          myId,
-
-        avatar:
-          data
-
-      });
-
-
-      logWebAction(
-        "アイコン変更"
-      );
-
-
-      await fetchSync();
+        SPEED50: "速度50%"
 
     };
 
 
-  reader.readAsDataURL(
-    input.files[0]
-  );
-
+    lastAction.textContent =
+        (
+            names[command] ||
+            command
+        ) +
+        " [" +
+        connection +
+        "]";
 }
 
 
-/* =========================================================
-   SHEET
-========================================================= */
+// =========================================================
+// 速度アップ
+// =========================================================
 
-function openSheet(id){
+speedUp.addEventListener(
+    "click",
+    async () => {
 
-  logWebAction(
-    "シート表示",
-    id
-  );
-
-
-  document
-    .getElementById(
-      "sheetOverlay"
-    )
-    .style.display =
-      "block";
+        currentSpeed += 10;
 
 
-  document
-    .getElementById(
-      id
-    )
-    .classList.add(
-      "open"
-    );
+        if (
+            currentSpeed > 100
+        ) {
 
-}
+            currentSpeed = 100;
+        }
 
 
-function closeSheet(id){
-
-  document
-    .getElementById(
-      id
-    )
-    .classList.remove(
-      "open"
-    );
+        updateSpeedDisplay();
 
 
-  if(
-    !document.querySelector(
-      ".bottom-sheet.open"
-    )
-  ){
+        await sendCommand(
+            "SPEED+"
+        );
+    }
+);
+
+
+// =========================================================
+// 速度ダウン
+// =========================================================
+
+speedDown.addEventListener(
+    "click",
+    async () => {
+
+        currentSpeed -= 10;
+
+
+        if (
+            currentSpeed < 10
+        ) {
+
+            currentSpeed = 10;
+        }
+
+
+        updateSpeedDisplay();
+
+
+        await sendCommand(
+            "SPEED-"
+        );
+    }
+);
+
+
+// =========================================================
+// 50%へ戻す
+// =========================================================
+
+speedReset.addEventListener(
+    "click",
+    async () => {
+
+        currentSpeed = 50;
+
+
+        updateSpeedDisplay();
+
+
+        await sendCommand(
+            "SPEED50"
+        );
+    }
+);
+
+
+// =========================================================
+// 押下解除
+// =========================================================
+
+function removePressed() {
 
     document
-      .getElementById(
-        "sheetOverlay"
-      )
-      .style.display =
-        "none";
-
-  }
-
-}
-
-
-function closeAllSheets(){
-
-  document
-    .getElementById(
-      "sheetOverlay"
-    )
-    .style.display =
-      "none";
-
-
-  document
     .querySelectorAll(
-      ".bottom-sheet"
+        ".control.pressed"
     )
     .forEach(
-      sheet =>
-        sheet.classList.remove(
-          "open"
-        )
-    );
+        button => {
 
-}
-
-
-/* =========================================================
-   ポーズ
-========================================================= */
-
-function showPauseMenu(){
-
-  logWebAction(
-    "ポーズ"
-  );
-
-
-  document
-    .getElementById(
-      "pauseOverlay"
-    )
-    .style.display =
-      "flex";
-
-}
-
-
-function resumeGame(){
-
-  document
-    .getElementById(
-      "pauseOverlay"
-    )
-    .style.display =
-      "none";
-
-}
-
-
-function exitGame(){
-
-  logWebAction(
-    "ゲーム終了"
-  );
-
-  closeGame();
-
-}
-
-
-/* =========================================================
-   ゲーム一覧
-========================================================= */
-
-async function loadGameList(){
-
-  const container =
-    document.getElementById(
-      "gameListContainer"
-    );
-
-
-  container.innerHTML =
-    "読み込み中...";
-
-
-  try{
-
-    const result =
-      await getGAS(
-        "getList"
-      );
-
-
-    if(
-      result.result !==
-      "success"
-    ){
-
-      container.innerHTML =
-        "ゲーム一覧の取得に失敗しました";
-
-      return;
-
-    }
-
-
-    const games =
-      result.data || [];
-
-
-    container.innerHTML =
-      "";
-
-
-    if(!games.length){
-
-      container.innerHTML =
-        "ゲームがありません";
-
-      return;
-
-    }
-
-
-    games.forEach(
-      game => {
-
-        const card =
-          document.createElement(
-            "div"
-          );
-
-
-        card.className =
-          "nav-card";
-
-
-        card.style.width =
-          "130px";
-
-
-        card.innerHTML =
-          `<b>${escapeHTML(game.title)}</b>`;
-
-
-        card.onclick =
-          function(){
-
-            launchGame(
-              game.id,
-              game.title
+            button.classList.remove(
+                "pressed"
             );
+        }
+    );
+}
 
-          };
+
+// =========================================================
+// 移動開始
+// =========================================================
+
+function startMoving(
+    command,
+    button,
+    event
+) {
+
+    event.preventDefault();
 
 
-        container.appendChild(
-          card
+    if (
+        activeCommand === command
+    ) {
+
+        return;
+    }
+
+
+    if (
+        activeCommand !== null
+    ) {
+
+        sendCommand(
+            "S"
+        );
+    }
+
+
+    removePressed();
+
+
+    activeCommand =
+        command;
+
+
+    activeButton =
+        button;
+
+
+    button.classList.add(
+        "pressed"
+    );
+
+
+    try {
+
+        button.setPointerCapture(
+            event.pointerId
         );
 
-      }
+    } catch (e) {}
+
+
+    sendCommand(
+        command
     );
-
-
-  }catch(error){
-
-    console.error(error);
-
-    container.innerHTML =
-      "ゲーム一覧の取得に失敗しました";
-
-  }
-
 }
 
 
-/* =========================================================
-   ゲーム起動
-========================================================= */
+// =========================================================
+// 移動停止
+// =========================================================
 
-async function launchGame(
-  id,
-  title
-){
+function stopMoving(
+    button,
+    event
+) {
 
-  logWebAction(
-    "ゲーム起動",
-    title,
-    id
-  );
+    if (event) {
 
-
-  document
-    .getElementById(
-      "gameLayer"
-    )
-    .style.display =
-      "block";
-
-
-  document
-    .getElementById(
-      "mobilePauseBtn"
-    )
-    .style.display =
-      "flex";
-
-
-  try{
-
-    const result =
-      await getGAS(
-        "getCode",
-        {
-          row:id
-        }
-      );
-
-
-    if(
-      result.result !==
-      "success"
-    ){
-
-      alert(
-        result.message ||
-        "ゲームコード取得失敗"
-      );
-
-      return;
-
+        event.preventDefault();
     }
 
 
-    document
-      .getElementById(
-        "gameFrame"
-      )
-      .srcdoc =
-        result.code || "";
+    if (
+        activeCommand === null
+    ) {
+
+        return;
+    }
 
 
-    await postGAS({
-
-      type:
-        "launch",
-
-      id:
-        myId,
-
-      gameId:
-        id,
-
-      title:
-        title
-
-    });
+    removePressed();
 
 
-  }catch(error){
+    activeCommand = null;
 
-    console.error(error);
+    activeButton = null;
 
-    alert(
-      "ゲーム起動に失敗しました"
+
+    sendCommand(
+        "S"
     );
-
-  }
-
 }
 
 
-/* =========================================================
-   ゲーム終了
-========================================================= */
+// =========================================================
+// ボタン設定
+// =========================================================
 
-function closeGame(){
+function setupButton(
+    id,
+    command
+) {
 
-  document
-    .getElementById(
-      "gameFrame"
-    )
-    .srcdoc =
-      "";
-
-
-  document
-    .getElementById(
-      "gameFrame"
-    )
-    .src =
-      "about:blank";
-
-
-  document
-    .getElementById(
-      "gameLayer"
-    )
-    .style.display =
-      "none";
-
-
-  document
-    .getElementById(
-      "mobilePauseBtn"
-    )
-    .style.display =
-      "none";
-
-
-  document
-    .getElementById(
-      "pauseOverlay"
-    )
-    .style.display =
-      "none";
-
-}
-
-
-/* =========================================================
-   履歴
-========================================================= */
-
-function updateHistoryUI(
-  history
-){
-
-  const container =
+    const button =
     document.getElementById(
-      "historyContainer"
-    );
-
-
-  if(
-    !history ||
-    !history.length
-  ){
-
-    container.innerHTML =
-      "履歴なし";
-
-    return;
-
-  }
-
-
-  container.innerHTML =
-    history
-      .map(
-        item => `
-
-          <div class="history-item">
-
-            <span>
-              ${escapeHTML(
-                item.reason
-              )}
-            </span>
-
-            <span>
-
-              ${
-                Number(item.coin) >= 0
-                  ? "+"
-                  : ""
-              }
-
-              ${Number(item.coin)}
-
-            </span>
-
-          </div>
-
-        `
-      )
-      .join("");
-
-}
-
-
-/* =========================================================
-   フレンドUI
-========================================================= */
-
-function renderFriends(
-  pending
-){
-
-  const req =
-    document.getElementById(
-      "reqList"
-    );
-
-  const list =
-    document.getElementById(
-      "fList"
-    );
-
-
-  const pendingIds =
-    pending
-      ? pending
-          .split(",")
-          .filter(Boolean)
-      : [];
-
-
-  req.innerHTML =
-    pendingIds.length
-
-      ?
-
-      pendingIds
-        .map(
-          id => `
-
-            <div
-              style="
-                background:#fff;
-                color:#333;
-                padding:10px;
-                border-radius:10px;
-                margin-bottom:5px;
-              "
-            >
-
-              <span>
-                ID:
-                ${escapeHTML(id)}
-              </span>
-
-              <button
-                onclick="
-                  acceptF(
-                    '${escapeHTML(id)}'
-                  )
-                "
-              >
-                承認
-              </button>
-
-            </div>
-
-          `
-        )
-        .join("")
-
-      :
-
-      "なし";
-
-
-  list.innerHTML =
-    friendsData.length
-
-      ?
-
-      friendsData
-        .map(
-          friend => `
-
-            <div
-              style="
-                background:#fff;
-                color:#333;
-                padding:10px;
-                margin-bottom:5px;
-                border-radius:10px;
-                display:flex;
-                justify-content:space-between;
-              "
-            >
-
-              <span>
-                ${escapeHTML(friend.name)}
-                ${
-                  friend.isOfficial
-                    ? " ✔"
-                    : ""
-                }
-              </span>
-
-              <span>
-
-                <button
-                  onclick="
-                    sendFriendGift(
-                      '${escapeHTML(friend.id)}'
-                    )
-                  "
-                >
-                  🎁
-                </button>
-
-                <button
-                  onclick="
-                    removeFriend(
-                      '${escapeHTML(friend.id)}'
-                    )
-                  "
-                >
-                  ×
-                </button>
-
-              </span>
-
-            </div>
-
-          `
-        )
-        .join("")
-
-      :
-
-      "なし";
-
-}
-
-
-/* =========================================================
-   フレンド申請
-========================================================= */
-
-async function sendReq(){
-
-  const target =
-    document
-      .getElementById(
-        "fIdIn"
-      )
-      .value
-      .trim()
-      .toUpperCase();
-
-
-  if(!target){
-
-    alert(
-      "IDを入力してください"
-    );
-
-    return;
-
-  }
-
-
-  if(
-    target === myId
-  ){
-
-    alert(
-      "自分自身には申請できません"
-    );
-
-    return;
-
-  }
-
-
-  const result =
-    await postGAS({
-
-      type:
-        "request",
-
-      myId:
-        myId,
-
-      targetId:
-        target
-
-    });
-
-
-  if(
-    result.result !==
-    "success"
-  ){
-
-    alert(
-      result.message ||
-      "申請に失敗しました"
-    );
-
-    return;
-
-  }
-
-
-  logWebAction(
-    "フレンド申請",
-    target
-  );
-
-
-  alert(
-    "送信完了"
-  );
-
-
-  document
-    .getElementById(
-      "fIdIn"
-    )
-    .value =
-      "";
-
-
-  await fetchSync();
-
-}
-
-
-/* =========================================================
-   承認
-========================================================= */
-
-async function acceptF(
-  target
-){
-
-  const result =
-    await postGAS({
-
-      type:
-        "accept",
-
-      myId:
-        myId,
-
-      targetId:
-        target
-
-    });
-
-
-  if(
-    result.result !==
-    "success"
-  ){
-
-    alert(
-      result.message ||
-      "承認に失敗しました"
-    );
-
-    return;
-
-  }
-
-
-  await fetchSync();
-
-}
-
-
-/* =========================================================
-   フレンド解除
-========================================================= */
-
-async function removeFriend(
-  fid
-){
-
-  if(
-    !confirm(
-      "このフレンドを解除しますか？"
-    )
-  ){
-
-    return;
-
-  }
-
-
-  const result =
-    await postGAS({
-
-      type:
-        "removeFriend",
-
-      myId:
-        myId,
-
-      targetId:
-        fid
-
-    });
-
-
-  if(
-    result.result !==
-    "success"
-  ){
-
-    alert(
-      result.message ||
-      "解除に失敗しました"
-    );
-
-    return;
-
-  }
-
-
-  await fetchSync();
-
-}
-
-
-/* =========================================================
-   コイン送信
-========================================================= */
-
-async function sendFriendGift(
-  fid
-){
-
-  const amount =
-    prompt(
-      "枚数",
-      "100"
-    );
-
-
-  if(!amount){
-
-    return;
-
-  }
-
-
-  const n =
-    Number(amount);
-
-
-  if(
-    !Number.isFinite(n) ||
-    n <= 0
-  ){
-
-    alert(
-      "枚数が不正です"
-    );
-
-    return;
-
-  }
-
-
-  if(
-    iroCoins < n
-  ){
-
-    alert(
-      "コインが不足しています"
-    );
-
-    return;
-
-  }
-
-
-  const result =
-    await postGAS({
-
-      type:
-        "friendGift",
-
-      fromId:
-        myId,
-
-      fromName:
-        document
-          .getElementById(
-            "hName"
-          )
-          .innerText,
-
-      toId:
-        fid,
-
-      amount:
-        n
-
-    });
-
-
-  if(
-    result.result !==
-    "success"
-  ){
-
-    alert(
-      result.message ||
-      "送信に失敗しました"
-    );
-
-    return;
-
-  }
-
-
-  await fetchSync();
-
-}
-
-
-/* =========================================================
-   プレゼント受取
-========================================================= */
-
-async function claim(
-  giftId,
-  type,
-  content,
-  name
-){
-
-  const result =
-    await postGAS({
-
-      type:
-        "claim",
-
-      userId:
-        myId,
-
-      giftId:
-        String(giftId)
-
-    });
-
-
-  if(
-    result.result !==
-    "success"
-  ){
-
-    alert(
-      result.message ||
-      "受取に失敗しました"
-    );
-
-    return;
-
-  }
-
-
-  alert(
-    `「${name}」受取完了`
-  );
-
-
-  await fetchSync();
-
-}
-
-
-/* =========================================================
-   プレゼントUI
-========================================================= */
-
-function updatePresentUI(
-  gifts
-){
-
-  const badge =
-    document.getElementById(
-      "pBadge"
-    );
-
-  const container =
-    document.getElementById(
-      "pListContainer"
-    );
-
-
-  if(
-    !gifts ||
-    !gifts.length
-  ){
-
-    badge.style.display =
-      "none";
-
-    container.innerHTML =
-      "プレゼントはありません";
-
-    return;
-
-  }
-
-
-  badge.innerText =
-    gifts.length;
-
-  badge.style.display =
-    "flex";
-
-
-  container.innerHTML =
-    gifts
-      .map(
-        gift => `
-
-          <div
-            class="present-item"
-          >
-
-            <div>
-
-              <b>
-                ${escapeHTML(
-                  gift.fromName ||
-                  "USER"
-                )}
-              </b>
-
-              <br>
-
-              ${
-                gift.type === "coin"
-
-                  ? "🪙 " +
-                    escapeHTML(
-                      gift.content
-                    ) +
-                    "コイン"
-
-                  : "🎁 " +
-                    escapeHTML(
-                      gift.content
-                    )
-
-              }
-
-            </div>
-
-
-            <button
-              class="btn-pro"
-              style="
-                width:auto;
-                padding:8px 15px;
-                margin:0;
-              "
-              onclick="
-                claim(
-                  '${escapeHTML(gift.id)}',
-                  '${escapeHTML(gift.type)}',
-                  '${escapeHTML(gift.content)}',
-                  '${escapeHTML(gift.fromName || 'プレゼント')}'
-                )
-              "
-            >
-              <span>受取</span>
-            </button>
-
-          </div>
-
-        `
-      )
-      .join("");
-
-}
-
-
-/* =========================================================
-   データ復元ダイアログ
-========================================================= */
-
-function openTransfer(){
-
-  logWebAction(
-    "データ復元開始"
-  );
-
-
-  document
-    .getElementById(
-      "modalTransfer"
-    )
-    .showModal();
-
-}
-
-
-/* =========================================================
-   データ復元
-========================================================= */
-
-async function executeTransfer(){
-
-  const id =
-    document
-      .getElementById(
-        "tIdIn"
-      )
-      .value
-      .trim()
-      .toUpperCase();
-
-
-  const pass =
-    document
-      .getElementById(
-        "tPassIn"
-      )
-      .value;
-
-
-  if(!id || !pass){
-
-    alert(
-      "IDと合言葉を入力してください"
-    );
-
-    return;
-
-  }
-
-
-  try{
-
-    const json =
-      await getGAS(
-        "",
-        {
-          id:id
-        }
-      );
-
-
-    if(
-      json.result ===
-      "success" &&
-      String(json.pass) ===
-      String(pass)
-    ){
-
-      localStorage.setItem(
-        "gID",
         id
-      );
-
-      localStorage.setItem(
-        "gName",
-        json.name || ""
-      );
-
-      localStorage.setItem(
-        "gPass",
-        pass
-      );
-
-      localStorage.setItem(
-        "gCoins",
-        json.iroCoin || 0
-      );
-
-
-      myId =
-        id;
-
-
-      logWebAction(
-        "データ復元成功"
-      );
-
-
-      document
-        .getElementById(
-          "modalTransfer"
-        )
-        .close();
-
-
-      location.reload();
-
-    }else{
-
-      alert(
-        "IDまたは合言葉が違います"
-      );
-
-    }
-
-  }catch(error){
-
-    console.error(error);
-
-    alert(
-      "復元に失敗しました"
     );
 
-  }
 
+    button.addEventListener(
+        "pointerdown",
+        event => {
+
+            startMoving(
+                command,
+                button,
+                event
+            );
+        }
+    );
+
+
+    button.addEventListener(
+        "pointerup",
+        event => {
+
+            stopMoving(
+                button,
+                event
+            );
+        }
+    );
+
+
+    button.addEventListener(
+        "pointercancel",
+        event => {
+
+            stopMoving(
+                button,
+                event
+            );
+        }
+    );
+
+
+    button.addEventListener(
+        "lostpointercapture",
+        () => {
+
+            if (
+                activeButton === button
+            ) {
+
+                stopMoving(
+                    button,
+                    null
+                );
+            }
+        }
+    );
 }
 
 
-/* =========================================================
-   属性用エスケープ
-========================================================= */
-
-function escapeAttribute(
-  value
-){
-
-  return String(
-    value || ""
-  )
-  .replaceAll(
-    "&",
-    "&amp;"
-  )
-  .replaceAll(
-    '"',
-    "&quot;"
-  )
-  .replaceAll(
-    "'",
-    "&#039;"
-  );
-
-}
+setupButton(
+    "up",
+    "U"
+);
 
 
-/* =========================================================
-   初期化
-========================================================= */
+setupButton(
+    "down",
+    "D"
+);
+
+
+setupButton(
+    "left",
+    "L"
+);
+
+
+setupButton(
+    "right",
+    "R"
+);
+
+
+// =========================================================
+// STOP
+// =========================================================
+
+const stopButton =
+document.getElementById(
+    "stop"
+);
+
+
+stopButton.addEventListener(
+    "pointerdown",
+    event => {
+
+        event.preventDefault();
+
+
+        removePressed();
+
+
+        activeCommand = null;
+
+        activeButton = null;
+
+
+        stopButton.classList.add(
+            "pressed"
+        );
+
+
+        sendCommand(
+            "S"
+        );
+    }
+);
+
+
+stopButton.addEventListener(
+    "pointerup",
+    () => {
+
+        stopButton.classList.remove(
+            "pressed"
+        );
+    }
+);
+
+
+// =========================================================
+// Bluetoothボタン
+// =========================================================
+
+bluetoothButton.addEventListener(
+    "click",
+    async () => {
+
+        if (
+            isBluetoothConnected()
+        ) {
+
+            await sendBluetooth(
+                "S"
+            );
+
+
+            try {
+
+                bluetoothDevice
+                .gatt
+                .disconnect();
+
+            } catch (e) {}
+
+        } else {
+
+            await connectBluetooth();
+        }
+    }
+);
+
+
+// =========================================================
+// 再接続
+// =========================================================
+
+reconnectButton.addEventListener(
+    "click",
+    async () => {
+
+        await reconnectBluetooth();
+    }
+);
+
+
+// =========================================================
+// USB
+// =========================================================
+
+usbButton.addEventListener(
+    "click",
+    async () => {
+
+        if (
+            isUSBConnected()
+        ) {
+
+            await disconnectUSB();
+
+        } else {
+
+            await connectUSB();
+        }
+    }
+);
+
+
+// =========================================================
+// キーボード
+// =========================================================
+
+const keys = {
+
+    ArrowUp: [
+        "U",
+        "up"
+    ],
+
+    ArrowDown: [
+        "D",
+        "down"
+    ],
+
+    ArrowLeft: [
+        "L",
+        "left"
+    ],
+
+    ArrowRight: [
+        "R",
+        "right"
+    ]
+};
+
 
 document.addEventListener(
-  "DOMContentLoaded",
-  function(){
+    "keydown",
+    event => {
 
-    document
-      .getElementById(
-        "myIdDisplay"
-      )
-      .innerText =
-        myId;
+        if (
+            !keys[event.key]
+        ) {
 
-
-    const savedName =
-      localStorage.getItem(
-        "gName"
-      );
+            return;
+        }
 
 
-    const savedPass =
-      localStorage.getItem(
-        "gPass"
-      );
+        event.preventDefault();
 
 
-    if(savedName){
+        if (
+            event.repeat
+        ) {
 
-      document
-        .getElementById(
-          "nIn"
-        )
-        .value =
-          savedName;
+            return;
+        }
 
+
+        const data =
+        keys[event.key];
+
+
+        const button =
+        document.getElementById(
+            data[1]
+        );
+
+
+        startMoving(
+            data[0],
+            button,
+            event
+        );
     }
+);
 
 
-    if(savedPass){
+document.addEventListener(
+    "keyup",
+    event => {
 
-      document
-        .getElementById(
-          "pIn"
-        )
-        .value =
-          savedPass;
+        if (
+            !keys[event.key]
+        ) {
 
+            return;
+        }
+
+
+        event.preventDefault();
+
+
+        const data =
+        keys[event.key];
+
+
+        const button =
+        document.getElementById(
+            data[1]
+        );
+
+
+        stopMoving(
+            button,
+            event
+        );
     }
+);
 
-  }
+
+// =========================================================
+// タブ・画面から離れたら停止
+// =========================================================
+
+window.addEventListener(
+    "blur",
+    () => {
+
+        if (
+            activeCommand !== null
+        ) {
+
+            removePressed();
+
+            activeCommand = null;
+
+            activeButton = null;
+
+
+            sendCommand(
+                "S"
+            );
+        }
+    }
+);
+
+
+// =========================================================
+// USB抜去
+// =========================================================
+
+if (
+    "serial" in navigator
+) {
+
+    navigator.serial.addEventListener(
+        "disconnect",
+        event => {
+
+            if (
+                serialPort ===
+                event.target
+            ) {
+
+                serialPort = null;
+
+                serialWriter = null;
+
+                serialReader = null;
+
+
+                updateStatus();
+
+
+                log(
+                    "USBが抜かれました"
+                );
+
+
+                if (
+                    isBluetoothConnected()
+                ) {
+
+                    log(
+                        "Bluetoothで操作を継続できます"
+                    );
+                }
+            }
+        }
+    );
+}
+
+
+// =========================================================
+// 初期化
+// =========================================================
+
+currentSpeed = 50;
+
+updateSpeedDisplay();
+
+updateStatus();
+
+
+log(
+    "コントローラー起動"
+);
+
+log(
+    "速度50%で開始"
 );
 
 </script>
