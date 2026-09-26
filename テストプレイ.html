@@ -1,0 +1,4323 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+>
+
+<title>幻想クロニクル</title>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+html,
+body{
+  margin:0;
+  width:100%;
+  height:100%;
+  font-family:
+    Arial,
+    "Noto Sans JP",
+    sans-serif;
+  background:#050509;
+  color:#fff;
+}
+
+body{
+  overflow:hidden;
+}
+
+button,
+input{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.hidden{
+  display:none!important;
+}
+
+
+/* ================================
+   BACKGROUND
+================================ */
+
+.bg{
+  position:fixed;
+  inset:0;
+
+  background:
+    radial-gradient(
+      circle at 50% 20%,
+      #174d49 0,
+      transparent 40%
+    ),
+    linear-gradient(
+      135deg,
+      #050509,
+      #15121d 55%,
+      #050509
+    );
+
+  z-index:-2;
+}
+
+.bg:after{
+  content:"";
+
+  position:absolute;
+  inset:0;
+
+  background:
+    radial-gradient(
+      circle,
+      transparent,
+      #000 90%
+    );
+
+  z-index:-1;
+}
+
+
+/* ================================
+   SCREEN
+================================ */
+
+.screen{
+  position:absolute;
+  inset:0;
+
+  display:flex;
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  padding:20px;
+}
+
+
+/* ================================
+   TITLE
+================================ */
+
+.title{
+  font-size:
+    clamp(
+      3.5rem,
+      15vw,
+      8rem
+    );
+
+  margin:0;
+
+  text-shadow:
+    0 0 30px #33ffcc;
+}
+
+.sub{
+  letter-spacing:12px;
+  color:#ff3399;
+  font-weight:900;
+}
+
+
+/* ================================
+   BUTTON
+================================ */
+
+.btn{
+  border:0;
+  border-radius:10px;
+
+  padding:
+    13px 22px;
+
+  font-weight:900;
+
+  background:#fff;
+  color:#111;
+
+  margin:6px;
+
+  transition:
+    transform .12s,
+    opacity .12s;
+}
+
+.btn:hover{
+  opacity:.9;
+}
+
+.btn:active{
+  transform:scale(.96);
+}
+
+.btn.green{
+  background:#00b894;
+  color:#fff;
+}
+
+.btn.pink{
+  background:#ff3399;
+  color:#fff;
+}
+
+.btn.dark{
+  background:#272733;
+  color:#fff;
+}
+
+.btn.red{
+  background:#b51e42;
+  color:#fff;
+}
+
+
+/* ================================
+   PANEL
+================================ */
+
+.panel{
+  width:min(1100px,94%);
+
+  background:#000b;
+
+  border:
+    1px solid #ffffff22;
+
+  border-radius:20px;
+
+  padding:24px;
+}
+
+
+/* ================================
+   STUDENT CARD
+================================ */
+
+.student{
+  background:#fff;
+  color:#222;
+
+  border-radius:15px;
+
+  padding:22px;
+
+  width:min(360px,90%);
+
+  box-shadow:
+    0 0 30px #000;
+}
+
+.student input{
+  width:100%;
+
+  border:0;
+
+  border-bottom:
+    2px solid #333;
+
+  padding:12px;
+
+  margin:7px 0;
+
+  color:#111;
+
+  outline:none;
+}
+
+
+/* ================================
+   HEADER
+================================ */
+
+.header{
+  position:absolute;
+
+  top:15px;
+  left:15px;
+  right:15px;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  z-index:1000;
+}
+
+.avatar{
+  width:38px;
+  height:38px;
+
+  border-radius:50%;
+
+  border:
+    2px solid #fff;
+
+  object-fit:cover;
+
+  background:#222;
+}
+
+.coins{
+  color:#33ffcc;
+  font-weight:900;
+
+  margin-left:auto;
+}
+
+
+/* ================================
+   NAVIGATION
+================================ */
+
+.nav{
+  position:absolute;
+
+  bottom:22px;
+
+  width:95%;
+  max-width:900px;
+
+  display:flex;
+
+  gap:10px;
+
+  z-index:1000;
+}
+
+.nav button{
+  flex:1;
+
+  padding:18px 5px;
+
+  border:
+    1px solid #ffffff33;
+
+  border-radius:12px;
+
+  background:#000b;
+
+  color:#fff;
+
+  font-weight:900;
+}
+
+.nav .main{
+  background:#ff3399;
+}
+
+
+/* ================================
+   PRESENT
+================================ */
+
+.present{
+  position:absolute;
+
+  top:75px;
+  left:15px;
+
+  z-index:1000;
+
+  border:
+    1px solid #ffffff33;
+
+  background:#000b;
+
+  border-radius:50%;
+
+  width:46px;
+  height:46px;
+
+  color:#fff;
+
+  font-size:20px;
+}
+
+.badge{
+  position:absolute;
+
+  top:-3px;
+  right:-3px;
+
+  background:red;
+
+  border-radius:50%;
+
+  font-size:11px;
+
+  padding:3px 6px;
+}
+
+
+/* ================================
+   BOTTOM SHEET
+================================ */
+
+.sheet{
+  position:fixed;
+
+  left:0;
+  right:0;
+
+  bottom:-100%;
+
+  height:92%;
+
+  background:#0a0b12;
+
+  border-radius:
+    25px 25px 0 0;
+
+  z-index:5000;
+
+  transition:
+    bottom .35s;
+
+  overflow:auto;
+}
+
+.sheet.open{
+  bottom:0;
+}
+
+.sheetContent{
+  padding:25px;
+
+  max-width:900px;
+
+  margin:auto;
+}
+
+#sheetOverlay{
+  position:fixed;
+
+  inset:0;
+
+  background:#000c;
+
+  z-index:4900;
+
+  display:none;
+}
+
+
+/* ================================
+   LIST
+================================ */
+
+.list{
+  display:flex;
+
+  flex-direction:column;
+
+  gap:9px;
+}
+
+.item{
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  gap:10px;
+
+  padding:13px;
+
+  background:#ffffff0d;
+
+  border:
+    1px solid #ffffff14;
+
+  border-radius:12px;
+}
+
+
+/* ================================
+   GRID
+================================ */
+
+.grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(120px,1fr)
+    );
+
+  gap:12px;
+}
+
+.member{
+  background:#ffffff0d;
+
+  border:
+    1px solid #ffffff22;
+
+  border-radius:12px;
+
+  padding:9px;
+
+  text-align:center;
+
+  cursor:pointer;
+}
+
+.member img{
+  width:100%;
+  height:120px;
+
+  object-fit:cover;
+
+  border-radius:8px;
+}
+
+
+/* ================================
+   DARK INPUT
+================================ */
+
+input.dark{
+  width:100%;
+
+  padding:12px;
+
+  border-radius:10px;
+
+  border:
+    1px solid #444;
+
+  background:#111;
+
+  color:#fff;
+
+  outline:none;
+}
+
+
+/* ================================
+   GAME
+================================ */
+
+#gameLayer{
+  position:fixed;
+
+  inset:0;
+
+  background:#000;
+
+  z-index:9000;
+
+  display:none;
+}
+
+#gameFrame{
+  width:100%;
+  height:100%;
+
+  border:0;
+}
+
+#pause{
+  position:fixed;
+
+  inset:0;
+
+  background:#000e;
+
+  z-index:9500;
+
+  display:none;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  justify-content:center;
+}
+
+#pauseBtn{
+  position:fixed;
+
+  right:15px;
+  top:15px;
+
+  z-index:9100;
+
+  display:none;
+
+  background:#000b;
+
+  color:#fff;
+
+  border:
+    1px solid #fff;
+
+  border-radius:50%;
+
+  width:45px;
+  height:45px;
+}
+
+
+/* ================================
+   DIALOG
+================================ */
+
+dialog{
+  background:#111;
+
+  color:#fff;
+
+  border:0;
+
+  border-radius:18px;
+
+  padding:25px;
+
+  width:min(350px,90%);
+
+  box-shadow:
+    0 0 50px #000;
+}
+
+dialog::backdrop{
+  background:#000c;
+}
+
+
+/* ================================
+   TOAST
+================================ */
+
+#toast{
+  position:fixed;
+
+  left:50%;
+
+  bottom:25px;
+
+  transform:
+    translateX(-50%);
+
+  z-index:99999;
+
+  pointer-events:none;
+}
+
+
+/* ================================
+   MOBILE
+================================ */
+
+@media(max-width:650px){
+
+  .nav{
+    gap:5px;
+  }
+
+  .nav button{
+    font-size:12px;
+    padding:15px 3px;
+  }
+
+  .sub{
+    letter-spacing:6px;
+  }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div class="bg"></div>
+
+
+<!-- =================================================
+     TITLE
+================================================= -->
+
+<div
+  id="titleScreen"
+  class="screen"
+>
+
+  <h1 class="title">
+    GENSOU
+  </h1>
+
+  <div class="sub">
+    COLORFUL STAGE
+  </div>
+
+  <button
+    class="btn"
+    onclick="handleLoginClick()"
+  >
+    ログイン / 新規登録
+  </button>
+
+  <button
+    class="btn pink"
+    onclick="openTransfer()"
+  >
+    データ復元
+  </button>
+
+</div>
+
+
+<!-- =================================================
+     REGISTRATION
+================================================= -->
+
+<div
+  id="registrationScreen"
+  class="screen hidden"
+>
+
+  <h2>
+    NEW REGISTRATION
+  </h2>
+
+  <div class="student">
+
+    <h3>
+      学生証作成
+    </h3>
+
+    <input
+      id="regName"
+      placeholder="なまえ"
+    >
+
+    <input
+      id="regPass"
+      type="password"
+      placeholder="合言葉"
+    >
+
+  </div>
+
+  <button
+    class="btn"
+    onclick="saveRegistration()"
+  >
+    作成してログイン
+  </button>
+
+  <button
+    class="btn dark"
+    onclick="showScreen(
+      'registrationScreen',
+      'titleScreen'
+    )"
+  >
+    戻る
+  </button>
+
+</div>
+
+
+<!-- =================================================
+     LOADING
+================================================= -->
+
+<div
+  id="loadingScreen"
+  class="screen hidden"
+>
+
+  <h2 style="color:#33ffcc">
+    同期中...
+  </h2>
+
+</div>
+
+
+<!-- =================================================
+     MAIN
+================================================= -->
+
+<div
+  id="gameScreen"
+  class="screen hidden"
+>
+
+  <div class="header">
+
+    <img
+      id="hAv"
+      class="avatar"
+      onclick="openSheet('sheetConfig')"
+    >
+
+    <b id="hName">
+      ---
+    </b>
+
+    <span id="hVerified"></span>
+
+    <span class="coins">
+      🪙
+      <span id="hIroCoin">
+        0
+      </span>
+    </span>
+
+  </div>
+
+
+  <button
+    class="present"
+    onclick="openSheet('sheetPresent')"
+  >
+
+    🎁
+
+    <span
+      id="pBadge"
+      class="badge hidden"
+    >
+      0
+    </span>
+
+  </button>
+
+
+  <h1
+    style="
+      font-size:
+        clamp(2rem,10vw,5rem);
+      letter-spacing:10px;
+    "
+  >
+    MAIN CONSOLE
+  </h1>
+
+
+  <div class="nav">
+
+    <button
+      onclick="openSheet('sheetFriend')"
+    >
+      フレンド
+    </button>
+
+    <button
+      onclick="launchGachaUI()"
+    >
+      ガチャ
+    </button>
+
+    <button
+      class="main"
+      onclick="
+        showScreen(
+          'gameScreen',
+          'questScreen'
+        );
+        loadGameList();
+      "
+    >
+      クエスト
+    </button>
+
+    <button
+      onclick="
+        openSheet('sheetMember');
+        renderMembers();
+      "
+    >
+      メンバー
+    </button>
+
+    <button
+      onclick="openSheet('sheetConfig')"
+    >
+      設定
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =================================================
+     QUEST
+================================================= -->
+
+<div
+  id="questScreen"
+  class="screen hidden"
+>
+
+  <h2>
+    QUEST SELECT
+  </h2>
+
+  <div
+    id="gameListContainer"
+    class="grid"
+    style="width:min(900px,95%)"
+  ></div>
+
+  <button
+    class="btn dark"
+    onclick="
+      showScreen(
+        'questScreen',
+        'gameScreen'
+      )
+    "
+  >
+    戻る
+  </button>
+
+</div>
+
+
+<!-- =================================================
+     SHEET OVERLAY
+================================================= -->
+
+<div
+  id="sheetOverlay"
+  onclick="closeAllSheets()"
+></div>
+
+
+<!-- =================================================
+     MEMBER
+================================================= -->
+
+<div
+  id="sheetMember"
+  class="sheet"
+>
+
+  <div class="sheetContent">
+
+    <h2>
+      MY MEMBERS
+    </h2>
+
+    <div
+      id="memberListContainer"
+      class="grid"
+    ></div>
+
+    <button
+      class="btn dark"
+      onclick="
+        closeSheet('sheetMember')
+      "
+    >
+      閉じる
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =================================================
+     MEMBER DETAIL
+================================================= -->
+
+<div
+  id="sheetMemberDetail"
+  class="sheet"
+>
+
+  <div
+    class="sheetContent"
+    style="text-align:center"
+  >
+
+    <div
+      id="memberDetailContent"
+    ></div>
+
+    <div
+      id="giftSelectionArea"
+      class="hidden"
+    >
+
+      <h3>
+        贈るフレンドを選択
+      </h3>
+
+      <div
+        id="giftFriendList"
+        class="list"
+      ></div>
+
+    </div>
+
+    <button
+      id="startGiftBtn"
+      class="btn pink"
+    >
+      フレンドにあげる
+    </button>
+
+    <button
+      class="btn dark"
+      onclick="
+        closeSheet(
+          'sheetMemberDetail'
+        )
+      "
+    >
+      戻る
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =================================================
+     PRESENT
+================================================= -->
+
+<div
+  id="sheetPresent"
+  class="sheet"
+>
+
+  <div class="sheetContent">
+
+    <h2>
+      PRESENTS
+    </h2>
+
+    <div
+      id="pListContainer"
+    ></div>
+
+    <h2>
+      COIN HISTORY
+    </h2>
+
+    <div
+      id="historyContainer"
+    ></div>
+
+    <button
+      class="btn dark"
+      onclick="
+        closeSheet('sheetPresent')
+      "
+    >
+      閉じる
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =================================================
+     CONFIG
+================================================= -->
+
+<div
+  id="sheetConfig"
+  class="sheet"
+>
+
+  <div class="sheetContent">
+
+    <h2>
+      設定
+    </h2>
+
+    <div class="student">
+
+      <img
+        id="mAv"
+        class="avatar"
+        style="
+          width:100px;
+          height:100px;
+        "
+        onclick="
+          document
+            .getElementById('fileIn')
+            .click()
+        "
+      >
+
+      <p>
+        ID:
+        <b id="myIdDisplay">
+          ---
+        </b>
+      </p>
+
+      <input
+        id="nIn"
+        placeholder="名前"
+      >
+
+      <input
+        id="pIn"
+        type="password"
+        placeholder="合言葉"
+      >
+
+      <input
+        id="fileIn"
+        type="file"
+        accept="image/*"
+        style="display:none"
+        onchange="uploadIcon(this)"
+      >
+
+    </div>
+
+    <button
+      class="btn"
+      onclick="saveSettings()"
+    >
+      保存して同期
+    </button>
+
+    <button
+      class="btn dark"
+      onclick="
+        closeSheet('sheetConfig')
+      "
+    >
+      閉じる
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =================================================
+     FRIEND
+================================================= -->
+
+<div
+  id="sheetFriend"
+  class="sheet"
+>
+
+  <div class="sheetContent">
+
+    <h2>
+      FRIENDS
+    </h2>
+
+    <input
+      id="fIdIn"
+      class="dark"
+      placeholder="相手のID"
+    >
+
+    <button
+      class="btn pink"
+      onclick="sendReq()"
+    >
+      申請
+    </button>
+
+    <h3>
+      受信した申請
+    </h3>
+
+    <div
+      id="reqList"
+      class="list"
+    ></div>
+
+    <h3>
+      フレンド
+    </h3>
+
+    <div
+      id="fList"
+      class="list"
+    ></div>
+
+    <button
+      class="btn dark"
+      onclick="
+        closeSheet('sheetFriend')
+      "
+    >
+      閉じる
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =================================================
+     TRANSFER
+================================================= -->
+
+<dialog id="modalTransfer">
+
+  <h3>
+    データ復元
+  </h3>
+
+  <input
+    id="tIdIn"
+    class="dark"
+    placeholder="ID"
+  >
+
+  <input
+    id="tPassIn"
+    class="dark"
+    type="password"
+    placeholder="合言葉"
+  >
+
+  <button
+    class="btn pink"
+    onclick="executeTransfer()"
+  >
+    復元実行
+  </button>
+
+  <button
+    class="btn dark"
+    onclick="
+      document
+        .getElementById('modalTransfer')
+        .close()
+    "
+  >
+    閉じる
+  </button>
+
+</dialog>
+
+
+<!-- =================================================
+     GACHA
+================================================= -->
+
+<dialog id="gachaDialog">
+
+  <h2>
+    ✨ ガチャ
+  </h2>
+
+  <div id="gachaInfo">
+    キャラクターガチャ
+  </div>
+
+  <div style="text-align:center">
+
+    <div
+      id="gachaStar"
+      style="
+        font-size:40px;
+        color:#ffd84d;
+      "
+    >
+      ?
+    </div>
+
+    <img
+      id="gachaImg"
+      style="
+        max-width:180px;
+        max-height:180px;
+        display:none;
+        margin:auto;
+        border-radius:12px;
+      "
+    >
+
+    <h2 id="gachaName">
+      ---
+    </h2>
+
+  </div>
+
+  <button
+    class="btn pink"
+    onclick="drawGacha()"
+  >
+    1回 100コイン
+  </button>
+
+  <button
+    class="btn dark"
+    onclick="
+      document
+        .getElementById('gachaDialog')
+        .close()
+    "
+  >
+    閉じる
+  </button>
+
+</dialog>
+
+
+<!-- =================================================
+     GAME
+================================================= -->
+
+<div id="gameLayer">
+
+  <button
+    id="pauseBtn"
+    onclick="showPause()"
+  >
+    Ⅱ
+  </button>
+
+  <iframe
+    id="gameFrame"
+    src="about:blank"
+  ></iframe>
+
+</div>
+
+
+<!-- =================================================
+     PAUSE
+================================================= -->
+
+<div id="pause">
+
+  <h1>
+    PAUSE
+  </h1>
+
+  <button
+    class="btn"
+    onclick="resumeGame()"
+  >
+    再開
+  </button>
+
+  <button
+    class="btn pink"
+    onclick="exitGame()"
+  >
+    終了
+  </button>
+
+</div>
+
+
+<div id="toast"></div>
+
+
+<script>
+
+/* =================================================
+   GAS URL
+================================================= */
+
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycbymku4waackl0hwHSe7dfglsTTe4Mueh2gdkgSbORCrteyWx0z9IA0_0aNBixI2yqad/exec";
+
+
+/* =================================================
+   DATA
+================================================= */
+
+let myId =
+  localStorage.getItem("gID") || "";
+
+let iroCoins =
+  Number(
+    localStorage.getItem("gCoins") || 0
+  );
+
+let myChars = "";
+
+let globalCharaPool = {
+  star2:[],
+  star3:[],
+  star4:[]
+};
+
+let friendsData = [];
+
+
+/* =================================================
+   GAS GET
+================================================= */
+
+async function getGAS(
+  action,
+  params={}
+){
+
+  const query =
+    new URLSearchParams({
+      action,
+      ...params
+    });
+
+  const response =
+    await fetch(
+      GAS_URL +
+      "?" +
+      query.toString()
+    );
+
+  if(!response.ok){
+
+    throw new Error(
+      "GAS HTTP Error " +
+      response.status
+    );
+
+  }
+
+  return response.json();
+
+}
+
+
+/* =================================================
+   GAS POST
+================================================= */
+
+async function postGAS(
+  data
+){
+
+  const response =
+    await fetch(
+      GAS_URL,
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
+        body:
+          JSON.stringify(data)
+      }
+    );
+
+  if(!response.ok){
+
+    throw new Error(
+      "GAS HTTP Error " +
+      response.status
+    );
+
+  }
+
+  return response.json();
+
+}
+
+
+/* =================================================
+   SCREEN
+================================================= */
+
+function showScreen(
+  hideId,
+  showId
+){
+
+  const hide =
+    document.getElementById(
+      hideId
+    );
+
+  const show =
+    document.getElementById(
+      showId
+    );
+
+  if(hide){
+
+    hide.classList.add(
+      "hidden"
+    );
+
+  }
+
+  if(show){
+
+    show.classList.remove(
+      "hidden"
+    );
+
+  }
+
+}
+
+
+/* =================================================
+   TOAST
+================================================= */
+
+function toast(
+  message
+){
+
+  const element =
+    document.getElementById(
+      "toast"
+    );
+
+  element.textContent =
+    message;
+
+  element.style.cssText =
+    `
+      position:fixed;
+      bottom:25px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      color:#fff;
+      padding:12px 20px;
+      border:1px solid #33ffcc;
+      border-radius:999px;
+      z-index:99999;
+    `;
+
+  setTimeout(
+    ()=>{
+      element.style.cssText="";
+    },
+    2200
+  );
+
+}
+
+
+/* =================================================
+   WEB ACTION LOG
+================================================= */
+
+function logWebAction(
+  label
+){
+
+  if(!myId){
+    return;
+  }
+
+  postGAS({
+    type:"webAction",
+    id:myId,
+    action:"Web操作",
+    label:label
+  })
+  .catch(
+    error=>{
+      console.warn(
+        "操作ログ失敗",
+        error
+      );
+    }
+  );
+
+}
+
+
+/* =================================================
+   LOGIN
+================================================= */
+
+async function handleLoginClick(){
+
+  try{
+
+    if(!myId){
+
+      myId =
+        Math.random()
+          .toString(36)
+          .substring(
+            2,
+            12
+          )
+          .toUpperCase();
+
+      localStorage.setItem(
+        "gID",
+        myId
+      );
+
+    }
+
+    const name =
+      localStorage.getItem(
+        "gName"
+      );
+
+    if(name){
+
+      await beginSync();
+
+    }else{
+
+      showScreen(
+        "titleScreen",
+        "registrationScreen"
+      );
+
+    }
+
+  }catch(error){
+
+    console.error(error);
+
+    alert(
+      "ログイン処理に失敗しました"
+    );
+
+  }
+
+}
+
+
+/* =================================================
+   REGISTRATION
+================================================= */
+
+async function saveRegistration(){
+
+  const name =
+    document
+      .getElementById(
+        "regName"
+      )
+      .value
+      .trim();
+
+  const pass =
+    document
+      .getElementById(
+        "regPass"
+      )
+      .value;
+
+  if(!name || !pass){
+
+    alert(
+      "名前と合言葉を入力してください"
+    );
+
+    return;
+
+  }
+
+  localStorage.setItem(
+    "gName",
+    name
+  );
+
+  localStorage.setItem(
+    "gPass",
+    pass
+  );
+
+  await beginSync(
+    true
+  );
+
+}
+
+
+/* =================================================
+   BEGIN SYNC
+================================================= */
+
+async function beginSync(
+  first=false
+){
+
+  showScreen(
+    "titleScreen",
+    "loadingScreen"
+  );
+
+  showScreen(
+    "registrationScreen",
+    "loadingScreen"
+  );
+
+  try{
+
+    await loadPools();
+
+    const ok =
+      await fetchSync(
+        true
+      );
+
+    if(ok){
+
+      showScreen(
+        "loadingScreen",
+        "gameScreen"
+      );
+
+      toast(
+        first
+          ? "登録しました"
+          : "同期しました"
+      );
+
+    }else{
+
+      showScreen(
+        "loadingScreen",
+        "titleScreen"
+      );
+
+      alert(
+        "GASとの同期に失敗しました"
+      );
+
+    }
+
+  }catch(error){
+
+    console.error(error);
+
+    showScreen(
+      "loadingScreen",
+      "titleScreen"
+    );
+
+    alert(
+      "通信エラーが発生しました"
+    );
+
+  }
+
+}
+
+
+/* =================================================
+   CHARACTER POOL
+================================================= */
+
+async function loadPools(){
+
+  const result =
+    await getGAS(
+      "getCharaPools"
+    );
+
+  if(
+    result.result ===
+    "success"
+  ){
+
+    globalCharaPool =
+      result.data || {
+        star2:[],
+        star3:[],
+        star4:[]
+      };
+
+  }
+
+}
+
+
+/* =================================================
+   USER SYNC
+================================================= */
+
+async function fetchSync(){
+
+  if(!myId){
+
+    return false;
+
+  }
+
+  try{
+
+    const result =
+      await getGAS(
+        "getUser",
+        {
+          id:myId
+        }
+      );
+
+    if(
+      result.result !==
+      "success"
+    ){
+
+      const name =
+        localStorage.getItem(
+          "gName"
+        );
+
+      const pass =
+        localStorage.getItem(
+          "gPass"
+        );
+
+      if(!name || !pass){
+
+        return false;
+
+      }
+
+      const register =
+        await postGAS({
+          type:"register",
+          id:myId,
+          name:name,
+          pass:pass
+        });
+
+      if(
+        register.result !==
+        "success"
+      ){
+
+        return false;
+
+      }
+
+      return applyUser(
+        register.data
+      );
+
+    }
+
+    return applyUser(
+      result.data
+    );
+
+  }catch(error){
+
+    console.error(error);
+
+    return false;
+
+  }
+
+}
+
+
+/* =================================================
+   APPLY USER
+================================================= */
+
+function applyUser(
+  user
+){
+
+  if(!user){
+
+    return false;
+
+  }
+
+  iroCoins =
+    Number(
+      user.coin || 0
+    );
+
+  myChars =
+    user.chara || "";
+
+  friendsData =
+    String(
+      user.friends || ""
+    )
+      .split(",")
+      .filter(Boolean);
+
+
+  localStorage.setItem(
+    "gCoins",
+    String(iroCoins)
+  );
+
+
+  document
+    .getElementById(
+      "hIroCoin"
+    )
+    .textContent =
+      iroCoins.toLocaleString();
+
+
+  document
+    .getElementById(
+      "hName"
+    )
+    .textContent =
+      user.name || "USER";
+
+
+  document
+    .getElementById(
+      "myIdDisplay"
+    )
+    .textContent =
+      myId;
+
+
+  document
+    .getElementById(
+      "nIn"
+    )
+    .value =
+      user.name || "";
+
+
+  document
+    .getElementById(
+      "pIn"
+    )
+    .value =
+      user.pass || "";
+
+
+  const avatar =
+    user.avatar ||
+    (
+      "https://api.dicebear.com/7.x/" +
+      "avataaars/svg?seed=" +
+      encodeURIComponent(myId)
+    );
+
+
+  document
+    .getElementById(
+      "hAv"
+    )
+    .src =
+      avatar;
+
+
+  document
+    .getElementById(
+      "mAv"
+    )
+    .src =
+      avatar;
+
+
+  updatePresentUI(
+    user.received
+  );
+
+
+  renderMembers();
+
+  loadFriendsUI();
+
+  return true;
+
+}
+
+
+/* =================================================
+   SYNC SAVE
+================================================= */
+
+async function sync(
+  showAlert=true
+){
+
+  try{
+
+    const result =
+      await postGAS({
+
+        type:"sync",
+
+        id:myId,
+
+        name:
+          document
+            .getElementById(
+              "nIn"
+            )
+            .value ||
+          localStorage.getItem(
+            "gName"
+          ),
+
+        pass:
+          document
+            .getElementById(
+              "pIn"
+            )
+            .value ||
+          localStorage.getItem(
+            "gPass"
+          ),
+
+        iroCoin:
+          iroCoins,
+
+        chars:
+          myChars,
+
+        avatar:
+          localStorage.getItem(
+            "gAv"
+          ) || ""
+
+      });
+
+
+    if(
+      result.result ===
+      "success"
+    ){
+
+      applyUser(
+        result.data
+      );
+
+      if(showAlert){
+
+        toast(
+          "保存しました"
+        );
+
+      }
+
+      return true;
+
+    }
+
+
+    alert(
+      result.message ||
+      "同期に失敗しました"
+    );
+
+    return false;
+
+  }catch(error){
+
+    console.error(error);
+
+    alert(
+      "同期通信に失敗しました"
+    );
+
+    return false;
+
+  }
+
+}
+
+
+/* =================================================
+   SETTINGS
+================================================= */
+
+async function saveSettings(){
+
+  const name =
+    document
+      .getElementById(
+        "nIn"
+      )
+      .value
+      .trim();
+
+  const pass =
+    document
+      .getElementById(
+        "pIn"
+      )
+      .value;
+
+  if(!name || !pass){
+
+    alert(
+      "名前と合言葉を入力してください"
+    );
+
+    return;
+
+  }
+
+  localStorage.setItem(
+    "gName",
+    name
+  );
+
+  localStorage.setItem(
+    "gPass",
+    pass
+  );
+
+
+  const result =
+    await postGAS({
+
+      type:"setting",
+
+      id:myId,
+
+      name:name,
+
+      pass:pass,
+
+      avatar:
+        localStorage.getItem(
+          "gAv"
+        ) || ""
+
+    });
+
+
+  if(
+    result.result !==
+    "success"
+  ){
+
+    alert(
+      result.message ||
+      "保存に失敗しました"
+    );
+
+    return;
+
+  }
+
+
+  await sync(false);
+
+  closeSheet(
+    "sheetConfig"
+  );
+
+  toast(
+    "設定を保存しました"
+  );
+
+}
+
+
+/* =================================================
+   ICON
+================================================= */
+
+function uploadIcon(
+  input
+){
+
+  if(
+    !input.files ||
+    !input.files[0]
+  ){
+
+    return;
+
+  }
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload =
+    async function(event){
+
+      const data =
+        event.target.result;
+
+
+      localStorage.setItem(
+        "gAv",
+        data
+      );
+
+
+      document
+        .getElementById(
+          "hAv"
+        )
+        .src =
+        data;
+
+
+      document
+        .getElementById(
+          "mAv"
+        )
+        .src =
+        data;
+
+
+      const result =
+        await postGAS({
+
+          type:"setting",
+
+          id:myId,
+
+          avatar:data
+
+        });
+
+
+      if(
+        result.result ===
+        "success"
+      ){
+
+        toast(
+          "アイコンを保存しました"
+        );
+
+      }else{
+
+        alert(
+          result.message ||
+          "アイコン保存に失敗しました"
+        );
+
+      }
+
+    };
+
+
+  reader.readAsDataURL(
+    input.files[0]
+  );
+
+}
+
+
+/* =================================================
+   SHEETS
+================================================= */
+
+function openSheet(
+  id
+){
+
+  logWebAction(
+    "シート:" + id
+  );
+
+
+  document
+    .getElementById(
+      "sheetOverlay"
+    )
+    .style.display =
+      "block";
+
+
+  document
+    .getElementById(
+      id
+    )
+    .classList.add(
+      "open"
+    );
+
+
+  if(
+    id ===
+    "sheetFriend"
+  ){
+
+    loadFriendsUI();
+
+  }
+
+
+  if(
+    id ===
+    "sheetPresent"
+  ){
+
+    loadPresentUI();
+
+  }
+
+}
+
+
+function closeSheet(
+  id
+){
+
+  document
+    .getElementById(
+      id
+    )
+    .classList.remove(
+      "open"
+    );
+
+
+  if(
+    !document.querySelector(
+      ".sheet.open"
+    )
+  ){
+
+    document
+      .getElementById(
+        "sheetOverlay"
+      )
+      .style.display =
+        "none";
+
+  }
+
+}
+
+
+function closeAllSheets(){
+
+  document
+    .querySelectorAll(
+      ".sheet"
+    )
+    .forEach(
+      sheet=>{
+        sheet.classList.remove(
+          "open"
+        );
+      }
+    );
+
+
+  document
+    .getElementById(
+      "sheetOverlay"
+    )
+    .style.display =
+      "none";
+
+}
+
+
+/* =================================================
+   GAME LIST
+================================================= */
+
+async function loadGameList(){
+
+  const container =
+    document
+      .getElementById(
+        "gameListContainer"
+      );
+
+
+  container.textContent =
+    "読み込み中...";
+
+
+  try{
+
+    const result =
+      await getGAS(
+        "getList"
+      );
+
+
+    if(
+      result.result !==
+      "success"
+    ){
+
+      container.textContent =
+        result.message ||
+        "取得失敗";
+
+      return;
+
+    }
+
+
+    container.innerHTML =
+      "";
+
+
+    const games =
+      result.data || [];
+
+
+    if(!games.length){
+
+      container.textContent =
+        "ゲームがありません";
+
+      return;
+
+    }
+
+
+    games.forEach(
+      game=>{
+
+        const card =
+          document.createElement(
+            "div"
+          );
+
+        card.className =
+          "member";
+
+
+        const title =
+          document.createElement(
+            "b"
+          );
+
+        title.textContent =
+          game.title;
+
+
+        const button =
+          document.createElement(
+            "button"
+          );
+
+        button.className =
+          "btn green";
+
+        button.textContent =
+          "起動";
+
+
+        button.onclick =
+          ()=>{
+            launchGame(
+              game.id,
+              game.title
+            );
+          };
+
+
+        card.appendChild(
+          title
+        );
+
+        card.appendChild(
+          document.createElement(
+            "br"
+          )
+        );
+
+        card.appendChild(
+          button
+        );
+
+
+        container.appendChild(
+          card
+        );
+
+      }
+    );
+
+
+  }catch(error){
+
+    console.error(error);
+
+    container.textContent =
+      "ゲーム一覧の取得に失敗しました";
+
+  }
+
+}
+
+
+/* =================================================
+   GAME LAUNCH
+================================================= */
+
+async function launchGame(
+  id,
+  title
+){
+
+  try{
+
+    logWebAction(
+      "ゲーム起動:" +
+      title
+    );
+
+
+    const launch =
+      await postGAS({
+
+        type:"launch",
+
+        id:myId,
+
+        gameId:id,
+
+        title:title
+
+      });
+
+
+    if(
+      launch.result !==
+      "success"
+    ){
+
+      alert(
+        launch.message ||
+        "ゲーム起動記録に失敗しました"
+      );
+
+      return;
+
+    }
+
+
+    const code =
+      await getGAS(
+        "getCode",
+        {
+          row:id
+        }
+      );
+
+
+    if(
+      code.result !==
+      "success"
+    ){
+
+      alert(
+        code.message ||
+        "ゲームコード取得失敗"
+      );
+
+      return;
+
+    }
+
+
+    const frame =
+      document
+        .getElementById(
+          "gameFrame"
+        );
+
+
+    frame.srcdoc =
+      code.code || "";
+
+
+    document
+      .getElementById(
+        "gameLayer"
+      )
+      .style.display =
+        "block";
+
+
+    document
+      .getElementById(
+        "pauseBtn"
+      )
+      .style.display =
+        "block";
+
+
+  }catch(error){
+
+    console.error(error);
+
+    alert(
+      "ゲーム起動に失敗しました"
+    );
+
+  }
+
+}
+
+
+/* =================================================
+   GAME CONTROL
+================================================= */
+
+function showPause(){
+
+  logWebAction(
+    "ポーズ"
+  );
+
+  document
+    .getElementById(
+      "pause"
+    )
+    .style.display =
+      "flex";
+
+}
+
+
+function resumeGame(){
+
+  document
+    .getElementById(
+      "pause"
+    )
+    .style.display =
+      "none";
+
+}
+
+
+function exitGame(){
+
+  logWebAction(
+    "ゲーム終了"
+  );
+
+
+  document
+    .getElementById(
+      "pause"
+    )
+    .style.display =
+      "none";
+
+
+  document
+    .getElementById(
+      "gameLayer"
+    )
+    .style.display =
+      "none";
+
+
+  document
+    .getElementById(
+      "pauseBtn"
+    )
+    .style.display =
+      "none";
+
+
+  const frame =
+    document
+      .getElementById(
+        "gameFrame"
+      );
+
+
+  frame.srcdoc =
+    "";
+
+  frame.src =
+    "about:blank";
+
+}
+
+
+/* =================================================
+   GACHA
+================================================= */
+
+async function launchGachaUI(){
+
+  if(!myId){
+
+    alert(
+      "先にログインしてください"
+    );
+
+    return;
+
+  }
+
+
+  try{
+
+    const result =
+      await getGAS(
+        "getGachaSettings"
+      );
+
+
+    const settings =
+      result.data || [];
+
+
+    document
+      .getElementById(
+        "gachaInfo"
+      )
+      .textContent =
+        settings[0]?.title ||
+        "キャラクターガチャ";
+
+
+    document
+      .getElementById(
+        "gachaDialog"
+      )
+      .showModal();
+
+
+    logWebAction(
+      "ガチャ画面"
+    );
+
+
+  }catch(error){
+
+    console.error(error);
+
+    alert(
+      "ガチャ情報の取得に失敗しました"
+    );
+
+  }
+
+}
+
+
+/* =================================================
+   DRAW GACHA
+================================================= */
+
+async function drawGacha(){
+
+  if(
+    iroCoins < 100
+  ){
+
+    alert(
+      "コインが不足しています"
+    );
+
+    return;
+
+  }
+
+
+  if(
+    !globalCharaPool.star2.length &&
+    !globalCharaPool.star3.length &&
+    !globalCharaPool.star4.length
+  ){
+
+    await loadPools();
+
+  }
+
+
+  const random =
+    Math.random();
+
+
+  let star;
+
+
+  if(
+    random < 0.70
+  ){
+
+    star = 2;
+
+  }else if(
+    random < 0.95
+  ){
+
+    star = 3;
+
+  }else{
+
+    star = 4;
+
+  }
+
+
+  const pool =
+    globalCharaPool[
+      "star" + star
+    ];
+
+
+  if(
+    !pool ||
+    !pool.length
+  ){
+
+    alert(
+      "キャラクターデータがありません"
+    );
+
+    return;
+
+  }
+
+
+  const character =
+    pool[
+      Math.floor(
+        Math.random() *
+        pool.length
+      )
+    ];
+
+
+  iroCoins -= 100;
+
+
+  myChars =
+    myChars
+      ? myChars +
+        "," +
+        character.name
+      : character.name;
+
+
+  document
+    .getElementById(
+      "gachaStar"
+    )
+    .textContent =
+      "★".repeat(star);
+
+
+  document
+    .getElementById(
+      "gachaName"
+    )
+    .textContent =
+      character.name;
+
+
+  const image =
+    document
+      .getElementById(
+        "gachaImg"
+      );
+
+
+  if(character.img){
+
+    image.src =
+      character.img;
+
+    image.style.display =
+      "block";
+
+  }else{
+
+    image.style.display =
+      "none";
+
+  }
+
+
+  const result =
+    await postGAS({
+
+      type:"gachaLog",
+
+      id:myId,
+
+      newCoins:
+        iroCoins,
+
+      newChars:
+        myChars,
+
+      name:
+        character.name,
+
+      star:
+        star
+
+    });
+
+
+  if(
+    result.result !==
+    "success"
+  ){
+
+    console.warn(
+      "ガチャ記録失敗",
+      result
+    );
+
+  }
+
+
+  localStorage.setItem(
+    "gCoins",
+    String(iroCoins)
+  );
+
+
+  document
+    .getElementById(
+      "hIroCoin"
+    )
+    .textContent =
+      iroCoins.toLocaleString();
+
+
+  renderMembers();
+
+  toast(
+    "ガチャ結果を記録しました"
+  );
+
+}
+
+
+/* =================================================
+   MEMBERS
+================================================= */
+
+function renderMembers(){
+
+  const container =
+    document
+      .getElementById(
+        "memberListContainer"
+      );
+
+
+  container.innerHTML =
+    "";
+
+
+  if(!myChars){
+
+    container.textContent =
+      "キャラクターがありません";
+
+    return;
+
+  }
+
+
+  const counts = {};
+
+
+  myChars
+    .split(",")
+    .filter(Boolean)
+    .forEach(
+      name=>{
+        counts[name] =
+          (
+            counts[name] || 0
+          ) + 1;
+      }
+    );
+
+
+  const all = [
+    ...globalCharaPool.star2,
+    ...globalCharaPool.star3,
+    ...globalCharaPool.star4
+  ];
+
+
+  Object.keys(
+    counts
+  ).forEach(
+    name=>{
+
+      const character =
+        all.find(
+          item =>
+            item.name ===
+            name
+        );
+
+
+      if(!character){
+        return;
+      }
+
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+
+      card.className =
+        "member";
+
+
+      const image =
+        document.createElement(
+          "img"
+        );
+
+
+      image.src =
+        character.img || "";
+
+
+      const title =
+        document.createElement(
+          "div"
+        );
+
+
+      title.textContent =
+        name;
+
+
+      const count =
+        document.createElement(
+          "div"
+        );
+
+
+      count.textContent =
+        "×" +
+        counts[name];
+
+
+      card.appendChild(
+        image
+      );
+
+      card.appendChild(
+        title
+      );
+
+      card.appendChild(
+        count
+      );
+
+
+      card.onclick =
+        ()=>{
+          showMemberDetail(
+            name
+          );
+        };
+
+
+      container.appendChild(
+        card
+      );
+
+    }
+  );
+
+}
+
+
+/* =================================================
+   MEMBER DETAIL
+================================================= */
+
+function showMemberDetail(
+  name
+){
+
+  const all = [
+    ...globalCharaPool.star2,
+    ...globalCharaPool.star3,
+    ...globalCharaPool.star4
+  ];
+
+
+  const character =
+    all.find(
+      item =>
+        item.name ===
+        name
+    );
+
+
+  if(!character){
+    return;
+  }
+
+
+  const detail =
+    document
+      .getElementById(
+        "memberDetailContent"
+      );
+
+
+  detail.innerHTML =
+    "";
+
+
+  const image =
+    document.createElement(
+      "img"
+    );
+
+
+  image.src =
+    character.img || "";
+
+
+  image.style.maxWidth =
+    "220px";
+
+  image.style.maxHeight =
+    "300px";
+
+  image.style.borderRadius =
+    "15px";
+
+
+  const title =
+    document.createElement(
+      "h2"
+    );
+
+
+  title.textContent =
+    name;
+
+
+  detail.appendChild(
+    image
+  );
+
+  detail.appendChild(
+    title
+  );
+
+
+  document
+    .getElementById(
+      "giftSelectionArea"
+    )
+    .classList.add(
+      "hidden"
+    );
+
+
+  document
+    .getElementById(
+      "startGiftBtn"
+    )
+    .onclick =
+      ()=>{
+
+        const list =
+          document
+            .getElementById(
+              "giftFriendList"
+            );
+
+
+        list.innerHTML =
+          "";
+
+
+        if(!friendsData.length){
+
+          list.textContent =
+            "フレンドがいません";
+
+        }else{
+
+          friendsData.forEach(
+            id=>{
+
+              const button =
+                document.createElement(
+                  "button"
+                );
+
+
+              button.className =
+                "btn dark";
+
+
+              button.textContent =
+                id +
+                " に贈る";
+
+
+              button.onclick =
+                ()=>{
+                  executeMemberGift(
+                    id,
+                    name
+                  );
+                };
+
+
+              list.appendChild(
+                button
+              );
+
+            }
+          );
+
+        }
+
+
+        document
+          .getElementById(
+            "giftSelectionArea"
+          )
+          .classList.remove(
+            "hidden"
+          );
+
+      };
+
+
+  openSheet(
+    "sheetMemberDetail"
+  );
+
+}
+
+
+/* =================================================
+   MEMBER GIFT
+================================================= */
+
+async function executeMemberGift(
+  toId,
+  charName
+){
+
+  if(
+    !confirm(
+      "このキャラクターを贈りますか？"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const result =
+    await postGAS({
+
+      type:"friendMemberGift",
+
+      fromId:
+        myId,
+
+      toId:
+        toId,
+
+      charName:
+        charName,
+
+      fromName:
+        document
+          .getElementById(
+            "hName"
+          )
+          .textContent
+
+    });
+
+
+  if(
+    result.result !==
+    "success"
+  ){
+
+    alert(
+      result.message ||
+      "送信失敗"
+    );
+
+    return;
+
+  }
+
+
+  closeSheet(
+    "sheetMemberDetail"
+  );
+
+
+  toast(
+    "プレゼントを送りました"
+  );
+
+}
+
+
+/* =================================================
+   FRIEND REQUEST
+================================================= */
+
+async function sendReq(){
+
+  const target =
+    document
+      .getElementById(
+        "fIdIn"
+      )
+      .value
+      .trim()
+      .toUpperCase();
+
+
+  if(!target){
+
+    alert(
+      "IDを入力してください"
+    );
+
+    return;
+
+  }
+
+
+  if(
+    target ===
+    myId
+  ){
+
+    alert(
+      "自分自身には申請できません"
+    );
+
+    return;
+
+  }
+
+
+  const result =
+    await postGAS({
+
+      type:"request",
+
+      myId:
+        myId,
+
+      targetId:
+        target
+
+    });
+
+
+  if(
+    result.result !==
+    "success"
+  ){
+
+    alert(
+      result.message ||
+      "申請失敗"
+    );
+
+    return;
+
+  }
+
+
+  document
+    .getElementById(
+      "fIdIn"
+    )
+    .value =
+      "";
+
+
+  toast(
+    "申請しました"
+  );
+
+
+  await loadFriendsUI();
+
+}
+
+
+/* =================================================
+   FRIEND UI
+================================================= */
+
+async function loadFriendsUI(){
+
+  if(!myId){
+    return;
+  }
+
+
+  const result =
+    await getGAS(
+      "getFriends",
+      {
+        id:myId
+      }
+    );
+
+
+  if(
+    result.result !==
+    "success"
+  ){
+
+    return;
+
+  }
+
+
+  const data =
+    result.data || {};
+
+
+  friendsData =
+    data.friends || [];
+
+
+  const req =
+    document
+      .getElementById(
+        "reqList"
+      );
+
+
+  const list =
+    document
+      .getElementById(
+        "fList"
+      );
+
+
+  req.innerHTML =
+    "";
+
+  list.innerHTML =
+    "";
+
+
+  if(
+    !data.received ||
+    !data.received.length
+  ){
+
+    req.textContent =
+      "申請はありません";
+
+  }else{
+
+    data.received.forEach(
+      id=>{
+
+        const item =
+          document.createElement(
+            "div"
+          );
+
+
+        item.className =
+          "item";
+
+
+        const text =
+          document.createElement(
+            "span"
+          );
+
+
+        text.textContent =
+          id;
+
+
+        const button =
+          document.createElement(
+            "button"
+          );
+
+
+        button.className =
+          "btn green";
+
+
+        button.textContent =
+          "承認";
+
+
+        button.onclick =
+          ()=>{
+            acceptF(id);
+          };
+
+
+        item.appendChild(
+          text
+        );
+
+        item.appendChild(
+          button
+        );
+
+
+        req.appendChild(
+          item
+        );
+
+      }
+    );
+
+  }
+
+
+  if(
+    !data.details ||
+    !data.details.length
+  ){
+
+    list.textContent =
+      "フレンドはいません";
+
+  }else{
+
+    data.details.forEach(
+      friend=>{
+
+        const item =
+          document.createElement(
+            "div"
+          );
+
+
+        item.className =
+          "item";
+
+
+        const text =
+          document.createElement(
+            "span"
+          );
+
+
+        text.textContent =
+          friend.name +
+          " (" +
+          friend.id +
+          ")";
+
+
+        const gift =
+          document.createElement(
+            "button"
+          );
+
+
+        gift.className =
+          "btn";
+
+
+        gift.textContent =
+          "🎁";
+
+
+        gift.onclick =
+          ()=>{
+            sendFriendGift(
+              friend.id
+            );
+          };
+
+
+        const remove =
+          document.createElement(
+            "button"
+          );
+
+
+        remove.className =
+          "btn red";
+
+
+        remove.textContent =
+          "解除";
+
+
+        remove.onclick =
+          ()=>{
+            removeFriend(
+              friend.id
+            );
+          };
+
+
+        item.appendChild(
+          text
+        );
+
+        item.appendChild(
+          gift
+        );
+
+        item.appendChild(
+          remove
+        );
+
+
+        list.appendChild(
+          item
+        );
+
+      }
+    );
+
+  }
+
+}
+
+
+/* =================================================
+   ACCEPT
+================================================= */
+
+async function acceptF(
+  targetId
+){
+
+  const result =
+    await postGAS({
+
+      type:"accept",
+
+      myId:
+        myId,
+
+      targetId:
+        targetId
+
+    });
+
+
+  if(
+    result.result !==
+    "success"
+  ){
+
+    alert(
+      result.message ||
+      "承認失敗"
+    );
+
+    return;
+
+  }
+
+
+  toast(
+    "承認しました"
+  );
+
+
+  await loadFriendsUI();
+
+}
+
+
+/* =================================================
+   REMOVE FRIEND
+================================================= */
+
+async function removeFriend(
+  targetId
+){
+
+  if(
+    !confirm(
+      "解除しますか？"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const result =
+    await postGAS({
+
+      type:"removeFriend",
+
+      myId:
+        myId,
+
+      targetId:
+        targetId
+
+    });
+
+
+  if(
+    result.result !==
+    "success"
+  ){
+
+    alert(
+      result.message ||
+      "解除失敗"
+    );
+
+    return;
+
+  }
+
+
+  toast(
+    "解除しました"
+  );
+
+
+  await loadFriendsUI();
+
+}
+
+
+/* =================================================
+   COIN GIFT
+================================================= */
+
+async function sendFriendGift(
+  targetId
+){
+
+  const input =
+    prompt(
+      "送るコイン数",
+      "100"
+    );
+
+
+  if(
+    input === null
+  ){
+
+    return;
+
+  }
+
+
+  const amount =
+    Number(input);
+
+
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
+
+    alert(
+      "コイン数が不正です"
+    );
+
+    return;
+
+  }
+
+
+  if(
+    iroCoins < amount
+  ){
+
+    alert(
+      "コインが不足しています"
+    );
+
+    return;
+
+  }
+
+
+  const result =
+    await postGAS({
+
+      type:"friendGift",
+
+      fromId:
+        myId,
+
+      toId:
+        targetId,
+
+      amount:
+        amount
+
+    });
+
+
+  if(
+    result.result !==
+    "success"
+  ){
+
+    alert(
+      result.message ||
+      "送信失敗"
+    );
+
+    return;
+
+  }
+
+
+  await fetchSync();
+
+  toast(
+    "コインを送りました"
+  );
+
+}
+
+
+/* =================================================
+   PRESENT
+================================================= */
+
+async function loadPresentUI(){
+
+  const result =
+    await getGAS(
+      "getUser",
+      {
+        id:myId
+      }
+    );
+
+
+  if(
+    result.result !==
+    "success"
+  ){
+
+    return;
+
+  }
+
+
+  applyUser(
+    result.data
+  );
+
+
+  updatePresentUI(
+    result.data.received
+  );
+
+
+  await updateHistory();
+
+}
+
+
+function updatePresentUI(
+  raw
+){
+
+  let gifts = [];
+
+
+  try{
+
+    gifts =
+      JSON.parse(
+        raw || "[]"
+      );
+
+  }catch(error){
+
+    gifts = [];
+
+  }
+
+
+  const badge =
+    document
+      .getElementById(
+        "pBadge"
+      );
+
+
+  const container =
+    document
+      .getElementById(
+        "pListContainer"
+      );
+
+
+  badge.textContent =
+    gifts.length;
+
+
+  badge.classList.toggle(
+    "hidden",
+    !gifts.length
+  );
+
+
+  container.innerHTML =
+    "";
+
+
+  if(!gifts.length){
+
+    container.textContent =
+      "プレゼントはありません";
+
+    return;
+
+  }
+
+
+  gifts.forEach(
+    gift=>{
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+
+      item.className =
+        "item";
+
+
+      const text =
+        document.createElement(
+          "span"
+        );
+
+
+      let content =
+        gift.fromName ||
+        "USER";
+
+
+      content +=
+        " から " +
+        (
+          gift.content ||
+          ""
+        );
+
+
+      if(
+        gift.type ===
+        "coin"
+      ){
+
+        content +=
+          " コイン";
+
+      }
+
+
+      text.textContent =
+        content;
+
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+
+      button.className =
+        "btn green";
+
+
+      button.textContent =
+        "受取";
+
+
+      button.onclick =
+        ()=>{
+          claim(
+            gift.id
+          );
+        };
+
+
+      item.appendChild(
+        text
+      );
+
+      item.appendChild(
+        button
+      );
+
+
+      container.appendChild(
+        item
+      );
+
+    }
+  );
+
+}
+
+
+/* =================================================
+   CLAIM
+================================================= */
+
+async function claim(
+  giftId
+){
+
+  const result =
+    await postGAS({
+
+      type:"claim",
+
+      userId:
+        myId,
+
+      giftId:
+        String(giftId)
+
+    });
+
+
+  if(
+    result.result !==
+    "success"
+  ){
+
+    alert(
+      result.message ||
+      "受取失敗"
+    );
+
+    return;
+
+  }
+
+
+  await fetchSync();
+
+  await loadPresentUI();
+
+  toast(
+    "受け取りました"
+  );
+
+}
+
+
+/* =================================================
+   HISTORY
+================================================= */
+
+async function updateHistory(){
+
+  const container =
+    document
+      .getElementById(
+        "historyContainer"
+      );
+
+
+  const result =
+    await getGAS(
+      "getHistory",
+      {
+        id:myId
+      }
+    );
+
+
+  container.innerHTML =
+    "";
+
+
+  if(
+    result.result !==
+    "success" ||
+    !result.data ||
+    !result.data.length
+  ){
+
+    container.textContent =
+      "履歴はありません";
+
+    return;
+
+  }
+
+
+  result.data.forEach(
+    history=>{
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+
+      item.className =
+        "item";
+
+
+      const text =
+        document.createElement(
+          "span"
+        );
+
+
+      text.textContent =
+        history.reason +
+        " / " +
+        history.date;
+
+
+      const detail =
+        document.createElement(
+          "b"
+        );
+
+
+      detail.textContent =
+        history.detail;
+
+
+      item.appendChild(
+        text
+      );
+
+      item.appendChild(
+        detail
+      );
+
+
+      container.appendChild(
+        item
+      );
+
+    }
+  );
+
+}
+
+
+/* =================================================
+   DATA TRANSFER
+================================================= */
+
+async function executeTransfer(){
+
+  const id =
+    document
+      .getElementById(
+        "tIdIn"
+      )
+      .value
+      .trim()
+      .toUpperCase();
+
+
+  const pass =
+    document
+      .getElementById(
+        "tPassIn"
+      )
+      .value;
+
+
+  if(!id || !pass){
+
+    alert(
+      "IDと合言葉を入力してください"
+    );
+
+    return;
+
+  }
+
+
+  try{
+
+    const result =
+      await postGAS({
+
+        type:"login",
+
+        id:id,
+
+        pass:pass
+
+      });
+
+
+    if(
+      result.result !==
+      "success"
+    ){
+
+      alert(
+        result.message ||
+        "復元失敗"
+      );
+
+      return;
+
+    }
+
+
+    myId =
+      id;
+
+
+    localStorage.setItem(
+      "gID",
+      id
+    );
+
+
+    localStorage.setItem(
+      "gName",
+      result.data.name ||
+      ""
+    );
+
+
+    localStorage.setItem(
+      "gPass",
+      pass
+    );
+
+
+    document
+      .getElementById(
+        "modalTransfer"
+      )
+      .close();
+
+
+    await beginSync();
+
+
+  }catch(error){
+
+    console.error(error);
+
+    alert(
+      "復元に失敗しました"
+    );
+
+  }
+
+}
+
+
+function openTransfer(){
+
+  document
+    .getElementById(
+      "modalTransfer"
+    )
+    .showModal();
+
+}
+
+
+/* =================================================
+   INIT
+================================================= */
+
+window.addEventListener(
+  "DOMContentLoaded",
+  async function(){
+
+    try{
+
+      await loadPools();
+
+
+      const savedId =
+        localStorage.getItem(
+          "gID"
+        );
+
+
+      const savedName =
+        localStorage.getItem(
+          "gName"
+        );
+
+
+      if(
+        savedId &&
+        savedName
+      ){
+
+        myId =
+          savedId;
+
+        await beginSync();
+
+      }
+
+    }catch(error){
+
+      console.error(
+        "初期化エラー",
+        error
+      );
+
+    }
+
+  }
+);
+
+</script>
+
+</body>
+</html>
