@@ -7,30 +7,20 @@
 
 <meta
   name="viewport"
-  content="width=device-width,
-  initial-scale=1.0,
-  maximum-scale=1.0,
-  user-scalable=no"
+  content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"
 >
 
 <title>幻想クロニクル</title>
 
-<link
-  href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Noto+Sans+JP:wght@400;700;900&display=swap"
-  rel="stylesheet"
->
-
 <style>
 
-:root{
-  --teal:#33ffcc;
-  --pink:#ff3399;
-  --glass:rgba(0,0,0,.78);
-  --border:rgba(255,255,255,.35);
-}
+/* =========================================================
+   基本
+========================================================= */
 
 *{
   box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
 }
 
 html,
@@ -40,367 +30,747 @@ body{
   width:100%;
   height:100%;
   overflow:hidden;
-  background:#000;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background:#080808;
   color:#fff;
-  font-family:'Noto Sans JP',sans-serif;
-}
-
-button,
-input{
-  font-family:inherit;
 }
 
 button{
+  font-family:inherit;
+  border:0;
   cursor:pointer;
 }
 
-.bg-sekai{
-  position:fixed;
-  inset:0;
-  background:
-    url("https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=2000")
-    center/cover;
-  filter:brightness(.38);
-  z-index:-3;
+button:active{
+  transform:scale(.96);
 }
 
-.bg-overlay{
-  position:fixed;
-  inset:0;
-  background:
-    radial-gradient(
-      circle at center,
-      transparent 0%,
-      rgba(0,0,0,.95) 100%
-    );
-  z-index:-2;
-}
 
-.hidden{
-  display:none!important;
-}
+/* =========================================================
+   アプリ
+========================================================= */
 
-.screen{
-  position:absolute;
-  inset:0;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  padding:20px;
-  z-index:100;
-}
-
-.btn-pro{
-  border:none;
-  background:#fff;
-  color:#111;
-  padding:15px 35px;
-  min-width:250px;
-  margin:10px;
-  font-weight:900;
-  font-size:1rem;
-  transform:skewX(-12deg);
-  box-shadow:5px 5px 0 var(--teal);
-  border-radius:4px;
-}
-
-.btn-pro span{
-  display:block;
-  transform:skewX(12deg);
-}
-
-.btn-pro:active{
-  transform:skewX(-12deg) translate(2px,2px);
-  box-shadow:0 0 0 var(--teal);
-}
-
-.btn-pro.pink{
-  background:var(--pink);
-  color:#fff;
-  box-shadow:5px 5px 0 #ffb3dd;
-}
-
-.header-minimal{
-  position:absolute;
-  top:15px;
-  left:15px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  z-index:500;
-}
-
-.av-mini{
-  width:38px;
-  height:38px;
-  border-radius:50%;
-  overflow:hidden;
-  border:2px solid #fff;
-  background:#222;
-}
-
-.av-mini img{
+#app{
+  position:relative;
   width:100%;
   height:100%;
-  object-fit:cover;
+  overflow:hidden;
+  background:
+    radial-gradient(
+      circle at 50% 20%,
+      #1c1c2c 0%,
+      #080808 60%
+    );
 }
 
-.iro-coin-disp{
-  margin-left:10px;
-  color:var(--teal);
+
+/* =========================================================
+   ヘッダー
+========================================================= */
+
+.header{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:70px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:
+    0 18px;
+
+  z-index:10;
+
+  background:
+    rgba(10,10,18,.9);
+
+  border-bottom:
+    1px solid rgba(255,255,255,.08);
+}
+
+.logo{
+  font-size:22px;
   font-weight:900;
-  text-shadow:0 0 10px var(--teal);
+  letter-spacing:2px;
 }
 
-.main-console-text{
-  font-family:Montserrat,sans-serif;
-  font-size:clamp(2rem,9vw,5.5rem);
-  letter-spacing:10px;
-  opacity:.85;
-  pointer-events:none;
+.coin{
+  border:
+    1px solid #00ffd5;
+
+  border-radius:30px;
+
+  padding:
+    9px 16px;
+
+  color:#fff;
+
+  background:
+    rgba(0,255,213,.05);
+
+  font-weight:800;
+}
+
+
+/* =========================================================
+   メイン
+========================================================= */
+
+.main{
+  position:absolute;
+  top:70px;
+  left:0;
+  right:0;
+  bottom:0;
+
+  overflow:auto;
+
+  padding:
+    30px 20px 120px;
+}
+
+.hero{
+  max-width:1000px;
+  margin:0 auto;
+
+  min-height:
+    calc(100vh - 180px);
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+
   text-align:center;
 }
 
-.nav-container{
-  position:absolute;
-  bottom:25px;
-  left:50%;
-  transform:translateX(-50%);
-  width:95%;
-  max-width:900px;
-  display:flex;
-  gap:10px;
-  z-index:500;
+.hero h1{
+  margin:0 0 12px;
+
+  font-size:
+    clamp(32px,7vw,76px);
+
+  font-weight:1000;
+
+  letter-spacing:4px;
+
+  text-shadow:
+    0 0 20px rgba(0,255,213,.5);
 }
 
-.nav-card{
-  flex:1;
-  padding:18px 5px;
-  background:rgba(0,0,0,.65);
-  border:1px solid #444;
+.hero p{
+  color:#aaa;
+  margin-bottom:30px;
+}
+
+
+/* =========================================================
+   ボタン
+========================================================= */
+
+.main-buttons{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+
+  width:min(330px,90vw);
+}
+
+.pro-btn{
+
+  width:100%;
+
+  min-height:58px;
+
   border-radius:12px;
-  text-align:center;
+
+  color:#fff;
+
+  font-size:17px;
+
   font-weight:900;
-  font-size:.8rem;
-  transition:.2s;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff,
+      #d8d8d8
+    );
+
+  color:#111;
+
+  box-shadow:
+    5px 5px 0 #00e8c0;
+
 }
 
-.nav-card.main{
-  background:var(--pink);
+.pro-btn.pink{
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff2193,
+      #ff3aa3
+    );
+
+  color:#fff;
+
+  box-shadow:
+    5px 5px 0 #ff8ac8;
 }
 
-.nav-card:active{
-  transform:scale(.95);
+.pro-btn.orange{
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff7200,
+      #ff9700
+    );
+
+  color:#fff;
+
+  box-shadow:
+    5px 5px 0 #ffc067;
 }
 
-.present-btn{
-  position:absolute;
-  top:75px;
-  left:15px;
-  width:48px;
-  height:48px;
-  border-radius:50%;
+
+/* =========================================================
+   ボトムナビ
+========================================================= */
+
+.bottom-nav{
+
+  position:fixed;
+
+  left:0;
+  right:0;
+  bottom:0;
+
+  height:78px;
+
   display:flex;
-  justify-content:center;
+
+  justify-content:
+    space-around;
+
   align-items:center;
-  background:rgba(255,255,255,.08);
-  border:1px solid #555;
-  z-index:500;
-  font-size:1.3rem;
+
+  background:
+    rgba(8,8,12,.96);
+
+  border-top:
+    1px solid
+    rgba(255,255,255,.1);
+
+  z-index:50;
 }
 
-.present-badge{
-  position:absolute;
-  right:-2px;
-  top:-2px;
-  width:19px;
-  height:19px;
-  border-radius:50%;
-  background:red;
-  border:1px solid #fff;
-  display:none;
-  justify-content:center;
+.nav-btn{
+
+  background:none;
+
+  color:#aaa;
+
+  font-size:12px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:5px;
+
   align-items:center;
-  font-size:.65rem;
 }
+
+.nav-btn .icon{
+  font-size:24px;
+}
+
+.nav-btn.active{
+  color:#00ffd5;
+}
+
+
+/* =========================================================
+   オーバーレイ
+========================================================= */
+
+#sheetOverlay,
+#pauseOverlay{
+
+  position:fixed;
+
+  inset:0;
+
+  z-index:100;
+
+  background:
+    rgba(0,0,0,.72);
+
+  display:none;
+}
+
+
+/* =========================================================
+   Bottom Sheet
+========================================================= */
 
 .bottom-sheet{
+
   position:fixed;
+
   left:0;
-  bottom:-100%;
-  width:100%;
-  height:94%;
-  background:#0a0b12;
-  border-radius:30px 30px 0 0;
-  border-top:1px solid var(--border);
-  z-index:50000;
-  transition:.4s;
-  overflow-y:auto;
+  right:0;
+  bottom:0;
+
+  z-index:110;
+
+  max-height:
+    85vh;
+
+  overflow:auto;
+
+  padding:
+    24px;
+
+  border-radius:
+    24px 24px 0 0;
+
+  background:
+    #16161d;
+
+  transform:
+    translateY(110%);
+
+  transition:
+    transform .25s ease;
+
+  box-shadow:
+    0 -10px 40px
+    rgba(0,0,0,.5);
 }
 
 .bottom-sheet.open{
-  bottom:0;
+  transform:
+    translateY(0);
 }
 
-.sheet-content{
-  max-width:850px;
-  margin:auto;
-  padding:25px;
-  padding-bottom:100px;
+.sheet-title{
+  font-size:22px;
+  font-weight:900;
+  margin-bottom:20px;
 }
 
-.member-grid{
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fill,minmax(105px,1fr));
+.close-btn{
+  position:absolute;
+
+  right:15px;
+  top:15px;
+
+  width:40px;
+  height:40px;
+
+  border-radius:50%;
+
+  background:#333;
+
+  color:#fff;
+
+  font-size:20px;
+}
+
+
+/* =========================================================
+   フォーム
+========================================================= */
+
+.input{
+
+  width:100%;
+
+  height:50px;
+
+  margin-bottom:12px;
+
+  border:
+    1px solid #444;
+
+  border-radius:10px;
+
+  background:#0c0c10;
+
+  color:#fff;
+
+  padding:
+    0 14px;
+
+  font-size:16px;
+}
+
+
+/* =========================================================
+   ガチャ
+========================================================= */
+
+#gachaBg{
+
+  position:absolute;
+
+  inset:0;
+
+  background-size:cover;
+
+  background-position:center;
+
+  opacity:.28;
+
+  z-index:-1;
+}
+
+.gacha-container{
+
+  max-width:1100px;
+
+  margin:0 auto;
+
+  padding-bottom:120px;
+}
+
+.gacha-title{
+
+  text-align:center;
+
+  font-size:
+    clamp(28px,6vw,52px);
+
+  font-weight:1000;
+
+  margin:
+    20px 0 10px;
+}
+
+.gacha-tabs{
+
+  display:flex;
+
+  gap:10px;
+
+  overflow:auto;
+
+  padding:10px 0;
+}
+
+.gacha-tab{
+
+  flex:
+    0 0 160px;
+
+  height:80px;
+
+  border-radius:14px;
+
+  background-size:cover;
+
+  background-position:center;
+
+  display:flex;
+
+  align-items:flex-end;
+
+  padding:12px;
+
+  font-weight:900;
+
+  text-shadow:
+    0 2px 5px #000;
+}
+
+.gacha-tab.active{
+  outline:
+    3px solid #00ffd5;
+}
+
+.gacha-buttons{
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  justify-content:center;
+
   gap:12px;
+
+  margin:20px 0;
 }
 
-.member-card{
-  position:relative;
-  background:rgba(255,255,255,.08);
-  border:1px solid #555;
-  border-radius:12px;
-  padding:8px;
+.gacha-btn{
+
+  min-width:150px;
+
+  min-height:65px;
+
+  padding:10px 20px;
+
+  border-radius:14px;
+
+  color:#fff;
+
+  font-weight:900;
+
+  background:#555;
+
+  font-size:17px;
+}
+
+.gacha-btn.pink{
+  background:#ff2193;
+}
+
+.gacha-btn.orange{
+  background:#ff7900;
+}
+
+.gacha-btn.green{
+  background:#00bfa5;
+}
+
+
+/* =========================================================
+   ガチャ結果
+========================================================= */
+
+#resultArea{
+
+  display:none;
+
   text-align:center;
 }
 
-.member-card img{
-  width:100%;
-  height:110px;
-  object-fit:cover;
-  border-radius:8px;
-}
+.result-card{
 
-.count-badge{
-  position:absolute;
-  top:4px;
-  right:4px;
-  background:var(--pink);
-  border:1px solid #fff;
-  border-radius:10px;
-  padding:2px 7px;
-  font-size:.7rem;
-}
+  display:inline-flex;
 
-.student-id-card{
-  background:#fff;
-  color:#222;
-  padding:25px;
-  border-radius:18px;
-  max-width:360px;
-  margin:20px auto;
-}
+  flex-direction:column;
 
-.student-input{
-  width:100%;
-  padding:12px 0;
-  margin-bottom:15px;
-  border:none;
-  border-bottom:2px solid #333;
-  color:#000;
-  font-size:1rem;
-  background:transparent;
-}
-
-.friend-box{
-  background:#fff;
-  border-radius:12px;
-  padding:12px;
-  margin:10px 0;
-}
-
-.history-item{
-  display:flex;
-  justify-content:space-between;
-  padding:12px;
-  margin-bottom:8px;
-  border-radius:10px;
-  background:rgba(255,255,255,.06);
-}
-
-.present-item{
-  display:flex;
-  justify-content:space-between;
   align-items:center;
-  background:#fff;
-  color:#222;
+
+  justify-content:center;
+
+  width:150px;
+
+  min-height:190px;
+
+  margin:8px;
+
+  border-radius:18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #222,
+      #111
+    );
+
+  border:
+    1px solid #444;
+
   padding:12px;
-  margin-bottom:10px;
-  border-radius:12px;
 }
+
+.result-card img{
+
+  width:110px;
+  height:110px;
+
+  object-fit:cover;
+
+  border-radius:12px;
+
+  margin-bottom:8px;
+}
+
+.stars{
+  color:#ffd700;
+  font-size:18px;
+}
+
+
+/* =========================================================
+   ゲーム
+========================================================= */
 
 #gameLayer{
+
   position:fixed;
+
   inset:0;
-  display:none;
+
+  z-index:200;
+
   background:#000;
-  z-index:10000;
+
+  display:none;
 }
 
 #gameFrame{
+
   width:100%;
   height:100%;
+
   border:0;
 }
 
 #mobilePauseBtn{
-  position:fixed;
+
+  position:absolute;
+
   top:15px;
   right:15px;
-  width:45px;
-  height:45px;
+
+  z-index:210;
+
+  width:52px;
+  height:52px;
+
   border-radius:50%;
-  background:rgba(0,0,0,.7);
-  border:1px solid #fff;
-  z-index:15000;
+
+  background:
+    rgba(0,0,0,.65);
+
+  color:#fff;
+
+  font-size:22px;
+
   display:none;
-  justify-content:center;
-  align-items:center;
-  font-weight:bold;
 }
 
-#pauseOverlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.95);
-  z-index:60000;
-  display:none;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
+
+/* =========================================================
+   ゲーム一覧
+========================================================= */
+
+.game-list{
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:12px;
 }
 
-.badge-verify{
-  display:inline-flex;
-  width:18px;
-  height:18px;
+.nav-card{
+
+  width:130px;
+
+  min-height:100px;
+
+  border-radius:14px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #252530,
+      #15151b
+    );
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  text-align:center;
+
+  padding:10px;
+
+  cursor:pointer;
+}
+
+
+/* =========================================================
+   履歴
+========================================================= */
+
+.history-item{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:20px;
+
+  padding:14px;
+
+  border-bottom:
+    1px solid #333;
+}
+
+
+/* =========================================================
+   プレゼント
+========================================================= */
+
+.present-badge{
+
+  display:none;
+
+  min-width:20px;
+  height:20px;
+
   border-radius:50%;
-  background:#168de2;
-  justify-content:center;
+
+  background:#ff277e;
+
   align-items:center;
-  margin-left:5px;
-  font-size:10px;
+  justify-content:center;
+
+  font-size:11px;
+
+  position:absolute;
+
+  top:-5px;
+  right:-8px;
 }
 
-@media(max-width:650px){
 
-  .nav-container{
-    gap:5px;
+/* =========================================================
+   レスポンシブ
+========================================================= */
+
+@media(max-width:600px){
+
+  .header{
+    height:62px;
   }
 
-  .nav-card{
-    padding:15px 2px;
-    font-size:.65rem;
+  .main{
+    top:62px;
   }
 
-  .main-console-text{
-    letter-spacing:4px;
+  .logo{
+    font-size:17px;
   }
 
-  .btn-pro{
-    min-width:220px;
+  .coin{
+    font-size:13px;
+    padding:7px 10px;
+  }
+
+  .bottom-nav{
+    height:70px;
+  }
+
+  .gacha-btn{
+    min-width:
+      calc(50% - 10px);
   }
 
 }
@@ -409,544 +779,454 @@ button{
 
 </head>
 
+
 <body>
 
-<div class="bg-sekai"></div>
-<div class="bg-overlay"></div>
-
-<div
-  id="sheetOverlay"
-  style="
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.8);
-    z-index:49000;
-    display:none;
-  "
-  onclick="closeAllSheets()"
-></div>
-
-
 <!-- =====================================================
-     PAUSE
-===================================================== -->
+     ここから画面
+     JavaScriptのソースコードはここに直接書かない
+====================================================== -->
 
-<div
-  id="mobilePauseBtn"
-  onclick="showPauseMenu()"
->
-  II
-</div>
+<div id="app">
 
-<div id="pauseOverlay">
+  <header class="header">
 
-  <h1
-    style="
-      font-family:Montserrat;
-      color:var(--teal);
-    "
-  >
-    PAUSE
-  </h1>
-
-  <button
-    class="btn-pro"
-    onclick="resumeGame()"
-  >
-    <span>再開</span>
-  </button>
-
-  <button
-    class="btn-pro pink"
-    onclick="exitGame()"
-  >
-    <span>終了</span>
-  </button>
-
-</div>
-
-
-<!-- =====================================================
-     TITLE
-===================================================== -->
-
-<div id="titleScreen" class="screen">
-
-  <h1
-    style="
-      font-family:Montserrat;
-      font-size:clamp(3rem,15vw,8rem);
-      margin:0;
-      text-shadow:0 0 30px var(--teal);
-    "
-  >
-    GENSOU
-  </h1>
-
-  <p
-    style="
-      color:var(--pink);
-      letter-spacing:10px;
-      font-weight:900;
-    "
-  >
-    COLORFUL STAGE
-  </p>
-
-  <button
-    class="btn-pro"
-    onclick="handleLoginClick()"
-  >
-    <span>ログイン</span>
-  </button>
-
-  <button
-    class="btn-pro pink"
-    onclick="openTransfer()"
-  >
-    <span>データ復元</span>
-  </button>
-
-</div>
-
-
-<!-- =====================================================
-     REGISTER
-===================================================== -->
-
-<div
-  id="registrationScreen"
-  class="screen hidden"
->
-
-  <h2
-    style="
-      color:var(--teal);
-      font-family:Montserrat;
-    "
-  >
-    NEW REGISTRATION
-  </h2>
-
-  <div class="student-id-card">
-
-    <h3>学生証作成</h3>
-
-    <input
-      id="regName"
-      class="student-input"
-      type="text"
-      placeholder="なまえ"
-    >
-
-    <input
-      id="regPass"
-      class="student-input"
-      type="password"
-      placeholder="合言葉"
-    >
-
-    <p
-      style="
-        font-size:.75rem;
-        color:#e39;
-      "
-    >
-      ※IDと合言葉はデータ復元に使用します。
-    </p>
-
-  </div>
-
-  <button
-    class="btn-pro"
-    onclick="saveRegistration()"
-  >
-    <span>作成してログイン！</span>
-  </button>
-
-</div>
-
-
-<!-- =====================================================
-     LOADING
-===================================================== -->
-
-<div
-  id="loadingScreen"
-  class="screen hidden"
->
-
-  <div
-    style="
-      color:var(--teal);
-      font-weight:bold;
-      font-size:1.4rem;
-    "
-  >
-    同期中...
-  </div>
-
-</div>
-
-
-<!-- =====================================================
-     HOME
-===================================================== -->
-
-<div
-  id="gameScreen"
-  class="screen hidden"
->
-
-  <div class="header-minimal">
-
-    <div
-      class="av-mini"
-      onclick="openSheet('sheetConfig')"
-    >
-      <img id="hAv">
+    <div class="logo">
+      幻想クロニクル
     </div>
 
-    <div>
-      <span id="hName">---</span>
-      <span id="hVerified"></span>
-    </div>
-
-    <div class="iro-coin-disp">
+    <div class="coin">
       🪙
       <span id="hIroCoin">0</span>
     </div>
 
-  </div>
+  </header>
 
+
+  <main class="main">
+
+    <section class="hero">
+
+      <h1 id="hName">
+        幻想クロニクル
+      </h1>
+
+      <p>
+        Fantasy Chronicle
+      </p>
+
+      <div class="main-buttons">
+
+        <button
+          class="pro-btn"
+          onclick="openSheet('loginSheet')"
+        >
+          ログイン
+        </button>
+
+        <button
+          class="pro-btn pink"
+          onclick="openSheet('transferSheet')"
+        >
+          データ復元
+        </button>
+
+        <button
+          class="pro-btn orange"
+          onclick="openSheet('gachaSheet')"
+        >
+          ガチャ
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- ===================================================
+       下部ナビ
+  ==================================================== -->
+
+  <nav class="bottom-nav">
+
+    <button
+      class="nav-btn active"
+      onclick="openSheet('homeSheet')"
+    >
+      <span class="icon">🏠</span>
+      ホーム
+    </button>
+
+    <button
+      class="nav-btn"
+      onclick="openSheet('gachaSheet')"
+    >
+      <span class="icon">🎰</span>
+      ガチャ
+    </button>
+
+    <button
+      class="nav-btn"
+      onclick="openSheet('gameSheet');loadGameList()"
+    >
+      <span class="icon">🎮</span>
+      ゲーム
+    </button>
+
+    <button
+      class="nav-btn"
+      onclick="openSheet('historySheet')"
+    >
+      <span class="icon">📜</span>
+      履歴
+    </button>
+
+    <button
+      class="nav-btn"
+      onclick="openSheet('settingSheet')"
+    >
+      <span class="icon">⚙️</span>
+      設定
+    </button>
+
+  </nav>
+
+
+  <!-- ===================================================
+       オーバーレイ
+  ==================================================== -->
 
   <div
-    class="present-btn"
-    onclick="openSheet('sheetPresent')"
+    id="sheetOverlay"
+    onclick="closeAllSheets()"
+  ></div>
+
+
+  <!-- ===================================================
+       ホーム
+  ==================================================== -->
+
+  <section
+    id="homeSheet"
+    class="bottom-sheet"
   >
 
-    🎁
-
-    <div
-      id="pBadge"
-      class="present-badge"
+    <button
+      class="close-btn"
+      onclick="closeSheet('homeSheet')"
     >
-      0
+      ×
+    </button>
+
+    <div class="sheet-title">
+      ホーム
     </div>
 
-  </div>
+    <p>
+      幻想クロニクルへようこそ。
+    </p>
 
-
-  <h1 class="main-console-text">
-    MAIN CONSOLE
-  </h1>
-
-
-  <nav class="nav-container">
-
-    <div
-      class="nav-card"
-      onclick="openSheet('sheetFriend')"
+    <button
+      class="pro-btn"
+      onclick="openSheet('gachaSheet')"
     >
-      フレンド
+      🎰 ガチャを開く
+    </button>
+
+  </section>
+
+
+  <!-- ===================================================
+       ログイン
+  ==================================================== -->
+
+  <section
+    id="loginSheet"
+    class="bottom-sheet"
+  >
+
+    <button
+      class="close-btn"
+      onclick="closeSheet('loginSheet')"
+    >
+      ×
+    </button>
+
+    <div class="sheet-title">
+      ログイン
     </div>
 
-    <div
-      class="nav-card"
-      onclick="launchGachaUI()"
+    <input
+      id="nIn"
+      class="input"
+      placeholder="名前"
     >
+
+    <input
+      id="pIn"
+      class="input"
+      type="password"
+      placeholder="合言葉"
+    >
+
+    <button
+      class="pro-btn"
+      onclick="saveSettings()"
+    >
+      保存
+    </button>
+
+  </section>
+
+
+  <!-- ===================================================
+       データ復元
+  ==================================================== -->
+
+  <section
+    id="transferSheet"
+    class="bottom-sheet"
+  >
+
+    <button
+      class="close-btn"
+      onclick="closeSheet('transferSheet')"
+    >
+      ×
+    </button>
+
+    <div class="sheet-title">
+      データ復元
+    </div>
+
+    <input
+      id="tIdIn"
+      class="input"
+      placeholder="ID"
+    >
+
+    <input
+      id="tPassIn"
+      class="input"
+      type="password"
+      placeholder="合言葉"
+    >
+
+    <button
+      class="pro-btn pink"
+      onclick="executeTransfer()"
+    >
+      復元
+    </button>
+
+  </section>
+
+
+  <!-- ===================================================
+       ガチャ
+  ==================================================== -->
+
+  <section
+    id="gachaSheet"
+    class="bottom-sheet"
+  >
+
+    <button
+      class="close-btn"
+      onclick="closeSheet('gachaSheet')"
+    >
+      ×
+    </button>
+
+    <div id="gachaBg"></div>
+
+    <div class="sheet-title">
       ガチャ
     </div>
 
     <div
-      class="nav-card main"
-      onclick="
-        transition('gameScreen','questScreen');
-        loadGameList();
-      "
-    >
-      クエスト
-    </div>
-
-    <div
-      class="nav-card"
-      onclick="openSheet('sheetMember')"
-    >
-      メンバー
-    </div>
-
-    <div
-      class="nav-card"
-      onclick="openSheet('sheetConfig')"
-    >
-      設定
-    </div>
-
-  </nav>
-
-</div>
-
-
-<!-- =====================================================
-     MEMBER
-===================================================== -->
-
-<div
-  id="sheetMember"
-  class="bottom-sheet"
->
-
-  <div class="sheet-content">
-
-    <h2 style="color:var(--teal)">
-      MY MEMBERS
-    </h2>
-
-    <div
-      id="memberListContainer"
-      class="member-grid"
+      id="gachaTabs"
+      class="gacha-tabs"
     ></div>
 
-  </div>
-
-</div>
-
-
-<!-- =====================================================
-     MEMBER DETAIL
-===================================================== -->
-
-<div
-  id="sheetMemberDetail"
-  class="bottom-sheet"
->
-
-  <div
-    class="sheet-content"
-    style="text-align:center"
-  >
-
-    <div id="memberDetailContent"></div>
+    <div
+      id="gachaButtons"
+      class="gacha-buttons"
+    ></div>
 
     <div
-      id="giftSelectionArea"
-      style="display:none"
+      id="resultArea"
+    ></div>
+
+  </section>
+
+
+  <!-- ===================================================
+       ゲーム一覧
+  ==================================================== -->
+
+  <section
+    id="gameSheet"
+    class="bottom-sheet"
+  >
+
+    <button
+      class="close-btn"
+      onclick="closeSheet('gameSheet')"
     >
+      ×
+    </button>
 
-      <h3 style="color:var(--pink)">
-        贈るフレンドを選択
-      </h3>
-
-      <div
-        id="giftFriendList"
-        style="
-          background:#fff;
-          color:#222;
-          border-radius:15px;
-          padding:10px;
-        "
-      ></div>
-
+    <div class="sheet-title">
+      ゲーム
     </div>
 
-    <button
-      id="startGiftBtn"
-      class="btn-pro pink"
+    <div
+      id="gameListContainer"
+      class="game-list"
     >
-      <span>フレンドにあげる</span>
+      読み込み中...
+    </div>
+
+  </section>
+
+
+  <!-- ===================================================
+       履歴
+  ==================================================== -->
+
+  <section
+    id="historySheet"
+    class="bottom-sheet"
+  >
+
+    <button
+      class="close-btn"
+      onclick="closeSheet('historySheet')"
+    >
+      ×
     </button>
 
-    <button
-      class="btn-pro"
-      onclick="
-        closeSheet('sheetMemberDetail')
-      "
+    <div class="sheet-title">
+      履歴
+    </div>
+
+    <div
+      id="historyContainer"
     >
-      <span>戻る</span>
-    </button>
-
-  </div>
-
-</div>
-
-
-<!-- =====================================================
-     PRESENT
-===================================================== -->
-
-<div
-  id="sheetPresent"
-  class="bottom-sheet"
->
-
-  <div class="sheet-content">
-
-    <h2 style="color:var(--teal)">
-      PRESENTS
-    </h2>
-
-    <div id="pListContainer"></div>
-
-    <h2 style="color:var(--pink)">
-      COIN HISTORY
-    </h2>
-
-    <div id="historyContainer">
       履歴なし
     </div>
 
-  </div>
-
-</div>
+  </section>
 
 
-<!-- =====================================================
-     CONFIG
-===================================================== -->
+  <!-- ===================================================
+       設定
+  ==================================================== -->
 
-<div
-  id="sheetConfig"
-  class="bottom-sheet"
->
-
-  <div
-    class="sheet-content"
-    style="text-align:center"
+  <section
+    id="settingSheet"
+    class="bottom-sheet"
   >
 
-    <div class="student-id-card">
+    <button
+      class="close-btn"
+      onclick="closeSheet('settingSheet')"
+    >
+      ×
+    </button>
 
-      <h3>学生証設定</h3>
-
-      <img
-        id="mAv"
-        onclick="
-          document
-            .getElementById('fileIn')
-            .click()
-        "
-        style="
-          width:105px;
-          height:140px;
-          object-fit:cover;
-          border:3px solid #333;
-          border-radius:10px;
-          cursor:pointer;
-        "
-      >
-
-      <p>
-        ID:
-        <span id="myIdDisplay">
-          ---
-        </span>
-      </p>
-
-      <input
-        id="nIn"
-        class="student-input"
-        placeholder="なまえ"
-      >
-
-      <input
-        id="pIn"
-        class="student-input"
-        type="password"
-        placeholder="合言葉"
-      >
-
-      <input
-        id="fileIn"
-        type="file"
-        accept="image/*"
-        style="display:none"
-        onchange="uploadIcon(this)"
-      >
-
+    <div class="sheet-title">
+      設定
     </div>
 
-    <button
-      class="btn-pro"
-      onclick="saveSettings()"
+    <input
+      id="settingName"
+      class="input"
+      placeholder="名前"
     >
-      <span>保存して同期</span>
+
+    <input
+      id="settingPass"
+      class="input"
+      type="password"
+      placeholder="合言葉"
+    >
+
+    <button
+      class="pro-btn"
+      onclick="saveSettingFromPanel()"
+    >
+      設定を保存
+    </button>
+
+  </section>
+
+
+  <!-- ===================================================
+       ゲーム画面
+  ==================================================== -->
+
+  <div id="gameLayer">
+
+    <iframe
+      id="gameFrame"
+      sandbox="allow-scripts allow-forms allow-modals allow-same-origin"
+    ></iframe>
+
+    <button
+      id="mobilePauseBtn"
+      onclick="showPauseMenu()"
+    >
+      ☰
     </button>
 
   </div>
 
-</div>
 
+  <!-- ===================================================
+       ポーズ
+  ==================================================== -->
 
-<!-- =====================================================
-     FRIEND
-===================================================== -->
-
-<div
-  id="sheetFriend"
-  class="bottom-sheet"
->
-
-  <div class="sheet-content">
-
-    <h2 style="color:var(--pink)">
-      FRIENDS
-    </h2>
-
-    <h3>受信申請</h3>
-
-    <div
-      id="reqList"
-      class="friend-box"
-    >
-      なし
-    </div>
-
-    <h3>送信済み</h3>
-
-    <div
-      id="sentList"
-      class="friend-box"
-    >
-      なし
-    </div>
-
-    <h3>フレンド</h3>
-
-    <div
-      id="fList"
-      class="friend-box"
-    >
-      なし
-    </div>
+  <div
+    id="pauseOverlay"
+    style="
+      display:none;
+      align-items:center;
+      justify-content:center;
+    "
+  >
 
     <div
       style="
-        display:flex;
-        gap:8px;
-        align-items:center;
+        background:#181820;
+        border-radius:20px;
+        padding:30px;
+        width:min(90%,360px);
+        text-align:center;
       "
     >
 
-      <input
-        id="fIdIn"
-        placeholder="10桁ID"
-        style="
-          flex:1;
-          padding:14px;
-          border-radius:10px;
-          border:0;
-        "
-      >
+      <h2>
+        ポーズ
+      </h2>
 
       <button
-        class="btn-pro pink"
-        style="
-          min-width:90px;
-          padding:12px;
-        "
-        onclick="sendReq()"
+        class="pro-btn"
+        onclick="resumeGame()"
       >
-        <span>申請</span>
+        ゲームに戻る
+      </button>
+
+      <br><br>
+
+      <button
+        class="pro-btn pink"
+        onclick="exitGame()"
+      >
+        ゲーム終了
       </button>
 
     </div>
@@ -957,167 +1237,68 @@ button{
 
 
 <!-- =====================================================
-     QUEST
-===================================================== -->
-
-<div
-  id="questScreen"
-  class="screen hidden"
->
-
-  <h2
-    style="
-      color:var(--teal);
-      font-family:Montserrat;
-    "
-  >
-    QUEST SELECT
-  </h2>
-
-  <div
-    id="gameListContainer"
-    style="
-      width:100%;
-      display:flex;
-      flex-wrap:wrap;
-      justify-content:center;
-      gap:15px;
-      overflow:auto;
-    "
-  ></div>
-
-  <button
-    class="btn-pro"
-    onclick="
-      transition('questScreen','gameScreen')
-    "
-  >
-    <span>戻る</span>
-  </button>
-
-</div>
-
-
-<!-- =====================================================
-     TRANSFER
-===================================================== -->
-
-<dialog
-  id="modalTransfer"
-  style="
-    background:#111;
-    color:#fff;
-    border:0;
-    border-radius:20px;
-    padding:30px;
-    width:90%;
-    max-width:350px;
-  "
->
-
-  <h3>データ復元</h3>
-
-  <input
-    id="tIdIn"
-    placeholder="ID"
-    style="
-      width:100%;
-      padding:12px;
-      margin-bottom:10px;
-    "
-  >
-
-  <input
-    id="tPassIn"
-    type="password"
-    placeholder="合言葉"
-    style="
-      width:100%;
-      padding:12px;
-    "
-  >
-
-  <button
-    class="btn-pro pink"
-    style="width:100%"
-    onclick="executeTransfer()"
-  >
-    <span>復元実行</span>
-  </button>
-
-  <button
-    class="btn-pro"
-    style="width:100%"
-    onclick="
-      document
-        .getElementById('modalTransfer')
-        .close()
-    "
-  >
-    <span>閉じる</span>
-  </button>
-
-</dialog>
-
-
-<!-- =====================================================
-     GAME
-===================================================== -->
-
-<div id="gameLayer">
-
-  <iframe
-    id="gameFrame"
-    src="about:blank"
-  ></iframe>
-
-</div>
-
+     重要
+     JavaScriptは必ずscriptタグの中に入れる
+====================================================== -->
 
 <script>
 
 /* =========================================================
-   基本設定
+   GAS URL
 ========================================================= */
 
+/*
+ * ↓ここを実際のGASウェブアプリURLに変更
+ */
+
 const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbzA68BqLLo--isaOL2z6cEkxyxl9uqb5z-g8QDxB5FmxxN2Tsj6Nd8nkZrVkW5y4bkm/exec";
-
-
-let myId =
-  localStorage.getItem("gID") ||
-  createLocalId();
-
-
-let iroCoins =
-  Number(
-    localStorage.getItem("gCoins") || 0
-  );
-
-
-let myChars = "";
-
-let globalCharaPool = {
-  star2:[],
-  star3:[],
-  star4:[]
-};
-
-let friendsData = [];
-
-let syncTimer = null;
+  "https://script.google.com/macros/s/AKfycbyAB6dqtWJHmWw5jflnU7R0EyBWkwr6PiAm9o6IKuTiECpvuvj97oQkes1RqMrYyz57/exec";
 
 
 /* =========================================================
-   ID
+   グローバル
 ========================================================= */
 
-function createLocalId(){
+let myId =
+  localStorage.getItem("gID") ||
+  createUserId();
+
+let myName =
+  localStorage.getItem("gName") ||
+  "ゲスト";
+
+let myPass =
+  localStorage.getItem("gPass") ||
+  "";
+
+let iroCoins =
+  Number(
+    localStorage.getItem("gCoins") ||
+    0
+  );
+
+let myChars = [];
+
+let gachaSettings = [];
+
+let charaPools = {
+  star2: [],
+  star3: [],
+  star4: []
+};
+
+
+/* =========================================================
+   ID作成
+========================================================= */
+
+function createUserId(){
 
   const id =
+    "GC" +
     Math.random()
       .toString(36)
-      .substring(2,12)
+      .substring(2,10)
       .toUpperCase();
 
   localStorage.setItem(
@@ -1126,7 +1307,6 @@ function createLocalId(){
   );
 
   return id;
-
 }
 
 
@@ -1136,13 +1316,14 @@ function createLocalId(){
 
 function escapeHTML(value){
 
-  return String(value ?? "")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-
+  return String(
+    value ?? ""
+  )
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
 }
 
 
@@ -1155,61 +1336,35 @@ async function getGAS(
   params = {}
 ){
 
-  let url =
-    GAS_URL;
-
-  const q =
-    new URLSearchParams();
-
+  const url =
+    new URL(GAS_URL);
 
   if(action){
-    q.set(
+    url.searchParams.set(
       "action",
       action
     );
   }
 
-
   Object.keys(params)
     .forEach(function(key){
 
-      q.set(
+      url.searchParams.set(
         key,
         params[key]
       );
 
     });
 
-
-  const query =
-    q.toString();
-
-
-  if(query){
-    url += "?" + query;
-  }
-
-
   const response =
     await fetch(
-      url,
+      url.toString(),
       {
-        method:"GET",
-        cache:"no-store"
+        method:"GET"
       }
     );
 
-
-  if(!response.ok){
-    throw new Error(
-      "GAS GET ERROR " +
-      response.status
-    );
-  }
-
-
-  return response.json();
-
+  return await response.json();
 }
 
 
@@ -1219,95 +1374,50 @@ async function getGAS(
 
 async function postGAS(data){
 
-  try{
-
-    const response =
-      await fetch(
-        GAS_URL,
-        {
-          method:"POST",
-          headers:{
-            "Content-Type":
-              "text/plain;charset=utf-8"
-          },
-          body:
-            JSON.stringify(data)
-        }
-      );
-
-
-    /*
-     * GitHub等の外部ページからの
-     * GAS POSTではレスポンスが取得できない
-     * ケースがある。
-     */
-
-    if(response.type === "opaque"){
-      return {
-        result:"success"
-      };
-    }
-
-
-    const text =
-      await response.text();
-
-
-    if(!text){
-      return {
-        result:"success"
-      };
-    }
-
-
-    try{
-      return JSON.parse(text);
-    }catch(e){
-      return {
-        result:"success"
-      };
-    }
-
-
-  }catch(error){
-
-    console.error(
-      "POST ERROR",
-      error
+  const response =
+    await fetch(
+      GAS_URL,
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+        body:
+          JSON.stringify(data)
+      }
     );
 
-
-    return {
-      result:"error",
-      message:
-        "通信に失敗しました"
-    };
-
-  }
-
+  return await response.json();
 }
 
 
 /* =========================================================
-   ログ
+   Web操作記録
 ========================================================= */
 
-async function logWebAction(
-  action
-){
+async function logWebAction(action){
 
-  await postGAS({
+  try{
 
-    type:"launch",
+    await postGAS({
 
-    id:myId,
+      type:"webAction",
 
-    gameId:"WEB",
+      id:myId,
 
-    title:action
+      action:action
 
-  });
+    });
 
+  }catch(error){
+
+    console.warn(
+      "操作ログ失敗:",
+      error
+    );
+
+  }
 }
 
 
@@ -1315,207 +1425,27 @@ async function logWebAction(
    初期化
 ========================================================= */
 
-window.addEventListener(
-  "DOMContentLoaded",
-  function(){
+async function init(){
 
-    initialize();
+  document
+    .getElementById("hName")
+    .innerText =
+      myName;
 
-  }
-);
-
-
-async function initialize(){
+  document
+    .getElementById("hIroCoin")
+    .innerText =
+      iroCoins.toLocaleString();
 
   try{
 
-    const pools =
-      await getGAS(
-        "getCharaPools"
-      );
+    await loadGachaData();
 
-
-    if(
-      pools &&
-      pools.result ===
-        "success"
-    ){
-
-      globalCharaPool =
-        pools;
-
-    }
-
-  }catch(e){
-
-    console.warn(
-      "キャラクター取得失敗",
-      e
-    );
-
-  }
-
-
-  const name =
-    localStorage.getItem(
-      "gName"
-    );
-
-
-  if(name){
-
-    beginPortalSync();
-
-  }
-
-}
-
-
-/* =========================================================
-   ログイン
-========================================================= */
-
-function handleLoginClick(){
-
-  const name =
-    localStorage.getItem(
-      "gName"
-    );
-
-
-  if(!name){
-
-    transition(
-      "titleScreen",
-      "registrationScreen"
-    );
-
-    return;
-
-  }
-
-
-  beginPortalSync();
-
-}
-
-
-/* =========================================================
-   登録
-========================================================= */
-
-async function saveRegistration(){
-
-  const name =
-    document
-      .getElementById(
-        "regName"
-      )
-      .value
-      .trim();
-
-
-  const pass =
-    document
-      .getElementById(
-        "regPass"
-      )
-      .value;
-
-
-  if(!name || !pass){
-
-    alert(
-      "名前と合言葉を入力してください"
-    );
-
-    return;
-
-  }
-
-
-  localStorage.setItem(
-    "gName",
-    name
-  );
-
-  localStorage.setItem(
-    "gPass",
-    pass
-  );
-
-
-  await postGAS({
-
-    type:"register",
-
-    id:myId,
-
-    name:name,
-
-    pass:pass
-
-  });
-
-
-  beginPortalSync();
-
-}
-
-
-/* =========================================================
-   同期開始
-========================================================= */
-
-async function beginPortalSync(){
-
-  transition(
-    "titleScreen",
-    "loadingScreen"
-  );
-
-  transition(
-    "registrationScreen",
-    "loadingScreen"
-  );
-
-
-  const ok =
     await fetchSync();
 
+  }catch(error){
 
-  if(ok){
-
-    transition(
-      "loadingScreen",
-      "gameScreen"
-    );
-
-
-    if(syncTimer){
-      clearInterval(
-        syncTimer
-      );
-    }
-
-
-    syncTimer =
-      setInterval(
-        fetchSync,
-        15000
-      );
-
-  }else{
-
-    alert(
-      "サーバーとの同期に失敗しました"
-    );
-
-
-    transition(
-      "loadingScreen",
-      "titleScreen"
-    );
+    console.error(error);
 
   }
 
@@ -1528,215 +1458,108 @@ async function beginPortalSync(){
 
 async function fetchSync(){
 
+  if(!myId){
+    return;
+  }
+
   try{
 
-    const json =
+    const result =
       await getGAS(
-        "",
+        "getUser",
         {
           id:myId
         }
       );
 
-
     if(
-      json.result !==
-        "success"
+      result.result !==
+      "success"
     ){
 
-      /*
-       * 初回ユーザーなら作成
-       */
-
-      const name =
-        localStorage.getItem(
-          "gName"
-        );
-
-      const pass =
-        localStorage.getItem(
-          "gPass"
-        );
-
-
-      if(name && pass){
-
-        await postGAS({
-
-          type:"register",
-
-          id:myId,
-
-          name:name,
-
-          pass:pass
-
-        });
-
-
-        return fetchSync();
-
-      }
-
-
-      return false;
-
+      return;
     }
 
+    if(
+      result.name !==
+      undefined
+    ){
 
-    iroCoins =
-      Number(
-        json.iroCoin || 0
-      );
-
-
-    localStorage.setItem(
-      "gCoins",
-      iroCoins
-    );
-
-
-    myChars =
-      json.chars || "";
-
-
-    document
-      .getElementById(
-        "hIroCoin"
-      )
-      .innerText =
-        iroCoins.toLocaleString();
-
-
-    document
-      .getElementById(
-        "hName"
-      )
-      .innerText =
-        json.name ||
-        "USER";
-
-
-    document
-      .getElementById(
-        "myIdDisplay"
-      )
-      .innerText =
-        myId;
-
-
-    document
-      .getElementById(
-        "nIn"
-      )
-      .value =
-        json.name ||
-        localStorage.getItem(
-          "gName"
-        ) ||
-        "";
-
-
-    document
-      .getElementById(
-        "pIn"
-      )
-      .value =
-        localStorage.getItem(
-          "gPass"
-        ) ||
-        "";
-
-
-    if(json.isOfficial){
-
-      document
-        .getElementById(
-          "hVerified"
-        )
-        .innerHTML =
-        '<span class="badge-verify">✓</span>';
-
-    }else{
-
-      document
-        .getElementById(
-          "hVerified"
-        )
-        .innerHTML = "";
-
-    }
-
-
-    const avatar =
-      json.avatar ||
-      (
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=" +
-        encodeURIComponent(myId)
-      );
-
-
-    document
-      .getElementById(
-        "hAv"
-      )
-      .src =
-        avatar;
-
-
-    document
-      .getElementById(
-        "mAv"
-      )
-      .src =
-        avatar;
-
-
-    if(json.avatar){
+      myName =
+        result.name;
 
       localStorage.setItem(
-        "gAv",
-        json.avatar
+        "gName",
+        myName
       );
 
+      document
+        .getElementById(
+          "hName"
+        )
+        .innerText =
+          myName;
     }
 
+    if(
+      result.pass !==
+      undefined
+    ){
 
-    friendsData =
-      Array.isArray(
-        json.friendsData
-      )
-        ? json.friendsData
-        : [];
+      myPass =
+        result.pass;
 
+      localStorage.setItem(
+        "gPass",
+        myPass
+      );
+    }
 
-    updatePresentUI(
-      json.pendingGifts
-    );
+    if(
+      result.iroCoin !==
+      undefined
+    ){
 
+      iroCoins =
+        Number(
+          result.iroCoin
+        );
 
-    updateHistoryUI(
-      json.history
-    );
+      localStorage.setItem(
+        "gCoins",
+        iroCoins
+      );
 
+      document
+        .getElementById(
+          "hIroCoin"
+        )
+        .innerText =
+          iroCoins.toLocaleString();
+    }
 
-    updateFriendUI(
-      json
-    );
+    if(result.chars){
 
+      try{
 
-    renderMembers();
+        myChars =
+          JSON.parse(
+            result.chars
+          );
 
+      }catch(e){
 
-    return true;
+        myChars = [];
+
+      }
+    }
 
   }catch(error){
 
     console.error(
+      "同期エラー:",
       error
     );
-
-    return false;
 
   }
 
@@ -1744,44 +1567,662 @@ async function fetchSync(){
 
 
 /* =========================================================
-   transition
+   ガチャデータ
 ========================================================= */
 
-function transition(
-  from,
-  to
-){
+async function loadGachaData(){
 
-  const a =
-    document.getElementById(
-      from
-    );
+  try{
 
-  const b =
-    document.getElementById(
-      to
-    );
+    const pools =
+      await getGAS(
+        "getCharaPools"
+      );
 
+    if(
+      pools.result ===
+      "success"
+    ){
 
-  if(a){
-    a.classList.add(
-      "hidden"
-    );
-  }
+      charaPools =
+        pools.data || {
+          star2:[],
+          star3:[],
+          star4:[]
+        };
 
+    }
 
-  if(b){
+    const settings =
+      await getGAS(
+        "getGachaSettings"
+      );
 
-    b.style.display =
-      "flex";
+    if(
+      settings.result ===
+      "success"
+    ){
 
-    b.classList.remove(
-      "hidden"
+      gachaSettings =
+        settings.data || [];
+
+    }
+
+    renderGachaTabs();
+
+  }catch(error){
+
+    console.error(
+      "ガチャデータ取得エラー:",
+      error
     );
 
   }
 
 }
+
+
+/* =========================================================
+   ガチャタブ
+========================================================= */
+
+function renderGachaTabs(){
+
+  const container =
+    document.getElementById(
+      "gachaTabs"
+    );
+
+  container.innerHTML = "";
+
+  if(!gachaSettings.length){
+
+    container.innerHTML =
+      "<div>ガチャ設定がありません</div>";
+
+    return;
+  }
+
+  gachaSettings.forEach(
+    function(gacha,index){
+
+      const tab =
+        document.createElement(
+          "div"
+        );
+
+      tab.className =
+        "gacha-tab";
+
+      if(index === 0){
+
+        tab.classList.add(
+          "active"
+        );
+
+      }
+
+      if(gacha.thumbnail){
+
+        tab.style.backgroundImage =
+          "url('" +
+          String(
+            gacha.thumbnail
+          ).replace(/'/g,"%27") +
+          "')";
+
+      }
+
+      tab.innerText =
+        gacha.title ||
+        "ガチャ";
+
+      tab.onclick =
+        function(){
+
+          selectGacha(index);
+
+        };
+
+      container.appendChild(
+        tab
+      );
+
+    }
+  );
+
+  selectGacha(0);
+
+}
+
+
+/* =========================================================
+   ガチャ選択
+========================================================= */
+
+function selectGacha(index){
+
+  if(
+    !gachaSettings[index]
+  ){
+
+    return;
+  }
+
+  document
+    .querySelectorAll(
+      ".gacha-tab"
+    )
+    .forEach(
+      function(tab,i){
+
+        tab.classList.toggle(
+          "active",
+          i === index
+        );
+
+      }
+    );
+
+  const gacha =
+    gachaSettings[index];
+
+  if(gacha.bg){
+
+    document
+      .getElementById(
+        "gachaBg"
+      )
+      .style.backgroundImage =
+        "url('" +
+        String(
+          gacha.bg
+        ).replace(/'/g,"%27") +
+        "')";
+
+  }
+
+  renderButtons(index);
+
+}
+
+
+/* =========================================================
+   ガチャボタン
+========================================================= */
+
+function renderButtons(index){
+
+  const container =
+    document.getElementById(
+      "gachaButtons"
+    );
+
+  container.innerHTML = "";
+
+  const gacha =
+    gachaSettings[index];
+
+  const buttons =
+    String(
+      gacha.buttons ||
+      "1回,10回,100回"
+    )
+    .split(",")
+    .map(
+      function(x){
+        return x.trim();
+      }
+    )
+    .filter(Boolean);
+
+  buttons.forEach(
+    function(button,index){
+
+      const btn =
+        document.createElement(
+          "button"
+        );
+
+      btn.className =
+        "gacha-btn";
+
+      if(index === 1){
+        btn.classList.add("pink");
+      }
+
+      if(index === 2){
+        btn.classList.add("orange");
+      }
+
+      const count =
+        parsePullCount(
+          button
+        );
+
+      const cost =
+        count * 300;
+
+      btn.innerHTML =
+        escapeHTML(button) +
+        "<br>" +
+        "<small>" +
+        cost.toLocaleString() +
+        "コイン" +
+        "</small>";
+
+      btn.onclick =
+        function(){
+
+          startPull(
+            count
+          );
+
+        };
+
+      container.appendChild(
+        btn
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   回数解析
+========================================================= */
+
+function parsePullCount(text){
+
+  const match =
+    String(text)
+      .match(/\d+/);
+
+  return match
+    ? Number(match[0])
+    : 1;
+}
+
+
+/* =========================================================
+   ガチャ実行
+========================================================= */
+
+async function startPull(n){
+
+  n =
+    Number(n);
+
+  if(
+    !Number.isFinite(n) ||
+    n < 1
+  ){
+
+    return;
+  }
+
+  n =
+    Math.floor(n);
+
+  const cost =
+    n * 300;
+
+  if(iroCoins < cost){
+
+    alert(
+      "コインが不足しています"
+    );
+
+    return;
+  }
+
+  iroCoins -= cost;
+
+  const results = [];
+
+  const names = [];
+
+  for(
+    let i = 0;
+    i < n;
+    i++
+  ){
+
+    const r =
+      Math.random() * 100;
+
+    let rank;
+
+    if(r < 3.5){
+
+      rank = 4;
+
+    }else if(r < 16){
+
+      rank = 3;
+
+    }else{
+
+      rank = 2;
+
+    }
+
+    let pool;
+
+    if(rank === 4){
+
+      pool =
+        charaPools.star4;
+
+    }else if(rank === 3){
+
+      pool =
+        charaPools.star3;
+
+    }else{
+
+      pool =
+        charaPools.star2;
+
+    }
+
+    if(
+      !pool ||
+      !pool.length
+    ){
+
+      continue;
+    }
+
+    const char =
+      pool[
+        Math.floor(
+          Math.random() *
+          pool.length
+        )
+      ];
+
+    results.push({
+
+      name:
+        char.name,
+
+      img:
+        char.img,
+
+      rank:
+        rank
+
+    });
+
+    names.push(
+      char.name
+    );
+
+  }
+
+  myChars =
+    myChars.concat(
+      results
+    );
+
+  localStorage.setItem(
+    "gCoins",
+    iroCoins
+  );
+
+  localStorage.setItem(
+    "gChars",
+    JSON.stringify(
+      myChars
+    )
+  );
+
+  document
+    .getElementById(
+      "hIroCoin"
+    )
+    .innerText =
+      iroCoins.toLocaleString();
+
+
+  /* -----------------------------------------
+     親ページへガチャ結果送信
+  ----------------------------------------- */
+
+  try{
+
+    if(
+      window.parent &&
+      window.parent !== window
+    ){
+
+      window.parent.postMessage({
+
+        type:"gachaPull",
+
+        value:
+          iroCoins,
+
+        pulls:
+          n,
+
+        chars:
+          names
+
+      },"*");
+
+    }
+
+  }catch(error){
+
+    console.warn(error);
+
+  }
+
+
+  /* -----------------------------------------
+     GASへ保存
+  ----------------------------------------- */
+
+  try{
+
+    const result =
+      await postGAS({
+
+        type:"gachaLog",
+
+        id:myId,
+
+        userId:myId,
+
+        newCoins:
+          iroCoins,
+
+        pulls:n,
+
+        newChars:
+          JSON.stringify(
+            myChars
+          )
+
+      });
+
+    if(
+      result.result !==
+      "success"
+    ){
+
+      console.warn(
+        "ガチャ記録失敗:",
+        result
+      );
+
+    }
+
+  }catch(error){
+
+    console.error(
+      "ガチャ保存エラー:",
+      error
+    );
+
+  }
+
+  showResult(
+    results
+  );
+
+}
+
+
+/* =========================================================
+   ガチャ結果表示
+========================================================= */
+
+function showResult(results){
+
+  const area =
+    document.getElementById(
+      "resultArea"
+    );
+
+  area.style.display =
+    "block";
+
+  if(!results.length){
+
+    area.innerHTML =
+      "<p>結果がありません</p>";
+
+    return;
+  }
+
+  area.innerHTML =
+    results
+      .map(
+        function(char){
+
+          return `
+
+            <div class="result-card">
+
+              ${
+                char.img
+                ?
+                `<img
+                  src="${escapeHTML(char.img)}"
+                  alt=""
+                  onerror="this.style.display='none'"
+                >`
+                :
+                `<div
+                  style="
+                    width:110px;
+                    height:110px;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:50px;
+                  "
+                >
+                  ✨
+                </div>`
+              }
+
+              <div class="stars">
+                ${"★".repeat(
+                  char.rank
+                )}
+              </div>
+
+              <b>
+                ${escapeHTML(
+                  char.name
+                )}
+              </b>
+
+            </div>
+
+          `;
+
+        }
+      )
+      .join("");
+
+}
+
+
+/* =========================================================
+   ガチャ結果受信
+========================================================= */
+
+window.addEventListener(
+  "message",
+  async function(event){
+
+    if(
+      !event.data ||
+      event.data.type !==
+      "gachaPull"
+    ){
+
+      return;
+    }
+
+    iroCoins =
+      Number(
+        event.data.value
+      );
+
+    localStorage.setItem(
+      "gCoins",
+      iroCoins
+    );
+
+    document
+      .getElementById(
+        "hIroCoin"
+      )
+      .innerText =
+      iroCoins.toLocaleString();
+
+    try{
+
+      await postGAS({
+
+        type:"gachaLog",
+
+        id:myId,
+
+        userId:myId,
+
+        newCoins:
+          iroCoins,
+
+        pulls:
+          event.data.pulls,
+
+        newChars:
+          event.data.chars
+
+      });
+
+      await fetchSync();
+
+    }catch(error){
+
+      console.warn(
+        "ガチャ記録失敗:",
+        error
+      );
+
+    }
+
+  }
+);
 
 
 /* =========================================================
@@ -1792,20 +2233,14 @@ async function saveSettings(){
 
   const name =
     document
-      .getElementById(
-        "nIn"
-      )
+      .getElementById("nIn")
       .value
       .trim();
 
-
   const pass =
     document
-      .getElementById(
-        "pIn"
-      )
+      .getElementById("pIn")
       .value;
-
 
   if(!name){
 
@@ -1814,32 +2249,55 @@ async function saveSettings(){
     );
 
     return;
-
   }
-
 
   localStorage.setItem(
     "gName",
     name
   );
 
-
   localStorage.setItem(
     "gPass",
     pass
   );
 
+  myName =
+    name;
 
-  const avatar =
-    localStorage.getItem(
-      "gAv"
-    ) || "";
+  myPass =
+    pass;
 
+  try{
 
-  const result =
+    const result =
+      await postGAS({
+
+        type:"setting",
+
+        id:myId,
+
+        name:name,
+
+        pass:pass
+
+      });
+
+    if(
+      result.result !==
+      "success"
+    ){
+
+      alert(
+        result.message ||
+        "設定保存に失敗しました"
+      );
+
+      return;
+    }
+
     await postGAS({
 
-      type:"setting",
+      type:"sync",
 
       id:myId,
 
@@ -1847,119 +2305,79 @@ async function saveSettings(){
 
       pass:pass,
 
-      avatar:avatar
+      iroCoin:
+        iroCoins,
+
+      chars:
+        JSON.stringify(
+          myChars
+        )
 
     });
 
-
-  if(
-    result.result ===
-      "error"
-  ){
+    document
+      .getElementById(
+        "hName"
+      )
+      .innerText =
+      name;
 
     alert(
-      result.message ||
+      "保存しました"
+    );
+
+    closeAllSheets();
+
+    await fetchSync();
+
+  }catch(error){
+
+    console.error(error);
+
+    alert(
       "保存に失敗しました"
     );
 
-    return;
-
   }
-
-
-  await fetchSync();
-
-
-  alert(
-    "保存しました"
-  );
-
-
-  closeAllSheets();
 
 }
 
 
 /* =========================================================
-   アイコン
+   設定パネル
 ========================================================= */
 
-function uploadIcon(input){
+function saveSettingFromPanel(){
 
-  if(
-    !input.files ||
-    !input.files[0]
-  ){
-    return;
-  }
+  const name =
+    document
+      .getElementById(
+        "settingName"
+      )
+      .value;
 
+  const pass =
+    document
+      .getElementById(
+        "settingPass"
+      )
+      .value;
 
-  const reader =
-    new FileReader();
+  document
+    .getElementById(
+      "nIn"
+    )
+    .value =
+    name;
 
+  document
+    .getElementById(
+      "pIn"
+    )
+    .value =
+    pass;
 
-  reader.onload =
-    async function(e){
-
-      const data =
-        e.target.result;
-
-
-      localStorage.setItem(
-        "gAv",
-        data
-      );
-
-
-      document
-        .getElementById(
-          "hAv"
-        )
-        .src =
-        data;
-
-
-      document
-        .getElementById(
-          "mAv"
-        )
-        .src =
-        data;
-
-
-      const result =
-        await postGAS({
-
-          type:"setting",
-
-          id:myId,
-
-          avatar:data
-
-        });
-
-
-      if(
-        result.result ===
-          "error"
-      ){
-
-        alert(
-          result.message ||
-          "アイコン保存失敗"
-        );
-
-      }
-
-
-      await fetchSync();
-
-    };
-
-
-  reader.readAsDataURL(
-    input.files[0]
-  );
+  saveSettings();
 
 }
 
@@ -1970,51 +2388,38 @@ function uploadIcon(input){
 
 function openSheet(id){
 
-  const sheet =
-    document.getElementById(
-      id
-    );
-
-
-  if(!sheet){
-    return;
-  }
-
+  logWebAction(
+    "シート:" + id
+  );
 
   document
     .getElementById(
       "sheetOverlay"
     )
     .style.display =
-      "block";
+    "block";
 
-
-  sheet.classList.add(
-    "open"
-  );
-
-
-  logWebAction(
-    "シート:" + id
-  );
+  document
+    .getElementById(id)
+    .classList.add(
+      "open"
+    );
 
 }
 
 
 function closeSheet(id){
 
-  const sheet =
-    document.getElementById(
-      id
-    );
+  const element =
+    document.getElementById(id);
 
+  if(element){
 
-  if(sheet){
-    sheet.classList.remove(
+    element.classList.remove(
       "open"
     );
-  }
 
+  }
 
   if(
     !document.querySelector(
@@ -2027,7 +2432,7 @@ function closeSheet(id){
         "sheetOverlay"
       )
       .style.display =
-        "none";
+      "none";
 
   }
 
@@ -2041,8 +2446,7 @@ function closeAllSheets(){
       "sheetOverlay"
     )
     .style.display =
-      "none";
-
+    "none";
 
   document
     .querySelectorAll(
@@ -2067,12 +2471,16 @@ function closeAllSheets(){
 
 function showPauseMenu(){
 
+  logWebAction(
+    "ポーズ"
+  );
+
   document
     .getElementById(
       "pauseOverlay"
     )
     .style.display =
-      "flex";
+    "flex";
 
 }
 
@@ -2084,7 +2492,7 @@ function resumeGame(){
       "pauseOverlay"
     )
     .style.display =
-      "none";
+    "none";
 
 }
 
@@ -2095,1666 +2503,9 @@ function exitGame(){
     "ゲーム終了"
   );
 
-
-  document
-    .getElementById(
-      "gameFrame"
-    )
-    .src =
-      "about:blank";
-
-
-  document
-    .getElementById(
-      "gameFrame"
-    )
-    .srcdoc =
-      "";
-
-
-  document
-    .getElementById(
-      "gameLayer"
-    )
-    .style.display =
-      "none";
-
-
-  document
-    .getElementById(
-      "mobilePauseBtn"
-    )
-    .style.display =
-      "none";
-
-
-  document
-    .getElementById(
-      "pauseOverlay"
-    )
-    .style.display =
-      "none";
+  closeGame();
 
 }
-
-
-/* =========================================================
-   メンバー
-========================================================= */
-
-function renderMembers(){
-
-  const container =
-    document.getElementById(
-      "memberListContainer"
-    );
-
-
-  if(!myChars){
-
-    container.innerHTML =
-      "まだキャラクターがありません";
-
-    return;
-
-  }
-
-
-  const counts = {};
-
-
-  myChars
-    .split(",")
-    .filter(Boolean)
-    .forEach(function(name){
-
-      counts[name] =
-        (
-          counts[name] ||
-          0
-        ) + 1;
-
-    });
-
-
-  const master =
-    []
-      .concat(
-        globalCharaPool.star2 || []
-      )
-      .concat(
-        globalCharaPool.star3 || []
-      )
-      .concat(
-        globalCharaPool.star4 || []
-      );
-
-
-  container.innerHTML =
-    Object.keys(
-      counts
-    )
-    .map(function(name){
-
-      const char =
-        master.find(
-          function(x){
-            return x.name === name;
-          }
-        );
-
-
-      if(!char){
-        return "";
-      }
-
-
-      return `
-
-        <div
-          class="member-card"
-          onclick="
-            showMemberDetail(
-              ${JSON.stringify(name)}
-            )
-          "
-        >
-
-          <div class="count-badge">
-            x${counts[name]}
-          </div>
-
-          <img
-            src="${escapeHTML(char.img)}"
-          >
-
-          <small>
-            ${escapeHTML(char.name)}
-          </small>
-
-        </div>
-
-      `;
-
-    })
-    .join("");
-
-}
-
-
-/* =========================================================
-   メンバー詳細
-========================================================= */
-
-function showMemberDetail(name){
-
-  const master =
-    []
-      .concat(
-        globalCharaPool.star2 || []
-      )
-      .concat(
-        globalCharaPool.star3 || []
-      )
-      .concat(
-        globalCharaPool.star4 || []
-      );
-
-
-  const char =
-    master.find(
-      function(x){
-        return x.name === name;
-      }
-    );
-
-
-  if(!char){
-    return;
-  }
-
-
-  let stars = 2;
-
-
-  if(
-    (globalCharaPool.star4 || [])
-      .some(
-        x => x.name === name
-      )
-  ){
-
-    stars = 4;
-
-  }else if(
-    (globalCharaPool.star3 || [])
-      .some(
-        x => x.name === name
-      )
-  ){
-
-    stars = 3;
-
-  }
-
-
-  document
-    .getElementById(
-      "memberDetailContent"
-    )
-    .innerHTML = `
-
-      <img
-        src="${escapeHTML(char.img)}"
-        style="
-          width:220px;
-          max-width:90%;
-          border-radius:15px;
-        "
-      >
-
-      <div
-        style="
-          color:#ffcc00;
-          font-size:2rem;
-          margin:10px;
-        "
-      >
-        ${"★".repeat(stars)}
-      </div>
-
-      <h2>
-        ${escapeHTML(char.name)}
-      </h2>
-
-    `;
-
-
-  document
-    .getElementById(
-      "giftSelectionArea"
-    )
-    .style.display =
-      "none";
-
-
-  document
-    .getElementById(
-      "startGiftBtn"
-    )
-    .onclick =
-      function(){
-
-        if(!friendsData.length){
-
-          alert(
-            "フレンドがいません"
-          );
-
-          return;
-
-        }
-
-
-        document
-          .getElementById(
-            "giftFriendList"
-          )
-          .innerHTML =
-          friendsData
-            .map(function(f){
-
-              return `
-
-                <div
-                  style="
-                    padding:12px;
-                    border-bottom:1px solid #ddd;
-                    cursor:pointer;
-                  "
-                  onclick="
-                    executeMemberGift(
-                      ${JSON.stringify(f.id)},
-                      ${JSON.stringify(f.name)},
-                      ${JSON.stringify(char.name)}
-                    )
-                  "
-                >
-                  ${escapeHTML(f.name)}
-                  ➜ 贈る
-                </div>
-
-              `;
-
-            })
-            .join("");
-
-
-        document
-          .getElementById(
-            "giftSelectionArea"
-          )
-          .style.display =
-            "block";
-
-      };
-
-
-  openSheet(
-    "sheetMemberDetail"
-  );
-
-}
-
-
-/* =========================================================
-   キャラクター送信
-========================================================= */
-
-async function executeMemberGift(
-  targetId,
-  targetName,
-  charName
-){
-
-  if(
-    !confirm(
-      targetName +
-      "さんに「" +
-      charName +
-      "」を贈りますか？"
-    )
-  ){
-    return;
-  }
-
-
-  const result =
-    await postGAS({
-
-      type:
-        "friendMemberGift",
-
-      fromId:
-        myId,
-
-      fromName:
-        document
-          .getElementById(
-            "hName"
-          )
-          .innerText,
-
-      toId:
-        targetId,
-
-      charName:
-        charName
-
-    });
-
-
-  if(
-    result.result ===
-      "error"
-  ){
-
-    alert(
-      result.message ||
-      "送信できませんでした"
-    );
-
-    return;
-
-  }
-
-
-  alert(
-    "送信しました"
-  );
-
-
-  closeSheet(
-    "sheetMemberDetail"
-  );
-
-
-  await fetchSync();
-
-}
-
-
-/* =========================================================
-   ガチャ
-========================================================= */
-
-async function launchGachaUI(){
-
-  try{
-
-    const results =
-      await Promise.all([
-
-        getGAS(
-          "getGachaSettings"
-        ),
-
-        getGAS(
-          "getCharaPools"
-        )
-
-      ]);
-
-
-    const gResult =
-      results[0];
-
-    const pools =
-      results[1];
-
-
-    const gData =
-      gResult.data || [];
-
-
-    if(!gData.length){
-
-      alert(
-        "ガチャ設定がありません"
-      );
-
-      return;
-
-    }
-
-
-    if(
-      !pools.star2.length &&
-      !pools.star3.length &&
-      !pools.star4.length
-    ){
-
-      alert(
-        "キャラクターが登録されていません"
-      );
-
-      return;
-
-    }
-
-
-    document
-      .getElementById(
-        "gameLayer"
-      )
-      .style.display =
-      "block";
-
-
-    document
-      .getElementById(
-        "mobilePauseBtn"
-      )
-      .style.display =
-      "flex";
-
-
-    const gachaHTML =
-      createGachaHTML(
-        gData,
-        pools
-      );
-
-
-    document
-      .getElementById(
-        "gameFrame"
-      )
-      .srcdoc =
-      gachaHTML;
-
-
-    logWebAction(
-      "ガチャ起動"
-    );
-
-  }catch(error){
-
-    console.error(
-      error
-    );
-
-    alert(
-      "ガチャの読み込みに失敗しました"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   ガチャHTML生成
-========================================================= */
-
-function createGachaHTML(
-  gData,
-  pools
-){
-
-  /*
-   * JSONを安全化
-   */
-
-  const json =
-    function(value){
-
-      return JSON
-        .stringify(value)
-        .replace(
-          /</g,
-          "\\u003c"
-        );
-
-    };
-
-
-  const dataJSON =
-    json(gData);
-
-
-  const poolJSON =
-    json(pools);
-
-
-  const firstBG =
-    escapeHTML(
-      gData[0].bg || ""
-    );
-
-
-  const firstTitle =
-    escapeHTML(
-      gData[0].title || "GACHA"
-    );
-
-
-  /*
-   * </script> を直接HTMLソースに置かない。
-   * これが以前の「プログラムが背景に表示される」
-   * 問題を防ぐ重要部分。
-   */
-
-  const endScript =
-    "</scr" +
-    "ipt>";
-
-
-  const script =
-`
-
-let coins =
-${Number(iroCoins) || 0};
-
-const pools =
-${poolJSON};
-
-const gData =
-${dataJSON};
-
-let resultList = [];
-
-let currentIndex = 0;
-
-let customCount = 1;
-
-let selectedIndex = 0;
-
-
-/* ---------------------------------------------
-   カスタム回数
---------------------------------------------- */
-
-function changeCustom(v){
-
-  customCount =
-    Math.max(
-      1,
-      customCount + v
-    );
-
-
-  const el =
-    document.getElementById(
-      "customNum"
-    );
-
-
-  if(el){
-    el.innerText =
-      customCount;
-  }
-
-}
-
-
-/* ---------------------------------------------
-   ガチャボタン
---------------------------------------------- */
-
-function renderButtons(index){
-
-  selectedIndex =
-    index;
-
-
-  const container =
-    document.getElementById(
-      "btn-container"
-    );
-
-
-  container.innerHTML =
-    "";
-
-
-  const buttons =
-    String(
-      gData[index].buttons ||
-      "1回,10回,100回"
-    )
-    .split(",")
-    .map(
-      x => x.trim()
-    );
-
-
-  buttons.forEach(function(button){
-
-    if(button === "1回"){
-
-      container.innerHTML +=
-        '<button class="pull-btn b1" onclick="startPull(1)">1回引く<br><small>300コイン</small></button>';
-
-    }
-
-
-    if(button === "10回"){
-
-      container.innerHTML +=
-        '<button class="pull-btn b10" onclick="startPull(10)">10回引く<br><small>3,000コイン</small></button>';
-
-    }
-
-
-    if(button === "100回"){
-
-      container.innerHTML +=
-        '<button class="pull-btn b100" onclick="startPull(100)">100回引く<br><small>30,000コイン</small></button>';
-
-    }
-
-  });
-
-
-  container.innerHTML +=
-    '<div class="custom-box">' +
-
-      '<button class="num-btn" onclick="changeCustom(-1)">−</button>' +
-
-      '<b id="customNum">' +
-        customCount +
-      '</b>' +
-
-      '<button class="num-btn" onclick="changeCustom(1)">＋</button>' +
-
-      '<button class="custom-pull" onclick="startPull(customCount)">引く</button>' +
-
-    '</div>';
-
-}
-
-
-/* ---------------------------------------------
-   ガチャ実行
---------------------------------------------- */
-
-function startPull(n){
-
-  n =
-    Number(n);
-
-
-  if(
-    !Number.isFinite(n) ||
-    n < 1
-  ){
-
-    return;
-
-  }
-
-
-  n =
-    Math.floor(n);
-
-
-  const cost =
-    n * 300;
-
-
-  if(coins < cost){
-
-    alert(
-      "コインが不足しています"
-    );
-
-    return;
-
-  }
-
-
-  coins -= cost;
-
-
-  document
-    .getElementById(
-      "coin"
-    )
-    .innerText =
-      coins.toLocaleString();
-
-
-  resultList =
-    [];
-
-
-  const names =
-    [];
-
-
-  let has4 =
-    false;
-
-  let has3 =
-    false;
-
-
-  for(
-    let i = 0;
-    i < n;
-    i++
-  ){
-
-    let rank = 2;
-
-    const r =
-      Math.random() *
-      100;
-
-
-    if(r < 3.5){
-
-      rank = 4;
-
-    }else if(r < 16){
-
-      rank = 3;
-
-    }
-
-
-    /*
-     * 10連以上なら最低★3
-     */
-
-    if(
-      n >= 10 &&
-      i === n - 1 &&
-      !has3 &&
-      rank < 3
-    ){
-
-      rank = 3;
-
-    }
-
-
-    /*
-     * 100連なら最低★4
-     */
-
-    if(
-      n >= 100 &&
-      i === n - 1 &&
-      !has4
-    ){
-
-      rank = 4;
-
-    }
-
-
-    if(rank >= 4){
-      has4 = true;
-    }
-
-
-    if(rank >= 3){
-      has3 = true;
-    }
-
-
-    let pool =
-      pools["star" + rank];
-
-
-    if(
-      !pool ||
-      !pool.length
-    ){
-
-      pool =
-        pools.star2 ||
-        [];
-
-    }
-
-
-    if(!pool.length){
-      continue;
-    }
-
-
-    const char =
-      pool[
-        Math.floor(
-          Math.random() *
-          pool.length
-        )
-      ];
-
-
-    resultList.push({
-
-      name:
-        char.name,
-
-      img:
-        char.img,
-
-      rank:
-        rank
-
-    });
-
-
-    names.push(
-      char.name
-    );
-
-  }
-
-
-  /*
-   * 親ページへ結果送信
-   */
-
-  window.parent.postMessage({
-
-    type:
-      "gachaPull",
-
-    value:
-      coins,
-
-    pulls:
-      n,
-
-    chars:
-      names.join(",")
-
-  },"*");
-
-
-  currentIndex =
-    0;
-
-
-  document
-    .getElementById(
-      "skip"
-    )
-    .style.display =
-      "block";
-
-
-  showResult();
-
-}
-
-
-/* ---------------------------------------------
-   結果表示
---------------------------------------------- */
-
-function showResult(){
-
-  if(
-    currentIndex >=
-    resultList.length
-  ){
-
-    showSummary();
-
-    return;
-
-  }
-
-
-  const char =
-    resultList[
-      currentIndex
-    ];
-
-
-  document
-    .getElementById(
-      "reveal"
-    )
-    .style.display =
-      "flex";
-
-
-  document
-    .getElementById(
-      "rev-img"
-    )
-    .src =
-      char.img;
-
-
-  document
-    .getElementById(
-      "rev-name"
-    )
-    .innerText =
-      char.name;
-
-
-  document
-    .getElementById(
-      "rev-stars"
-    )
-    .innerText =
-      "★".repeat(
-        char.rank
-      );
-
-}
-
-
-/* ---------------------------------------------
-   次
---------------------------------------------- */
-
-function nextReveal(){
-
-  currentIndex++;
-
-  if(
-    currentIndex <
-    resultList.length
-  ){
-
-    showResult();
-
-  }else{
-
-    showSummary();
-
-  }
-
-}
-
-
-/* ---------------------------------------------
-   SKIP
---------------------------------------------- */
-
-function skipReveal(){
-
-  currentIndex =
-    resultList.length;
-
-  showSummary();
-
-}
-
-
-/* ---------------------------------------------
-   結果一覧
---------------------------------------------- */
-
-function showSummary(){
-
-  document
-    .getElementById(
-      "reveal"
-    )
-    .style.display =
-      "none";
-
-
-  document
-    .getElementById(
-      "skip"
-    )
-    .style.display =
-      "none";
-
-
-  const grid =
-    document.getElementById(
-      "summaryGrid"
-    );
-
-
-  grid.innerHTML =
-    "";
-
-
-  resultList.forEach(function(char){
-
-    const card =
-      document.createElement(
-        "div"
-      );
-
-
-    card.className =
-      "summary-card";
-
-
-    card.innerHTML =
-
-      '<img src="' +
-      char.img +
-      '">' +
-
-      '<div>' +
-      "★".repeat(
-        char.rank
-      ) +
-      "</div>" +
-
-      '<small>' +
-      char.name +
-      "</small>";
-
-
-    grid.appendChild(
-      card
-    );
-
-  });
-
-
-  document
-    .getElementById(
-      "summary"
-    )
-    .style.display =
-      "flex";
-
-}
-
-
-/* ---------------------------------------------
-   ガチャ選択
---------------------------------------------- */
-
-function selectGacha(index){
-
-  const g =
-    gData[index];
-
-
-  document
-    .getElementById(
-      "bg"
-    )
-    .style.backgroundImage =
-      "url('" +
-      g.bg +
-      "')";
-
-
-  document
-    .getElementById(
-      "title"
-    )
-    .innerText =
-      g.title;
-
-
-  document
-    .querySelectorAll(
-      ".tab"
-    )
-    .forEach(
-      function(el,i){
-
-        el.classList.toggle(
-          "active",
-          i === index
-        );
-
-      }
-    );
-
-
-  renderButtons(
-    index
-  );
-
-}
-
-
-/* ---------------------------------------------
-   初期表示
---------------------------------------------- */
-
-gData.forEach(
-  function(g,index){
-
-    const tab =
-      document.createElement(
-        "div"
-      );
-
-
-    tab.className =
-      "tab";
-
-
-    tab.style.backgroundImage =
-      "url('" +
-      g.thumbnail +
-      "')";
-
-
-    tab.innerText =
-      g.title;
-
-
-    tab.onclick =
-      function(){
-
-        selectGacha(
-          index
-        );
-
-      };
-
-
-    document
-      .getElementById(
-        "sidebar"
-      )
-      .appendChild(
-        tab
-      );
-
-  }
-);
-
-
-selectGacha(0);
-
-`;
-
-
-  return `
-
-<!DOCTYPE html>
-
-<html lang="ja">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1"
->
-
-<style>
-
-*{
-  box-sizing:border-box;
-}
-
-html,
-body{
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#000;
-  color:#fff;
-  font-family:Arial,sans-serif;
-}
-
-#bg{
-  position:fixed;
-  inset:0;
-  background:url('${firstBG}')
-    center/cover;
-  filter:brightness(.8);
-  transition:.4s;
-}
-
-#ui{
-  position:relative;
-  z-index:5;
-  width:100%;
-  height:100%;
-  padding:25px;
-  background:
-    linear-gradient(
-      rgba(0,0,0,.1),
-      transparent 45%,
-      rgba(0,0,0,.9)
-    );
-}
-
-#coinBox{
-  position:absolute;
-  top:20px;
-  right:20px;
-  padding:10px 20px;
-  border:1px solid #33ffcc;
-  border-radius:30px;
-  color:#33ffcc;
-  background:rgba(0,0,0,.65);
-  font-weight:bold;
-}
-
-#title{
-  position:absolute;
-  left:190px;
-  top:25px;
-  font-size:2rem;
-}
-
-#sidebar{
-  position:absolute;
-  top:100px;
-  left:20px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  width:140px;
-}
-
-.tab{
-  height:65px;
-  border-radius:10px;
-  border:2px solid transparent;
-  background-size:cover;
-  background-position:center;
-  background-color:#222;
-  padding:10px;
-  display:flex;
-  align-items:end;
-  font-weight:bold;
-  text-shadow:0 2px 5px #000;
-  cursor:pointer;
-}
-
-.tab.active{
-  border-color:#ffcc00;
-  box-shadow:0 0 15px #ffcc00;
-}
-
-#btn-container{
-  position:absolute;
-  right:35px;
-  bottom:40px;
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:12px;
-}
-
-.pull-btn{
-  width:220px;
-  padding:18px;
-  border:0;
-  border-radius:15px;
-  color:#fff;
-  font-size:1.05rem;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.pull-btn small{
-  opacity:.8;
-}
-
-.b1{
-  background:#555;
-}
-
-.b10{
-  background:#ff3399;
-}
-
-.b100{
-  background:#ff7700;
-}
-
-.custom-box{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:10px;
-  background:rgba(0,0,0,.8);
-  border-radius:15px;
-}
-
-.num-btn{
-  width:35px;
-  height:35px;
-  border:0;
-  border-radius:50%;
-  cursor:pointer;
-}
-
-.custom-pull{
-  padding:10px 20px;
-  border:0;
-  border-radius:10px;
-  background:#33ffcc;
-  cursor:pointer;
-  font-weight:bold;
-}
-
-#reveal{
-  position:fixed;
-  inset:0;
-  display:none;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  background:#000;
-  z-index:100;
-  cursor:pointer;
-}
-
-#rev-img{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  opacity:.9;
-}
-
-#revealOverlay{
-  position:absolute;
-  inset:0;
-  background:
-    linear-gradient(
-      transparent 40%,
-      rgba(0,0,0,.95)
-    );
-}
-
-#rev-content{
-  position:absolute;
-  bottom:70px;
-  text-align:center;
-  z-index:5;
-}
-
-#rev-stars{
-  color:#ffcc00;
-  font-size:3rem;
-  text-shadow:0 0 15px #000;
-}
-
-#rev-name{
-  font-size:2.5rem;
-  margin:5px;
-}
-
-#skip{
-  position:fixed;
-  top:20px;
-  right:20px;
-  z-index:200;
-  display:none;
-  padding:10px 25px;
-  border-radius:30px;
-  border:1px solid #fff;
-  background:rgba(255,255,255,.15);
-  color:#fff;
-}
-
-#summary{
-  position:fixed;
-  inset:0;
-  z-index:300;
-  display:none;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  background:rgba(0,0,0,.96);
-}
-
-#summaryGrid{
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:10px;
-  max-width:90%;
-  max-height:70%;
-  overflow:auto;
-}
-
-.summary-card{
-  width:90px;
-  padding:5px;
-  border-radius:8px;
-  text-align:center;
-  background:rgba(255,255,255,.1);
-}
-
-.summary-card img{
-  width:70px;
-  height:90px;
-  object-fit:cover;
-  border-radius:5px;
-}
-
-@media(max-width:650px){
-
-  #title{
-    left:160px;
-    font-size:1.2rem;
-  }
-
-  #sidebar{
-    width:110px;
-  }
-
-  .tab{
-    height:55px;
-    font-size:.7rem;
-  }
-
-  #btn-container{
-    right:15px;
-    bottom:20px;
-  }
-
-  .pull-btn{
-    width:180px;
-  }
-
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div id="bg"></div>
-
-<div id="ui">
-
-  <div id="coinBox">
-    🪙
-    <span id="coin">
-      ${Number(iroCoins) || 0}
-    </span>
-  </div>
-
-  <h1 id="title">
-    ${firstTitle}
-  </h1>
-
-  <div id="sidebar"></div>
-
-  <div id="btn-container"></div>
-
-</div>
-
-
-<button
-  id="skip"
-  onclick="skipReveal()"
->
-  SKIP
-</button>
-
-
-<div
-  id="reveal"
-  onclick="nextReveal()"
->
-
-  <img
-    id="rev-img"
-  >
-
-  <div id="revealOverlay"></div>
-
-  <div id="rev-content">
-
-    <div id="rev-stars"></div>
-
-    <h1 id="rev-name"></h1>
-
-    <p>
-      TAP TO NEXT
-    </p>
-
-  </div>
-
-</div>
-
-
-<div id="summary">
-
-  <h2>
-    RESULT
-  </h2>
-
-  <div id="summaryGrid"></div>
-
-  <button
-    onclick="
-      document
-        .getElementById('summary')
-        .style.display='none'
-    "
-    style="
-      margin-top:20px;
-      padding:15px 70px;
-      border:0;
-      border-radius:30px;
-    "
-  >
-    とじる
-  </button>
-
-</div>
-
-
-<script>
-${script}
-${endScript}
-
-</body>
-
-</html>
-
-`;
-
-}
-
-
-/* =========================================================
-   ガチャ結果受信
-========================================================= */
-
-window.addEventListener(
-  "message",
-  async function(event){
-
-    if(
-      !event.data ||
-      event.data.type !==
-        "gachaPull"
-    ){
-
-      return;
-
-    }
-
-
-    iroCoins =
-      Number(
-        event.data.value
-      );
-
-
-    localStorage.setItem(
-      "gCoins",
-      iroCoins
-    );
-
-
-    const coinEl =
-      document.getElementById(
-        "hIroCoin"
-      );
-
-
-    if(coinEl){
-
-      coinEl.innerText =
-        iroCoins.toLocaleString();
-
-    }
-
-
-    const result =
-      await postGAS({
-
-        type:
-          "gachaLog",
-
-        id:
-          myId,
-
-        userId:
-          myId,
-
-        newCoins:
-          iroCoins,
-
-        pulls:
-          event.data.pulls,
-
-        newChars:
-          event.data.chars
-
-      });
-
-
-    if(
-      result.result ===
-        "error"
-    ){
-
-      console.warn(
-        "ガチャ記録失敗",
-        result
-      );
-
-    }
-
-
-    await fetchSync();
-
-  }
-);
 
 
 /* =========================================================
@@ -3768,10 +2519,8 @@ async function loadGameList(){
       "gameListContainer"
     );
 
-
   container.innerHTML =
     "読み込み中...";
-
 
   try{
 
@@ -3780,37 +2529,30 @@ async function loadGameList(){
         "getList"
       );
 
-
     if(
       result.result !==
-        "success"
+      "success"
     ){
 
       container.innerHTML =
         "ゲーム一覧の取得に失敗しました";
 
       return;
-
     }
-
 
     const games =
       result.data || [];
 
-
     if(!games.length){
 
       container.innerHTML =
-        "ゲームが登録されていません";
+        "ゲームがありません";
 
       return;
-
     }
-
 
     container.innerHTML =
       "";
-
 
     games.forEach(
       function(game){
@@ -3820,14 +2562,8 @@ async function loadGameList(){
             "div"
           );
 
-
         card.className =
           "nav-card";
-
-
-        card.style.flex =
-          "0 0 130px";
-
 
         card.innerHTML =
           "<b>" +
@@ -3835,7 +2571,6 @@ async function loadGameList(){
             game.title
           ) +
           "</b>";
-
 
         card.onclick =
           function(){
@@ -3847,7 +2582,6 @@ async function loadGameList(){
 
           };
 
-
         container.appendChild(
           card
         );
@@ -3855,13 +2589,9 @@ async function loadGameList(){
       }
     );
 
-
   }catch(error){
 
-    console.error(
-      error
-    );
-
+    console.error(error);
 
     container.innerHTML =
       "ゲーム一覧の取得に失敗しました";
@@ -3880,6 +2610,25 @@ async function launchGame(
   title
 ){
 
+  logWebAction(
+    "ゲーム起動:" +
+    title
+  );
+
+  document
+    .getElementById(
+      "gameLayer"
+    )
+    .style.display =
+    "block";
+
+  document
+    .getElementById(
+      "mobilePauseBtn"
+    )
+    .style.display =
+    "flex";
+
   try{
 
     const result =
@@ -3890,10 +2639,9 @@ async function launchGame(
         }
       );
 
-
     if(
       result.result !==
-        "success"
+      "success"
     ){
 
       alert(
@@ -3901,26 +2649,19 @@ async function launchGame(
         "ゲームコード取得失敗"
       );
 
-      return;
+      closeGame();
 
+      return;
     }
 
-
-    document
-      .getElementById(
-        "gameLayer"
-      )
-      .style.display =
-      "block";
-
-
-    document
-      .getElementById(
-        "mobilePauseBtn"
-      )
-      .style.display =
-      "flex";
-
+    /*
+     * ここでは取得したゲームHTMLを
+     * iframeのsrcdocに入れる。
+     *
+     * メインページのHTMLとして直接挿入しないため、
+     * ゲームコードがメイン画面の背景に
+     * 文字として表示されることを防ぐ。
+     */
 
     document
       .getElementById(
@@ -3929,33 +2670,27 @@ async function launchGame(
       .srcdoc =
       result.code || "";
 
-
     await postGAS({
 
-      type:
-        "launch",
+      type:"launch",
 
-      id:
-        myId,
+      id:myId,
 
-      gameId:
-        id,
+      gameId:id,
 
-      title:
-        title
+      title:title
 
     });
 
   }catch(error){
 
-    console.error(
-      error
-    );
-
+    console.error(error);
 
     alert(
       "ゲーム起動に失敗しました"
     );
+
+    closeGame();
 
   }
 
@@ -3963,153 +2698,111 @@ async function launchGame(
 
 
 /* =========================================================
-   フレンドUI
+   ゲーム終了
 ========================================================= */
 
-function updateFriendUI(json){
-
-  const req =
-    json.pending
-      ? json.pending
-          .split(",")
-          .filter(Boolean)
-      : [];
-
-
-  const sent =
-    json.sent
-      ? json.sent
-          .split(",")
-          .filter(Boolean)
-      : [];
-
+function closeGame(){
 
   document
     .getElementById(
-      "reqList"
+      "gameFrame"
     )
-    .innerHTML =
-      req.length
-        ? req.map(function(id){
+    .srcdoc =
+    "";
 
-            return `
+  document
+    .getElementById(
+      "gameFrame"
+    )
+    .src =
+    "about:blank";
 
-              <div
+  document
+    .getElementById(
+      "gameLayer"
+    )
+    .style.display =
+    "none";
+
+  document
+    .getElementById(
+      "mobilePauseBtn"
+    )
+    .style.display =
+    "none";
+
+  document
+    .getElementById(
+      "pauseOverlay"
+    )
+    .style.display =
+    "none";
+
+}
+
+
+/* =========================================================
+   履歴
+========================================================= */
+
+function updateHistoryUI(history){
+
+  const container =
+    document.getElementById(
+      "historyContainer"
+    );
+
+  if(
+    !history ||
+    !history.length
+  ){
+
+    container.innerHTML =
+      "履歴なし";
+
+    return;
+  }
+
+  container.innerHTML =
+    history
+      .map(
+        function(item){
+
+          return `
+
+            <div class="history-item">
+
+              <span>
+                ${escapeHTML(
+                  item.reason
+                )}
+              </span>
+
+              <span
                 style="
-                  display:flex;
-                  justify-content:space-between;
-                  padding:10px;
-                  margin-bottom:5px;
-                  background:#fff;
-                  border-radius:10px;
-                  color:#222;
+                  text-align:right;
+                  font-weight:bold;
                 "
               >
+                ${
+                  Number(
+                    item.coin
+                  ) >= 0
+                    ? "+"
+                    : ""
+                }${Number(
+                  item.coin
+                )}
 
-                <span>
-                  ID: ${escapeHTML(id)}
-                </span>
+              </span>
 
-                <button
-                  onclick="
-                    acceptF(
-                      ${JSON.stringify(id)}
-                    )
-                  "
-                >
-                  承認
-                </button>
+            </div>
 
-              </div>
+          `;
 
-            `;
-
-          }).join("")
-        : "なし";
-
-
-  document
-    .getElementById(
-      "sentList"
-    )
-    .innerHTML =
-      sent.length
-        ? sent
-            .map(
-              id =>
-                "<div>ID: " +
-                escapeHTML(id) +
-                "</div>"
-            )
-            .join("")
-        : "なし";
-
-
-  document
-    .getElementById(
-      "fList"
-    )
-    .innerHTML =
-      friendsData.length
-        ? friendsData
-            .map(function(friend){
-
-              return `
-
-                <div
-                  style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    border-bottom:1px solid #ddd;
-                    padding:8px;
-                    color:#222;
-                  "
-                >
-
-                  <span>
-                    ${escapeHTML(
-                      friend.name
-                    )}
-
-                    ${
-                      friend.isOfficial
-                        ? "✔"
-                        : ""
-                    }
-                  </span>
-
-                  <span>
-
-                    <button
-                      onclick="
-                        sendFriendGift(
-                          ${JSON.stringify(friend.id)}
-                        )
-                      "
-                    >
-                      🎁
-                    </button>
-
-                    <button
-                      onclick="
-                        removeFriend(
-                          ${JSON.stringify(friend.id)}
-                        )
-                      "
-                    >
-                      ×
-                    </button>
-
-                  </span>
-
-                </div>
-
-              `;
-
-            })
-            .join("")
-        : "なし";
+        }
+      )
+      .join("");
 
 }
 
@@ -4124,11 +2817,9 @@ async function sendReq(){
     document
       .getElementById(
         "fIdIn"
-      )
-      .value
+      )?.value
       .trim()
       .toUpperCase();
-
 
   if(!target){
 
@@ -4137,9 +2828,7 @@ async function sendReq(){
     );
 
     return;
-
   }
-
 
   if(target === myId){
 
@@ -4148,28 +2837,22 @@ async function sendReq(){
     );
 
     return;
-
   }
-
 
   const result =
     await postGAS({
 
-      type:
-        "request",
+      type:"request",
 
-      myId:
-        myId,
+      myId:myId,
 
-      targetId:
-        target
+      targetId:target
 
     });
 
-
   if(
-    result.result ===
-      "error"
+    result.result !==
+    "success"
   ){
 
     alert(
@@ -4178,22 +2861,11 @@ async function sendReq(){
     );
 
     return;
-
   }
 
-
   alert(
-    "申請しました"
+    "送信完了"
   );
-
-
-  document
-    .getElementById(
-      "fIdIn"
-    )
-    .value =
-      "";
-
 
   await fetchSync();
 
@@ -4201,7 +2873,7 @@ async function sendReq(){
 
 
 /* =========================================================
-   承認
+   フレンド承認
 ========================================================= */
 
 async function acceptF(
@@ -4211,21 +2883,17 @@ async function acceptF(
   const result =
     await postGAS({
 
-      type:
-        "accept",
+      type:"accept",
 
-      myId:
-        myId,
+      myId:myId,
 
-      targetId:
-        target
+      targetId:target
 
     });
 
-
   if(
-    result.result ===
-      "error"
+    result.result !==
+    "success"
   ){
 
     alert(
@@ -4234,9 +2902,7 @@ async function acceptF(
     );
 
     return;
-
   }
-
 
   await fetchSync();
 
@@ -4258,28 +2924,22 @@ async function removeFriend(
   ){
 
     return;
-
   }
-
 
   const result =
     await postGAS({
 
-      type:
-        "removeFriend",
+      type:"removeFriend",
 
-      myId:
-        myId,
+      myId:myId,
 
-      targetId:
-        fid
+      targetId:fid
 
     });
 
-
   if(
-    result.result ===
-      "error"
+    result.result !==
+    "success"
   ){
 
     alert(
@@ -4288,9 +2948,7 @@ async function removeFriend(
     );
 
     return;
-
   }
-
 
   await fetchSync();
 
@@ -4307,82 +2965,57 @@ async function sendFriendGift(
 
   const amount =
     prompt(
-      "送るコイン枚数",
+      "枚数",
       "100"
     );
 
-
-  if(
-    amount === null ||
-    amount === ""
-  ){
+  if(!amount){
 
     return;
-
   }
-
 
   const n =
     Number(amount);
 
-
   if(
     !Number.isFinite(n) ||
-    n <= 0 ||
-    !Number.isInteger(n)
+    n <= 0
   ){
 
     alert(
-      "正しい枚数を入力してください"
+      "枚数が不正です"
     );
 
     return;
-
   }
 
-
-  if(
-    iroCoins <
-    n
-  ){
+  if(iroCoins < n){
 
     alert(
       "コインが不足しています"
     );
 
     return;
-
   }
-
 
   const result =
     await postGAS({
 
-      type:
-        "friendGift",
+      type:"friendGift",
 
-      fromId:
-        myId,
+      fromId:myId,
 
-      fromName:
-        document
-          .getElementById(
-            "hName"
-          )
-          .innerText,
+      fromName:myName,
 
-      toId:
-        fid,
+      toId:fid,
 
-      amount:
-        n
+      amount:n
 
     });
 
-
   if(
-    result.result ===
-      "error"
+    result.result !==
+    "success"
   ){
 
     alert(
@@ -4391,127 +3024,23 @@ async function sendFriendGift(
     );
 
     return;
-
   }
 
+  iroCoins -= n;
 
-  await fetchSync();
-
-
-  alert(
-    "送信しました"
+  localStorage.setItem(
+    "gCoins",
+    iroCoins
   );
 
-}
+  document
+    .getElementById(
+      "hIroCoin"
+    )
+    .innerText =
+    iroCoins.toLocaleString();
 
-
-/* =========================================================
-   プレゼント
-========================================================= */
-
-function updatePresentUI(
-  gifts
-){
-
-  const badge =
-    document.getElementById(
-      "pBadge"
-    );
-
-
-  const container =
-    document.getElementById(
-      "pListContainer"
-    );
-
-
-  if(
-    !gifts ||
-    !gifts.length
-  ){
-
-    badge.style.display =
-      "none";
-
-
-    container.innerHTML =
-      "プレゼントはありません";
-
-    return;
-
-  }
-
-
-  badge.innerText =
-    gifts.length;
-
-
-  badge.style.display =
-    "flex";
-
-
-  container.innerHTML =
-    gifts
-      .map(function(gift){
-
-        return `
-
-          <div
-            class="present-item"
-          >
-
-            <div>
-
-              <b>
-                ${escapeHTML(
-                  gift.fromName ||
-                  "USER"
-                )}
-              </b>
-
-              <br>
-
-              ${
-                gift.type === "coin"
-                  ? "🪙 " +
-                    escapeHTML(
-                      gift.content
-                    ) +
-                    "コイン"
-                  :
-                    "🎁 " +
-                    escapeHTML(
-                      gift.content
-                    )
-              }
-
-            </div>
-
-            <button
-              class="btn-pro"
-              style="
-                min-width:80px;
-                padding:7px 10px;
-                margin:0;
-              "
-              onclick="
-                claim(
-                  ${JSON.stringify(gift.id)},
-                  ${JSON.stringify(gift.type)},
-                  ${JSON.stringify(gift.content)},
-                  ${JSON.stringify(gift.fromName || "プレゼント")}
-                )
-              "
-            >
-              <span>受取</span>
-            </button>
-
-          </div>
-
-        `;
-
-      })
-      .join("");
+  await fetchSync();
 
 }
 
@@ -4530,21 +3059,18 @@ async function claim(
   const result =
     await postGAS({
 
-      type:
-        "claim",
+      type:"claim",
 
-      userId:
-        myId,
+      userId:myId,
 
       giftId:
         String(giftId)
 
     });
 
-
   if(
-    result.result ===
-      "error"
+    result.result !==
+    "success"
   ){
 
     alert(
@@ -4553,16 +3079,13 @@ async function claim(
     );
 
     return;
-
   }
-
 
   alert(
     "「" +
     name +
-    "」を受け取りました"
+    "」受取完了"
   );
-
 
   await fetchSync();
 
@@ -4570,67 +3093,135 @@ async function claim(
 
 
 /* =========================================================
-   履歴
+   プレゼントUI
 ========================================================= */
 
-function updateHistoryUI(
-  history
+function updatePresentUI(
+  gifts
 ){
 
   const container =
     document.getElementById(
-      "historyContainer"
+      "pListContainer"
     );
 
+  const badge =
+    document.getElementById(
+      "pBadge"
+    );
 
-  if(
-    !history ||
-    !history.length
-  ){
-
-    container.innerHTML =
-      "履歴なし";
+  if(!container){
 
     return;
-
   }
 
+  if(
+    !gifts ||
+    !gifts.length
+  ){
+
+    if(badge){
+      badge.style.display =
+        "none";
+    }
+
+    container.innerHTML =
+      "プレゼントはありません";
+
+    return;
+  }
+
+  if(badge){
+
+    badge.innerText =
+      gifts.length;
+
+    badge.style.display =
+      "flex";
+  }
 
   container.innerHTML =
-    history
-      .map(function(item){
+    gifts
+      .map(
+        function(gift){
 
-        const n =
-          Number(
-            item.coin
-          );
+          return `
 
+            <div
+              style="
+                background:#fff;
+                color:#333;
+                padding:15px;
+                border-radius:12px;
+                margin-bottom:10px;
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+              "
+            >
 
-        return `
+              <div>
 
-          <div
-            class="history-item"
-          >
+                <b>
+                  ${escapeHTML(
+                    gift.fromName ||
+                    "USER"
+                  )}
+                </b>
 
-            <span>
-              ${escapeHTML(
-                item.reason
-              )}
-            </span>
+                <br>
 
-            <b>
-              ${
-                n >= 0
-                  ? "+"
-                  : ""
-              }${n}
-            </b>
+                ${
+                  gift.type === "coin"
+                    ?
+                    "🪙 " +
+                    escapeHTML(
+                      gift.content
+                    ) +
+                    "コイン"
+                    :
+                    "🎁 " +
+                    escapeHTML(
+                      gift.content
+                    )
+                }
 
-          </div>
+              </div>
 
-        `;
+              <button
+                class="pro-btn"
+                style="
+                  width:auto;
+                  min-height:40px;
+                  padding:5px 10px;
+                "
+                onclick="
+                  claim(
+                    '${escapeHTML(
+                      gift.id
+                    )}',
+                    '${escapeHTML(
+                      gift.type
+                    )}',
+                    '${escapeHTML(
+                      gift.content
+                    )}',
+                    '${escapeHTML(
+                      gift.fromName ||
+                      "プレゼント"
+                    )}'
+                  )
+                "
+              >
+                受取
+              </button>
 
-      })
+            </div>
+
+          `;
+
+        }
+      )
       .join("");
 
 }
@@ -4639,31 +3230,6 @@ function updateHistoryUI(
 /* =========================================================
    データ復元
 ========================================================= */
-
-function openTransfer(){
-
-  const dialog =
-    document.getElementById(
-      "modalTransfer"
-    );
-
-
-  if(
-    typeof dialog.showModal ===
-      "function"
-  ){
-
-    dialog.showModal();
-
-  }else{
-
-    dialog.style.display =
-      "block";
-
-  }
-
-}
-
 
 async function executeTransfer(){
 
@@ -4676,14 +3242,12 @@ async function executeTransfer(){
       .trim()
       .toUpperCase();
 
-
   const pass =
     document
       .getElementById(
         "tPassIn"
       )
       .value;
-
 
   if(!id || !pass){
 
@@ -4692,9 +3256,7 @@ async function executeTransfer(){
     );
 
     return;
-
   }
-
 
   try{
 
@@ -4706,24 +3268,11 @@ async function executeTransfer(){
         }
       );
 
-
-    /*
-     * 以前のコードでは
-     *
-     * const res = ...
-     * if(json.result ...)
-     *
-     * となっており、
-     * json が未定義だった。
-     *
-     * 今回は json に統一。
-     */
-
     if(
       json.result ===
-        "success" &&
-      String(json.pass || "") ===
-        String(pass)
+      "success" &&
+      String(json.pass) ===
+      String(pass)
     ){
 
       localStorage.setItem(
@@ -4731,46 +3280,40 @@ async function executeTransfer(){
         id
       );
 
-
       localStorage.setItem(
         "gName",
         json.name || ""
       );
-
 
       localStorage.setItem(
         "gPass",
         pass
       );
 
-
-      myId =
-        id;
-
-
-      const avatar =
-        json.avatar || "";
-
-
-      if(avatar){
+      if(
+        json.iroCoin !==
+        undefined
+      ){
 
         localStorage.setItem(
-          "gAv",
-          avatar
+          "gCoins",
+          json.iroCoin
         );
 
       }
 
+      myId =
+        id;
 
       document
         .getElementById(
-          "modalTransfer"
+          "transferSheet"
         )
-        .close();
-
+        .classList.remove(
+          "open"
+        );
 
       location.reload();
-
 
     }else{
 
@@ -4782,10 +3325,7 @@ async function executeTransfer(){
 
   }catch(error){
 
-    console.error(
-      error
-    );
-
+    console.error(error);
 
     alert(
       "復元に失敗しました"
@@ -4795,8 +3335,21 @@ async function executeTransfer(){
 
 }
 
+
+/* =========================================================
+   初回起動
+========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function(){
+
+    init();
+
+  }
+);
+
 </script>
 
 </body>
-
 </html>
