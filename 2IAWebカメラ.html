@@ -453,89 +453,86 @@ button {
 }
 
 
+
 /* =========================================
-   ギャラリー
+   ギャラリー：iPhone「写真」風
 ========================================= */
 
 #galleryPage {
   position: absolute;
-
   inset: 0;
-
   z-index: 50;
-
-  background: #111;
-
+  background: #000;
+  color: #fff;
   display: none;
-
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .galleryHeader {
   position: sticky;
-
   top: 0;
-
-  z-index: 5;
-
+  z-index: 20;
+  min-height: 62px;
   padding:
-    calc(
-      env(safe-area-inset-top) +
-      12px
-    )
-    15px
-    12px;
-
-  background:
-    rgba(17,17,17,.94);
-
-  backdrop-filter: blur(12px);
-
+    calc(env(safe-area-inset-top) + 8px)
+    14px
+    8px;
+  background: rgba(0,0,0,.88);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
   display: flex;
-
   align-items: center;
   justify-content: space-between;
 }
 
 .galleryTitle {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
+  letter-spacing: -.3px;
 }
 
 .galleryClose {
   width: 40px;
   height: 40px;
-
   border: 0;
-
   border-radius: 50%;
-
   background: #292929;
-
   color: #fff;
-
-  font-size: 20px;
+  font-size: 24px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .galleryTabs {
+  position: sticky;
+  top: 62px;
+  z-index: 19;
   display: flex;
-
   gap: 7px;
+  padding: 7px 12px 10px;
+  background: rgba(0,0,0,.88);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
 
-  padding: 10px 14px;
+.galleryTabs::-webkit-scrollbar {
+  display: none;
 }
 
 .galleryTab {
+  flex: 0 0 auto;
   border: 0;
-
-  padding:
-    8px 14px;
-
-  border-radius: 20px;
-
-  color: #aaa;
-
-  background: #242424;
+  padding: 8px 15px;
+  border-radius: 18px;
+  color: #c9c9c9;
+  background: #252525;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .galleryTab.active {
@@ -543,172 +540,269 @@ button {
   background: #fff;
 }
 
+.gallerySectionTitle {
+  padding: 14px 14px 8px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
 .galleryGrid {
   display: grid;
-
-  grid-template-columns:
-    repeat(3,1fr);
-
-  gap: 3px;
-
-  padding: 3px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  padding: 0 2px 18px;
 }
 
 .mediaCard {
   position: relative;
-
-  aspect-ratio: 1;
-
-  background: #222;
-
+  aspect-ratio: 1 / 1;
+  background: #202020;
   overflow: hidden;
-
   cursor: pointer;
+  user-select: none;
 }
 
 .mediaCard img {
+  display: block;
   width: 100%;
   height: 100%;
-
   object-fit: cover;
+  opacity: 0;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.mediaCard img.loaded {
+  opacity: 1;
+}
+
+.mediaCard:active img {
+  transform: scale(.97);
+}
+
+.thumbnailLoading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(
+      135deg,
+      #1b1b1b,
+      #2a2a2a
+    );
+  color: #777;
+  font-size: 24px;
+}
+
+.thumbnailLoading::after {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,.18);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
 }
 
 .videoPlaceholder {
   width: 100%;
   height: 100%;
-
   display: flex;
-
   align-items: center;
   justify-content: center;
-
-  font-size: 45px;
-
   background:
     linear-gradient(
       135deg,
       #222,
       #444
     );
+  font-size: 38px;
+}
+
+.videoBadge {
+  position: absolute;
+  left: 7px;
+  bottom: 7px;
+  min-width: 27px;
+  height: 27px;
+  padding: 0 7px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.72);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .mediaMine {
   position: absolute;
-
   top: 6px;
   right: 6px;
-
-  font-size: 11px;
-
-  padding:
-    4px 7px;
-
+  font-size: 10px;
+  padding: 4px 7px;
   border-radius: 12px;
-
-  background:
-    rgba(0,0,0,.65);
+  background: rgba(0,0,0,.68);
 }
 
-
 /* =========================================
-   プレビュー
+   写真・動画の個別表示：iPhone風
 ========================================= */
 
 #previewPage {
   position: absolute;
-
   inset: 0;
-
   z-index: 200;
-
   background: #000;
-
   display: none;
-
-  align-items: center;
-  justify-content: center;
-
-  flex-direction: column;
+  overflow: hidden;
 }
 
 #previewContent {
-  width: 100%;
-  height: 100%;
-
+  position: absolute;
+  inset: 0;
   display: flex;
-
   align-items: center;
   justify-content: center;
+  padding:
+    calc(env(safe-area-inset-top) + 58px)
+    0
+    calc(env(safe-area-inset-bottom) + 92px);
 }
 
 #previewContent img,
 #previewContent video {
+  display: block;
   max-width: 100%;
-  max-height: 75vh;
-
+  max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
 }
 
 .previewTop {
   position: absolute;
-
   top: 0;
   left: 0;
   right: 0;
-
   z-index: 10;
-
+  min-height: 62px;
   padding:
-    calc(
-      env(safe-area-inset-top) +
-      12px
-    )
-    15px;
+    calc(env(safe-area-inset-top) + 8px)
+    12px
+    8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,.82),
+    rgba(0,0,0,0)
+  );
+}
+
+.previewBack {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(42,42,42,.92);
+  color: #fff;
+  font-size: 25px;
+  line-height: 1;
+}
+
+.previewInfo {
+  flex: 1;
+  min-width: 0;
+  margin: 0 12px;
+  text-align: center;
+}
+
+.previewName {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.previewDate {
+  margin-top: 2px;
+  color: #aaa;
+  font-size: 11px;
+}
+
+.previewTopSpacer {
+  width: 40px;
+  height: 40px;
 }
 
 .previewBottom {
   position: absolute;
-
-  bottom: 0;
   left: 0;
   right: 0;
-
+  bottom: 0;
   z-index: 10;
-
   padding:
-    20px
-    20px
-    calc(
-      env(safe-area-inset-bottom) +
-      20px
-    );
-
+    12px
+    18px
+    calc(env(safe-area-inset-bottom) + 14px);
   display: flex;
-
-  justify-content: center;
-
-  gap: 10px;
+  justify-content: space-around;
+  align-items: center;
+  background: linear-gradient(
+    to top,
+    rgba(0,0,0,.86),
+    rgba(0,0,0,0)
+  );
 }
 
 .actionButton {
+  width: 46px;
+  height: 46px;
   border: 0;
-
-  padding:
-    12px 18px;
-
-  border-radius: 25px;
-
-  background:
-    rgba(255,255,255,.15);
-
+  border-radius: 50%;
+  background: rgba(255,255,255,.13);
   color: #fff;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  backdrop-filter: blur(10px);
+.actionButton span {
+  display: none;
 }
 
 .actionButton.danger {
-  background:
-    rgba(220,40,40,.8);
+  background: rgba(220,40,40,.82);
+}
+
+.previewHint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 72px);
+  transform: translateX(-50%);
+  color: rgba(255,255,255,.55);
+  font-size: 11px;
+  pointer-events: none;
+}
+
+@media (min-width:700px) {
+  .galleryGrid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (min-width:1100px) {
+  .galleryGrid {
+    grid-template-columns: repeat(7, 1fr);
+  }
 }
 
 
@@ -988,16 +1082,15 @@ button {
       ギャラリー
     </div>
 
-
     <button
       class="galleryClose"
       id="galleryClose"
+      aria-label="閉じる"
     >
       ×
     </button>
 
   </div>
-
 
   <div class="galleryTabs">
 
@@ -1008,14 +1101,12 @@ button {
       すべて
     </button>
 
-
     <button
       class="galleryTab"
       data-filter="mine"
     >
       自分
     </button>
-
 
     <button
       class="galleryTab"
@@ -1026,6 +1117,9 @@ button {
 
   </div>
 
+  <div class="gallerySectionTitle">
+    最近の項目
+  </div>
 
   <div
     class="galleryGrid"
@@ -1044,41 +1138,57 @@ button {
   <div class="previewTop">
 
     <button
-      class="galleryClose"
+      class="previewBack"
       id="previewClose"
+      aria-label="戻る"
     >
-      ×
+      ‹
     </button>
+
+    <div class="previewInfo">
+      <div class="previewName" id="previewName">
+        写真
+      </div>
+      <div class="previewDate" id="previewDate"></div>
+    </div>
+
+    <div class="previewTopSpacer"></div>
 
   </div>
 
-
   <div id="previewContent"></div>
 
+  <div class="previewHint">
+    写真・動画を表示しています
+  </div>
 
   <div class="previewBottom">
 
     <button
       class="actionButton"
       id="driveButton"
+      title="Google Drive"
+      aria-label="Google Drive"
     >
-      Google Drive
+      ↗
     </button>
-
 
     <button
       class="actionButton"
       id="saveButton"
+      title="保存"
+      aria-label="保存"
     >
-      保存
+      ↓
     </button>
-
 
     <button
       class="actionButton danger"
       id="deleteButton"
+      title="削除"
+      aria-label="削除"
     >
-      削除
+      🗑
     </button>
 
   </div>
@@ -1115,7 +1225,7 @@ button {
  *************************************************/
 
 const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbwq378JfxWIFqDdaxH19n2ybX43FuBGGu39kO90hjKJiKsWGgusR2lvNYSMRcCBcXunLg/exec";
+  "https://script.google.com/macros/s/AKfycbwIIvVi2W8MWRac0SHN-kN6ff9E6rEiZihW7SZodpg5uoWcKl-vYnZJ8tJ6_axFILhYhQ/exec";
 
 
 /*************************************************
@@ -2754,178 +2864,320 @@ async function loadGallery(
  * ギャラリー表示
  *************************************************/
 
+const thumbnailCache = new Map();
+
+async function loadThumbnail(item, img, loading) {
+
+  if (thumbnailCache.has(item.id)) {
+
+    img.src = thumbnailCache.get(item.id);
+    img.classList.add("loaded");
+
+    if (loading) {
+      loading.remove();
+    }
+
+    return;
+  }
+
+  try {
+
+    const result =
+      await jsonp({
+        action: "file",
+        fileId: item.id
+      });
+
+    if (!result || !result.success) {
+      throw new Error(
+        result && result.error
+          ? result.error
+          : "画像を読み込めませんでした"
+      );
+    }
+
+    if (
+      result.type === "image" &&
+      result.data
+    ) {
+
+      const src =
+        "data:" +
+        result.mimeType +
+        ";base64," +
+        result.data;
+
+      thumbnailCache.set(
+        item.id,
+        src
+      );
+
+      img.src = src;
+      img.onload = () => {
+        img.classList.add("loaded");
+        if (loading) {
+          loading.remove();
+        }
+      };
+
+      return;
+    }
+
+    /*
+     * 5MBを超える画像はGAS側で
+     * Base64を返さないためDriveサムネイルを使用
+     */
+    if (
+      item.mimeType &&
+      item.mimeType.startsWith("image/")
+    ) {
+
+      if (
+        result.thumbnailData
+      ) {
+
+        img.src =
+          "data:" +
+          (
+            result.thumbnailMimeType ||
+            "image/jpeg"
+          ) +
+          ";base64," +
+          result.thumbnailData;
+
+      } else {
+
+        img.src =
+          "https://drive.google.com/thumbnail?id=" +
+          encodeURIComponent(item.id) +
+          "&sz=w500";
+      }
+
+      img.onload = () => {
+        img.classList.add("loaded");
+        if (loading) {
+          loading.remove();
+        }
+      };
+
+      img.onerror = () => {
+        if (loading) {
+          loading.textContent = "📷";
+          loading.style.fontSize = "28px";
+        }
+      };
+
+      return;
+    }
+
+    throw new Error(
+      "画像データがありません"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "thumbnail error:",
+      item.id,
+      error
+    );
+
+    if (loading) {
+      loading.textContent = "📷";
+      loading.style.fontSize = "28px";
+    }
+  }
+}
+
+
 function renderGallery() {
 
-  galleryGrid.innerHTML =
-    "";
+  galleryGrid.innerHTML = "";
 
+  let list = mediaList;
 
-  let list =
-    mediaList;
-
-
-  if (
-    currentFilter ===
-    "mine"
-  ) {
-
+  if (currentFilter === "mine") {
     list =
       mediaList.filter(
-        item =>
-          item.mine
+        item => item.mine
       );
   }
 
-
-  if (
-    currentFilter ===
-    "shared"
-  ) {
-
+  if (currentFilter === "shared") {
     list =
       mediaList.filter(
-        item =>
-          !item.mine
+        item => !item.mine
       );
   }
 
-
-  if (
-    list.length === 0
-  ) {
+  if (list.length === 0) {
 
     galleryGrid.innerHTML = `
-
       <div style="
         grid-column:1/-1;
-        padding:50px;
+        min-height:240px;
+        padding:70px 20px;
         text-align:center;
         color:#888;
+        font-size:14px;
       ">
-
+        <div style="
+          font-size:42px;
+          margin-bottom:14px;
+        ">📷</div>
         写真・動画がありません
-
       </div>
-
     `;
 
     return;
   }
 
+  const observer =
+    "IntersectionObserver" in window
+      ? new IntersectionObserver(
+          entries => {
+            entries.forEach(entry => {
 
-  list.forEach(
-    item => {
+              if (!entry.isIntersecting) {
+                return;
+              }
 
-      const card =
-        document.createElement(
-          "div"
-        );
+              const card =
+                entry.target;
 
+              observer.unobserve(card);
 
-      card.className =
-        "mediaCard";
+              const item =
+                card.__mediaItem;
 
+              if (!item) {
+                return;
+              }
 
-      if (
-        item.mimeType
-          .startsWith(
-            "image/"
-          )
-      ) {
+              if (
+                item.mimeType &&
+                item.mimeType.startsWith("image/")
+              ) {
 
-        const icon =
-          document.createElement(
-            "div"
-          );
+                loadThumbnail(
+                  item,
+                  card.querySelector("img"),
+                  card.querySelector(".thumbnailLoading")
+                );
 
+              }
+            });
+          },
+          {
+            root: galleryPage,
+            rootMargin: "500px 0px"
+          }
+        )
+      : null;
 
-        icon.style.width =
-          "100%";
+  list.forEach(item => {
 
-        icon.style.height =
-          "100%";
+    const card =
+      document.createElement("div");
 
-        icon.style.display =
-          "flex";
+    card.className =
+      "mediaCard";
 
-        icon.style.alignItems =
-          "center";
+    card.__mediaItem =
+      item;
 
-        icon.style.justifyContent =
-          "center";
+    if (
+      item.mimeType &&
+      item.mimeType.startsWith("image/")
+    ) {
 
-        icon.style.fontSize =
-          "35px";
+      const loading =
+        document.createElement("div");
 
-        icon.textContent =
-          "📷";
+      loading.className =
+        "thumbnailLoading";
 
+      card.appendChild(
+        loading
+      );
 
-        card.appendChild(
-          icon
-        );
+      const img =
+        document.createElement("img");
 
+      img.alt =
+        item.name || "写真";
+
+      img.loading =
+        "lazy";
+
+      card.appendChild(
+        img
+      );
+
+      if (observer) {
+        observer.observe(card);
       } else {
-
-        const video =
-          document.createElement(
-            "div"
-          );
-
-
-        video.className =
-          "videoPlaceholder";
-
-
-        video.textContent =
-          "🎥";
-
-
-        card.appendChild(
-          video
+        loadThumbnail(
+          item,
+          img,
+          loading
         );
       }
 
+    } else {
 
-      if (
-        item.mine
-      ) {
+      const video =
+        document.createElement("div");
 
-        const mine =
-          document.createElement(
-            "div"
-          );
+      video.className =
+        "videoPlaceholder";
 
+      video.textContent =
+        "🎥";
 
-        mine.className =
-          "mediaMine";
-
-
-        mine.textContent =
-          "自分";
-
-
-        card.appendChild(
-          mine
-        );
-      }
-
-
-      card.addEventListener(
-        "click",
-        () =>
-          openPreview(
-            item
-          )
+      card.appendChild(
+        video
       );
 
+      const badge =
+        document.createElement("div");
 
-      galleryGrid.appendChild(
-        card
+      badge.className =
+        "videoBadge";
+
+      badge.textContent =
+        "▶";
+
+      card.appendChild(
+        badge
       );
-
     }
-  );
+
+    if (item.mine) {
+
+      const mine =
+        document.createElement("div");
+
+      mine.className =
+        "mediaMine";
+
+      mine.textContent =
+        "自分";
+
+      card.appendChild(
+        mine
+      );
+    }
+
+    card.addEventListener(
+      "click",
+      () => openPreview(item)
+    );
+
+    galleryGrid.appendChild(
+      card
+    );
+  });
 }
 
 
@@ -2938,7 +3190,10 @@ async function openGallery() {
   galleryPage.style.display =
     "block";
 
-
+  /*
+   * カメラを止めずにギャラリーだけ
+   * 前面へ表示する
+   */
   await loadGallery();
 }
 
@@ -2955,9 +3210,7 @@ function closeGallery() {
 
 
 document
-  .getElementById(
-    "galleryButton"
-  )
+  .getElementById("galleryButton")
   .addEventListener(
     "click",
     openGallery
@@ -2965,9 +3218,7 @@ document
 
 
 document
-  .getElementById(
-    "galleryButton2"
-  )
+  .getElementById("galleryButton2")
   .addEventListener(
     "click",
     openGallery
@@ -2975,9 +3226,7 @@ document
 
 
 document
-  .getElementById(
-    "galleryClose"
-  )
+  .getElementById("galleryClose")
   .addEventListener(
     "click",
     closeGallery
@@ -2989,46 +3238,31 @@ document
  *************************************************/
 
 document
-  .querySelectorAll(
-    ".galleryTab"
-  )
-  .forEach(
-    button => {
+  .querySelectorAll(".galleryTab")
+  .forEach(button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+    button.addEventListener(
+      "click",
+      () => {
 
-          document
-            .querySelectorAll(
-              ".galleryTab"
-            )
-            .forEach(
-              b =>
-                b.classList
-                  .remove(
-                    "active"
-                  )
-            );
+        document
+          .querySelectorAll(".galleryTab")
+          .forEach(b =>
+            b.classList.remove("active")
+          );
 
+        button.classList.add(
+          "active"
+        );
 
-          button.classList
-            .add(
-              "active"
-            );
+        currentFilter =
+          button.dataset.filter;
 
+        renderGallery();
+      }
+    );
 
-          currentFilter =
-            button.dataset.filter;
-
-
-          renderGallery();
-
-        }
-      );
-
-    }
-  );
+  });
 
 
 /*************************************************
@@ -3042,57 +3276,60 @@ async function openPreview(
   currentPreview =
     item;
 
-
   previewPage.style.display =
     "flex";
 
+  const previewName =
+    document.getElementById(
+      "previewName"
+    );
 
-  previewContent.innerHTML =
-    `
-      <div style="
-        color:#aaa;
-        text-align:center;
-      ">
-        読み込んでいます...
-      </div>
-    `;
+  const previewDate =
+    document.getElementById(
+      "previewDate"
+    );
 
+  previewName.textContent =
+    item.name || "写真";
+
+  previewDate.textContent =
+    item.updated
+      ? formatGalleryDate(item.updated)
+      : "";
+
+  previewContent.innerHTML = `
+    <div style="
+      color:#aaa;
+      text-align:center;
+      font-size:14px;
+    ">
+      読み込んでいます…
+    </div>
+  `;
 
   try {
 
     const result =
       await jsonp({
-
-        action:
-          "file",
-
-        fileId:
-          item.id
-
+        action: "file",
+        fileId: item.id
       });
 
-
-    if (
-      !result.success
-    ) {
-
+    if (!result.success) {
       throw new Error(
         result.error
       );
     }
 
-
     previewContent.innerHTML =
       "";
 
-
     /*
-     * 写真
+     * 5MB以下の写真
      */
-
     if (
-      result.type ===
-      "image"
+      result.type === "image" &&
+      result.data
     ) {
 
       const img =
@@ -3100,17 +3337,14 @@ async function openPreview(
           "img"
         );
 
-
       img.src =
         "data:" +
         result.mimeType +
         ";base64," +
         result.data;
 
-
       img.alt =
         result.name;
-
 
       previewContent.appendChild(
         img
@@ -3118,11 +3352,52 @@ async function openPreview(
 
     }
 
+    /*
+     * 5MBを超える写真
+     */
+    else if (
+      result.type === "image" &&
+      result.tooLarge
+    ) {
+
+      const img =
+        document.createElement(
+          "img"
+        );
+
+      if (
+        result.thumbnailData
+      ) {
+
+        img.src =
+          "data:" +
+          (
+            result.thumbnailMimeType ||
+            "image/jpeg"
+          ) +
+          ";base64," +
+          result.thumbnailData;
+
+      } else {
+
+        img.src =
+          "https://drive.google.com/thumbnail?id=" +
+          encodeURIComponent(item.id) +
+          "&sz=w1200";
+      }
+
+      img.alt =
+        result.name;
+
+      previewContent.appendChild(
+        img
+      );
+
+    }
 
     /*
      * 動画
      */
-
     else if (
       result.type ===
       "video"
@@ -3133,7 +3408,6 @@ async function openPreview(
           "video"
         );
 
-
       video.controls =
         true;
 
@@ -3143,56 +3417,40 @@ async function openPreview(
       video.preload =
         "metadata";
 
-
       video.src =
         result.downloadUrl;
-
 
       previewContent.appendChild(
         video
       );
 
-
-      /*
-       * Driveで直接再生できない場合の
-       * 案内
-       */
-
       video.addEventListener(
         "error",
         () => {
 
-          previewContent.innerHTML =
-            `
-
+          previewContent.innerHTML = `
             <div style="
               text-align:center;
               color:#aaa;
               padding:30px;
             ">
-
               <div style="
                 font-size:50px;
                 margin-bottom:15px;
-              ">
-                🎥
-              </div>
+              ">🎥</div>
 
-              動画をブラウザ内で<br>
+              動画をブラウザ内で
               再生できませんでした。
 
               <br><br>
 
               Google Driveから開いてください。
-
             </div>
-
-            `;
+          `;
 
         }
       );
     }
-
 
     document
       .getElementById(
@@ -3200,35 +3458,57 @@ async function openPreview(
       )
       .style.display =
         item.mine
-          ? "block"
+          ? "inline-flex"
           : "none";
-
 
   } catch (
     error
   ) {
 
-    previewContent.innerHTML =
-      `
-
+    previewContent.innerHTML = `
       <div style="
         color:#ff7777;
         text-align:center;
         padding:30px;
       ">
-
         読み込みに失敗しました
-
         <br><br>
-
         ${escapeHtml(
           error.message
         )}
-
       </div>
-
-      `;
+    `;
   }
+}
+
+
+function formatGalleryDate(
+  timestamp
+) {
+
+  const date =
+    new Date(
+      Number(timestamp)
+    );
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(
+    "ja-JP",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }
+  ).format(date);
 }
 
 
