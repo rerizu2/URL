@@ -806,6 +806,27 @@ button {
 }
 
 
+#uploadStatus {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 450;
+  padding: 7px 12px;
+  border-radius: 18px;
+  background: rgba(0,0,0,.55);
+  color: rgba(255,255,255,.78);
+  font-size: 11px;
+  pointer-events: none;
+  backdrop-filter: blur(10px);
+  transition: opacity .2s ease, background .2s ease;
+}
+
+#uploadStatus.active {
+  background: rgba(0,120,255,.75);
+  color: #fff;
+}
+
 /* =========================================
    ローディング
 ========================================= */
@@ -1200,6 +1221,9 @@ button {
      ローディング
 ===================================== -->
 
+<div id="uploadStatus" aria-live="polite">保存完了</div>
+
+
 <div id="loading">
 
   <div class="loader"></div>
@@ -1225,7 +1249,7 @@ button {
  *************************************************/
 
 const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbwIIvVi2W8MWRac0SHN-kN6ff9E6rEiZihW7SZodpg5uoWcKl-vYnZJ8tJ6_axFILhYhQ/exec";
+  "https://script.google.com/macros/s/AKfycbxAp7q5WXDHNtZPayZ9UqaR-4RvOV4VGZJigp68mGTPHMLqLY3nZ4AjkpFlY4I6UTIEYw/exec";
 
 
 /*************************************************
@@ -1233,10 +1257,10 @@ const GAS_URL =
  *************************************************/
 
 const MAX_FILE_SIZE =
-  20 * 1024 * 1024;
+  15 * 1024 * 1024;
 
 const CHUNK_SIZE =
-  256 * 1024;
+  128 * 1024;
 
 const MAX_RECORDING_TIME =
   60;
@@ -1287,6 +1311,65 @@ let currentPreview =
 
 let currentMimeType =
   "";
+
+/*************************************************
+ * バックグラウンド保存キュー
+ *
+ * 写真撮影とDrive保存を完全に分離します。
+ * シャッターを押した瞬間に撮影だけ完了し、
+ * 保存は裏側で1件ずつ処理します。
+ *************************************************/
+const uploadQueue = [];
+let uploadWorkerRunning = false;
+let uploadQueueCount = 0;
+
+function updateUploadStatus() {
+  const el = document.getElementById("uploadStatus");
+  if (!el) return;
+
+  if (uploadWorkerRunning || uploadQueue.length > 0) {
+    el.textContent = "保存中 " + (uploadQueue.length + 1);
+    el.classList.add("active");
+  } else {
+    el.textContent = "保存完了";
+    el.classList.remove("active");
+  }
+}
+
+function enqueueUpload(blob, fileName, mimeType) {
+  uploadQueue.push({
+    blob,
+    fileName,
+    mimeType,
+    queuedAt: Date.now()
+  });
+  uploadQueueCount++;
+  updateUploadStatus();
+  processUploadQueue();
+}
+
+async function processUploadQueue() {
+  if (uploadWorkerRunning) return;
+  uploadWorkerRunning = true;
+  updateUploadStatus();
+
+  while (uploadQueue.length > 0) {
+    const job = uploadQueue.shift();
+    updateUploadStatus();
+
+    try {
+      await uploadFile(job.blob, job.fileName, job.mimeType);
+    } catch (error) {
+      console.error("バックグラウンド保存エラー", error);
+      showError("保存に失敗しました: " + (error.message || error));
+    }
+
+    await sleep(50);
+  }
+
+  uploadWorkerRunning = false;
+  updateUploadStatus();
+}
 
 
 /*************************************************
@@ -1896,7 +1979,7 @@ async function takePhoto() {
       }
 
 
-      await uploadFile(
+      enqueueUpload(
         blob,
         "photo_" +
         formatDate(
@@ -2083,7 +2166,7 @@ async function startRecording() {
       ) {
 
         showError(
-          "動画が20MBを超えています"
+          "動画が15MBを超えています"
         );
 
 
@@ -2100,7 +2183,7 @@ async function startRecording() {
           : "webm";
 
 
-      await uploadFile(
+      enqueueUpload(
         blob,
         "video_" +
         formatDate(
@@ -2214,262 +2297,79 @@ async function uploadFile(
   mimeType
 ) {
 
-  try {
-
-    showLoading(
-      "保存しています..."
-    );
-
-
-    const check =
-      await jsonp({
-        action:
-          "settings"
-      });
-
-
-    if (
-      !check.success ||
-      !check.cameraEnabled
-    ) {
-
-      hideLoading();
-
-      disableCamera();
-
-      alert(
-        "現在カメラ機能が無効です"
-      );
-
-      return;
-    }
-
-
-    settings =
-      check;
-
-
-    if (
-      blob.size >
-      MAX_FILE_SIZE
-    ) {
-
-      throw new Error(
-        "20MBを超えています"
-      );
-    }
-
-
-    /*
-     * アップロード開始
-     */
-
-    const start =
-      await jsonp({
-
-        action:
-          "start",
-
-        fileName:
-          fileName,
-
-        mimeType:
-          mimeType,
-
-        totalSize:
-          blob.size,
-
-        deviceId:
-          getDeviceId()
-
-      });
-
-
-    if (
-      !start.success
-    ) {
-
-      throw new Error(
-        start.error
-      );
-    }
-
-
-    /*
-     * Blobをチャンクに分割
-     */
-
-    const totalChunks =
-      Math.ceil(
-        blob.size /
-        CHUNK_SIZE
-      );
-
-
-    for (
-      let i = 0;
-      i < totalChunks;
-      i++
-    ) {
-
-      const begin =
-        i *
-        CHUNK_SIZE;
-
-
-      const end =
-        Math.min(
-          begin +
-          CHUNK_SIZE,
-          blob.size
-        );
-
-
-      const chunk =
-        blob.slice(
-          begin,
-          end
-        );
-
-
-      const base64 =
-        await blobToBase64(
-          chunk
-        );
-
-
-      const data =
-        base64.split(",")[1];
-
-
-      showLoading(
-        "保存しています... " +
-        (i + 1) +
-        " / " +
-        totalChunks
-      );
-
-
-      await sendChunk(
-        start.uploadId,
-        i,
-        totalChunks,
-        data
-      );
-    }
-
-
-    /*
-     * GAS側の完成を確認
-     */
-
-    let completed =
-      false;
-
-
-    for (
-      let i = 0;
-      i < 15;
-      i++
-    ) {
-
-      const status =
-        await jsonp({
-
-          action:
-            "status",
-
-          uploadId:
-            start.uploadId
-
-        });
-
-
-      if (
-        status.success &&
-        status.completed &&
-        status.fileId
-      ) {
-
-        completed =
-          true;
-
-        break;
-      }
-
-
-      await sleep(
-        1000
-      );
-    }
-
-
-    if (
-      !completed
-    ) {
-
-      /*
-       * 最後のチャンクのレスポンスから
-       * 完成している場合もあるため、
-       * 一覧を確認
-       */
-
-      await sleep(
-        1500
-      );
-    }
-
-
-    hideLoading();
-
-
-    /*
-     * 完了
-     */
-
-    alert(
-      "保存できました！"
-    );
-
-
-    /*
-     * ★アラートを閉じた後に復帰
-     */
-
-    await resumeCamera();
-
-
-    /*
-     * ギャラリー更新
-     */
-
-    await loadGallery(
-      true
-    );
-
-
-  } catch (
-    error
-  ) {
-
-    hideLoading();
-
-
-    console.error(
-      error
-    );
-
-
-    alert(
-      "保存に失敗しました\n\n" +
-      error.message
-    );
-
-
-    await resumeCamera();
+  const check =
+    await jsonp({
+      action: "settings"
+    });
+
+  if (!check.success || !check.cameraEnabled) {
+    throw new Error("現在カメラ機能が無効です");
   }
-}
 
+  settings = check;
+
+  if (blob.size > MAX_FILE_SIZE) {
+    throw new Error("写真・動画が15MBを超えています");
+  }
+
+  const start =
+    await jsonp({
+      action: "start",
+      fileName: fileName,
+      mimeType: mimeType,
+      totalSize: blob.size,
+      deviceId: getDeviceId()
+    });
+
+  if (!start.success) {
+    throw new Error(start.error || "アップロードを開始できませんでした");
+  }
+
+  const totalChunks =
+    Math.ceil(blob.size / CHUNK_SIZE);
+
+  for (let i = 0; i < totalChunks; i++) {
+    const begin = i * CHUNK_SIZE;
+    const end = Math.min(begin + CHUNK_SIZE, blob.size);
+    const chunk = blob.slice(begin, end);
+    const base64 = await blobToBase64(chunk);
+    const data = base64.split(",")[1];
+
+    await sendChunk(
+      start.uploadId,
+      i,
+      totalChunks,
+      data
+    );
+  }
+
+  // 最終チャンクでGASが完成処理するため、
+  // status確認は短時間だけ行います。
+  for (let i = 0; i < 10; i++) {
+    const status =
+      await jsonp({
+        action: "status",
+        uploadId: start.uploadId
+      });
+
+    if (status.success && status.completed && status.fileId) {
+      // ギャラリーを裏で更新。カメラ操作は待たせません。
+      loadGallery(true).catch(() => {});
+      return status;
+    }
+
+    await sleep(300);
+  }
+
+  // 保存処理自体はチャンク送信後にGAS側で継続している可能性があるため、
+  // タイムアウトを「失敗」とは扱わず、後でギャラリーを更新します。
+  loadGallery(true).catch(() => {});
+  return {
+    success: true,
+    pending: true,
+    uploadId: start.uploadId
+  };
+}
 
 /*************************************************
  * チャンク送信
