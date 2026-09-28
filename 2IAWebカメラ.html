@@ -682,6 +682,9 @@ button {
   object-fit: contain;
 }
 
+.previewNavigation {position:absolute;top:50%;transform:translateY(-50%);z-index:30;width:54px;height:82px;border:0;border-radius:18px;background:rgba(0,0,0,.45);color:#fff;font-size:58px;line-height:1;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;user-select:none;}
+.previewNavigation:hover{background:rgba(255,255,255,.18)} .previewNavigation:active{transform:translateY(-50%) scale(.92)} .previewNavigation.disabled{opacity:.18;pointer-events:none}.previewPrev{left:12px}.previewNext{right:12px}.previewCounter{position:absolute;top:calc(env(safe-area-inset-top) + 67px);left:50%;transform:translateX(-50%);z-index:31;padding:5px 10px;border-radius:14px;background:rgba(0,0,0,.45);color:rgba(255,255,255,.8);font-size:11px;pointer-events:none}@media(max-width:600px){.previewNavigation{width:44px;height:68px;font-size:48px}.previewPrev{left:7px}.previewNext{right:7px}}
+
 .previewTop {
   position: absolute;
   top: 0;
@@ -1177,6 +1180,10 @@ button {
 
   </div>
 
+  <button id="previewPrev" class="previewNavigation previewPrev" aria-label="前の写真">‹</button>
+  <button id="previewNext" class="previewNavigation previewNext" aria-label="次の写真">›</button>
+  <div id="previewCounter" class="previewCounter">1 / 1</div>
+
   <div id="previewContent"></div>
 
   <div class="previewHint">
@@ -1249,7 +1256,7 @@ button {
  *************************************************/
 
 const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbxAp7q5WXDHNtZPayZ9UqaR-4RvOV4VGZJigp68mGTPHMLqLY3nZ4AjkpFlY4I6UTIEYw/exec";
+  "https://script.google.com/macros/s/AKfycbxAj-hA9gJGEQ2k971iyblJi9uWwOiN_w8ty-qrybCnjtie66uKp2QxMNf8_4g2qYkFkA/exec";
 
 
 /*************************************************
@@ -1308,6 +1315,12 @@ let currentFilter =
 
 let currentPreview =
   null;
+
+let currentPreviewIndex = -1;
+let previewList = [];
+let previewTouchStartX = null;
+let previewTouchStartY = null;
+let previewOpeningToken = 0;
 
 let currentMimeType =
   "";
@@ -3172,12 +3185,20 @@ document
 async function openPreview(
   item
 ) {
-
-  currentPreview =
-    item;
-
-  previewPage.style.display =
-    "flex";
+  if (!item) return;
+  let filteredList = mediaList;
+  if (currentFilter === "mine") filteredList = mediaList.filter(x => x.mine);
+  if (currentFilter === "shared") filteredList = mediaList.filter(x => !x.mine);
+  previewList = filteredList.slice();
+  currentPreviewIndex = previewList.findIndex(x => x.id === item.id);
+  if (currentPreviewIndex < 0) {
+    previewList = mediaList.slice();
+    currentPreviewIndex = previewList.findIndex(x => x.id === item.id);
+  }
+  currentPreview = item;
+  const openingToken = ++previewOpeningToken;
+  previewPage.style.display = "flex";
+  updatePreviewNavigation();
 
   const previewName =
     document.getElementById(
@@ -3214,6 +3235,8 @@ async function openPreview(
         action: "file",
         fileId: item.id
       });
+
+    if (openingToken !== previewOpeningToken) return;
 
     if (!result.success) {
       throw new Error(
@@ -3382,6 +3405,21 @@ async function openPreview(
 }
 
 
+function updatePreviewNavigation(){
+ const prev=document.getElementById("previewPrev"),next=document.getElementById("previewNext"),counter=document.getElementById("previewCounter");
+ if(!prev||!next)return;
+ const ok=previewList.length>0&&currentPreviewIndex>=0;
+ prev.classList.toggle("disabled",!ok||currentPreviewIndex<=0);
+ next.classList.toggle("disabled",!ok||currentPreviewIndex>=previewList.length-1);
+ if(counter)counter.textContent=ok?(currentPreviewIndex+1)+" / "+previewList.length:"1 / 1";
+}
+function movePreview(delta){if(!previewList.length||currentPreviewIndex<0)return;const i=currentPreviewIndex+delta;if(i<0||i>=previewList.length)return;openPreview(previewList[i]);}
+document.getElementById("previewPrev").addEventListener("click",e=>{e.stopPropagation();movePreview(-1);});
+document.getElementById("previewNext").addEventListener("click",e=>{e.stopPropagation();movePreview(1);});
+document.addEventListener("keydown",e=>{if(previewPage.style.display!=="flex")return;if(e.key==="ArrowLeft"){e.preventDefault();movePreview(-1)}if(e.key==="ArrowRight"){e.preventDefault();movePreview(1)}});
+previewPage.addEventListener("touchstart",e=>{if(e.touches.length){previewTouchStartX=e.touches[0].clientX;previewTouchStartY=e.touches[0].clientY}},{passive:true});
+previewPage.addEventListener("touchend",e=>{if(previewTouchStartX===null||!e.changedTouches.length)return;const dx=e.changedTouches[0].clientX-previewTouchStartX,dy=e.changedTouches[0].clientY-previewTouchStartY;previewTouchStartX=null;previewTouchStartY=null;if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.2)return;movePreview(dx<0?1:-1)},{passive:true});
+
 function formatGalleryDate(
   timestamp
 ) {
@@ -3465,6 +3503,9 @@ document
 
       currentPreview =
         null;
+      currentPreviewIndex = -1;
+      previewList = [];
+      updatePreviewNavigation();
 
     }
   );
