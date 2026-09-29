@@ -1256,7 +1256,7 @@ button {
  *************************************************/
 
 const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbxAj-hA9gJGEQ2k971iyblJi9uWwOiN_w8ty-qrybCnjtie66uKp2QxMNf8_4g2qYkFkA/exec";
+  "https://script.google.com/macros/s/AKfycbyTkFNY1B9psKb5n3Hni2pSdOWovPAb5TZrw5J944oRncFkx8iGdh8bMArjGAdDV0WV8g/exec";
 
 
 /*************************************************
@@ -2733,7 +2733,15 @@ async function loadGallery(
           "list",
 
         deviceId:
-          getDeviceId()
+          getDeviceId(),
+
+        /*
+         * 現在選択している撮影モードをGASへ渡す
+         * photo = 写真のみ
+         * video = 動画のみ
+         */
+        mediaType:
+          currentMode
 
       });
 
@@ -2907,18 +2915,42 @@ function renderGallery() {
 
   galleryGrid.innerHTML = "";
 
-  let list = mediaList;
+  /*
+   * 現在の撮影モードに合わせて
+   * ギャラリー表示対象も絞り込む。
+   *
+   * GAS側でも同じ条件で絞り込んでいるため、
+   * HTML側・GAS側の二重チェックになる。
+   */
+  let list = mediaList.filter(item => {
+
+    if (currentMode === "photo") {
+      return !!(
+        item.mimeType &&
+        item.mimeType.startsWith("image/")
+      );
+    }
+
+    if (currentMode === "video") {
+      return !!(
+        item.mimeType &&
+        item.mimeType.startsWith("video/")
+      );
+    }
+
+    return true;
+  });
 
   if (currentFilter === "mine") {
     list =
-      mediaList.filter(
+      list.filter(
         item => item.mine
       );
   }
 
   if (currentFilter === "shared") {
     list =
-      mediaList.filter(
+      list.filter(
         item => !item.mine
       );
   }
@@ -2937,8 +2969,8 @@ function renderGallery() {
         <div style="
           font-size:42px;
           margin-bottom:14px;
-        ">📷</div>
-        写真・動画がありません
+        ">${currentMode === "video" ? "🎥" : "📷"}</div>
+        ${currentMode === "video" ? "動画がありません" : "写真がありません"}
       </div>
     `;
 
@@ -3045,8 +3077,12 @@ function renderGallery() {
       video.className =
         "videoPlaceholder";
 
-      video.textContent =
-        "🎥";
+      video.innerHTML = `
+        <div style="
+          font-size:42px;
+          line-height:1;
+        ">🎥</div>
+      `;
 
       card.appendChild(
         video
@@ -3059,7 +3095,7 @@ function renderGallery() {
         "videoBadge";
 
       badge.textContent =
-        "▶";
+        "▶ 動画";
 
       card.appendChild(
         badge
@@ -3337,8 +3373,31 @@ async function openPreview(
       video.playsInline =
         true;
 
+      video.setAttribute(
+        "playsinline",
+        ""
+      );
+
       video.preload =
         "metadata";
+
+      video.style.maxWidth =
+        "100%";
+
+      video.style.maxHeight =
+        "100%";
+
+      video.style.width =
+        "100%";
+
+      video.style.height =
+        "auto";
+
+      video.style.objectFit =
+        "contain";
+
+      video.style.background =
+        "#000";
 
       video.src =
         result.downloadUrl;
@@ -3836,6 +3895,22 @@ document
 
           currentMode =
             button.dataset.mode;
+
+          /*
+           * ギャラリーが開いている場合は、
+           * 写真 / 動画の表示内容も即座に切り替える。
+           */
+          if (
+            galleryPage &&
+            galleryPage.style.display === "block"
+          ) {
+            loadGallery(true).catch(error => {
+              console.error(
+                "ギャラリー再読み込みエラー:",
+                error
+              );
+            });
+          }
 
         }
       );
