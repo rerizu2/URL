@@ -1121,8 +1121,24 @@ button {
     <button
       class="galleryTab active"
       data-filter="all"
+      data-filter-kind="owner"
+      data-media-type="all"
     >
       すべて
+    </button>
+
+    <button
+      class="galleryTab"
+      data-media-type="photo"
+    >
+      📷 写真
+    </button>
+
+    <button
+      class="galleryTab"
+      data-media-type="video"
+    >
+      🎥 動画
     </button>
 
     <button
@@ -1256,7 +1272,7 @@ button {
  *************************************************/
 
 const GAS_URL =
-  "https://script.google.com/macros/s/AKfycbyTkFNY1B9psKb5n3Hni2pSdOWovPAb5TZrw5J944oRncFkx8iGdh8bMArjGAdDV0WV8g/exec";
+  "https://script.google.com/macros/s/AKfycbwWdQgJd9uT5qMOg9_y_oz87dqFnyz8IFgJCcnKPSEXTI4A3FvYUahlZ1SV2LiEqUyNQg/exec";
 
 
 /*************************************************
@@ -1311,6 +1327,13 @@ let mediaList =
   [];
 
 let currentFilter =
+  "all";
+
+/*
+ * ギャラリー内のメディア種類
+ * all = 写真＋動画 / photo = 写真 / video = 動画
+ */
+let galleryTypeFilter =
   "all";
 
 let currentPreview =
@@ -2736,12 +2759,12 @@ async function loadGallery(
           getDeviceId(),
 
         /*
-         * 現在選択している撮影モードをGASへ渡す
-         * photo = 写真のみ
-         * video = 動画のみ
+         * ギャラリーは撮影モードとは独立して
+         * 写真＋動画を取得する。
+         * 実際の表示は galleryTypeFilter で絞り込む。
          */
         mediaType:
-          currentMode
+          "all"
 
       });
 
@@ -2916,29 +2939,33 @@ function renderGallery() {
   galleryGrid.innerHTML = "";
 
   /*
-   * 現在の撮影モードに合わせて
-   * ギャラリー表示対象も絞り込む。
-   *
-   * GAS側でも同じ条件で絞り込んでいるため、
-   * HTML側・GAS側の二重チェックになる。
+   * ギャラリーは撮影モード(currentMode)とは独立。
+   * 写真＋動画を取得し、ギャラリー内の種類フィルター
+   * (all / photo / video) で表示を切り替える。
    */
   let list = mediaList.filter(item => {
 
-    if (currentMode === "photo") {
+    if (galleryTypeFilter === "photo") {
       return !!(
         item.mimeType &&
         item.mimeType.startsWith("image/")
       );
     }
 
-    if (currentMode === "video") {
+    if (galleryTypeFilter === "video") {
       return !!(
         item.mimeType &&
         item.mimeType.startsWith("video/")
       );
     }
 
-    return true;
+    return !!(
+      item.mimeType &&
+      (
+        item.mimeType.startsWith("image/") ||
+        item.mimeType.startsWith("video/")
+      )
+    );
   });
 
   if (currentFilter === "mine") {
@@ -2969,8 +2996,8 @@ function renderGallery() {
         <div style="
           font-size:42px;
           margin-bottom:14px;
-        ">${currentMode === "video" ? "🎥" : "📷"}</div>
-        ${currentMode === "video" ? "動画がありません" : "写真がありません"}
+        ">${galleryTypeFilter === "video" ? "🎥" : galleryTypeFilter === "photo" ? "📷" : "📷🎥"}</div>
+        ${galleryTypeFilter === "video" ? "動画がありません" : galleryTypeFilter === "photo" ? "写真がありません" : "写真・動画がありません"}
       </div>
     `;
 
@@ -3186,31 +3213,32 @@ document
  * フィルター
  *************************************************/
 
+/* 所有/自分/共有 */
 document
-  .querySelectorAll(".galleryTab")
+  .querySelectorAll('.galleryTab[data-filter-kind="owner"] , .galleryTab[data-filter="mine"], .galleryTab[data-filter="shared"]')
   .forEach(button => {
+    button.addEventListener("click", () => {
+      document
+        .querySelectorAll('.galleryTab[data-filter-kind="owner"] , .galleryTab[data-filter="mine"], .galleryTab[data-filter="shared"]')
+        .forEach(b => b.classList.remove("active"));
+      button.classList.add("active");
+      currentFilter = button.dataset.filter || "all";
+      renderGallery();
+    });
+  });
 
-    button.addEventListener(
-      "click",
-      () => {
-
-        document
-          .querySelectorAll(".galleryTab")
-          .forEach(b =>
-            b.classList.remove("active")
-          );
-
-        button.classList.add(
-          "active"
-        );
-
-        currentFilter =
-          button.dataset.filter;
-
-        renderGallery();
-      }
-    );
-
+/* 写真 / 動画 / すべて */
+document
+  .querySelectorAll(".galleryTab[data-media-type]")
+  .forEach(button => {
+    button.addEventListener("click", () => {
+      document
+        .querySelectorAll(".galleryTab[data-media-type]")
+        .forEach(b => b.classList.remove("active"));
+      button.classList.add("active");
+      galleryTypeFilter = button.dataset.mediaType || "all";
+      renderGallery();
+    });
   });
 
 
@@ -3222,9 +3250,20 @@ async function openPreview(
   item
 ) {
   if (!item) return;
-  let filteredList = mediaList;
-  if (currentFilter === "mine") filteredList = mediaList.filter(x => x.mine);
-  if (currentFilter === "shared") filteredList = mediaList.filter(x => !x.mine);
+  let filteredList = mediaList.filter(x => {
+    if (galleryTypeFilter === "photo") {
+      return x.mimeType && x.mimeType.startsWith("image/");
+    }
+    if (galleryTypeFilter === "video") {
+      return x.mimeType && x.mimeType.startsWith("video/");
+    }
+    return x.mimeType && (
+      x.mimeType.startsWith("image/") ||
+      x.mimeType.startsWith("video/")
+    );
+  });
+  if (currentFilter === "mine") filteredList = filteredList.filter(x => x.mine);
+  if (currentFilter === "shared") filteredList = filteredList.filter(x => !x.mine);
   previewList = filteredList.slice();
   currentPreviewIndex = previewList.findIndex(x => x.id === item.id);
   if (currentPreviewIndex < 0) {
@@ -3897,20 +3936,9 @@ document
             button.dataset.mode;
 
           /*
-           * ギャラリーが開いている場合は、
-           * 写真 / 動画の表示内容も即座に切り替える。
+           * 撮影モード変更とギャラリー表示は独立。
+           * ギャラリーでは写真・動画の両方を閲覧できる。
            */
-          if (
-            galleryPage &&
-            galleryPage.style.display === "block"
-          ) {
-            loadGallery(true).catch(error => {
-              console.error(
-                "ギャラリー再読み込みエラー:",
-                error
-              );
-            });
-          }
 
         }
       );
