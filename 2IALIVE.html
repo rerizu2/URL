@@ -8,16 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- PeerJS (WebRTC簡易化ライブラリ) -->
+    <!-- PeerJS -->
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    <!-- Firebase SDK (CDN) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        
-        // グローバルに公開（後続のスクリプトから利用するため）
-        window.firebaseModules = { initializeApp, getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, serverTimestamp };
-    </script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
 
@@ -41,31 +33,12 @@
     <!-- メインコンテンツ -->
     <main class="max-w-7xl mx-auto px-4 py-8">
 
-        <!-- 設定モーダル（初回のみFirebase設定を入力してもらうか、下記に直接記述） -->
-        <div id="setup-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-                <h3 class="text-lg font-bold mb-2 text-white"><i class="fa-solid fa-gear text-red-500 mr-2"></i>Firebase設定の入力</h3>
-                <p class="text-xs text-slate-400 mb-4">ライブ一覧のリアルタイム同期に無料のFirebase（Firestore）を使用します。コンソールから取得した設定値を貼り付けてください。</p>
-                <div class="space-y-3 mb-4">
-                    <div>
-                        <label class="text-xs text-slate-400 block mb-1">API Key</label>
-                        <input type="text" id="fb-apikey" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500" placeholder="AIzaSy...">
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-400 block mb-1">Project ID</label>
-                        <input type="text" id="fb-projectid" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500" placeholder="my-live-app">
-                    </div>
-                </div>
-                <button onclick="saveFirebaseConfig()" class="w-full bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-bold text-sm transition shadow-lg shadow-red-600/20">接続してはじめる</button>
-            </div>
-        </div>
-
         <!-- ホームビュー -->
         <section id="view-home" class="space-y-12">
             <div class="text-center py-16 bg-gradient-to-b from-slate-900 to-slate-950 rounded-3xl border border-slate-800/80 p-8 shadow-2xl relative overflow-hidden">
                 <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.08)_0,transparent_70%)]"></div>
-                <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">あなたの熱量を、<span class="text-red-500">リアルタイム</span>で届けよう。</h1>
-                <p class="text-slate-400 max-w-2xl mx-auto mb-8 text-sm md:text-base">ブラウザだけで今すぐ高画質なライブ配信を開始、または世界中の配信を視聴できます。</p>
+                <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">外部サービスなしで、<span class="text-red-500">P2Pライブ配信</span>。</h1>
+                <p class="text-slate-400 max-w-2xl mx-auto mb-8 text-sm md:text-base">ブラウザだけで今すぐ高画質なライブ配信を開始、または配信を探して視聴できます。</p>
                 <div class="flex justify-center gap-4">
                     <button onclick="switchView('browse')" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition flex items-center border border-slate-700">
                         <i class="fa-solid fa-compass mr-2 text-red-500"></i>配信を探す
@@ -82,16 +55,17 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h2 class="text-2xl font-bold text-white flex items-center"><i class="fa-solid fa-fire text-red-500 mr-2"></i>配信中のライブ</h2>
-                    <p class="text-xs text-slate-400 mt-1">現在リアルタイムで配信されているルームの一覧です。</p>
+                    <p class="text-xs text-slate-400 mt-1">現在オンラインの配信ルームです（ルームIDを入力して直接参加も可能）</p>
                 </div>
-                <button onclick="loadStreamsList()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center border border-slate-700">
-                    <i class="fa-solid fa-rotate mr-1.5"></i>更新
-                </button>
+                <div class="flex gap-2">
+                    <input type="text" id="direct-peer-id" placeholder="ルームIDを直入力" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-red-500">
+                    <button onclick="joinDirect()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">参加</button>
+                </div>
             </div>
             <div id="streams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- 動的に生成されます -->
             </div>
-            <div id="no-streams" class="hidden text-center py-20 text-slate-500">
+            <div id="no-streams" class="text-center py-20 text-slate-500">
                 <i class="fa-solid fa-video-slash text-4xl mb-3"></i>
                 <p>現在配信中のルームはありません。「配信する」から配信を始めてみましょう！</p>
             </div>
@@ -110,25 +84,31 @@
                         <span class="w-2 h-2 bg-white rounded-full animate-ping mr-1.5"></span>LIVE
                     </div>
                 </div>
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-wrap gap-4 items-center justify-between">
-                    <div class="w-full md:w-auto flex-1">
-                        <label class="text-xs text-slate-400 block mb-1">配信タイトル</label>
-                        <input type="text" id="stream-title-input" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500" placeholder="例：雑談しながらゲームするよ！">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div class="flex flex-wrap gap-4 items-center justify-between">
+                        <div class="w-full md:w-auto flex-1">
+                            <label class="text-xs text-slate-400 block mb-1">配信タイトル</label>
+                            <input type="text" id="stream-title-input" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500" placeholder="例：雑談しながらゲームするよ！">
+                        </div>
+                        <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                            <button id="btn-toggle-cam" onclick="toggleCamera()" class="p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition" title="カメラON/OFF"><i class="fa-solid fa-camera"></i></button>
+                            <button id="btn-toggle-mic" onclick="toggleMic()" class="p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition" title="マイクON/OFF"><i class="fa-solid fa-microphone"></i></button>
+                            <button id="btn-start-stream" onclick="startBroadcasting()" class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition shadow-lg shadow-red-600/20">配信開始</button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 w-full md:w-auto justify-end">
-                        <button id="btn-toggle-cam" onclick="toggleCamera()" class="p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition" title="カメラON/OFF"><i class="fa-solid fa-camera"></i></button>
-                        <button id="btn-toggle-mic" onclick="toggleMic()" class="p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition" title="マイクON/OFF"><i class="fa-solid fa-microphone"></i></button>
-                        <button id="btn-start-stream" onclick="startBroadcasting()" class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition shadow-lg shadow-red-600/20">配信開始</button>
+                    <div id="room-info-box" class="hidden text-xs text-slate-400 bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+                        <div>ルームID: <span id="current-room-id" class="font-mono text-white select-all"></span> をコピーして視聴者に共有できます。</div>
+                        <button onclick="copyRoomId()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded">コピー</button>
                     </div>
                 </div>
             </div>
-            <!-- チャット欄等 -->
+            <!-- チャット欄 -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col h-[500px] lg:h-auto">
                 <h3 class="font-bold text-sm text-slate-300 pb-3 border-b border-slate-800 flex items-center">
-                    <i class="fa-solid fa-comments text-red-500 mr-2"></i>ライブチャット
+                    <i class="fa-solid fa-comments text-red-500 mr-2"></i>ライブチャット (<span id="viewer-count">0</span>人視聴中)
                 </h3>
                 <div id="streamer-chat-messages" class="flex-1 overflow-y-auto py-3 space-y-3 text-xs">
-                    <div class="text-slate-500 text-center italic">視聴者からのコメントがここに表示されます</div>
+                    <div class="text-slate-500 text-center italic">視聴者の接続待ち...</div>
                 </div>
             </div>
         </section>
@@ -145,8 +125,8 @@
                 </div>
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
                     <div>
-                        <h2 id="viewer-stream-title" class="text-lg font-bold text-white">読み込み中...</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">PeerID: <span id="viewer-peer-id" class="font-mono text-slate-300"></span></p>
+                        <h2 id="viewer-stream-title" class="text-lg font-bold text-white">ライブ配信</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">ルームID: <span id="viewer-peer-id" class="font-mono text-slate-300"></span></p>
                     </div>
                     <button onclick="switchView('browse')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition">一覧に戻る</button>
                 </div>
@@ -167,49 +147,12 @@
 
     <!-- アプリケーション制御スクリプト -->
     <script>
-        let db, auth, colRef, unsubStreams;
-        let peer = null, localStream = null, currentPeerId = null, currentDocId = null;
-        let activeCall = null, chatConn = null;
+        let peer = null, localStream = null, activeCall = null;
+        let connections = []; // 配信者が接続中の視聴者とのコネクション一覧
+        let activeViewersCount = 0;
+        let chatConnsAsViewer = null; // 視聴者側のチャット用コネクション
+        let activeStreams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
         let isCamOn = true, isMicOn = true;
-
-        // 初期化：ローカルストレージからFirebase設定をロード
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedApiKey = localStorage.getItem('fb_apikey');
-            const savedProjectId = localStorage.getItem('fb_projectid');
-            if (savedApiKey && savedProjectId) {
-                document.getElementById('setup-modal').classList.add('hidden');
-                initFirebase(savedApiKey, savedProjectId);
-            }
-        });
-
-        function saveFirebaseConfig() {
-            const apiKey = document.getElementById('fb-apikey').value.trim();
-            const projectId = document.getElementById('fb-projectid').value.trim();
-            if(!apiKey || !projectId) {
-                alert('すべての項目を入力してください。');
-                return;
-            }
-            localStorage.setItem('fb_apikey', apiKey);
-            localStorage.setItem('fb_projectid', projectId);
-            document.getElementById('setup-modal').classList.add('hidden');
-            initFirebase(apiKey, projectId);
-        }
-
-        function initFirebase(apiKey, projectId) {
-            const { initializeApp, getFirestore, collection } = window.firebaseModules;
-            const firebaseConfig = {
-                apiKey: apiKey,
-                authDomain: `${projectId}.firebaseapp.com`,
-                projectId: projectId,
-                storageBucket: `${projectId}.appspot.com`,
-                messagingSenderId: "00000000000",
-                appId: "1:000000:web:00000"
-            };
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            colRef = collection(db, "active_streams");
-            loadStreamsList();
-        }
 
         function switchView(viewName) {
             ['home', 'browse', 'streamer', 'viewer'].forEach(v => {
@@ -226,7 +169,6 @@
 
             document.getElementById(`view-${viewName}`).classList.remove('hidden');
 
-            // ビュー切り替え時のクリーンアップ
             if(viewName !== 'streamer' && localStream) {
                 stopBroadcastingInternal();
             }
@@ -235,16 +177,12 @@
                 activeCall = null;
             }
             if(viewName === 'browse') {
-                loadStreamsList();
+                renderStreamsList();
             }
         }
 
         // --- 配信者機能 ---
         async function startBroadcasting() {
-            if(!db) {
-                alert('Firebase設定が完了していません。画面を再読み込みしてください。');
-                return;
-            }
             const title = document.getElementById('stream-title-input').value.trim() || '無題のライブ配信';
             
             try {
@@ -255,66 +193,87 @@
                 document.getElementById('btn-start-stream').innerText = "配信終了";
                 document.getElementById('btn-start-stream').setAttribute('onclick', "stopBroadcasting()");
 
-                // PeerJSで接続確立 (パブリック無料PeerServer利用)
                 peer = new Peer();
-                peer.on('open', async (id) => {
-                    currentPeerId = id;
-                    // Firestoreにルーム情報を保存
-                    const { addDoc, serverTimestamp } = window.firebaseModules;
-                    const docRef = await addDoc(colRef, {
-                        title: title,
-                        peerId: id,
-                        createdAt: serverTimestamp()
-                    });
-                    currentDocId = docRef.id;
+                peer.on('open', (id) => {
+                    document.getElementById('current-room-id').innerText = id;
+                    document.getElementById('room-info-box').classList.remove('hidden');
+
+                    // ローカルストレージに配信情報を登録（同じブラウザ内でのテスト用）
+                    activeStreams = activeStreams.filter(s => s.id !== id);
+                    activeStreams.push({ id: id, title: title });
+                    localStorage.setItem('local_active_streams', JSON.stringify(activeStreams));
                 });
 
-                // 視聴者からの通話リクエスト(Call)を待ち受ける
+                // 視聴者からの映像リクエスト
                 peer.on('call', (call) => {
-                    call.answer(localStream); // 自分のカメラ映像を返す
+                    call.answer(localStream);
                     activeCall = call;
                 });
 
-                // 視聴者からのデータ通信(チャット)を待ち受ける
+                // 視聴者からのチャット・データ接続
                 peer.on('connection', (conn) => {
-                    chatConn = conn;
+                    connections.push(conn);
+                    activeViewersCount++;
+                    updateViewerCount();
+
                     conn.on('data', (data) => {
-                        appendChat('streamer-chat-messages', '視聴者', data);
+                        appendChat('streamer-chat-messages', data.sender, data.text);
+                        // 他の視聴者にもチャットをブロードキャスト
+                        connections.forEach(c => {
+                            if(c !== conn && c.open) c.send(data);
+                        });
+                    });
+
+                    conn.on('close', () => {
+                        connections = connections.filter(c => c !== conn);
+                        activeViewersCount = Math.max(0, activeViewersCount - 1);
+                        updateViewerCount();
                     });
                 });
 
             } catch (err) {
                 console.error(err);
-                alert('カメラまたはマイクの取得に失敗しました。権限を確認してください。');
+                alert('カメラまたはマイクの取得に失敗しました。');
             }
         }
 
-        async function stopBroadcasting() {
+        function stopBroadcasting() {
             stopBroadcastingInternal();
             switchView('home');
         }
 
-        async function stopBroadcastingInternal() {
+        function stopBroadcastingInternal() {
             if(localStream) {
                 localStream.getTracks().forEach(track => track.stop());
                 localStream = null;
             }
             if(peer) {
+                if(peer.id) {
+                    activeStreams = activeStreams.filter(s => s.id !== peer.id);
+                    localStorage.setItem('local_active_streams', JSON.stringify(activeStreams));
+                }
                 peer.destroy();
                 peer = null;
             }
-            if(currentDocId && db) {
-                const { deleteDoc, doc } = window.firebaseModules;
-                try {
-                    await deleteDoc(doc(db, "active_streams", currentDocId));
-                } catch(e) { console.error(e); }
-                currentDocId = null;
-            }
+            connections = [];
+            activeViewersCount = 0;
+            updateViewerCount();
             document.getElementById('self-video').srcObject = null;
             document.getElementById('streamer-offline').classList.remove('hidden');
             document.getElementById('live-badge').classList.add('hidden');
+            document.getElementById('room-info-box').classList.add('hidden');
             document.getElementById('btn-start-stream').innerText = "配信開始";
             document.getElementById('btn-start-stream').setAttribute('onclick', "startBroadcasting()");
+        }
+
+        function updateViewerCount() {
+            document.getElementById('viewer-count').innerText = activeViewersCount;
+        }
+
+        function copyRoomId() {
+            const id = document.getElementById('current-room-id').innerText;
+            navigator.clipboard.writeText(id);
+            alert('ルームIDをコピーしました！');
         }
 
         function toggleCamera() {
@@ -331,48 +290,51 @@
             document.getElementById('btn-toggle-mic').className = isMicOn ? "p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition" : "p-3 bg-red-600 text-white rounded-xl transition";
         }
 
-        // --- 閲覧一覧機能 ---
-        async function loadStreamsList() {
-            if(!db) return;
-            const { getDocs } = window.firebaseModules;
+        // --- 閲覧・一覧機能 ---
+        function renderStreamsList() {
             const grid = document.getElementById('streams-grid');
             const noStreams = document.getElementById('no-streams');
-            grid.innerHTML = '<div class="col-span-full text-center py-10 text-slate-500"><i class="fa-solid fa-circle-notch fa-spin text-2xl"></i></div>';
+            grid.innerHTML = '';
 
-            try {
-                const querySnapshot = await getDocs(colRef);
-                grid.innerHTML = '';
-                if(querySnapshot.empty) {
-                    noStreams.classList.remove('hidden');
-                    return;
-                }
-                noStreams.classList.add('hidden');
-                querySnapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const card = document.createElement('div');
-                    card.className = "bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition flex flex-col group cursor-pointer";
-                    card.setAttribute('onclick', `joinStream('${data.peerId}', '${escapeHtml(data.title)}')`);
-                    card.innerHTML = `
-                        <div class="aspect-video bg-slate-950 relative flex items-center justify-center overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent z-10"></div>
-                            <i class="fa-solid fa-play text-red-500 text-3xl group-hover:scale-110 transition duration-300 z-20"></i>
-                            <span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full z-20 flex items-center">
-                                <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping mr-1"></span>LIVE
-                            </span>
-                        </div>
-                        <div class="p-4 flex-1 flex flex-col justify-between">
-                            <h3 class="font-bold text-sm text-white line-clamp-1 mb-2">${escapeHtml(data.title)}</h3>
-                            <div class="flex items-center text-xs text-slate-400">
-                                <i class="fa-solid fa-user-circle mr-1.5 text-slate-500"></i>配信ルーム
-                            </div>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                });
-            } catch(e) {
-                console.error(e);
-                grid.innerHTML = '<div class="col-span-full text-center text-red-400 text-xs">配信リストの取得に失敗しました。</div>';
+            // ローカルストレージから最新の配信一覧を取得
+            activeStreams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
+
+            if(activeStreams.length === 0) {
+                noStreams.classList.remove('hidden');
+                return;
             }
+            noStreams.classList.add('hidden');
+
+            activeStreams.forEach(stream => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition flex flex-col group cursor-pointer";
+                card.setAttribute('onclick', `joinStream('${stream.id}', '${escapeHtml(stream.title)}')`);
+                card.innerHTML = `
+                    <div class="aspect-video bg-slate-950 relative flex items-center justify-center overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent z-10"></div>
+                        <i class="fa-solid fa-play text-red-500 text-3xl group-hover:scale-110 transition duration-300 z-20"></i>
+                        <span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full z-20 flex items-center">
+                            <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping mr-1"></span>LIVE
+                        </span>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <h3 class="font-bold text-sm text-white line-clamp-1 mb-2">${escapeHtml(stream.title)}</h3>
+                        <div class="flex items-center text-xs text-slate-400">
+                            <i class="fa-solid fa-user-circle mr-1.5 text-slate-500"></i>ID: ${stream.id.substring(0, 8)}...
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function joinDirect() {
+            const id = document.getElementById('direct-peer-id').value.trim();
+            if(!id) {
+                alert('ルームIDを入力してください。');
+                return;
+            }
+            joinStream(id, '直接参加のライブ配信');
         }
 
         // --- 視聴者機能 ---
@@ -385,8 +347,7 @@
 
             peer = new Peer();
             peer.on('open', () => {
-                // 配信者に接続をリクエスト(Call)
-                const call = peer.call(peerId, new MediaStream()); // 空のストリームを渡して受信開始
+                const call = peer.call(peerId, new MediaStream());
                 activeCall = call;
 
                 call.on('stream', (remoteStream) => {
@@ -396,16 +357,20 @@
                 });
 
                 // チャット用コネクション
-                chatConn = peer.connect(peerId);
+                chatConnsAsViewer = peer.connect(peerId);
+                chatConnsAsViewer.on('data', (data) => {
+                    appendChat('viewer-chat-messages', data.sender, data.text);
+                });
             });
         }
 
         function sendChat() {
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
-            if(!msg || !chatConn) return;
+            if(!msg || !chatConnsAsViewer) return;
 
-            chatConn.send(msg);
+            const chatData = { sender: '視聴者', text: msg };
+            chatConnsAsViewer.send(chatData);
             appendChat('viewer-chat-messages', 'あなた', msg, true);
             input.value = '';
         }
