@@ -15,7 +15,7 @@
 
     <!-- ★ここに取得したGASのウェブアプリURLを貼り付けてください -->
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx3ws_iV8v2LV54gpGqDm35AxNOb3pU5cBtzBAW8l2KbqBugEsdZn1WOq7KnnDSJ3g4ZA/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyZjxxy04KDftMPwLqjKege6gWYZreYWsPlNR50TpaDWJZbLP0NMpD-P__DzhJS47f_VA/exec";
     </script>
 
     <!-- ヘッダー -->
@@ -153,6 +153,7 @@
         let chatConnsAsViewer = null;
         let currentPeerId = null;
         let isCamOn = true, isMicOn = true;
+        let connectionTimeout = null;
 
         function switchView(viewName) {
             ['home', 'browse', 'streamer', 'viewer'].forEach(v => {
@@ -172,9 +173,15 @@
             if(viewName !== 'streamer' && localStream) {
                 stopBroadcastingInternal();
             }
-            if(viewName !== 'viewer' && activeCall) {
-                activeCall.close();
-                activeCall = null;
+            if(viewName !== 'viewer') {
+                if(activeCall) {
+                    activeCall.close();
+                    activeCall = null;
+                }
+                if(connectionTimeout) {
+                    clearTimeout(connectionTimeout);
+                    connectionTimeout = null;
+                }
             }
             if(viewName === 'browse') {
                 renderStreamsList();
@@ -196,7 +203,6 @@
                 peer = new Peer();
                 peer.on('open', async (id) => {
                     currentPeerId = id;
-                    // スプレッドシートに配信情報を登録 (no-corsモード)
                     await fetch(GAS_API_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -306,7 +312,6 @@
                 streams.forEach(stream => {
                     const card = document.createElement('div');
                     card.className = "bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition flex flex-col group cursor-pointer shadow-lg";
-                    // カードをクリックするとIDを自動で渡して視聴画面へ移動
                     card.setAttribute('onclick', `joinStream('${escapeHtml(String(stream.id || ''))}', '${escapeHtml(String(stream.title || ''))}')`);
                     card.innerHTML = `
                         <div class="aspect-video bg-slate-950 relative flex items-center justify-center overflow-hidden">
@@ -332,7 +337,7 @@
             }
         }
 
-        // --- 視聴者機能 ---
+        // --- 視聴者機能 (タイムアウト付き) ---
         function joinStream(peerId, title) {
             switchView('viewer');
             document.getElementById('viewer-stream-title').innerText = title;
@@ -340,21 +345,54 @@
             document.getElementById('viewer-loading').classList.remove('hidden');
             document.getElementById('viewer-chat-messages').innerHTML = '';
 
+            if(peer) {
+                peer.destroy();
+            }
+
+            // 10秒以内に繋がらなければ自動キャンセル
+            if(connectionTimeout) clearTimeout(connectionTimeout);
+            connectionTimeout = setTimeout(() => {
+                const loadingEl = document.getElementById('viewer-loading');
+                if(loadingEl && !loadingEl.classList.contains('hidden')) {
+                    alert('接続がタイムアウトしました。配信者がオフラインの可能性があります。');
+                    switchView('browse');
+                }
+            }, 10000);
+
             peer = new Peer();
             peer.on('open', () => {
                 const call = peer.call(peerId, new MediaStream());
                 activeCall = call;
 
                 call.on('stream', (remoteStream) => {
+                    if(connectionTimeout) {
+                        clearTimeout(connectionTimeout);
+                        connectionTimeout = null;
+                    }
                     const videoEl = document.getElementById('remote-video');
                     videoEl.srcObject = remoteStream;
                     document.getElementById('viewer-loading').classList.add('hidden');
+                });
+
+                call.on('close', () => {
+                    alert('配信が終了しました。');
+                    switchView('browse');
                 });
 
                 chatConnsAsViewer = peer.connect(peerId);
                 chatConnsAsViewer.on('data', (data) => {
                     appendChat('viewer-chat-messages', data.sender, data.text);
                 });
+            });
+
+            peer.on('error', (err) => {
+                console.error(err);
+                if(connectionTimeout) {
+                    clearTimeout(connectionTimeout);
+                    connectionTimeout = null;
+                }
+                alert('接続エラーが発生しました。配信者を確認してください。');
+                switchView('browse');
             });
         }
 
