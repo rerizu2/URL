@@ -37,8 +37,8 @@
         <section id="view-home" class="space-y-12">
             <div class="text-center py-16 bg-gradient-to-b from-slate-900 to-slate-950 rounded-3xl border border-slate-800/80 p-8 shadow-2xl relative overflow-hidden">
                 <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.08)_0,transparent_70%)]"></div>
-                <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">ID入力不要で、<span class="text-red-500">ワンクリック視聴</span>。</h1>
-                <p class="text-slate-400 max-w-2xl mx-auto mb-8 text-sm md:text-base">配信一覧から好きな配信を選んで、すぐに高画質なライブを楽しめます。</p>
+                <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">ID入力不要、<span class="text-red-500">ワンクリックライブ</span>。</h1>
+                <p class="text-slate-400 max-w-2xl mx-auto mb-8 text-sm md:text-base">ブラウザだけで今すぐライブ配信を開始、または一覧からワンタップで視聴できます。</p>
                 <div class="flex justify-center gap-4">
                     <button onclick="switchView('browse')" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition flex items-center border border-slate-700">
                         <i class="fa-solid fa-compass mr-2 text-red-500"></i>配信を探す
@@ -55,7 +55,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h2 class="text-2xl font-bold text-white flex items-center"><i class="fa-solid fa-fire text-red-500 mr-2"></i>配信中のライブ一覧</h2>
-                    <p class="text-xs text-slate-400 mt-1">クリックするだけでID入力なしですぐに視聴を開始できます</p>
+                    <p class="text-xs text-slate-400 mt-1">カードをクリックするだけで、すぐに配信を視聴できます。</p>
                 </div>
                 <button onclick="renderStreamsList()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center border border-slate-700">
                     <i class="fa-solid fa-rotate mr-1.5"></i>更新
@@ -95,9 +95,6 @@
                             <button id="btn-start-stream" onclick="startBroadcasting()" class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition shadow-lg shadow-red-600/20">配信開始</button>
                         </div>
                     </div>
-                    <div class="text-xs text-emerald-400 bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center">
-                        <i class="fa-solid fa-circle-check mr-2"></i>配信を開始すると、自動的に「ライブ一覧」に掲載され、誰でもIDなしで参加できるようになります。
-                    </div>
                 </div>
             </div>
             <!-- チャット欄 -->
@@ -124,7 +121,7 @@
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
                     <div>
                         <h2 id="viewer-stream-title" class="text-lg font-bold text-white">ライブ配信</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">接続ステータス: <span class="text-emerald-400 font-semibold">接続完了</span></p>
+                        <p class="text-xs text-slate-400 mt-0.5">視聴中</p>
                     </div>
                     <button onclick="switchView('browse')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition">一覧に戻る</button>
                 </div>
@@ -145,18 +142,15 @@
 
     <!-- アプリケーション制御スクリプト -->
     <script>
-        let peer = null, localStream = null, activeCall = null;
-        let connections = []; 
-        let activeViewersCount = 0;
-        let chatConnsAsViewer = null; 
-        let isCamOn = true, isMicOn = true;
+        // 固定のルーム名（全員がこの共通の空間を利用するためID入力が不要になります）
+        const COMMON_ROOM_ID = "livestream-hub-main-room-2026";
 
-        // タブ間でのライブ一覧の自動同期
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'local_active_streams' && document.getElementById('view-browse').classList.contains('hidden') === false) {
-                renderStreamsList();
-            }
-        });
+        let peer = null, localStream = null, activeCall = null;
+        let connections = [];
+        let activeViewersCount = 0;
+        let chatConnsAsViewer = null;
+        let activeStreams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
+        let isCamOn = true, isMicOn = true;
 
         function switchView(viewName) {
             ['home', 'browse', 'streamer', 'viewer'].forEach(v => {
@@ -197,20 +191,29 @@
                 document.getElementById('btn-start-stream').innerText = "配信終了";
                 document.getElementById('btn-start-stream').setAttribute('onclick', "stopBroadcasting()");
 
-                peer = new Peer();
+                // 固定IDを使ってPeerを作成し、誰でもすぐに接続できるようにする
+                peer = new Peer(COMMON_ROOM_ID);
+
                 peer.on('open', (id) => {
-                    // 自動的にストレージに登録して一覧に載せる
-                    let streams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
-                    streams = streams.filter(s => s.id !== id);
-                    streams.push({ id: id, title: title });
-                    localStorage.setItem('local_active_streams', JSON.stringify(streams));
+                    activeStreams = [{ id: id, title: title }];
+                    localStorage.setItem('local_active_streams', JSON.stringify(activeStreams));
                 });
 
+                peer.on('error', (err) => {
+                    if(err.type === 'unavailable-id') {
+                        alert('現在、すでに他の人がこのブラウザ等で配信中です。');
+                        stopBroadcastingInternal();
+                        switchView('home');
+                    }
+                });
+
+                // 視聴者からの映像リクエスト
                 peer.on('call', (call) => {
                     call.answer(localStream);
                     activeCall = call;
                 });
 
+                // 視聴者からのチャット・データ接続
                 peer.on('connection', (conn) => {
                     connections.push(conn);
                     activeViewersCount++;
@@ -242,11 +245,6 @@
         }
 
         function stopBroadcastingInternal() {
-            if(peer && peer.id) {
-                let streams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
-                streams = streams.filter(s => s.id !== peer.id);
-                localStorage.setItem('local_active_streams', JSON.stringify(streams));
-            }
             if(localStream) {
                 localStream.getTracks().forEach(track => track.stop());
                 localStream = null;
@@ -255,6 +253,7 @@
                 peer.destroy();
                 peer = null;
             }
+            localStorage.removeItem('local_active_streams');
             connections = [];
             activeViewersCount = 0;
             updateViewerCount();
@@ -283,37 +282,36 @@
             document.getElementById('btn-toggle-mic').className = isMicOn ? "p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition" : "p-3 bg-red-600 text-white rounded-xl transition";
         }
 
-        // --- 一覧表示機能 ---
+        // --- 閲覧・一覧機能 ---
         function renderStreamsList() {
             const grid = document.getElementById('streams-grid');
             const noStreams = document.getElementById('no-streams');
             grid.innerHTML = '';
 
-            const streams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
+            activeStreams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
 
-            if(streams.length === 0) {
+            if(activeStreams.length === 0) {
                 noStreams.classList.remove('hidden');
                 return;
             }
             noStreams.classList.add('hidden');
 
-            streams.forEach(stream => {
+            activeStreams.forEach(stream => {
                 const card = document.createElement('div');
-                card.className = "bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition flex flex-col group cursor-pointer shadow-lg";
-                // カードをクリックするだけでID入力なしに配信へジャンプ
+                card.className = "bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition flex flex-col group cursor-pointer";
                 card.setAttribute('onclick', `joinStream('${stream.id}', '${escapeHtml(stream.title)}')`);
                 card.innerHTML = `
                     <div class="aspect-video bg-slate-950 relative flex items-center justify-center overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent z-10"></div>
                         <i class="fa-solid fa-play text-red-500 text-3xl group-hover:scale-110 transition duration-300 z-20"></i>
-                        <span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full z-20 flex items-center shadow">
+                        <span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full z-20 flex items-center">
                             <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping mr-1"></span>LIVE
                         </span>
                     </div>
                     <div class="p-4 flex-1 flex flex-col justify-between">
                         <h3 class="font-bold text-sm text-white line-clamp-1 mb-2">${escapeHtml(stream.title)}</h3>
-                        <div class="flex items-center text-xs text-emerald-400">
-                            <i class="fa-solid fa-circle-dot mr-1.5"></i>クリックして視聴する
+                        <div class="flex items-center text-xs text-slate-400">
+                            <i class="fa-solid fa-user-circle mr-1.5 text-slate-500"></i>配信中
                         </div>
                     </div>
                 `;
@@ -328,6 +326,7 @@
             document.getElementById('viewer-loading').classList.remove('hidden');
             document.getElementById('viewer-chat-messages').innerHTML = '';
 
+            // ランダムな一時IDでPeerを作成して視聴開始
             peer = new Peer();
             peer.on('open', () => {
                 const call = peer.call(peerId, new MediaStream());
