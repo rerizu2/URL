@@ -37,8 +37,8 @@
         <section id="view-home" class="space-y-12">
             <div class="text-center py-16 bg-gradient-to-b from-slate-900 to-slate-950 rounded-3xl border border-slate-800/80 p-8 shadow-2xl relative overflow-hidden">
                 <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.08)_0,transparent_70%)]"></div>
-                <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">外部サービスなしで、<span class="text-red-500">P2Pライブ配信</span>。</h1>
-                <p class="text-slate-400 max-w-2xl mx-auto mb-8 text-sm md:text-base">ブラウザだけで今すぐ高画質なライブ配信を開始、または配信を探して視聴できます。</p>
+                <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">ID入力不要で、<span class="text-red-500">ワンクリック視聴</span>。</h1>
+                <p class="text-slate-400 max-w-2xl mx-auto mb-8 text-sm md:text-base">配信一覧から好きな配信を選んで、すぐに高画質なライブを楽しめます。</p>
                 <div class="flex justify-center gap-4">
                     <button onclick="switchView('browse')" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition flex items-center border border-slate-700">
                         <i class="fa-solid fa-compass mr-2 text-red-500"></i>配信を探す
@@ -54,13 +54,12 @@
         <section id="view-browse" class="hidden space-y-6">
             <div class="flex justify-between items-center">
                 <div>
-                    <h2 class="text-2xl font-bold text-white flex items-center"><i class="fa-solid fa-fire text-red-500 mr-2"></i>配信中のライブ</h2>
-                    <p class="text-xs text-slate-400 mt-1">現在オンラインの配信ルームです（ルームIDを入力して直接参加も可能）</p>
+                    <h2 class="text-2xl font-bold text-white flex items-center"><i class="fa-solid fa-fire text-red-500 mr-2"></i>配信中のライブ一覧</h2>
+                    <p class="text-xs text-slate-400 mt-1">クリックするだけでID入力なしですぐに視聴を開始できます</p>
                 </div>
-                <div class="flex gap-2">
-                    <input type="text" id="direct-peer-id" placeholder="ルームIDを直入力" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-red-500">
-                    <button onclick="joinDirect()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">参加</button>
-                </div>
+                <button onclick="renderStreamsList()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center border border-slate-700">
+                    <i class="fa-solid fa-rotate mr-1.5"></i>更新
+                </button>
             </div>
             <div id="streams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- 動的に生成されます -->
@@ -96,9 +95,8 @@
                             <button id="btn-start-stream" onclick="startBroadcasting()" class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition shadow-lg shadow-red-600/20">配信開始</button>
                         </div>
                     </div>
-                    <div id="room-info-box" class="hidden text-xs text-slate-400 bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
-                        <div>ルームID: <span id="current-room-id" class="font-mono text-white select-all"></span> をコピーして視聴者に共有できます。</div>
-                        <button onclick="copyRoomId()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded">コピー</button>
+                    <div class="text-xs text-emerald-400 bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center">
+                        <i class="fa-solid fa-circle-check mr-2"></i>配信を開始すると、自動的に「ライブ一覧」に掲載され、誰でもIDなしで参加できるようになります。
                     </div>
                 </div>
             </div>
@@ -126,7 +124,7 @@
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
                     <div>
                         <h2 id="viewer-stream-title" class="text-lg font-bold text-white">ライブ配信</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">ルームID: <span id="viewer-peer-id" class="font-mono text-slate-300"></span></p>
+                        <p class="text-xs text-slate-400 mt-0.5">接続ステータス: <span class="text-emerald-400 font-semibold">接続完了</span></p>
                     </div>
                     <button onclick="switchView('browse')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition">一覧に戻る</button>
                 </div>
@@ -148,11 +146,17 @@
     <!-- アプリケーション制御スクリプト -->
     <script>
         let peer = null, localStream = null, activeCall = null;
-        let connections = []; // 配信者が接続中の視聴者とのコネクション一覧
+        let connections = []; 
         let activeViewersCount = 0;
-        let chatConnsAsViewer = null; // 視聴者側のチャット用コネクション
-        let activeStreams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
+        let chatConnsAsViewer = null; 
         let isCamOn = true, isMicOn = true;
+
+        // タブ間でのライブ一覧の自動同期
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'local_active_streams' && document.getElementById('view-browse').classList.contains('hidden') === false) {
+                renderStreamsList();
+            }
+        });
 
         function switchView(viewName) {
             ['home', 'browse', 'streamer', 'viewer'].forEach(v => {
@@ -195,22 +199,18 @@
 
                 peer = new Peer();
                 peer.on('open', (id) => {
-                    document.getElementById('current-room-id').innerText = id;
-                    document.getElementById('room-info-box').classList.remove('hidden');
-
-                    // ローカルストレージに配信情報を登録（同じブラウザ内でのテスト用）
-                    activeStreams = activeStreams.filter(s => s.id !== id);
-                    activeStreams.push({ id: id, title: title });
-                    localStorage.setItem('local_active_streams', JSON.stringify(activeStreams));
+                    // 自動的にストレージに登録して一覧に載せる
+                    let streams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
+                    streams = streams.filter(s => s.id !== id);
+                    streams.push({ id: id, title: title });
+                    localStorage.setItem('local_active_streams', JSON.stringify(streams));
                 });
 
-                // 視聴者からの映像リクエスト
                 peer.on('call', (call) => {
                     call.answer(localStream);
                     activeCall = call;
                 });
 
-                // 視聴者からのチャット・データ接続
                 peer.on('connection', (conn) => {
                     connections.push(conn);
                     activeViewersCount++;
@@ -218,7 +218,6 @@
 
                     conn.on('data', (data) => {
                         appendChat('streamer-chat-messages', data.sender, data.text);
-                        // 他の視聴者にもチャットをブロードキャスト
                         connections.forEach(c => {
                             if(c !== conn && c.open) c.send(data);
                         });
@@ -243,15 +242,16 @@
         }
 
         function stopBroadcastingInternal() {
+            if(peer && peer.id) {
+                let streams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
+                streams = streams.filter(s => s.id !== peer.id);
+                localStorage.setItem('local_active_streams', JSON.stringify(streams));
+            }
             if(localStream) {
                 localStream.getTracks().forEach(track => track.stop());
                 localStream = null;
             }
             if(peer) {
-                if(peer.id) {
-                    activeStreams = activeStreams.filter(s => s.id !== peer.id);
-                    localStorage.setItem('local_active_streams', JSON.stringify(activeStreams));
-                }
                 peer.destroy();
                 peer = null;
             }
@@ -261,19 +261,12 @@
             document.getElementById('self-video').srcObject = null;
             document.getElementById('streamer-offline').classList.remove('hidden');
             document.getElementById('live-badge').classList.add('hidden');
-            document.getElementById('room-info-box').classList.add('hidden');
             document.getElementById('btn-start-stream').innerText = "配信開始";
             document.getElementById('btn-start-stream').setAttribute('onclick', "startBroadcasting()");
         }
 
         function updateViewerCount() {
             document.getElementById('viewer-count').innerText = activeViewersCount;
-        }
-
-        function copyRoomId() {
-            const id = document.getElementById('current-room-id').innerText;
-            navigator.clipboard.writeText(id);
-            alert('ルームIDをコピーしました！');
         }
 
         function toggleCamera() {
@@ -290,37 +283,37 @@
             document.getElementById('btn-toggle-mic').className = isMicOn ? "p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition" : "p-3 bg-red-600 text-white rounded-xl transition";
         }
 
-        // --- 閲覧・一覧機能 ---
+        // --- 一覧表示機能 ---
         function renderStreamsList() {
             const grid = document.getElementById('streams-grid');
             const noStreams = document.getElementById('no-streams');
             grid.innerHTML = '';
 
-            // ローカルストレージから最新の配信一覧を取得
-            activeStreams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
+            const streams = JSON.parse(localStorage.getItem('local_active_streams') || '[]');
 
-            if(activeStreams.length === 0) {
+            if(streams.length === 0) {
                 noStreams.classList.remove('hidden');
                 return;
             }
             noStreams.classList.add('hidden');
 
-            activeStreams.forEach(stream => {
+            streams.forEach(stream => {
                 const card = document.createElement('div');
-                card.className = "bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition flex flex-col group cursor-pointer";
+                card.className = "bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 transition flex flex-col group cursor-pointer shadow-lg";
+                // カードをクリックするだけでID入力なしに配信へジャンプ
                 card.setAttribute('onclick', `joinStream('${stream.id}', '${escapeHtml(stream.title)}')`);
                 card.innerHTML = `
                     <div class="aspect-video bg-slate-950 relative flex items-center justify-center overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent z-10"></div>
                         <i class="fa-solid fa-play text-red-500 text-3xl group-hover:scale-110 transition duration-300 z-20"></i>
-                        <span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full z-20 flex items-center">
+                        <span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full z-20 flex items-center shadow">
                             <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping mr-1"></span>LIVE
                         </span>
                     </div>
                     <div class="p-4 flex-1 flex flex-col justify-between">
                         <h3 class="font-bold text-sm text-white line-clamp-1 mb-2">${escapeHtml(stream.title)}</h3>
-                        <div class="flex items-center text-xs text-slate-400">
-                            <i class="fa-solid fa-user-circle mr-1.5 text-slate-500"></i>ID: ${stream.id.substring(0, 8)}...
+                        <div class="flex items-center text-xs text-emerald-400">
+                            <i class="fa-solid fa-circle-dot mr-1.5"></i>クリックして視聴する
                         </div>
                     </div>
                 `;
@@ -328,20 +321,10 @@
             });
         }
 
-        function joinDirect() {
-            const id = document.getElementById('direct-peer-id').value.trim();
-            if(!id) {
-                alert('ルームIDを入力してください。');
-                return;
-            }
-            joinStream(id, '直接参加のライブ配信');
-        }
-
         // --- 視聴者機能 ---
         function joinStream(peerId, title) {
             switchView('viewer');
             document.getElementById('viewer-stream-title').innerText = title;
-            document.getElementById('viewer-peer-id').innerText = peerId;
             document.getElementById('viewer-loading').classList.remove('hidden');
             document.getElementById('viewer-chat-messages').innerHTML = '';
 
@@ -356,7 +339,6 @@
                     document.getElementById('viewer-loading').classList.add('hidden');
                 });
 
-                // チャット用コネクション
                 chatConnsAsViewer = peer.connect(peerId);
                 chatConnsAsViewer.on('data', (data) => {
                     appendChat('viewer-chat-messages', data.sender, data.text);
