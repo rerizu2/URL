@@ -15,7 +15,7 @@
 
     <!-- ★ここに取得したGASのウェブアプリURLを貼り付けてください -->
     <script>
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyZjxxy04KDftMPwLqjKege6gWYZreYWsPlNR50TpaDWJZbLP0NMpD-P__DzhJS47f_VA/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyv8XqcbCmNZsi53Ewc9NqLqNfcA0FlRAaR4UshI8jIo_qC2XAyb8J07xgV3HpidqG8UQ/exec";
     </script>
 
     <!-- ヘッダー -->
@@ -66,9 +66,7 @@
                     <i class="fa-solid fa-rotate mr-1.5"></i>更新
                 </button>
             </div>
-            <div id="streams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- 動的に生成されます -->
-            </div>
+            <div id="streams-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             <div id="no-streams" class="hidden text-center py-20 text-slate-500">
                 <i class="fa-solid fa-video-slash text-4xl mb-3"></i>
                 <p>現在配信中のルームはありません。</p>
@@ -292,7 +290,7 @@
             document.getElementById('btn-toggle-mic').className = isMicOn ? "p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition" : "p-3 bg-red-600 text-white rounded-xl transition";
         }
 
-        // --- 閲覧・一覧機能 (スプレッドシートから取得) ---
+        // --- 閲覧・一覧機能 ---
         async function renderStreamsList() {
             const grid = document.getElementById('streams-grid');
             const noStreams = document.getElementById('no-streams');
@@ -337,8 +335,8 @@
             }
         }
 
-        // --- 視聴者機能 (タイムアウト付き) ---
-        function joinStream(peerId, title) {
+        // --- 視聴者機能 ---
+        async function joinStream(peerId, title) {
             switchView('viewer');
             document.getElementById('viewer-stream-title').innerText = title;
             document.getElementById('viewer-peer-id-display').innerText = peerId;
@@ -349,7 +347,6 @@
                 peer.destroy();
             }
 
-            // 10秒以内に繋がらなければ自動キャンセル
             if(connectionTimeout) clearTimeout(connectionTimeout);
             connectionTimeout = setTimeout(() => {
                 const loadingEl = document.getElementById('viewer-loading');
@@ -357,43 +354,55 @@
                     alert('接続がタイムアウトしました。配信者がオフラインの可能性があります。');
                     switchView('browse');
                 }
-            }, 10000);
+            }, 15000);
 
-            peer = new Peer();
-            peer.on('open', () => {
-                const call = peer.call(peerId, new MediaStream());
-                activeCall = call;
+            try {
+                const viewerStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => {
+                    return new MediaStream();
+                });
+                viewerStream.getAudioTracks().forEach(track => track.enabled = false);
 
-                call.on('stream', (remoteStream) => {
+                peer = new Peer();
+                peer.on('open', () => {
+                    const call = peer.call(peerId, viewerStream);
+                    activeCall = call;
+
+                    call.on('stream', (remoteStream) => {
+                        if(connectionTimeout) {
+                            clearTimeout(connectionTimeout);
+                            connectionTimeout = null;
+                        }
+                        const videoEl = document.getElementById('remote-video');
+                        videoEl.srcObject = remoteStream;
+                        document.getElementById('viewer-loading').classList.add('hidden');
+                    });
+
+                    call.on('close', () => {
+                        alert('配信が終了しました。');
+                        switchView('browse');
+                    });
+
+                    chatConnsAsViewer = peer.connect(peerId);
+                    chatConnsAsViewer.on('data', (data) => {
+                        appendChat('viewer-chat-messages', data.sender, data.text);
+                    });
+                });
+
+                peer.on('error', (err) => {
+                    console.error(err);
                     if(connectionTimeout) {
                         clearTimeout(connectionTimeout);
                         connectionTimeout = null;
                     }
-                    const videoEl = document.getElementById('remote-video');
-                    videoEl.srcObject = remoteStream;
-                    document.getElementById('viewer-loading').classList.add('hidden');
-                });
-
-                call.on('close', () => {
-                    alert('配信が終了しました。');
+                    alert('接続エラーが発生しました。');
                     switchView('browse');
                 });
 
-                chatConnsAsViewer = peer.connect(peerId);
-                chatConnsAsViewer.on('data', (data) => {
-                    appendChat('viewer-chat-messages', data.sender, data.text);
-                });
-            });
-
-            peer.on('error', (err) => {
+            } catch (err) {
                 console.error(err);
-                if(connectionTimeout) {
-                    clearTimeout(connectionTimeout);
-                    connectionTimeout = null;
-                }
-                alert('接続エラーが発生しました。配信者を確認してください。');
+                alert('カメラ・マイクの権限が許可されていないため視聴できません。');
                 switchView('browse');
-            });
+            }
         }
 
         function sendChat() {
