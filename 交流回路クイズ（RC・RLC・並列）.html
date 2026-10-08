@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>交流回路クイズ（RC・RLC・並列）</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#eef3f6;--grid:#d5e0e6;--card:#fff;--ink:#14263a;--sub:#5a6b7b;--line:#c3d0d9;--acc:#e58a00;--accink:#7a4600;--ok:#1b7f4b;--okbg:#e2f4ea;--ng:#b3261e;--ngbg:#fbe9e7}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a24;--grid:#182836;--card:#16232f;--ink:#e6eef5;--sub:#9db0c0;--line:#2c4052;--acc:#ffb340;--accink:#ffd08a;--ok:#5fd394;--okbg:#12362a;--ng:#ff8a80;--ngbg:#3a1c1a}}
+:root[data-theme="dark"]{--bg:#0f1a24;--grid:#182836;--card:#16232f;--ink:#e6eef5;--sub:#9db0c0;--line:#2c4052;--acc:#ffb340;--accink:#ffd08a;--ok:#5fd394;--okbg:#12362a;--ng:#ff8a80;--ngbg:#3a1c1a}
+*,*:before,*:after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;line-height:1.7;
+background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+main{max-width:680px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.6rem;font-weight:900;margin:8px 0 4px;letter-spacing:.02em}
+.lead{color:var(--sub);margin:0 0 16px;font-size:.95rem}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.tabs button,.btn{font:inherit;cursor:pointer;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:6px}
+.tabs button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.card{background:var(--card);border:1.5px solid var(--ink);border-radius:10px;padding:18px 18px 20px;box-shadow:5px 5px 0 var(--ink)}
+.bar{height:6px;background:var(--line);border-radius:3px;margin-bottom:14px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc);transition:width .3s}
+.meta{display:flex;justify-content:space-between;color:var(--sub);font-size:.88rem}
+.q{font-size:1.08rem;font-weight:700;margin:8px 0 12px}
+.given{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.given span{background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:2px 9px;font-size:.92rem}
+.row{display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap}
+.row label{min-width:3.4em;font-weight:700}
+.row input{font:inherit;width:9em;padding:7px 10px;border:1.5px solid var(--ink);border-radius:6px;background:var(--bg);color:var(--ink)}
+.row .u{color:var(--sub)}
+.row.ok input{border-color:var(--ok);background:var(--okbg)}
+.row.ng input{border-color:var(--ng);background:var(--ngbg)}
+.row .fb{font-size:.9rem;font-weight:700}
+.row.ok .fb{color:var(--ok)}.row.ng .fb{color:var(--ng)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn.main{background:var(--acc);border-color:var(--ink);color:#201000;font-weight:700}
+.hint,.sol{margin-top:12px;padding:10px 12px;border-left:4px solid var(--acc);background:var(--bg);font-size:.95rem;white-space:pre-line}
+.sol{border-color:var(--ink)}
+.res{font-size:2.4rem;font-weight:900;margin:4px 0}
+.list{margin:12px 0;padding:0;list-style:none}
+.list li{padding:6px 0;border-bottom:1px dashed var(--line);display:flex;justify-content:space-between;gap:8px}
+.t{margin-top:18px;text-align:right}
+.t button{background:none;border:none;color:var(--sub);cursor:pointer;font:inherit;text-decoration:underline}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .15em;line-height:1.3;font-size:.95em}
+.fr>span{padding:0 .25em}.fr>span:first-child{border-bottom:1.5px solid currentColor}
+.rt{white-space:nowrap}.ov{border-top:1.5px solid currentColor;padding:0 .1em;margin-left:1px}
+.fig{margin:0 0 12px;text-align:center}.fig svg{width:100%;max-width:300px;height:auto;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.fig .tx{fill:currentColor;stroke:none;font-size:14px;font-style:italic}.fig figcaption{font-size:.82rem;color:var(--sub)}
+.panel{margin-top:14px;background:var(--card);border:1.5px solid var(--ink);border-radius:10px;padding:14px;box-shadow:5px 5px 0 var(--ink)}.panel[hidden]{display:none}
+#cv{display:block;width:100%;height:260px;border:1.5px dashed var(--line);border-radius:6px;background:var(--bg);touch-action:none;cursor:crosshair}
+.panel .btn[aria-pressed=true]{background:var(--ink);color:var(--bg)}.note{font-size:.82rem;color:var(--sub);margin:8px 0 0}
+.calc{max-width:380px;margin:0 auto}.calc>.btn{margin-bottom:8px}
+.cd{border:1.5px solid var(--ink);border-radius:6px;background:var(--bg);padding:6px 10px;text-align:right;min-height:66px;margin-bottom:8px}
+#ce{color:var(--sub);font-size:.95rem;min-height:1.4em;word-break:break-all}#cr{font-size:1.5rem;font-weight:700}
+.cg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.cg button{font:inherit;min-height:44px;border:1.5px solid var(--ink);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer;padding:0}
+.cg .f,.cg .c{background:var(--bg);font-size:.88rem}.cg .o{background:var(--bg)}.cg .eq{background:var(--acc);color:#201000;font-weight:700}
+</style>
+</head>
+<body>
+<main>
+<h1>交流回路クイズ</h1>
+<p class="lead">RC直列・RLC直列・共振・RL並列・RC並列。数値を入力して答え合わせ。角度はrad（ラジアン）で答えます。</p>
+<div class="tabs" id="tabs"></div>
+<div class="tabs" id="tools"><button id="tm" aria-pressed="false">メモ</button><button id="tc" aria-pressed="false">関数電卓</button></div>
+<div id="app"></div>
+<section class="panel" id="pm" hidden>
+<canvas id="cv" aria-label="書きメモ"></canvas>
+<div class="actions"><button class="btn" data-t="p" aria-pressed="true">ペン</button><button class="btn" data-t="e" aria-pressed="false">消しゴム</button><button class="btn" data-k="ink" aria-pressed="true">標準色</button><button class="btn" data-k="#e8453c" aria-pressed="false">赤</button><button class="btn" data-k="#3b82f6" aria-pressed="false">青</button><button class="btn" id="undo">1つ戻す</button><button class="btn" id="clr">全消去</button></div>
+<p class="note">次の問題に進むとメモは消えます。</p></section>
+<section class="panel" id="pc" hidden><div class="calc"><button class="btn" id="dg">Rad（ラジアン）</button><div class="cd"><div id="ce"></div><div id="cr"></div></div><div class="cg" id="ck"></div></div></section>
+<div class="t"><button id="theme">表示の明暗を切り替え</button></div>
+</main>
+<script>
+const CATS=["すべて","RC直列","RLC直列","共振","RL並列","RC並列"];
+const D=[
+{c:"RC直列",n:16,q:"インピーダンスZ=12Ωの RC直列回路で、容量性リアクタンスXc=4Ω。抵抗Rを求めよ。また、電流I=2Aのときの電圧Vを求めよ。",h:"Z²=R²+Xc² より R²=Z²−Xc²　　V=IZ",p:[["R","11.3","Ω",1],["V","24","V"]],s:"R²=12²−4²=144−16=128 → R=[128]=8[2]≒11.3Ω\nV=IZ=2×12=24V"},
+{c:"RC直列",n:17,q:"周波数5kHz、100Vの交流電圧をRC直列回路に加えた。R=10Ω、C={20|π} μF のとき、Xc、Z、Iを求めよ。",h:"ω=2πf　　Xc={1|ωC}　　Z=[R²+Xc²]　　I={V|Z}",p:[["Xc","5","Ω"],["Z","11.2","Ω",1],["I","8.94","A",1]],s:"ω=2π×5000=10000π rad/s\nωC=10000π×{20|π}×10⁻⁶=0.2 → Xc={1|0.2}=5Ω\nZ=[10²+5²]=[125]=5[5]≒11.2Ω\nI={100|11.18}≒8.94A（Zを11.2で丸めると8.93A）"},
+{c:"RC直列",n:18,q:"抵抗15Ωと容量性リアクタンス12Ωの直列回路のインピーダンスZと、インピーダンス角θ[rad]を求めよ。",h:"Z=[R²+Xc²]　　θ=tan⁻¹{Xc|R}",p:[["Z","19.2","Ω",1],["θ","0.67","rad",2]],s:"Z=[15²+12²]=[369]≒19.2Ω\nθ=tan⁻¹{12|15}=tan⁻¹0.8≒0.67rad（38.7°）"},
+{c:"RC直列",n:19,q:"抵抗16Ωと容量性リアクタンス12Ωの直列回路に100Vの交流電圧を加えた。電流Iとインピーダンス角θ[rad]を求めよ。",h:"Z=[R²+Xc²]　　I={V|Z}　　θ=tan⁻¹{Xc|R}",p:[["I","5","A"],["θ","0.644","rad",1]],s:"Z=[16²+12²]=[400]=20Ω\nI={100|20}=5A\nθ=tan⁻¹{12|16}=tan⁻¹0.75≒0.644rad（36.9°）"},
+{c:"RLC直列",n:20,q:"誘導性のRLC直列回路で、インピーダンス角θ=0.785rad、抵抗R=5Ω、誘導性リアクタンスXL=10Ω。容量性リアクタンスXcを求めよ。",h:"tanθ={∣XL−Xc∣|R}　　誘導性なので XL>Xc（絶対値を外せる）。電卓はrad設定。",p:[["Xc","5","Ω",2]],s:"R·tanθ=XL−Xc\nXc=XL−R·tanθ=10−5×tan(0.785)≒10−4.996≒5Ω"},
+{c:"RLC直列",n:21,q:"100Vの電圧を加えたRLC直列回路で、R=8Ω、ωL=13Ω、{1|ωC}=5Ω。インピーダンスZ、電流I、インピーダンス角θ[rad]を求めよ。",h:"Z=[R²+(XL−Xc)²]　　I={V|Z}　　θ=tan⁻¹{∣XL−Xc∣|R}",p:[["Z","11.3","Ω",1],["I","8.84","A",1],["θ","0.785","rad",1]],s:"Z=[8²+(13−5)²]=[128]=8[2]≒11.3Ω\nI={100|8[2]}≒8.84A\nθ=tan⁻¹{8|8}=tan⁻¹1={π|4}≒0.785rad"},
+{c:"共振",n:22,q:"共振周波数f₀=100HzのRLC直列回路で、R=15Ω、L=30mH。静電容量Cを求めよ（単位はμF）。",h:"f₀={1|2π[LC]}　を C について解く：C={1|4π²f₀²L}",p:[["C","84.4","μF",1]],s:"C={1|4π²×100²×30×10⁻³}\n={1|4×9.8696×10⁴×0.03}≒8.44×10⁻⁵ F＝84.4μF"},
+{c:"共振",n:23,q:"RLC直列回路で、R=8Ω、L=1000H、C=2.5μF。共振周波数f₀を求めよ。",h:"f₀={1|2π[LC]}　　μ=10⁻⁶",p:[["f₀","3.18","Hz",1]],s:"LC=1000×2.5×10⁻⁶=2.5×10⁻³\n[LC]=0.05\nf₀={1|2π×0.05}={1|0.314}≒3.18Hz"},
+{c:"RL並列",n:24,q:"RL並列回路で、V=80V、R=4Ω、XL=5Ω。回路を流れる電流Iと、電圧と電流の位相差θ[rad]を求めよ。",h:"IR={V|R}　　IL={V|XL}　　I=[IR²+IL²]　　θ=tan⁻¹{IL|IR}",p:[["I","25.6","A",1],["θ","0.675","rad",1]],s:"IR={80|4}=20A　IL={80|5}=16A\nI=[20²+16²]=[656]=4[41]≒25.6A\nθ=tan⁻¹{16|20}=tan⁻¹0.8≒0.675rad"},
+{c:"RL並列",n:25,q:"RL並列回路で、R=4Ω、XL=12Ω、V=120V。IR、IL、Iと、位相差θ[rad]を求めよ。",h:"IR={V|R}　　IL={V|XL}　　I=[IR²+IL²]　　θ=tan⁻¹{IL|IR}",p:[["IR","30","A"],["IL","10","A"],["I","31.6","A",1],["θ","0.322","rad",1]],s:"IR={120|4}=30A　IL={120|12}=10A\nI=[30²+10²]=[1000]=10[10]≒31.6A\nθ=tan⁻¹{10|30}≒0.322rad（18.4°）"},
+{c:"RL並列",n:26,q:"抵抗30Ωと誘導性リアクタンス40Ωを並列に接続し、120Vを加えた。IR、IL、Iを求めよ。",h:"IR={V|R}　　IL={V|XL}　　I=[IR²+IL²]",p:[["IR","4","A"],["IL","3","A"],["I","5","A"]],s:"IR={120|30}=4A　IL={120|40}=3A\nI=[4²+3²]=[25]=5A"},
+{c:"RL並列",n:27,q:"RL並列回路で、R=4.8Ω、インピーダンスZ=2Ω。誘導性リアクタンスXLを求めよ。また、電流I=5Aのときの電圧Vを求めよ。",h:"({1|Z})²=({1|R})²+({1|XL})²　→　{1|XL}=[({1|Z})²−({1|R})²]　　V=IZ",p:[["XL","2.2","Ω",1],["V","10","V"]],s:"{1|XL}=[({1|2})²−({1|4.8})²]=[{1|4}−{1|23.04}]≒0.4545\nXL≒2.2Ω\nV=IZ=5×2=10V"},
+{c:"RC並列",n:28,q:"RC並列回路で、V=80V、R=4Ω、Xc=5Ω。回路を流れる電流Iと、電圧と電流の位相差θ[rad]を求めよ。",h:"IR={V|R}　　IC={V|Xc}　　I=[IR²+IC²]　　θ=tan⁻¹{IC|IR}=tan⁻¹{R|Xc}",p:[["I","25.6","A",1],["θ","0.675","rad",1]],s:"IR={80|4}=20A　IC={80|5}=16A\nI=[20²+16²]=[656]≒25.6A\nθ=tan⁻¹{4|5}=tan⁻¹0.8≒0.675rad"},
+{c:"RC並列",n:29,q:"RC並列回路で、R=4Ω、Xc=12Ω、V=120V。IR、IC、Iと、位相差θ[rad]を求めよ。",h:"IR={V|R}　　IC={V|Xc}　　I=[IR²+IC²]　　θ=tan⁻¹{R|Xc}",p:[["IR","30","A"],["IC","10","A"],["I","31.6","A",1],["θ","0.322","rad",1]],s:"IR={120|4}=30A　IC={120|12}=10A\nI=[30²+10²]=10[10]≒31.6A\nθ=tan⁻¹{4|12}≒0.322rad（18.4°）"},
+{c:"RC並列",n:30,q:"抵抗40Ωと容量性リアクタンス30Ωを並列に接続し、240Vを加えた。IR、IC、Iを求めよ。",h:"IR={V|R}　　IC={V|Xc}　　I=[IR²+IC²]",p:[["IR","6","A"],["IC","8","A"],["I","10","A"]],s:"IR={240|40}=6A　IC={240|30}=8A\nI=[6²+8²]=[100]=10A"},
+{c:"RC並列",n:31,q:"RC並列回路で、R=4.8Ω、インピーダンスZ=3Ω。容量性リアクタンスXcを求めよ。また、電流I=5Aのときの電圧Vを求めよ。",h:"({1|Z})²=({1|R})²+({1|Xc})²　→　{1|Xc}=[({1|Z})²−({1|R})²]　　V=IZ",p:[["Xc","3.84","Ω",1],["V","15","V"]],s:"({1|Xc})²={1|9}−{25|576}={39|576}\n{1|Xc}={[39]|24} → Xc={24|[39]}≒3.84Ω\nV=IZ=5×3=15V"}
+];
+const fmt=t=>t.replace(/\{([^{}|]*)\|([^{}]*)\}/g,'<span class="fr"><span>$1</span><span>$2</span></span>').replace(/\[([^\[\]]*)\]/g,'<span class="rt">√<span class="ov">$1</span></span>');
+const W='stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"';
+const pl=y=>`<path d="M176 ${y}h28M176 ${y+8}h28"/>`;
+const coil=(x,y)=>`<path d="M${x} ${y}c-12 0-12 8 0 8c-12 0-12 8 0 8c-12 0-12 8 0 8"/>`;
+const src=(x,y)=>`<circle cx="${x}" cy="${y}" r="16"/><path d="M${x-8} ${y}q4-8 8 0t8 0"/>`;
+const arr='<path d="M52 12h24M70 7l6 5-6 5"/><text x="60" y="30" class="tx">I</text>';
+function diagram(d){
+ const par=/並列/.test(d.c),ct=/RC/.test(d.c),L=/RL/.test(d.c)&&!ct;
+ let b,name;
+ if(!par){const rlc=d.c==="RLC直列"||d.c==="共振";name=rlc?"RLC直列回路":"RC直列回路";
+  b=`<path d="M40 20H190M40 150H190M40 20V69M40 101V150"/>`+src(40,85)+arr+`<text x="58" y="90" class="tx">V</text>`+
+   (rlc?`<path d="M190 20V34M190 60V70M190 94V108M190 124V150"/><rect x="182" y="34" width="16" height="26"/>${coil(190,70)}${pl(108)}<text x="212" y="52" class="tx">R</text><text x="212" y="87" class="tx">L</text><text x="212" y="119" class="tx">C</text>`
+   :`<path d="M190 20V45M190 75V105M190 113V150"/><rect x="182" y="45" width="16" height="30"/>${pl(105)}<text x="212" y="64" class="tx">R</text><text x="212" y="113" class="tx">C</text>`);
+ }else{name=ct?"RC並列回路":"RL並列回路";const k=ct?"C":"L";
+  b=`<path d="M30 25H200M30 145H200M30 25V69M30 101V145M130 25V60M130 90V145"/>`+src(30,85)+`<circle cx="130" cy="25" r="2.5" fill="currentColor"/><circle cx="130" cy="145" r="2.5" fill="currentColor"/><rect x="122" y="60" width="16" height="30"/>`+arr.replace(/52/,'44').replace(/M70/,'M62')+
+   `<text x="146" y="80" class="tx">R</text><text x="104" y="48" class="tx">I<tspan font-size="10" dy="3">R</tspan></text><text x="172" y="48" class="tx">I<tspan font-size="10" dy="3">${k}</tspan></text><text x="48" y="90" class="tx">V</text>`+
+   (ct?`<path d="M200 25V70M200 86V145" transform="translate(0,0)"/><path d="M186 70h28M186 78h28"/><text x="218" y="80" class="tx">C</text>`.replace('V70M200 86','V70M200 78'):`<path d="M200 25V70M200 94V145"/>${coil(200,70)}<text x="218" y="86" class="tx">L</text>`);
+ }
+ return `<figure class="fig"><svg viewBox="0 0 250 165" role="img" aria-label="${name}の回路図" ${W}>${b}</svg><figcaption>${name}の回路図</figcaption></figure>`;
+}
+const $=s=>document.querySelector(s);
+let cat="すべて",list=[],i=0,done=false,res=[],hinted=false;
+function start(){list=D.filter(d=>cat==="すべて"||d.c===cat);i=0;res=[];show()}
+function tabs(){$("#tabs").innerHTML=CATS.map(c=>`<button aria-pressed="${c===cat}" data-c="${c}">${c}</button>`).join("");
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{cat=b.dataset.c;tabs();start()})}
+function ok(v,p){const a=parseFloat(p[1]);return Math.abs(v-a)<=Math.abs(a)*(p[3]?0.02:0.008)+0.003}
+function show(){
+ if(i>=list.length)return result();
+ const d=list[i];done=false;hinted=false;clearMemo();
+ const pct=Math.round(i/list.length*100);
+ $("#app").innerHTML=`<div class="card"><div class="bar"><i style="width:${pct}%"></i></div>
+ <div class="meta"><span>問${d.n}・${d.c}</span><span>${i+1} / ${list.length}</span></div>
+ <p class="q">${fmt(d.q)}</p>${diagram(d)}
+ ${d.p.map((p,k)=>`<div class="row" id="r${k}"><label for="a${k}">${p[0]}＝</label><input id="a${k}" inputmode="decimal" autocomplete="off"><span class="u">${p[2]}</span><span class="fb"></span></div>`).join("")}
+ <div class="actions"><button class="btn main" id="chk">答え合わせ</button><button class="btn" id="hn">ヒント</button><button class="btn" id="sk">わからない</button></div>
+ <div id="ex"></div></div>`;
+ $("#chk").onclick=check;$("#hn").onclick=()=>{$("#ex").insertAdjacentHTML("afterbegin",`<div class="hint">${fmt(d.h)}</div>`);$("#hn").disabled=true};
+ $("#sk").onclick=()=>finish(false,true);
+ $("#app").onkeydown=e=>{if(e.key==="Enter"){done?next():check()}};
+ $("#a0").focus();
+}
+function check(){
+ if(done)return next();
+ const d=list[i];let all=true;
+ d.p.forEach((p,k)=>{const raw=$("#a"+k).value.replace(/[０-９．]/g,c=>c==="．"?".":String.fromCharCode(c.charCodeAt(0)-65248)).trim();
+  const v=parseFloat(raw);const good=!isNaN(v)&&ok(v,p);if(!good)all=false;
+  const r=$("#r"+k);r.className="row "+(good?"ok":"ng");r.querySelector(".fb").textContent=good?"正解":"不正解（答え："+p[1]+"）"});
+ finish(all,false);
+}
+function finish(all,skip){
+ const d=list[i];done=true;
+ if(skip)d.p.forEach((p,k)=>{const r=$("#r"+k);r.className="row ng";r.querySelector(".fb").textContent="答え："+p[1]});
+ res[i]=all;
+ $("#ex").innerHTML=`<div class="sol"><b>${all?"全問正解。":"解き方"}</b>\n${fmt(d.s)}</div>`;
+ $("#chk").textContent=i+1<list.length?"次の問題へ":"結果を見る";$("#chk").onclick=next;$("#hn").disabled=true;$("#sk").disabled=true;
+}
+function next(){i++;show()}
+function result(){
+ const n=res.filter(Boolean).length,t=list.length;
+ $("#app").innerHTML=`<div class="card"><div class="meta"><span>結果（${cat}）</span></div>
+ <div class="res">${n} / ${t}</div><p>${n===t?"全問正解です。":n/t>=.7?"よくできています。間違えた問題だけやり直しましょう。":"公式を見直して、もう一度挑戦しましょう。"}</p>
+ <ul class="list">${list.map((d,k)=>`<li><span>問${d.n}　${d.c}</span><b style="color:var(--${res[k]?"ok":"ng"})">${res[k]?"○":"×"}</b></li>`).join("")}</ul>
+ <div class="actions"><button class="btn main" id="re">間違えた問題をやり直す</button><button class="btn" id="all">最初から</button></div></div>`;
+ const w=list.filter((d,k)=>!res[k]);
+ if(!w.length)$("#re").disabled=true;
+ $("#re").onclick=()=>{list=w;i=0;res=[];show()};
+ $("#all").onclick=start;
+}
+$("#theme").onclick=()=>{const r=document.documentElement,dk=matchMedia("(prefers-color-scheme: dark)").matches;
+ const cur=r.dataset.theme||(dk?"dark":"light");r.dataset.theme=cur==="dark"?"light":"dark";redraw()};
+/* ---- メモ ---- */
+const cv=$("#cv"),cx=cv.getContext("2d");let strokes=[],tool="p",pk="ink",cur=null;
+const col=k=>k==="ink"?getComputedStyle(document.body).color:k;
+function seg(s){cx.globalCompositeOperation=s.t==="e"?"destination-out":"source-over";cx.strokeStyle=col(s.k);cx.lineWidth=s.t==="e"?20:2.2;cx.lineCap=cx.lineJoin="round";cx.beginPath();s.p.forEach((q,i)=>i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1]));if(s.p.length===1)cx.lineTo(s.p[0][0]+.1,s.p[0][1]);cx.stroke()}
+function redraw(){cx.save();cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,cv.width,cv.height);cx.restore();strokes.forEach(seg)}
+function sizeCv(){const w=cv.parentElement.clientWidth;if(!w)return;const d=devicePixelRatio||1;cv.width=w*d;cv.height=260*d;cx.setTransform(d,0,0,d,0,0);redraw()}
+function clearMemo(){strokes=[];redraw()}
+cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);cur={t:tool,k:pk,p:[[e.offsetX,e.offsetY]]};strokes.push(cur);seg(cur);e.preventDefault()});
+cv.addEventListener("pointermove",e=>{if(!cur)return;cur.p.push([e.offsetX,e.offsetY]);seg(cur)});
+["pointerup","pointercancel"].forEach(n=>cv.addEventListener(n,()=>{cur=null}));
+function pick(sel,b){document.querySelectorAll(sel).forEach(x=>x.setAttribute("aria-pressed",x===b))}
+document.querySelectorAll("#pm [data-t]").forEach(b=>b.onclick=()=>{tool=b.dataset.t;pick("#pm [data-t]",b)});
+document.querySelectorAll("#pm [data-k]").forEach(b=>b.onclick=()=>{pk=b.dataset.k;tool="p";pick("#pm [data-k]",b);pick("#pm [data-t]",document.querySelector("#pm [data-t=p]"))});
+$("#undo").onclick=()=>{strokes.pop();redraw()};$("#clr").onclick=clearMemo;
+/* ---- 電卓 ---- */
+let cex="",crs="",ans=0,deg=false,fresh=false;
+const rd=v=>deg?v*180/Math.PI:v,dr=x=>deg?x*Math.PI/180:x;
+const FN={sin:x=>Math.sin(dr(x)),cos:x=>Math.cos(dr(x)),tan:x=>Math.tan(dr(x)),"sin⁻¹":x=>rd(Math.asin(x)),"cos⁻¹":x=>rd(Math.acos(x)),"tan⁻¹":x=>rd(Math.atan(x)),log:Math.log10,ln:Math.log,"√":Math.sqrt};
+function calc(s){
+ const re=/\s*(\d+\.?\d*(?:E[+-]?\d+)?|\.\d+(?:E[+-]?\d+)?|sin⁻¹|cos⁻¹|tan⁻¹|sin|cos|tan|log|ln|√|π|e|Ans|[+\-−×÷^()])/y,t=[];let m,i=0;
+ while(re.lastIndex<s.length&&(m=re.exec(s)))t.push(m[1]);
+ if(t.join("").length!==s.replace(/\s/g,"").length)throw 0;
+ const num=x=>/^[\d.]/.test(x),vs=x=>x&&(num(x)||x in FN||x==="π"||x==="e"||x==="Ans"||x==="(");
+ const expr=()=>{let v=term();while(t[i]==="+"||t[i]==="-"||t[i]==="−"){const o=t[i++],w=term();v=o==="+"?v+w:v-w}return v};
+ const term=()=>{let v=unary();for(;;){const x=t[i];if(x==="×"||x==="÷"){i++;const w=unary();v=x==="×"?v*w:v/w}else if(vs(x))v*=unary();else return v}};
+ const unary=()=>{if(t[i]==="-"||t[i]==="−"){i++;return -unary()}if(t[i]==="+"){i++;return unary()}const b=atom();if(t[i]==="^"){i++;return Math.pow(b,unary())}return b};
+ const paren=()=>{const v=expr();if(t[i]===")")i++;return v};
+ const atom=()=>{const x=t[i++];if(x===undefined)throw 0;if(num(x))return parseFloat(x);if(x==="π")return Math.PI;if(x==="e")return Math.E;if(x==="Ans")return ans;if(x==="(")return paren();if(x in FN){const a=t[i]==="("?(i++,paren()):atom();return FN[x](a)}throw 0};
+ const v=expr();if(i<t.length)throw 0;return v;
+}
+function fmtN(x){if(!isFinite(x))throw 0;x=parseFloat(x.toPrecision(10));const a=Math.abs(x);return a!==0&&(a<1e-4||a>=1e10)?x.toExponential().replace("e","E").replace("+",""):String(x)}
+function cshow(){$("#ce").textContent=cex||"0";$("#cr").textContent=crs||"\u00a0"}
+const KEYS=[["sin","f"],["cos","f"],["tan","f"],["log","f"],["ln","f"],["sin⁻¹","f"],["cos⁻¹","f"],["tan⁻¹","f"],["√","f"],["x²","f"],["π","c"],["e","c"],["^","o"],["(","o"],[")","o"],
+["7"],["8"],["9"],["DEL","o"],["AC","o"],["4"],["5"],["6"],["×","o"],["÷","o"],["1"],["2"],["3"],["+","o"],["−","o"],["0"],["."],["EXP","o"],["Ans","c"],["=","eq"]];
+$("#ck").innerHTML=KEYS.map(k=>`<button data-k="${k[0]}" class="${k[1]||""}">${k[0]==="x²"?"x²":k[0]}</button>`).join("");
+function put(s){if(fresh){cex=/^[+−×÷^]/.test(s)?"Ans"+s:s;fresh=false}else cex+=s;crs=""}
+document.querySelectorAll("#ck button").forEach(b=>b.onclick=()=>{
+ const k=b.dataset.k;
+ if(k==="AC"){cex="";crs="";fresh=false}
+ else if(k==="DEL"){cex=cex.replace(/(sin⁻¹\(|cos⁻¹\(|tan⁻¹\(|sin\(|cos\(|tan\(|log\(|ln\(|√\(|Ans|.)$/,"");crs="";fresh=false}
+ else if(k==="="){try{const v=calc(cex);ans=v;crs="= "+fmtN(v);fresh=true}catch(e){crs="Error";fresh=false}}
+ else if(k==="x²")put("^2");
+ else if(k==="EXP")put("E");
+ else if(b.className==="f")put(k+"(");
+ else put(k);
+ cshow()});
+$("#dg").onclick=()=>{deg=!deg;$("#dg").textContent=deg?"Deg（度）":"Rad（ラジアン）"};
+/* ---- 開閉 ---- */
+function tog(bid,pid,open){const b=$(bid),p=$(pid);b.onclick=()=>{const o=p.hidden;p.hidden=!o;b.setAttribute("aria-pressed",o);if(o&&open)open()}}
+tog("#tm","#pm",sizeCv);tog("#tc","#pc");
+addEventListener("resize",sizeCv);matchMedia("(prefers-color-scheme: dark)").addEventListener("change",redraw);cshow();
+
+tabs();start();
+</script>
+</body>
+</html>
