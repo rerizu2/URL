@@ -91,7 +91,7 @@ $('#sel').innerHTML=S.map((s,i)=>`<option value="${i}">${nm(s)}</option>`).join(
 $('#sel').onchange=e=>go(+e.target.value);
 function go(i){if(i<0||i>=S.length)return;cur=i;try{localStorage.setItem('eccube-cur',i)}catch(e){}
  const s=S[i];$('#im').src=s.img;$('#ttl').textContent=nm(s);$('#url').textContent=s.u;$('#sel').value=i;$('#memo').value=D().memo;
- texts();nav();ppl();oth();fit();if(mm==='s'){pres({s:cur,x:null,y:null,live:null,ltx:null});cursors()}$('.tools').scrollIntoView?.({block:'nearest'});}
+ texts();nav();ppl();oth();fit();if(mm==='s'){pres({s:cur,x:null,y:null,live:null,ltx:null,lm:null});cursors()}$('.tools').scrollIntoView?.({block:'nearest'});}
 $('#im').onload=fit;addEventListener('resize',fit);
 function fit(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;draw()}
 function draw(){const w=cv.width,h=cv.height;ctx.clearRect(0,0,w,h);ctx.lineCap=ctx.lineJoin='round';ctx.globalAlpha=1;
@@ -140,7 +140,7 @@ $('#undo').onclick=()=>{if(!myName)return askName();const d=D(),a=d.strokes.at(-
 let arm=0;$('#clr').onclick=e=>{if(!myName)return askName();if(!arm){arm=setTimeout(()=>{arm=0;e.target.textContent='この画面を消す'},3000);e.target.textContent='もう一度押すと消えます';return}
  clearTimeout(arm);arm=0;e.target.textContent='この画面を消す';const d=D();d.strokes=[];d.texts=[];save();texts();draw();nav()};
 document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{if(!myName){askName();return}const m=$('#memo');m.value+=(m.value&&!m.value.endsWith('\n')?'\n':'')+b.dataset.s;m.focus();m.dispatchEvent(new Event('input'))});
-$('#memo').oninput=e=>{D().memo=e.target.value;save();nav()};
+$('#memo').oninput=e=>{D().memo=e.target.value;save();nav();if(mm==='s'){pres({lm:{s:cur,t:e.target.value.slice(0,600)}});clearTimeout(lmT);lmT=setTimeout(()=>pres({lm:null}),2500)}};
 $('#prev').onclick=()=>go(cur-1);$('#next').onclick=()=>go(cur+1);
 addEventListener('keydown',e=>{const a=document.activeElement.tagName;if(['TEXTAREA','INPUT','SELECT'].includes(a)||document.activeElement.isContentEditable)return;
  if(e.key==='ArrowLeft')go(cur-1);if(e.key==='ArrowRight')go(cur+1)});
@@ -168,7 +168,7 @@ const stat=m=>{const e=$('#mst');e.hidden=!m;e.innerHTML='';if(m){const s=docume
 function push(i){if(p2p){p2push(i);return}touched.add(i);clearTimeout(tmr[i]);tmr[i]=setTimeout(async()=>{try{
  if(!metaDone){await dbx.doc('n/'+uid).set({t:Date.now(),name:myName});metaDone=true}
  const d=sh[i]||{strokes:[],texts:[],memo:''};await dbx.doc('n/'+uid+'/s/'+i).set({j:JSON.stringify({strokes:d.strokes,texts:d.texts}),memo:d.memo});
- stat('共有モード：保存しました（全員の赤入れが色違いで重なって見えます）')}catch(e){stat('共有への保存に失敗しました。通信を確認してください。')}},600)}
+ stat('共有モード：保存しました（全員の赤入れが色違いで重なって見えます）')}catch(e){stat('共有への保存に失敗しました。編集権限（Contributor以上）があるか、通信を確認してください。')}},250)}
 function sub(id){if(subs[id])return;others[id]=others[id]||{};
  subs[id]=dbx.collection('n/'+id+'/s').onSnapshot(s=>{s.docs.forEach(d=>{const x=d.data()||{};let p={};try{p=JSON.parse(x.j||'{}')}catch(e){}
    const v={strokes:p.strokes||[],texts:p.texts||[],memo:x.memo||''};others[id][d.id]=v;
@@ -180,8 +180,8 @@ function ppl(){const e=$('#ppl');e.innerHTML='';const us=Object.keys(others).sor
  const l=document.createElement('span');l.className='lg';l.textContent='ほかの人の赤入れ：';e.append(l);
  us.forEach(u=>{const b=document.createElement('button'),i=document.createElement('i');b.className='btn chip'+(hid.has(u)?' off':'');i.style.background=pc(u);b.append(i,document.createTextNode(names[u]||'メンバー'));
   b.onclick=()=>{hid.has(u)?hid.delete(u):hid.add(u);ppl();draw();texts();oth()};e.append(b)})}
-function oth(){const e=$('#oth');e.innerHTML='';if(mm!=='s')return;Object.keys(others).sort().forEach(u=>{const d=others[u][cur];if(u===uid||hid.has(u)||!d||!d.memo)return;
- const x=document.createElement('div');x.className='oth';x.style.borderColor=pc(u);const b=document.createElement('b');b.textContent=names[u]||'メンバー';x.append(b,document.createTextNode('\n'+d.memo));e.append(x)})}
+function oth(){const e=$('#oth');e.innerHTML='';if(mm!=='s')return;const LM={};peersOn().forEach(p=>{const q=p.presence;if(q.lm&&typeof q.lm.t==='string'&&q.lm.s===cur)LM[q.by||q.sid]=q.lm.t});[...new Set([...Object.keys(others),...Object.keys(LM)])].sort().forEach(u=>{const d=others[u]&&others[u][cur];const tx=(u in LM)?LM[u]:(d&&d.memo);if(u===uid||hid.has(u)||!tx)return;
+ const x=document.createElement('div');x.className='oth';x.style.borderColor=pc(u);const b=document.createElement('b');b.textContent=names[u]||'メンバー';x.append(b,document.createTextNode('\n'+tx));e.append(x)})}
 async function initShared(){if(inited)return true;if(!window.claude)return initP2P();try{const c=window.claude;if(!c)return false;dbx=await c.use('db');userN=await c.use('user');if(!dbx||!userN)return false;uid=await userN.id();if(!uid)return false;
  inited=true;try{room=await c.use('room')}catch(e){room=null}if(room){room.presence({sid:sid,by:uid,who:myName||null,s:cur}).catch(()=>{});room.onPeers(onPeers)}sub(uid);dbx.collection('n').onSnapshot(s=>{s.docs.forEach(d=>{sub(d.id);const x=d.data()||{};if(x.name)names[d.id]=x.name});refresh()},()=>{});return true}catch(e){return false}}
 async function setMode(m){if(m==='s'){stat('共有モードに接続しています…');if(!await initShared()){stat(window.claude?'共有モードは、Claudeにログインした状態でこのページを開くと使えます。個人モードのままです。':'共有の接続に失敗しました。ネットワークが外部への接続（WebRTC）を許可していない可能性があります。個人モードのままです。');return}
@@ -189,18 +189,18 @@ async function setMode(m){if(m==='s'){stat('共有モードに接続していま
  $('#mp').classList.toggle('on',m==='p');$('#ms').classList.toggle('on',m==='s');try{localStorage.setItem('eccube-mode',m)}catch(e){}
  if(m==='s')stat(p2p?p2txt():'共有モード：自分の赤入れはみんなに見えます。ほかの人の赤入れは色違いで重なります。');go(cur);refresh()}
 $('#mp').onclick=()=>setMode('p');$('#ms').onclick=()=>setMode('s');
-let room=null,sid=Math.random().toString(36).slice(2,10),lv=0,lt=0,sigL='',sigT='';
+let room=null,sid=Math.random().toString(36).slice(2,10),lv=0,lt=0,lmT=0,sigL='',sigT='',sigM='';
 const r3=v=>Math.round(v*1000)/1000;
 const pres=o=>{if(room)room.presence(o).catch(()=>{})};
 function curs(e){const p=pt(e);pres({s:cur,x:r3(p[0]),y:r3(p[1])})}
 cv.onpointerleave=()=>{if(mm==='s')pres({x:null,y:null})};
 function liveOf(){if(cs==='s')return{k:sh_.k,w:sh_.w,a:sh_.a.map(r3),b:sh_.b.map(r3)};return{w:cs.w,p:cs.p.slice(-60).map(q=>[r3(q[0]),r3(q[1])])}}
-function endLive(){const k=++lv;setTimeout(()=>{if(k===lv)pres({live:null})},1500)}
+function endLive(){const k=++lv;setTimeout(()=>{if(k===lv)pres({live:null})},2500)}
 function peersOn(){return room?room.peers().filter(p=>p.presence&&p.presence.sid&&p.presence.sid!==sid&&p.presence.s===cur):[]}
 function pcol(p){const u=p.presence.by;return u&&others[u]?pc(u):PAL[[...String(p.presence.sid)].reduce((a,c)=>a+c.charCodeAt(0),0)%PAL.length]}
 function pname(p){const q=p.presence;return String(q.who||names[q.by]||'メンバー').slice(0,20)}
 function cursors(){const l=$('#cu');l.innerHTML='';if(mm!=='s')return;peersOn().forEach(p=>{const q=p.presence;if(typeof q.x!=='number'||typeof q.y!=='number')return;const d=document.createElement('div');d.className='pcur';d.style.left=(q.x*100)+'%';d.style.top=(q.y*100)+'%';d.style.setProperty('--c',pcol(p));d.innerHTML='<svg width="16" height="20" viewBox="0 0 16 20"><path d="M1 1l13 8-6 2-3 8z" fill="currentColor" stroke="#fff" stroke-width="1.2"/></svg>';const s=document.createElement('span');s.textContent=pname(p);d.append(s);l.append(d)})}
-function onPeers(){cursors();const a=peersOn().map(p=>JSON.stringify(p.presence.live||'')).join('|'),b=peersOn().map(p=>JSON.stringify(p.presence.ltx||'')).join('|');if(a!==sigL){sigL=a;draw()}if(b!==sigT){sigT=b;if(!document.activeElement.classList.contains('tx'))texts()}}
+function onPeers(){cursors();const a=peersOn().map(p=>JSON.stringify(p.presence.live||'')).join('|'),b=peersOn().map(p=>JSON.stringify(p.presence.ltx||'')).join('|');if(a!==sigL){sigL=a;draw()}if(b!==sigT){sigT=b;if(!document.activeElement.classList.contains('tx'))texts()}const c=peersOn().map(p=>JSON.stringify(p.presence.lm||'')).join('|');if(c!==sigM){sigM=c;oth()}}
 // ===== GitHub公開用の共有（同じURLを開いている人と直接つながる／サーバー不要）=====
 let p2p=null,pconns={},pinfo={},ppres={},myPres={},pcb=null,pend={},pt2=0;
 const P2N=10;
