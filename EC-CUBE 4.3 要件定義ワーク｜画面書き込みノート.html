@@ -27,7 +27,7 @@ nav{border-right:1px solid var(--line);padding:8px}
 main{overflow:auto;padding:12px 16px}
 .tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 auto 10px;max-width:920px}
 .sw{width:24px;height:24px;border-radius:50%;border:2px solid var(--panel);cursor:pointer;padding:0}.sw.on{outline:2px solid var(--ink)}
-[hidden]{display:none!important}.seg{display:inline-flex;gap:4px}.chip{display:inline-flex;align-items:center;gap:5px}.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}.chip.off{opacity:.45}.oth{border-left:4px solid;padding:4px 8px;background:var(--bg);margin-top:6px;white-space:pre-wrap;font-size:13px}.sp{flex:1}.tx small{font-size:.8em;opacity:.85}.tx.ro{opacity:.92}#cu{position:absolute;inset:0;pointer-events:none;overflow:hidden}.pcur{position:absolute;line-height:1;color:var(--c);transition:left .06s linear,top .06s linear}.pcur span{position:absolute;left:14px;top:16px;font-size:12px;line-height:1.4;padding:1px 7px;border-radius:9px;background:var(--c);color:#fff;white-space:nowrap}#nmv{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:20;padding:16px}#nmi{padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:16px}#who{max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lg{color:var(--sub);font-size:12px}.lt{border-collapse:collapse;font-size:13px}.lt td{border:1px solid var(--line);padding:4px 8px}#simg{width:100%;border:1px solid var(--line)}.mb.wide{width:min(1000px,100%);max-height:100%;overflow:auto}
+[hidden]{display:none!important}.seg{display:inline-flex;gap:4px}.chip{display:inline-flex;align-items:center;gap:5px}.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}.chip.off{opacity:.45}.oth{border-left:4px solid;padding:4px 8px;background:var(--bg);margin-top:6px;white-space:pre-wrap;font-size:13px}.sp{flex:1}.tx small{font-size:.8em;opacity:.85}.tx.ro{opacity:.92}.pdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;box-shadow:0 0 0 1.5px #fff}#cu{position:absolute;inset:0;pointer-events:none;overflow:hidden}.pcur{position:absolute;line-height:1;color:var(--c);transition:left .06s linear,top .06s linear}.pcur span{position:absolute;left:14px;top:16px;font-size:12px;line-height:1.4;padding:1px 7px;border-radius:9px;background:var(--c);color:#fff;white-space:nowrap}#nmv{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:20;padding:16px}#nmi{padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:16px}#who{max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lg{color:var(--sub);font-size:12px}.lt{border-collapse:collapse;font-size:13px}.lt td{border:1px solid var(--line);padding:4px 8px}#simg{width:100%;border:1px solid var(--line)}.mb.wide{width:min(1000px,100%);max-height:100%;overflow:auto}
 .stage{position:relative;max-width:920px;margin:0 auto;background:#fff;border:1px solid var(--line);container-type:inline-size;line-height:0}
 .stage img{width:100%;display:block;user-select:none;-webkit-user-drag:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
@@ -86,7 +86,7 @@ const nm=s=>`${s.n} ${s.t}${s.q?`（${s.q}）`:''}`;
 function nav(){const n=$('#nav');let g='';n.innerHTML='';
  S.forEach((s,i)=>{if(s.g!==g){g=s.g;const h=document.createElement('div');h.className='gh';h.textContent=g;n.append(h)}
   const d=store[i],has=d&&(d.memo||d.strokes.length||d.texts.length),b=document.createElement('button');
-  b.className='it'+(i===cur?' cur':'');b.innerHTML=`${has?'<span class="dot">●</span> ':''}${nm(s)}<small>${s.u}</small>`;b.onclick=()=>go(i);n.append(b)});}
+  b.className='it'+(i===cur?' cur':'');b.innerHTML=`${has?'<span class="dot">●</span> ':''}${nm(s)}<small>${s.u}</small>`;if(mm==='s'&&room)room.peers().forEach(p=>{const q=p.presence;if(q&&q.sid!==sid&&q.s===i){const d=document.createElement('i');d.className='pdot';d.style.background=pcol(p);d.title=pname(p);b.prepend(d)}});b.onclick=()=>go(i);n.append(b)});}
 $('#sel').innerHTML=S.map((s,i)=>`<option value="${i}">${nm(s)}</option>`).join('');
 $('#sel').onchange=e=>go(+e.target.value);
 function go(i){if(i<0||i>=S.length)return;cur=i;try{localStorage.setItem('eccube-cur',i)}catch(e){}
@@ -130,7 +130,7 @@ function texts(f){tl.innerHTML='';othT();D().texts.forEach(t=>{const e=document.
  e.onblur=()=>{if(mm==='s'){const k=++lt;setTimeout(()=>{if(k===lt)pres({ltx:null})},1500)};if(!t.t.replace(/[①②③]/g,'').trim())rm();else nav()};
  e.onclick=()=>{if(tool==='eraser')rm()};
  tl.append(e);if(t.id===f)setTimeout(()=>{e.focus();const r=document.createRange();r.selectNodeContents(e);r.collapse(false);const g=getSelection();g.removeAllRanges();g.addRange(r)})})}
-function setTool(t){tool=t;document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t));cv.style.touchAction=t==='text'?'auto':'none';cv.style.cursor=t==='eraser'?'cell':t==='text'?'text':'crosshair'}
+function setTool(t){tool=t;if(mm==='s')pres({tl:t});document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t));cv.style.touchAction=t==='text'?'auto':'none';cv.style.cursor=t==='eraser'?'cell':t==='text'?'text':'crosshair'}
 document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>setTool(b.dataset.t));
 document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{color=b.dataset.c;document.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('on',x===b));if(tool==='eraser')setTool('pen')});
 document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{wd=+b.dataset.w;document.querySelectorAll('[data-w]').forEach(x=>x.classList.toggle('on',x===b));if(tool==='eraser')setTool('pen')});
@@ -166,7 +166,7 @@ const PAL=['#1f5fd1','#1f8a4c','#8a3fc4','#d9770a','#0b8f9c','#b0357a'];
 const pc=u=>PAL[Math.max(0,Object.keys(others).sort().indexOf(u))%PAL.length];
 const stat=m=>{const e=$('#mst');e.hidden=!m;e.innerHTML='';if(m){const s=document.createElement('span');s.className='lg';s.textContent=m;e.append(s)}};
 function push(i){if(p2p){p2push(i);return}touched.add(i);clearTimeout(tmr[i]);tmr[i]=setTimeout(async()=>{try{
- if(!metaDone){await dbx.doc('n/'+uid).set({t:Date.now(),name:myName});metaDone=true}
+ if(!metaDone){try{await dbx.doc('n/'+uid).set({t:Date.now(),name:myName});metaDone=true}catch(e){}}
  const d=sh[i]||{strokes:[],texts:[],memo:''};await dbx.doc('n/'+uid+'/s/'+i).set({j:JSON.stringify({strokes:d.strokes,texts:d.texts}),memo:d.memo});
  stat('共有モード：保存しました（全員の赤入れが色違いで重なって見えます）')}catch(e){stat('共有への保存に失敗しました。編集権限（Contributor以上）があるか、通信を確認してください。')}},250)}
 function sub(id){if(subs[id])return;others[id]=others[id]||{};
@@ -176,7 +176,7 @@ function sub(id){if(subs[id])return;others[id]=others[id]||{};
 let rt=0;function refresh(){clearTimeout(rt);rt=setTimeout(async()=>{if(mm!=='s')return;
  try{const ids=Object.keys(others).filter(u=>!names[u]);if(ids.length){const p=await userN.profiles(ids);ids.forEach(u=>names[u]=(p[u]&&p[u].name)||'メンバー')}}catch(e){}
  nav();draw();if(!document.activeElement.classList.contains('tx'))texts();ppl();oth()},150)}
-function ppl(){const e=$('#ppl');e.innerHTML='';const us=Object.keys(others).sort().filter(u=>u!==uid&&Object.keys(others[u]).length);e.hidden=mm!=='s'||!us.length;if(e.hidden)return;
+function ppl(){const e=$('#ppl');e.innerHTML='';const us=Object.keys(others).sort().filter(u=>u!==uid&&Object.keys(others[u]).length);const on=onlineNames();e.hidden=mm!=='s'||(!us.length&&!on.length);if(e.hidden)return;if(on.length){const o=document.createElement('span');o.className='lg';o.textContent='いま開いている人：'+on.join('、')+'　';e.append(o)}if(!us.length)return;
  const l=document.createElement('span');l.className='lg';l.textContent='ほかの人の赤入れ：';e.append(l);
  us.forEach(u=>{const b=document.createElement('button'),i=document.createElement('i');b.className='btn chip'+(hid.has(u)?' off':'');i.style.background=pc(u);b.append(i,document.createTextNode(names[u]||'メンバー'));
   b.onclick=()=>{hid.has(u)?hid.delete(u):hid.add(u);ppl();draw();texts();oth()};e.append(b)})}
@@ -189,18 +189,21 @@ async function setMode(m){if(m==='s'){stat('共有モードに接続していま
  $('#mp').classList.toggle('on',m==='p');$('#ms').classList.toggle('on',m==='s');try{localStorage.setItem('eccube-mode',m)}catch(e){}
  if(m==='s')stat(p2p?p2txt():'共有モード：自分の赤入れはみんなに見えます。ほかの人の赤入れは色違いで重なります。');go(cur);refresh()}
 $('#mp').onclick=()=>setMode('p');$('#ms').onclick=()=>setMode('s');
-let room=null,sid=Math.random().toString(36).slice(2,10),lv=0,lt=0,lmT=0,sigL='',sigT='',sigM='';
+let room=null,sid=Math.random().toString(36).slice(2,10),lv=0,lt=0,lmT=0,sigL='',sigT='',sigM='',sigN='';
 const r3=v=>Math.round(v*1000)/1000;
 const pres=o=>{if(room)room.presence(o).catch(()=>{})};
-function curs(e){const p=pt(e);pres({s:cur,x:r3(p[0]),y:r3(p[1])})}
+function curs(e){const p=pt(e);pres({s:cur,x:r3(p[0]),y:r3(p[1]),tl:tool})}
 cv.onpointerleave=()=>{if(mm==='s')pres({x:null,y:null})};
 function liveOf(){if(cs==='s')return{k:sh_.k,w:sh_.w,a:sh_.a.map(r3),b:sh_.b.map(r3)};return{w:cs.w,p:cs.p.slice(-60).map(q=>[r3(q[0]),r3(q[1])])}}
 function endLive(){const k=++lv;setTimeout(()=>{if(k===lv)pres({live:null})},2500)}
 function peersOn(){return room?room.peers().filter(p=>p.presence&&p.presence.sid&&p.presence.sid!==sid&&p.presence.s===cur):[]}
 function pcol(p){const u=p.presence.by;return u&&others[u]?pc(u):PAL[[...String(p.presence.sid)].reduce((a,c)=>a+c.charCodeAt(0),0)%PAL.length]}
 function pname(p){const q=p.presence;return String(q.who||names[q.by]||'メンバー').slice(0,20)}
-function cursors(){const l=$('#cu');l.innerHTML='';if(mm!=='s')return;peersOn().forEach(p=>{const q=p.presence;if(typeof q.x!=='number'||typeof q.y!=='number')return;const d=document.createElement('div');d.className='pcur';d.style.left=(q.x*100)+'%';d.style.top=(q.y*100)+'%';d.style.setProperty('--c',pcol(p));d.innerHTML='<svg width="16" height="20" viewBox="0 0 16 20"><path d="M1 1l13 8-6 2-3 8z" fill="currentColor" stroke="#fff" stroke-width="1.2"/></svg>';const s=document.createElement('span');s.textContent=pname(p);d.append(s);l.append(d)})}
-function onPeers(){cursors();const a=peersOn().map(p=>JSON.stringify(p.presence.live||'')).join('|'),b=peersOn().map(p=>JSON.stringify(p.presence.ltx||'')).join('|');if(a!==sigL){sigL=a;draw()}if(b!==sigT){sigT=b;if(!document.activeElement.classList.contains('tx'))texts()}const c=peersOn().map(p=>JSON.stringify(p.presence.lm||'')).join('|');if(c!==sigM){sigM=c;oth()}}
+function cursors(){const l=$('#cu');l.innerHTML='';if(mm!=='s')return;peersOn().forEach(p=>{const q=p.presence;if(typeof q.x!=='number'||typeof q.y!=='number')return;const d=document.createElement('div');d.className='pcur';d.style.left=(q.x*100)+'%';d.style.top=(q.y*100)+'%';d.style.setProperty('--c',pcol(p));d.innerHTML='<svg width="16" height="20" viewBox="0 0 16 20"><path d="M1 1l13 8-6 2-3 8z" fill="currentColor" stroke="#fff" stroke-width="1.2"/></svg>';const s=document.createElement('span');s.textContent=pname(p)+(TL[q.tl]?'（'+TL[q.tl]+'）':'');d.append(s);l.append(d)})}
+const TL={circle:'丸',strike:'横線',ask:'？',pen:'ペン',eraser:'消しゴム'};
+function peerScan(){if(!room)return;room.peers().forEach(p=>{const q=p.presence;if(!q)return;const u=q.by;if(typeof u!=='string'||u===uid)return;if(q.who&&!names[u])names[u]=String(q.who).slice(0,20);if(dbx&&!subs[u])sub(u)})}
+function onlineNames(){return room?[...new Set(room.peers().map(p=>p.presence).filter(q=>q&&q.sid!==sid).map(q=>String(q.who||names[q.by]||'メンバー').slice(0,20)))]:[]}
+function onPeers(){peerScan();cursors();const a=peersOn().map(p=>JSON.stringify(p.presence.live||'')).join('|'),b=peersOn().map(p=>JSON.stringify(p.presence.ltx||'')).join('|');if(a!==sigL){sigL=a;draw()}if(b!==sigT){sigT=b;if(!document.activeElement.classList.contains('tx'))texts()}const c=peersOn().map(p=>JSON.stringify(p.presence.lm||'')).join('|');if(c!==sigM){sigM=c;oth()}const nn=room?room.peers().map(p=>p.presence&&(p.presence.s+':'+(p.presence.who||''))).join('|'):'';if(nn!==sigN){sigN=nn;nav();ppl()}}
 // ===== GitHub公開用の共有（同じURLを開いている人と直接つながる／サーバー不要）=====
 let p2p=null,pconns={},pinfo={},ppres={},myPres={},pcb=null,pend={},pt2=0;
 const P2N=10;
