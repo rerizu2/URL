@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ATEM Mini Extreme ISO G2 Web</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#16181b;--dev:#25282c;--key:#d9dce0;--keytx:#15171a;--red:#ff2a2a;--grn:#26e05a;--amb:#ffb020;--ink:#e6e8eb;--dim:#8a9099}
+:root[data-theme="light"]{--bg:#16181b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 "Helvetica Neue",Arial,"Hiragino Sans","Noto Sans JP",sans-serif;padding:12px}
+.dev{max-width:1100px;margin:0 auto;background:var(--dev);border-radius:14px;padding:14px;border:1px solid #3a3e44}
+.hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.hd b{font-size:16px;letter-spacing:.02em}.hd span{color:var(--dim)}
+.mv{display:block;width:100%;border-radius:6px;background:#777}
+.mon{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mon figure{margin:0;position:relative;background:#000;border-radius:6px;overflow:hidden}
+.mon canvas{display:block;width:100%;aspect-ratio:16/9}
+.mon figcaption{position:absolute;left:6px;top:6px;padding:1px 7px;border-radius:3px;font-weight:700;font-size:11px;color:#fff}
+.pgm figcaption{background:var(--red)}.pvw figcaption{background:#17a043}
+.sec{margin-top:12px;background:#1b1d20;border-radius:8px;padding:10px}
+.lbl{color:var(--dim);font-size:11px;margin-bottom:5px}
+.row{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
+button{font:inherit;cursor:pointer;border:0;border-radius:5px;background:var(--key);color:var(--keytx);height:40px;font-weight:700;box-shadow:0 2px 0 #7b8087}
+button:active{transform:translateY(2px);box-shadow:none}
+button:focus-visible,input:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
+button.sm{height:30px;font-size:11px}
+.pv button.on{background:var(--grn);color:#012}
+.pg button.on{background:var(--red);color:#fff}
+button.lit{background:var(--red);color:#fff}
+button.amb{background:var(--amb)}
+.ctl{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px;margin-top:12px}
+.grp{background:#1b1d20;border-radius:8px;padding:10px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.tr{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.tr button{height:56px;font-size:15px}
+#auto{background:#fff}
+.aud{display:grid;grid-template-columns:repeat(12,1fr);gap:4px}
+.ch{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:var(--dim)}
+.ch .fw{display:flex;gap:3px;height:96px}
+.ch input[type=range]{writing-mode:vertical-lr;direction:rtl;width:18px;height:96px;margin:0;accent-color:#cfd3d8}
+.mt{width:6px;height:96px;background:#0c0d0f;border-radius:3px;position:relative;overflow:hidden}
+.mt i{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,var(--grn) 60%,var(--amb) 85%,var(--red));height:0}
+.ch button{height:22px;width:100%;font-size:10px;padding:0}
+.lvg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.lvg .grp{background:#212428}.lvg .g2,.lvg .g3{margin-top:6px}
+input[type=text],input[type=number],select{background:#0c0d0f;color:var(--ink);border:1px solid #3a3e44;border-radius:5px;height:30px;padding:0 8px;font:inherit;width:100%}
+input[type=file]{font-size:11px;color:var(--dim);width:100%}
+input[type=color]{width:100%;height:30px;padding:0;border:1px solid #3a3e44;border-radius:5px;background:#0c0d0f}
+.li{display:flex;gap:4px;align-items:center;margin-top:4px}.li button{height:26px;padding:0 7px;font-size:11px}.li span{flex:1;font-size:12px;padding:3px 6px;border-radius:4px;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.li span.on{background:#3a3e44;color:#fff}
+#rc{display:none;position:fixed;inset:0;z-index:10;overflow:auto;background:#16181b;padding:12px}
+.rb{height:48px;font-size:14px}.rb.big{height:76px;font-size:22px}.rb.sm2{height:38px;font-size:12px;padding:0 4px}.rb.wh{background:#fff}
+.rg{display:grid;gap:6px}.r2{grid-template-columns:repeat(2,1fr)}.r3{grid-template-columns:repeat(3,1fr)}.r4{grid-template-columns:repeat(4,1fr)}.r5{grid-template-columns:repeat(5,1fr)}.r6{grid-template-columns:repeat(6,1fr)}
+.rh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.rb.gp.on{background:var(--red);color:#fff}.rb.gv.on{background:var(--grn);color:#012}
+.ra{display:grid;grid-template-columns:70px 1fr;gap:8px;align-items:center;margin-top:6px}.ra input{width:100%}
+#rc input[type=text]{height:48px;font-size:22px;margin:8px 0}
+.note{font-size:10px;color:var(--dim);margin-top:6px}
+.st{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.st button{height:34px;padding:0 14px}
+.tm{font-variant-numeric:tabular-nums;color:var(--dim);min-width:64px}
+@media(max-width:720px){#lay .eg{grid-template-columns:1fr!important}#cap8{grid-template-columns:repeat(4,1fr)!important}.mon{grid-template-columns:1fr}.ctl{grid-template-columns:1fr}.row{grid-template-columns:repeat(5,1fr)}.aud{grid-template-columns:repeat(8,1fr)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head>
+<body>
+<div class="dev">
+<div class="hd"><b>ATEM Mini Extreme ISO G2</b><span>Webシミュレーター(画面キャプチャー入力) / 1-8: プレビュー, Shift+1-8: プログラム, Space: AUTO, Enter: CUT</span></div>
+
+<div class="st" style="margin:0 0 8px"><button id="rcb">📱 リモコンモード(スマホ操作)</button><span class="lbl" id="rci" style="margin:0"></span></div>
+<canvas id="mv" class="mv" width="1280" height="1260"></canvas>
+
+<div class="sec"><div class="lbl">画面キャプチャー入力(取り込む画面・ウィンドウ・タブを選択。音声も共有するとミキサーの H1〜H8 に入ります)</div><div class="row" id="cap8" style="grid-template-columns:repeat(6,1fr)"></div><div class="lbl" id="cm" style="margin:6px 0 0"></div></div>
+
+<div class="sec pv"><div class="lbl">プレビュー</div><div class="row" id="rv"></div></div>
+<div class="sec pg"><div class="lbl">プログラム</div><div class="row" id="rp"></div></div>
+
+<div class="ctl">
+<div class="grp"><div class="lbl">トランジション</div>
+<div class="g3" style="grid-template-columns:repeat(4,1fr);margin-bottom:6px"><button class="sm" data-t="mix">MIX</button><button class="sm" data-t="dip">DIP</button><button class="sm" data-t="dipw">DIP白</button><button class="sm" data-t="wipe">ワイプ→</button><button class="sm" data-t="wipel">ワイプ←</button><button class="sm" data-t="wiped">ワイプ↓</button><button class="sm" data-t="iris">IRIS</button><button class="sm" data-t="split">SPLIT</button><button class="sm" data-t="blinds">BLINDS</button><button class="sm" data-t="mosaic">MOSAIC</button><button class="sm" data-t="slide">SLIDE</button><button class="sm" data-t="zoom">ZOOM</button><button class="sm" data-t="push">PUSH</button><button class="sm" data-t="pushd">PUSH↓</button><button class="sm" data-t="squeeze">SQUEEZE</button><button class="sm" data-t="rnd">ランダム</button></div>
+<div class="g3" style="grid-template-columns:repeat(5,1fr)"><button class="sm" data-d="0.5">0.5s</button><button class="sm" data-d="1">1s</button><button class="sm" data-d="1.5">1.5s</button><button class="sm" data-d="2">2s</button><button class="sm" data-d="3">3s</button></div><div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-top:10px"><span class="note" style="margin:0">T-BAR</span><input type="range" id="tbar" min="0" max="100" value="0" step="1" style="width:100%" aria-label="T-BAR"><select id="ease" style="width:auto" aria-label="イージング"><option value="lin">リニア</option><option value="io">イーズ</option><option value="in">加速</option><option value="out">減速</option></select></div></div>
+<div class="grp"><div class="lbl">キー / PiP</div>
+<div class="g2"><button class="sm" id="k1">KEY1 ON AIR</button><button class="sm" id="dsk">DSK ON AIR</button><button class="sm" id="pip">PiP</button><button class="sm" id="cap">キャプション</button></div></div>
+<div class="grp"><div class="lbl">トランジション実行</div>
+<div class="tr"><button id="cut">CUT</button><button id="auto">AUTO</button><button id="ftb">FTB</button></div></div>
+</div>
+
+<div class="sec"><div class="lbl">配置画面 LAY1〜LAY8(バスの「LAY」ボタンで選択 / OBSのようにソースをドラッグして配置)</div><div id="lay"></div></div>
+
+<div class="sec"><div class="lbl">ライブ機能</div><div class="lvg">
+<div class="grp"><div class="lbl">ローワーサード(KEY1)</div><input type="text" id="t1" value="山田 太郎" aria-label="名前"><div style="height:6px"></div><input type="text" id="t2" value="ゲスト" aria-label="肩書"></div>
+<div class="grp"><div class="lbl">メディアプレーヤー1(ロゴ → DSK)</div><input type="file" id="logo" accept="image/*"><div class="note">画像を選び、DSK ON AIR でプログラム右下に表示</div></div>
+<div class="grp"><div class="lbl">オーバーレイ</div><div class="g3"><button class="sm" id="clk">時計</button><button class="sm" id="tmr">タイマー</button><button class="sm" id="safe">セーフエリア</button></div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><input type="number" id="tmm" min="1" max="999" value="5" style="width:70px"><span class="note" style="margin:0">分カウントダウン(タイマー押下で開始)</span></div></div>
+<div class="grp"><div class="lbl">オーディオ</div><div class="g3"><button class="sm" id="afv">AFV</button><button class="sm" id="lim">リミッター</button><button class="sm" id="mic">MIC1接続</button></div><div class="note">AFV: プログラムの入力音声に自動追従(クロスフェード)</div></div>
+<div class="grp"><div class="lbl">シーンメモリー(マクロ)</div><div class="g3" style="grid-template-columns:repeat(5,1fr)" id="sc"></div><button class="sm" id="scs" style="margin-top:6px;width:100%">保存モード(押してから M1〜M4)</button></div>
+<div class="grp"><div class="lbl">出力・配信設定</div><div class="g2"><select id="plat"><option>YouTube</option><option>Twitch</option><option>Facebook</option><option>X</option><option>カスタムRTMP</option></select><select id="br"><option value="3">3 Mbps</option><option value="4.5" selected>4.5 Mbps</option><option value="6">6 Mbps</option><option value="9">9 Mbps</option></select></div><button class="sm" id="snap" style="margin-top:6px;width:100%">PGM静止画を保存(PNG)</button><div class="note">配信設定は表示のみ(実際の送信はしません)</div></div>
+</div></div>
+
+<div class="sec"><div class="lbl">オーディオミキサー</div><div class="aud" id="aud"></div></div>
+
+<div class="st">
+<button id="strm">STREAM</button><span class="tm" id="ts">00:00:00</span>
+<button id="rec">RECORD</button><span class="tm" id="tr">00:00:00</span>
+<button id="mon">モニター音 OFF</button>
+<button id="pop">PROGRAMを別ウィンドウで開く</button>
+<span class="lbl" id="iso" style="margin:0">REC: 停止中</span><span class="lbl" id="rm" style="margin:0;color:var(--amb)"></span>
+</div>
+</div>
+
+<div id="rc"></div>
+<script>
+const NAMES=["BLK","1","2","3","4","5","6","7","8","LAY1","LAY2","LAY3","LAY4","LAY5","LAY6","LAY7","LAY8","BARS"];
+const S={lim:1,br:4.5,plat:'YouTube',pgm:1,pvw:2,type:"mix",dur:1,tp:-1,ftb:0,ftbDir:0,k1:0,dsk:0,pip:0,cap:0,strm:0,rec:0,ts:0,tr:0};
+const $=id=>document.getElementById(id);
+const mk=()=>{const e=document.createElement("canvas");e.width=1280;e.height=720;return e};
+const cvE=mk(),cpE=mk(),cv=cvE.getContext("2d"),cp=cpE.getContext("2d");
+cv.setTransform(2,0,0,2,0,0);cp.setTransform(2,0,0,2,0,0);
+const W=640,H=360;
+
+const aui=n=>n<=8?1+n:n+3;
+const VID=Array(20).fill(null);
+function src(c,i,x,y,w,h,t){
+  c.save();c.beginPath();c.rect(x,y,w,h);c.clip();
+  const v=VID[i];
+  if(i===0){c.fillStyle="#000";c.fillRect(x,y,w,h)}
+  else if(i===17){const cl=["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"],bw=w/7;
+    cl.forEach((k,n)=>{c.fillStyle=k;c.fillRect(x+n*bw,y,bw+1,h*.75)});c.fillStyle="#111";c.fillRect(x,y+h*.75,w,h*.25)}
+  else if(i>=9&&i<=16){c.translate(x,y);c.scale(w/1280,h/720);drawLay(c,t,LAYS[i-9])}
+  else if(v&&v.videoWidth){c.fillStyle="#000";c.fillRect(x,y,w,h);
+    const r=Math.min(w/v.videoWidth,h/v.videoHeight),dw=v.videoWidth*r,dh=v.videoHeight*r;
+    c.drawImage(v,x+(w-dw)/2,y+(h-dh)/2,dw,dh)}
+  else{c.fillStyle="#14171b";c.fillRect(x,y,w,h);
+    c.strokeStyle="#2a2f36";c.lineWidth=1;c.strokeRect(x+.5,y+.5,w-1,h-1);
+    c.textAlign="center";c.textBaseline="middle";
+    c.fillStyle="#3b424b";c.font=`700 ${h*.3}px Helvetica,Arial`;c.fillText(i,x+w/2,y+h*.42);
+    c.fillStyle="#6a727c";c.font=`${h*.075}px Helvetica,Arial`;c.fillText("NO SIGNAL",x+w/2,y+h*.7)}
+  c.restore();
+}
+
+function overlays(c,t,pip){
+  if(S.pip){const w=W*.28,h=H*.28;src(c,S.pvw,W-w-14,14,w,h,t);c.strokeStyle="#fff";c.lineWidth=2;c.strokeRect(W-w-14,14,w,h)}
+  if(S.k1){c.fillStyle="#e22";c.fillRect(20,H*.74,6,H*.17);c.fillStyle="rgba(15,15,20,.88)";c.fillRect(26,H*.74,W*.46,H*.17);c.textAlign="left";c.textBaseline="middle";c.fillStyle="#fff";c.font="700 24px Helvetica,Arial";c.fillText($("t1").value,42,H*.795);c.fillStyle="#bbb";c.font="15px Helvetica,Arial";c.fillText($("t2").value,42,H*.86)}
+  if(S.dsk){if(LOGO){const r=Math.min(110/LOGO.width,70/LOGO.height);c.drawImage(LOGO,W-LOGO.width*r-16,H-LOGO.height*r-16,LOGO.width*r,LOGO.height*r)}else{c.fillStyle="#e22";c.beginPath();c.arc(W-28,H-28,10,0,7);c.fill();c.fillStyle="#fff";c.font="700 14px Helvetica,Arial";c.textAlign="right";c.textBaseline="middle";c.fillText("LIVE",W-46,H-27)}}
+  if(S.clk){c.fillStyle="rgba(0,0,0,.55)";c.fillRect(10,10,118,32);txt(c,new Date().toLocaleTimeString("ja-JP",{hour12:false}),69,26,20,"#fff",600)}
+  if(S.tmr){const r=Math.max(0,(S.tmEnd-Date.now())/1000|0),yy=S.clk?48:10;c.fillStyle="rgba(0,0,0,.55)";c.fillRect(10,yy,118,32);txt(c,String(r/60|0).padStart(2,"0")+":"+String(r%60).padStart(2,"0"),69,yy+16,20,r<10?"#ff4040":"#fff",700)}
+  if(S.cap){c.fillStyle="rgba(0,0,0,.6)";c.fillRect(0,H-44,W,44);c.fillStyle="#fff";c.font="20px Helvetica,Arial";c.textAlign="center";c.textBaseline="middle";c.fillText("ATEM Mini Extreme ISO G2 – Web Simulator",W/2,H-22)}
+}
+
+const EASE={lin:x=>x,io:x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2,in:x=>x*x,out:x=>1-(1-x)*(1-x)};
+const RT=["mix","dip","dipw","wipe","wipel","wiped","iris","split","blinds","mosaic","slide","zoom","push","pushd","squeeze"];
+function startTrans(){S.cty=S.type==="rnd"?RT[Math.random()*RT.length|0]:S.type}
+function transFrame(c,ty,p,t){const A=S.pgm,B=S.pvw,full=id=>src(c,id,0,0,W,H,t);
+  const clipB=fn=>{full(A);c.save();c.beginPath();fn();c.clip();full(B);c.restore()};
+  switch(ty){
+  case "dip":case "dipw":c.fillStyle=ty==="dipw"?"#fff":"#000";c.fillRect(0,0,W,H);c.globalAlpha=p<.5?1-p*2:p*2-1;full(p<.5?A:B);c.globalAlpha=1;break;
+  case "wipe":clipB(()=>c.rect(0,0,W*p,H));break;
+  case "wipel":clipB(()=>c.rect(W*(1-p),0,W*p,H));break;
+  case "wiped":clipB(()=>c.rect(0,0,W,H*p));break;
+  case "iris":clipB(()=>c.arc(W/2,H/2,p*Math.hypot(W,H)/2,0,7));break;
+  case "split":clipB(()=>c.rect(W*(1-p)/2,0,W*p,H));break;
+  case "blinds":clipB(()=>{for(let i=0;i<8;i++)c.rect(0,i*H/8,W,H/8*p)});break;
+  case "mosaic":clipB(()=>{for(let x=0;x<16;x++)for(let y=0;y<9;y++){const h=(((x*73856093)^(y*19349663))>>>0)%100/100;if(p>h)c.rect(x*W/16,y*H/9,W/16+.5,H/9+.5)}});break;
+  case "slide":full(A);src(c,B,W*(1-p),0,W,H,t);break;
+  case "zoom":full(A);c.save();c.globalAlpha=p;c.translate(W/2,H/2);c.scale(.5+.5*p,.5+.5*p);c.translate(-W/2,-H/2);full(B);c.restore();break;
+  case "push":c.fillStyle="#000";c.fillRect(0,0,W,H);src(c,A,-W*p,0,W,H,t);src(c,B,W*(1-p),0,W,H,t);break;
+  case "pushd":c.fillStyle="#000";c.fillRect(0,0,W,H);src(c,A,0,-H*p,W,H,t);src(c,B,0,H*(1-p),W,H,t);break;
+  case "squeeze":c.fillStyle="#000";c.fillRect(0,0,W,H);src(c,A,0,0,Math.max(1,W*(1-p)),H,t);src(c,B,W*(1-p),0,Math.max(1,W*p),H,t);break;
+  default:full(A);c.globalAlpha=p;full(B);c.globalAlpha=1}}
+function render(t){
+  src(cv,S.pvw,0,0,W,H,t);
+  const c=cp,p=S.tp<0?-1:EASE[S.ease||"lin"](S.tp);
+  if(p<0)src(c,S.pgm,0,0,W,H,t);
+  else transFrame(c,S.cty||S.type,p,t);
+  overlays(c,t);
+  if(S.ftb>0){c.fillStyle=`rgba(0,0,0,${S.ftb})`;c.fillRect(0,0,W,H)}
+}
+
+function swap(){[S.pgm,S.pvw]=[S.pvw,S.pgm];ui()}
+function cut(){if(S.tp>=0)return;swap()}
+function auto(){if(S.tp>=0)return;startTrans();S.tp=0;S.t0=performance.now()}
+
+function ui(){
+  [...$("rv").children].forEach((b,i)=>b.classList.toggle("on",i===S.pvw));
+  [...$("rp").children].forEach((b,i)=>b.classList.toggle("on",i===S.pgm));
+  document.querySelectorAll("[data-t]").forEach(b=>b.classList.toggle("amb",b.dataset.t===S.type));
+  document.querySelectorAll("[data-d]").forEach(b=>b.classList.toggle("amb",+b.dataset.d===S.dur));
+  [["k1","k1"],["dsk","dsk"],["pip","pip"],["cap","cap"],["strm","strm"],["rec","rec"],["clk","clk"],["tmr","tmr"],["safe","safe"],["afv","afv"],["lim","lim"]].forEach(([id,k])=>$(id).classList.toggle("lit",!!S[k]));
+  $("ftb").classList.toggle("lit",S.ftbDir===1||S.ftb>=1);
+  $("iso").textContent="REC: "+(S.rec?"PGM 録画中":"停止中");
+}
+
+NAMES.forEach((n,i)=>{
+  ["rv","rp"].forEach((r,k)=>{const b=document.createElement("button");b.textContent=n;
+    b.onclick=()=>{if(k===0)S.pvw=i;else if(S.tp<0)S.pgm=i;ui()};$(r).appendChild(b)})
+});
+document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{S.type=b.dataset.t;ui()});
+document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{S.dur=+b.dataset.d;ui()});
+$("cut").onclick=cut;$("auto").onclick=auto;
+$("ftb").onclick=()=>{S.ftbDir=S.ftbDir?0:1;ui()};
+["k1","dsk","pip","cap"].forEach(k=>$(k).onclick=()=>{S[k]^=1;ui()});
+$("strm").onclick=()=>{S.strm^=1;if(!S.strm)S.ts=0;ui()};
+$("rec").onclick=()=>{S.rec^=1;if(S.rec){startRec()}else{stopRec();S.tr=0}ui()};
+
+// audio
+const CH=["MIC1","MIC2","H1","H2","H3","H4","H5","H6","H7","H8","MP","MST"];
+const AU=CH.map((n,i)=>({n,on:i===11||i<3,v:75}));
+CH.forEach((n,i)=>{
+  const d=document.createElement("div");d.className="ch";
+  d.innerHTML=`<div class="fw"><div class="mt"><i></i></div><input type="range" min="0" max="100" value="75" aria-label="${n}"></div><button class="sm"></button><span>${n}</span>`;
+  const r=d.querySelector("input"),b=d.querySelector("button");
+  r.oninput=()=>{AU[i].v=+r.value;gains()};
+  const sync=()=>{b.textContent=AU[i].on?"ON":"OFF";b.classList.toggle("lit",AU[i].on)};
+  b.onclick=()=>{AU[i].on=!AU[i].on;sync();gains()};AU[i].sync=sync;AU[i].r=r;AU[i].b=b;sync();AU[i].m=d.querySelector("i");$("aud").appendChild(d)});
+
+addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT")return;
+  if(e.code==="Space"){e.preventDefault();auto()}
+  else if(e.key==="Enter"){e.preventDefault();cut()}
+  else if(/^Digit[1-8]$/.test(e.code)){const n=+e.code[5];if(e.shiftKey){if(S.tp<0)S.pgm=n}else S.pvw=n;ui()}
+});
+
+const fmt=s=>[s/3600|0,(s/60|0)%60,s%60|0].map(v=>String(v).padStart(2,"0")).join(":");
+let last=performance.now();
+function loop(now){
+  if(REMOTE){last=now;requestAnimationFrame(loop);return}
+  const t=now/1000,dt=(now-last)/1000;last=now;
+  if(S.tp>=0&&!S.manual){S.tp=(now-S.t0)/(S.dur*1000);if(S.tp>=1){S.tp=-1;swap();$("tbar").value=0}else $("tbar").value=S.tp*100}
+  const tgt=S.ftbDir?1:0;S.ftb+=Math.sign(tgt-S.ftb)*Math.min(Math.abs(tgt-S.ftb),dt/S.dur);
+  if(S.strm){S.ts+=dt;$("ts").textContent=fmt(S.ts)}else $("ts").textContent="00:00:00";
+  if(S.rec){S.tr+=dt;$("tr").textContent=fmt(S.tr)}else $("tr").textContent="00:00:00";
+  if(S.afv&&AC)gains();
+  AU.forEach(a=>{const lv=a.an?lvl(a.an):0;a.lv=lv;a.m.style.height=(lv*100)+"%"});
+  render(t);multiview(t);editFrame(t);requestAnimationFrame(loop);
+}
+
+const mvc=$("mv").getContext("2d");
+function pill(c,txt,cx,cy,col){c.font="600 15px Helvetica,Arial";const w=c.measureText(txt).width+22;c.fillStyle=col;c.beginPath();c.roundRect(cx-w/2,cy-12,w,24,5);c.fill();c.fillStyle="#fff";c.textAlign="center";c.textBaseline="middle";c.fillText(txt,cx,cy+1)}
+function bar(c,x,y,w,h,lv){lv=Math.min(1,lv*1.15);c.fillStyle="#1b1b1b";c.fillRect(x,y,w,h);const g=c.createLinearGradient(0,y+h,0,y);g.addColorStop(0,"#2c2");g.addColorStop(.6,"#2c2");g.addColorStop(.72,"#dd2");g.addColorStop(.88,"#e33");c.fillStyle=g;c.fillRect(x,y+h*(1-lv),w,h*lv)}
+function txt(c,s,x,y,sz,col,wt){c.font=`${wt||400} ${sz}px Helvetica,Arial`;c.fillStyle=col;c.textAlign="center";c.textBaseline="middle";c.fillText(s,x,y)}
+function ring(c,x,y,r,col,f){c.lineWidth=7;c.strokeStyle="#333";c.beginPath();c.arc(x,y,r,0,7);c.stroke();c.strokeStyle=col;c.beginPath();c.arc(x,y,r,-Math.PI/2,-Math.PI/2+6.283*f);c.stroke()}
+const dB=l=>l>0.001?(20*Math.log10(l)-6).toFixed(2):"-60.00";
+function multiview(t){
+  const m=mvc;m.fillStyle="#777";m.fillRect(0,0,1280,1260);
+  m.drawImage(cvE,1,1,638,358);m.drawImage(cpE,641,1,638,358);
+  pill(m,"Preview",320,330,"rgba(50,50,50,.85)");pill(m,"Program",960,330,"rgba(50,50,50,.85)");
+  if(S.safe)[1,641].forEach(x=>{m.strokeStyle="rgba(255,255,255,.55)";m.lineWidth=1;m.strokeRect(x+32,19,574,322);m.strokeRect(x+64,37,510,286);m.beginPath();m.moveTo(x+319,150);m.lineTo(x+319,210);m.moveTo(x+289,180);m.lineTo(x+349,180);m.stroke()});
+  for(let k=0;k<16;k++){
+    const x=(k&3)*320,y=360+(k>>2)*180,id=k+1;
+    src(m,id,x+1,y+1,318,178,t);
+    if(id<=8)bar(m,x+8,y+10,12,100,AU[aui(id)].lv||0);
+    const isP=S.pgm===id,isV=S.pvw===id;
+    if(isP||isV){m.lineWidth=4;m.strokeStyle=isP?"#ff2a2a":"#26e05a";m.strokeRect(x+3,y+3,314,174)}
+    pill(m,id>8?"LAY"+(id-8):"入力 "+id,x+160,y+160,isP?"#ff2a2a":isV?"#17a043":"rgba(50,50,50,.85)");
+  }
+  const y=1080;m.fillStyle="#000";[0,320,640,960].forEach(x=>m.fillRect(x+1,y+1,318,178));
+  // Media Player
+  if(LOGO){const r=Math.min(110/LOGO.width,70/LOGO.height);m.drawImage(LOGO,160-LOGO.width*r/2,y+25,LOGO.width*r,LOGO.height*r)}else{m.fillStyle="#fff";m.beginPath();m.arc(270,y+40,24,0,7);m.fill();txt(m,"LOGO",270,y+40,11,"#000",700)}
+  txt(m,"Media Player 1",160,y+160,15,"#ddd",600);
+  // REC
+  txt(m,"REC",480,y+26,34,S.rec?"#ff2a2a":"#6a1a1a",700);txt(m,fmt(S.tr),480,y+56,16,"#fff");
+  const rem=Math.max(0,47*60+24-S.tr),mm=String(rem/60|0).padStart(2,"0")+":"+String(rem%60|0).padStart(2,"0");
+  [[420,"BACK UP 6","#ff2a2a"],[540,"JOHNS DRIVE","#aab"]].forEach(([cx,n,col],i)=>{ring(m,cx,y+108,32,col,rem/3000);txt(m,mm,cx,y+104,15,"#fff",600);txt(m,"1.2TB",cx,y+120,10,"#bbb");txt(m,n,cx,y+160,10,"#999")});
+  // ON AIR
+  txt(m,S.strm?"ON AIR":"OFF AIR",800,y+26,34,S.strm?"#ff2a2a":"#6a1a1a",700);txt(m,fmt(S.ts),800,y+56,16,"#fff");
+  txt(m,"DATA RATE Mb/s",730,y+88,10,"#bbb");txt(m,"CACHE",870,y+88,10,"#bbb");
+  txt(m,S.strm?(S.br*(.985+.015*Math.sin(t*3))).toFixed(2):"0.00",730,y+114,36,"#fff",500);txt(m,"OK",870,y+114,36,"#fff",500);
+  txt(m,S.plat,800,y+160,15,"#ddd",600);
+  // Audio
+  const ch=[["Cam1",2],["Cam2",3],["Cam3",4],["Cam4",5],["Mic1",0],["Mic2",1],["PGM",11]];
+  ch.forEach(([n,ix],i)=>{const cx=985+i*40,lv=AU[ix].lv||0;txt(m,n,cx,y+16,11,"#ddd",600);m.fillStyle=i<4?"#4af":"#fa4";m.fillRect(cx-9,y+26,18,2);
+    bar(m,cx-8,y+34,16,110,lv);txt(m,dB(lv),cx,y+160,9,"#ddd")});
+}
+
+function capSync(){[...$("cap8").children].forEach((b,i)=>{const on=!!VID[i+1];b.classList.toggle("lit",on);b.textContent=(on?"■ ":"▶ ")+"入力"+(i+1)})}
+for(let n=1;n<=8;n++){const b=document.createElement("button");b.className="sm";
+  b.onclick=async()=>{
+    if(VID[n]){dropIn(n);return}
+    ensureAC();
+    try{const st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30},audio:true});
+      const v=document.createElement("video");v.srcObject=new MediaStream(st.getVideoTracks());v.muted=true;v.playsInline=true;await v.play();v._st=st;
+      const at=st.getAudioTracks()[0];
+      if(at){const sc=AC.createMediaStreamSource(new MediaStream([at])),g=AC.createGain(),an=AC.createAnalyser();an.fftSize=1024;
+        sc.connect(g);g.connect(an);g.connect(master);v._au={sc,g};const a=AU[aui(n)];a.an=an;a.on=true;a.sync();
+        VID[n]=v;gains();$("cm").textContent="入力"+n+": 画面の音声をオーディオミキサー(H"+n+")に接続しました。"}
+      else{VID[n]=v;$("cm").textContent="入力"+n+": 音声が含まれていません。共有ダイアログで「タブの音声」または「システム音声」を共有してください。"}
+      st.getVideoTracks()[0].onended=()=>dropIn(n);capSync()}
+    catch(e){$("cm").textContent="画面を取り込めませんでした("+e.name+")。ブラウザの許可、または埋め込み表示の制限が原因の可能性があります。新しいタブでこのページを開いてお試しください。"}};
+  $("cap8").appendChild(b)}
+capSync();
+
+
+let AC=null,comp=null,master=null,DEST=null,mAn=null,monOn=0;const lb=new Float32Array(1024);
+function ensureAC(){
+  if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();mAn=AC.createAnalyser();mAn.fftSize=1024;
+    DEST=AC.createMediaStreamDestination();comp=AC.createDynamicsCompressor();master.connect(comp);comp.connect(mAn);mAn.connect(DEST);setLim();AU[11].an=mAn;gains()}
+  if(AC.state==="suspended")AC.resume()
+}
+function setLim(){if(!comp)return;comp.threshold.value=S.lim?-6:0;comp.ratio.value=S.lim?20:1;comp.knee.value=0;comp.attack.value=.003}
+function wt(n){return !S.afv?1:S.tp>=0?(n===S.pgm?1-S.tp:n===S.pvw?S.tp:0):(n===S.pgm?1:0)}
+function gains(){if(!AC)return;const T=AC.currentTime,f=a=>a.on?Math.pow(a.v/75,1.5):0;
+  for(let n=1;n<=8;n++){const v=VID[n];if(v&&v._au)v._au.g.gain.setTargetAtTime(f(AU[aui(n)])*wt(n),T,.02)}
+  if(MIC)MIC.g.gain.setTargetAtTime(f(AU[0]),T,.02);
+  master.gain.setTargetAtTime(f(AU[11]),T,.02)}
+function lvl(an){an.getFloatTimeDomainData(lb);let s=0;for(let i=0;i<lb.length;i++)s+=lb[i]*lb[i];return Math.min(1,Math.sqrt(s/lb.length)*3)}
+function dropIn(n){const v=VID[n];if(!v)return;v._st.getTracks().forEach(k=>k.stop());
+  if(v._au){try{v._au.sc.disconnect();v._au.g.disconnect()}catch(e){}AU[aui(n)].an=null}VID[n]=null;capSync()}
+$("mon").onclick=()=>{ensureAC();monOn^=1;try{monOn?mAn.connect(AC.destination):mAn.disconnect(AC.destination)}catch(e){}
+  $("mon").textContent="モニター音 "+(monOn?"ON":"OFF");$("mon").classList.toggle("lit",!!monOn)};
+
+let MIC=null,LOGO=null;
+["clk","safe"].forEach(k=>$(k).onclick=()=>{S[k]^=1;ui()});
+$("tmr").onclick=()=>{S.tmr^=1;if(S.tmr)S.tmEnd=Date.now()+Math.max(1,+$("tmm").value||1)*60000;ui()};
+$("afv").onclick=()=>{S.afv^=1;gains();ui()};
+$("lim").onclick=()=>{S.lim^=1;ensureAC();setLim();ui()};
+$("mic").onclick=async()=>{
+  if(MIC){MIC.st.getTracks().forEach(k=>k.stop());try{MIC.sc.disconnect();MIC.g.disconnect()}catch(e){}MIC=null;AU[0].an=null;$("mic").classList.remove("lit");return}
+  ensureAC();
+  try{const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+    const sc=AC.createMediaStreamSource(st),g=AC.createGain(),an=AC.createAnalyser();an.fftSize=1024;sc.connect(g);g.connect(an);g.connect(master);
+    MIC={st,sc,g};AU[0].an=an;AU[0].on=true;AU[0].sync();gains();$("mic").classList.add("lit")}
+  catch(e){$("cm").textContent="マイクを使えませんでした("+e.name+")。ブラウザの許可を確認してください。"}};
+$("logo").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{LOGO=im};im.src=r.result};r.readAsDataURL(f)};
+$("plat").onchange=()=>{S.plat=$("plat").value};$("br").onchange=()=>{S.br=+$("br").value};
+const SC=[null,null,null,null,null];let scSave=0;
+for(let i=0;i<5;i++){const b=document.createElement("button");b.className="sm";b.textContent="M"+(i+1);
+  b.onclick=()=>{if(scSave){SC[i]={pvw:S.pvw,k1:S.k1,dsk:S.dsk,pip:S.pip,cap:S.cap,type:S.type,dur:S.dur};scSave=0;$("scs").classList.remove("lit")}
+    else if(SC[i])Object.assign(S,SC[i]);
+    b.classList.toggle("amb",!!SC[i]);ui()};$("sc").appendChild(b)}
+$("scs").onclick=()=>{scSave^=1;$("scs").classList.toggle("lit",!!scSave)};
+async function saveBlob(name,blob){
+  try{const dl=window.claude?await claude.use("downloads"):null;
+    if(dl)await dl.save({filename:name,data:blob});
+    else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove()}
+    rmsg("保存しました: "+name)}
+  catch(e){rmsg(e&&e.code==="declined"?"保存がキャンセルされました。":"保存できませんでした")}}
+$("snap").onclick=()=>cpE.toBlob(b=>b&&saveBlob("ATEM_PGM_"+Date.now()+".png",b),"image/png");
+
+const F='"Hiragino Sans","Noto Sans JP","Yu Gothic",Helvetica,Arial,sans-serif';
+function T(c,s,x,y,sz,col,wt,al,mw){c.font=`${wt||400} ${sz}px ${F}`;c.fillStyle=col;c.textAlign=al||"center";c.textBaseline="middle";c.fillText(s,x,y,mw)}
+function rr(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r)}
+function star(c,cx,cy,r,a){c.beginPath();for(let i=0;i<10;i++){const R=i%2?r*.45:r,q=a+i*Math.PI/5-Math.PI/2;c.lineTo(cx+R*Math.cos(q),cy+R*Math.sin(q))}c.closePath()}
+function laybg(c,t){const g=c.createLinearGradient(0,0,1280,720);g.addColorStop(0,"#f6e9ff");g.addColorStop(.5,"#e4f1ff");g.addColorStop(1,"#ffe6f3");c.fillStyle=g;c.fillRect(0,0,1280,720);
+  [[90,420,70,"#ffb3d1"],[160,150,40,"#aee7ff"],[1150,90,50,"#ffd3a8"],[1190,560,60,"#c9b8ff"],[640,30,24,"#ffc7e3"],[40,650,36,"#b8f0d8"]].forEach(([x,y,r,k],i)=>{c.fillStyle=k;c.globalAlpha=.7;star(c,x,y+5*Math.sin(t+i),r,.2*Math.sin(t*.5+i));c.fill();c.globalAlpha=1})}
+const tmStr=()=>{const r=S.tmr?Math.max(0,(S.tmEnd-Date.now())/1000|0):0;return String(r/60|0).padStart(2,"0")+":"+String(r%60).padStart(2,"0")};
+function drawLay(c,t,items){
+  for(const it of items||[]){if(it.vis===false)continue;
+    if(it.t==="bg")laybg(c,t);
+    else if(it.t==="rect"){rr(c,it.x,it.y,it.w,it.h,Math.min(it.r||0,it.w/2,it.h/2));c.fillStyle=it.color;c.fill()}
+    else if(it.t==="in"){c.fillStyle="#000";c.fillRect(it.x,it.y,it.w,it.h);src(c,it.src,it.x,it.y,it.w,it.h,t)}
+    else if(it.t==="img"){const im=it.ref==="LOGO"?LOGO:it.im;if(im)c.drawImage(im,it.x,it.y,it.w,it.h);else{rr(c,it.x,it.y,it.w,it.h,6);c.fillStyle="#d6d3e0";c.fill()}}
+    else if(it.t==="txt"){const tx=it.text.replace("{timer}",tmStr()).replace("{clock}",new Date().toLocaleTimeString("ja-JP",{hour12:false})),al=it.al||"left",px=al==="center"?it.x+it.w/2:it.x;
+      if(it.stroke){c.font=`${it.wt||700} ${it.size}px ${F}`;c.textAlign=al;c.textBaseline="middle";c.lineJoin="round";c.lineWidth=it.size*.14;c.strokeStyle=it.stroke;c.strokeText(tx,px,it.y+it.h/2,it.w)}
+      T(c,tx,px,it.y+it.h/2,it.size,it.color,it.wt||700,al,it.w)}}
+}
+const R=o=>Object.assign({vis:true,lock:false},o);
+const bgI=()=>R({t:"bg",x:0,y:0,w:1280,h:720,name:"背景"});
+const tx=(name,text,x,y,w,h,size,color,al,o)=>R({t:"txt",name,text,x,y,w,h,size,color,al:al||"center",...o});
+const inp=(n,x,y,w,h)=>R({t:"in",src:n,x,y,w,h,name:"入力"+n});
+const rc=(name,x,y,w,h,color,r)=>R({t:"rect",name,x,y,w,h,color,r});
+function mkQuad(){const a=[bgI()];
+  [["Lodge","#1e88e5"],["たまご","#1e88e5"],["temp","#ff9800"],["","#1e88e5"]].forEach(([n,col],k)=>{const bx=224+(k&1)*420,by=30+(k>>1)*278;
+    a.push(rc("枠"+(k+1),bx,by,410,268,col,8),inp(k+1,bx+5,by+5,400,n?204:258));if(n)a.push(tx("名前"+(k+1),n,bx,by+212,410,52,32,"#fff"))});
+  a.push(rc("バッジ",0,616,274,80,"#7a4bff",12),tx("ラウンド","準決勝",0,620,250,34,28,"#fff"),tx("グループ","Group A",0,652,250,44,42,"#fff"),
+    R({t:"img",name:"ジャケット",x:302,y:614,w:84,h:84}),rc("Lvバッジ",406,612,80,80,"#8b3dff",999),tx("Lv","Lv.",406,618,80,24,16,"#fff"),tx("Lv数値","35",406,638,80,44,36,"#fff"),tx("難易度","MASTER",386,696,120,22,15,"#8b3dff"),
+    tx("曲名","怪獣になりたい",506,630,560,56,42,"#3a3a55","left"),R({t:"img",name:"ロゴ",ref:"LOGO",x:1090,y:606,w:170,h:100}));return a}
+const mkNext=()=>[bgI(),rc("映像枠",64,80,784,442,"#8a5cff",14),inp(1,69,85,774,432),rc("パネル",60,560,510,140,"#fff",28),tx("試合名","準決勝 Group A",60,590,510,100,54,"#8a3dff"),rc("ラベル枠",170,538,300,40,"#a24bff",18),tx("ラベル","NEXT MATCH",170,538,300,40,24,"#fff"),tx("タイマー","{timer}",580,590,340,110,100,"#fff","center",{stroke:"#9a4bff",wt:800})];
+const mkOne=()=>[bgI(),inp(1,0,0,1280,720)];
+const mkTwo=()=>[bgI(),inp(1,20,150,610,343),inp(2,650,150,610,343)];
+const mkSide=()=>[bgI(),inp(1,30,40,860,484),inp(2,910,40,340,191),inp(3,910,242,340,191),inp(4,910,444,340,191)];
+const mkPip=()=>[bgI(),inp(1,0,0,1280,720),rc("ワイプ枠",884,36,360,203,"#fff",8),inp(2,890,42,348,191)];
+const mkBlank=()=>[bgI()];
+const LAYS=[mkQuad(),mkNext(),mkOne(),mkTwo(),mkSide(),mkPip(),mkBlank(),mkQuad()];
+let cur=0,sel=null,mode=null,off=[0,0],orig=null,start=[0,0];
+$("lay").innerHTML=`<div class="eg" style="display:grid;grid-template-columns:minmax(0,2fr) minmax(250px,1fr);gap:10px"><div><div id="lt" style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px"></div><canvas id="ed" width="960" height="540" tabindex="0" style="display:block;width:100%;margin-top:6px;background:#000;border-radius:6px;touch-action:none"></canvas><div class="note">ドラッグで移動(端・中央にスナップ) / ハンドルでサイズ変更(Shiftで縦横比固定) / 矢印キーで微調整(Shiftで10px) / Deleteで削除</div></div><div><div class="grp"><div class="lbl">ソース(上が前面)</div><div id="il"></div><div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:8px"><select id="addt">${[1,2,3,4,5,6,7,8].map(i=>`<option value="in${i}">入力${i}</option>`).join("")}<option value="img">画像</option><option value="txt">テキスト</option><option value="rect">矩形</option></select><button class="sm" id="addb">追加</button></div><div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:6px"><select id="pre"><option value="q">4分割(対戦)</option><option value="n">NEXT MATCH</option><option value="o">1画面</option><option value="t">2画面</option><option value="s">サイドバー(1+3)</option><option value="p">ワイプ(PiP)</option><option value="b">空(背景のみ)</option></select><button class="sm" id="preb">プリセット適用</button></div></div><div class="grp" style="margin-top:10px"><div class="lbl">プロパティ</div><div id="pp"></div></div></div></div>`;
+const ed=$("ed"),edc=ed.getContext("2d");
+function tabs(){[...$("lt").children].forEach((b,i)=>b.classList.toggle("amb",i===cur))}
+for(let i=0;i<8;i++){const b=document.createElement("button");b.className="sm";b.textContent="LAY"+(i+1);b.onclick=()=>{cur=i;sel=null;tabs();renderList();renderProps()};$("lt").appendChild(b)}
+function renderList(){const L=$("il");L.innerHTML="";const a=LAYS[cur];
+  for(let i=a.length-1;i>=0;i--){const it=a[i],d=document.createElement("div");d.className="li";
+    const mk=(s,fn,ti)=>{const b=document.createElement("button");b.textContent=s;b.title=ti;b.onclick=fn;d.appendChild(b)};
+    mk(it.vis===false?"○":"●",()=>{it.vis=it.vis===false;renderList()},"表示/非表示");
+    mk(it.lock?"🔒":"🔓",()=>{it.lock=!it.lock;renderList()},"ロック");
+    const sp=document.createElement("span");sp.textContent=it.name;sp.className=it===sel?"on":"";sp.onclick=()=>{sel=it;renderList();renderProps()};d.appendChild(sp);
+    mk("↑",()=>{if(i<a.length-1){[a[i],a[i+1]]=[a[i+1],a[i]];renderList()}},"前面へ");
+    mk("↓",()=>{if(i>0){[a[i],a[i-1]]=[a[i-1],a[i]];renderList()}},"背面へ");
+    mk("×",()=>{a.splice(i,1);if(sel===it)sel=null;renderList();renderProps()},"削除");
+    L.appendChild(d)}}
+function fld(p,label,type,key,id){const d=document.createElement("div");d.style.cssText="display:grid;grid-template-columns:64px 1fr;gap:6px;align-items:center;margin-top:5px";
+  const l=document.createElement("span");l.className="note";l.style.margin=0;l.textContent=label;const i=document.createElement("input");i.type=type;i.value=type==="number"?Math.round(sel[key]??0):(sel[key]??"");if(id)i.id=id;
+  const it=sel;i.oninput=()=>{it[key]=type==="number"?+i.value:i.value;if(key==="name")renderList()};d.append(l,i);p.appendChild(d)}
+function syncXY(){["x","y","w","h"].forEach(k=>{const e=$("p"+k);if(e&&document.activeElement!==e)e.value=Math.round(sel[k])})}
+function renderProps(){const p=$("pp");p.innerHTML="";if(!sel){p.innerHTML='<div class="note">ソースを選択してください</div>';return}
+  const it=sel;fld(p,"名前","text","name");
+  if(it.t!=="bg"){[["x","X"],["y","Y"],["w","幅"],["h","高さ"]].forEach(([k,n])=>fld(p,n,"number",k,"p"+k));
+    const r=document.createElement("div");r.className="g2";r.style.marginTop="8px";
+    [["画面に合わせる",()=>Object.assign(it,{x:0,y:0,w:1280,h:720})],["水平中央",()=>it.x=(1280-it.w)/2],["垂直中央",()=>it.y=(720-it.h)/2],["16:9に整える",()=>it.h=it.w*9/16]].forEach(([n,fn])=>{const b=document.createElement("button");b.className="sm";b.textContent=n;b.onclick=()=>{fn();syncXY()};r.appendChild(b)});p.appendChild(r)}
+  const sel2=(label,opts,key,num)=>{const d=document.createElement("div");d.style.cssText="display:grid;grid-template-columns:64px 1fr;gap:6px;align-items:center;margin-top:5px";d.innerHTML=`<span class="note" style="margin:0">${label}</span><select>${opts.map(([v,n])=>`<option value="${v}">${n}</option>`).join("")}</select>`;const s=d.querySelector("select");s.value=it[key]??opts[0][0];s.onchange=()=>{it[key]=num?+s.value:s.value};p.appendChild(d)};
+  if(it.t==="in")sel2("入力",[1,2,3,4,5,6,7,8].map(n=>[n,"入力"+n]),"src",1);
+  if(it.t==="txt"){fld(p,"文字","text","text");fld(p,"サイズ","number","size");fld(p,"色","color","color");sel2("揃え",[["left","左"],["center","中央"]],"al")}
+  if(it.t==="rect"){fld(p,"色","color","color");fld(p,"角丸","number","r")}
+  if(it.t==="img"){const f=document.createElement("input");f.type="file";f.accept="image/*";f.style.marginTop="6px";
+    f.onchange=e=>{const fl=e.target.files[0];if(!fl)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{it.im=im;it.ref=null;it.h=it.w*im.height/im.width;syncXY()};im.src=rd.result};rd.readAsDataURL(fl)};p.appendChild(f);
+    const b=document.createElement("button");b.className="sm";b.style.cssText="width:100%;margin-top:6px";b.textContent="メディアプレーヤー1のロゴを使う";b.onclick=()=>{it.ref="LOGO"};p.appendChild(b)}}
+$("addb").onclick=()=>{const v=$("addt").value,a=LAYS[cur];let it;
+  if(v.startsWith("in"))it=inp(+v.slice(2),320,180,640,360);
+  else if(v==="img")it=R({t:"img",name:"画像",x:440,y:210,w:400,h:300});
+  else if(v==="txt")it=tx("テキスト","テキスト",200,300,800,100,64,"#3a3a55","left");
+  else it=rc("矩形",400,250,480,220,"#1e88e5",12);
+  a.push(it);sel=it;renderList();renderProps()};
+$("preb").onclick=()=>{LAYS[cur]={q:mkQuad,n:mkNext,o:mkOne,t:mkTwo,s:mkSide,p:mkPip,b:mkBlank}[$("pre").value]();sel=null;renderList();renderProps()};
+const hnd=it=>{const{x,y,w,h}=it,cx=x+w/2,cy=y+h/2,r=x+w,b=y+h;return[["nw",x,y],["n",cx,y],["ne",r,y],["e",r,cy],["se",r,b],["s",cx,b],["sw",x,b],["w",x,cy]]};
+const pt=e=>{const r=ed.getBoundingClientRect();return[(e.clientX-r.left)*1280/r.width,(e.clientY-r.top)*720/r.height]};
+function snapv(v,size,Ts){let best=v,d=8;for(const o of[0,size/2,size])for(const t of Ts){const dd=Math.abs(v+o-t);if(dd<d){d=dd;best=t-o}}return best}
+ed.onpointerdown=e=>{ed.setPointerCapture(e.pointerId);ed.focus();const[vx,vy]=pt(e);mode=null;
+  if(sel&&!sel.lock&&sel.t!=="bg"&&LAYS[cur].includes(sel)){const h=hnd(sel).find(h=>Math.abs(h[1]-vx)<14&&Math.abs(h[2]-vy)<14);if(h)mode=h[0]}
+  if(!mode){const a=LAYS[cur];sel=null;for(let i=a.length-1;i>=0;i--){const it=a[i];if(it.t==="bg"||it.vis===false||it.lock)continue;if(vx>=it.x&&vx<=it.x+it.w&&vy>=it.y&&vy<=it.y+it.h){sel=it;break}}
+    if(sel){mode="move";off=[vx-sel.x,vy-sel.y]}renderList();renderProps()}
+  orig=sel?{...sel}:null;start=[vx,vy]};
+ed.onpointermove=e=>{if(!mode||!sel)return;const[vx,vy]=pt(e);
+  if(mode==="move"){sel.x=snapv(vx-off[0],sel.w,[0,640,1280]);sel.y=snapv(vy-off[1],sel.h,[0,360,720])}
+  else{const dx=vx-start[0],dy=vy-start[1];let{x,y,w,h}=orig;
+    if(mode.includes("e"))w=orig.w+dx;if(mode.includes("w")){x=orig.x+dx;w=orig.w-dx}
+    if(mode.includes("s"))h=orig.h+dy;if(mode.includes("n")){y=orig.y+dy;h=orig.h-dy}
+    if(e.shiftKey&&mode.length===2){const nh=w*orig.h/orig.w;if(mode.includes("n"))y=orig.y+orig.h-nh;h=nh}
+    if(w>=10&&h>=10)Object.assign(sel,{x,y,w,h})}
+  syncXY()};
+ed.onpointerup=()=>{mode=null};
+ed.onkeydown=e=>{if(!sel)return;const d=e.shiftKey?10:1,m={ArrowLeft:["x",-d],ArrowRight:["x",d],ArrowUp:["y",-d],ArrowDown:["y",d]}[e.key];
+  if(m){sel[m[0]]+=m[1];syncXY();e.preventDefault()}
+  else if(e.key==="Delete"||e.key==="Backspace"){const a=LAYS[cur];a.splice(a.indexOf(sel),1);sel=null;renderList();renderProps();e.preventDefault()}};
+function editFrame(t){const c=edc;c.setTransform(.75,0,0,.75,0,0);c.fillStyle="#000";c.fillRect(0,0,1280,720);c.save();c.beginPath();c.rect(0,0,1280,720);c.clip();drawLay(c,t,LAYS[cur]);c.restore();
+  if(sel&&sel.t!=="bg"&&LAYS[cur].includes(sel)){c.lineWidth=3;c.strokeStyle="#ff3b3b";c.strokeRect(sel.x,sel.y,sel.w,sel.h);hnd(sel).forEach(([n,hx,hy])=>{c.fillStyle="#fff";c.fillRect(hx-7,hy-7,14,14);c.strokeRect(hx-7,hy-7,14,14)})}}
+tabs();renderList();renderProps();
+
+$("tbar").oninput=e=>{const v=+e.target.value/100;if(S.tp>=0&&!S.manual){e.target.value=S.tp*100;return}
+  if(!S.manual&&v>0)startTrans();S.manual=v>0&&v<1;S.tp=S.manual?v:-1;if(v>=1){swap();e.target.value=0}};
+$("ease").onchange=()=>{S.ease=$("ease").value};
+let REMOTE=false,HR=null,RR=null,CODE="";
+const rcStore=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
+const TOGS=["k1","dsk","pip","cap","clk","tmr","safe","afv","lim","strm","rec","cut","auto","ftb","snap","scs"];
+function doCmd(d){
+  if(!d||typeof d!=="object")return;const n=+d.n,i=+d.i,v=+d.v;
+  switch(d.a){
+  case "pvw":if(n>=0&&n<NAMES.length)$("rv").children[n].click();break;
+  case "pgm":if(n>=0&&n<NAMES.length)$("rp").children[n].click();break;
+  case "t":{const b=document.querySelector(`[data-t="${String(d.v).replace(/[^a-z]/g,"")}"]`);if(b)b.click();break}
+  case "d":{const b=document.querySelector(`[data-d="${v}"]`);if(b)b.click();break}
+  case "ease":if(EASE[d.v]){$("ease").value=d.v;S.ease=d.v}break;
+  case "tbar":if(v>=0&&v<=100){$("tbar").value=v;$("tbar").dispatchEvent(new Event("input"))}break;
+  case "tog":if(TOGS.includes(d.k))$(d.k).click();break;
+  case "sc":if(i>=0&&i<5)$("sc").children[i].click();break;
+  case "fd":if(AU[i]&&v>=0&&v<=100){AU[i].r.value=v;AU[i].r.dispatchEvent(new Event("input"))}break;
+  case "on":if(AU[i])AU[i].b.click();break}}
+const stateObj=()=>({pg:S.pgm,pv:S.pvw,ty:S.type,du:S.dur,ea:S.ease||"lin",tp:S.tp<0?0:Math.round(S.tp*100),k1:S.k1,dsk:S.dsk,pip:S.pip,cap:S.cap,clk:S.clk||0,tmr:S.tmr||0,safe:S.safe||0,afv:S.afv||0,lim:S.lim||0,strm:S.strm,rec:S.rec,ftb:S.ftbDir||0,ts:Math.round(S.ts),tr:Math.round(S.tr),au:AU.map(a=>[a.v,a.on?1:0]),sc:SC.map(x=>x?1:0)});
+(async()=>{try{if(!window.claude)return;const room=await claude.use("room");if(!room)return;
+  CODE=rcStore("atem_code")||String(Math.random()*1e6|0).padStart(6,"0");rcStore("atem_code",CODE);
+  HR=await room.join("atem-"+CODE);HR.on("cmd",m=>{if(!REMOTE)doCmd(m.data)});
+  setInterval(()=>{if(!REMOTE)HR.emit("st",stateObj()).catch(()=>{})},400);
+  $("rci").textContent="リモコンコード: "+CODE+"(スマホで同じページを開き「リモコンモード」で入力)"}catch(e){}})();
+const send=o=>{if(RR)RR.emit("cmd",o).catch(()=>{})};
+$("rcb").onclick=()=>{document.querySelector(".dev").style.display="none";const r=$("rc");r.style.display="block";
+  r.innerHTML=`<div class="rh"><b>リモコン接続</b><button class="rb sm2" data-exit="1">戻る</button></div><div class="lbl">PC側に表示されているコード(6桁)</div><input type="text" id="rcode" inputmode="numeric" maxlength="6" value="${rcStore("atem_rcode")||""}"><button class="rb" id="rgo" style="width:100%">接続</button><div class="lbl" id="rerr" style="margin-top:8px"></div>`};
+async function openRemote(code){const er=$("rerr");
+  if(!/^\d{6}$/.test(code)){er.textContent="6桁の数字を入力してください。";return}
+  try{const room=window.claude?await claude.use("room"):null;if(!room){er.textContent="接続できません。同じアカウントでサインインしているか確認してください。";return}
+    RR=await room.join("atem-"+code);rcStore("atem_rcode",code);REMOTE=true;buildRemote();RR.on("st",m=>applyState(m.data))}
+  catch(e){er.textContent="接続に失敗しました。"}}
+function exitRemote(){REMOTE=false;try{if(RR)RR.leave()}catch(e){}RR=null;$("rc").style.display="none";document.querySelector(".dev").style.display=""}
+function buildRemote(){
+  const B=(c,a,t)=>`<button class="rb ${c}" ${a}>${t}</button>`;
+  const bus=(c,k)=>NAMES.map((n,i)=>B(c,`data-bus="${k}" data-n="${i}"`,n)).join("");
+  const ty=[...document.querySelectorAll("[data-t]")].map(b=>B("sm2",`data-t="${b.dataset.t}"`,b.textContent)).join("");
+  const du=[0.5,1,1.5,2,3].map(d=>B("sm2",`data-d="${d}"`,d+"s")).join("");
+  const tg=[["k1","KEY1"],["dsk","DSK"],["pip","PiP"],["cap","字幕"],["clk","時計"],["tmr","タイマー"],["safe","セーフ"],["afv","AFV"],["lim","LIM"]].map(([k,n])=>B("sm2",`data-g="${k}"`,n)).join("");
+  const au=CH.map((n,i)=>`<div class="ra"><button class="rb sm2" data-on="${i}">${n}</button><input type="range" min="0" max="100" data-fd="${i}"></div>`).join("");
+  $("rc").innerHTML=`<div class="rh"><b>ATEM リモコン</b><span id="rst" class="lbl" style="margin:0">接続中…</span><button class="rb sm2" data-exit="1">終了</button></div>
+<div class="lbl">プログラム</div><div class="rg r6">${bus("gp","pg")}</div>
+<div class="lbl" style="margin-top:10px">プレビュー</div><div class="rg r6">${bus("gv","pv")}</div>
+<div class="rg r3" style="margin-top:12px">${B("big",'data-g="cut"',"CUT")}${B("big wh",'data-g="auto"',"AUTO")}${B("big",'data-g="ftb"',"FTB")}</div>
+<div style="margin-top:12px"><span class="lbl">T-BAR</span><input type="range" id="rtb" min="0" max="100" value="0" style="width:100%;height:44px"></div>
+<div class="lbl" style="margin-top:8px">トランジション</div><div class="rg r4">${ty}</div><div class="rg r5" style="margin-top:6px">${du}</div>
+<select id="rea" style="margin-top:6px;height:40px"><option value="lin">リニア</option><option value="io">イーズ</option><option value="in">加速</option><option value="out">減速</option></select>
+<div class="lbl" style="margin-top:10px">キー / オーバーレイ</div><div class="rg r3">${tg}</div>
+<div class="lbl" style="margin-top:10px">録画 / 配信 / 静止画</div><div class="rg r3">${B("",'data-g="rec"',"● REC")}${B("",'data-g="strm"',"STREAM")}${B("",'data-g="snap"',"静止画")}</div><div class="lbl" id="rtm"></div>
+<div class="lbl" style="margin-top:6px">シーンメモリー</div><div class="rg r6">${[0,1,2,3,4].map(i=>B("sm2",`data-sc="${i}"`,"M"+(i+1))).join("")}${B("sm2",'data-g="scs"',"保存")}</div>
+<details style="margin-top:10px"><summary class="lbl">オーディオミキサー</summary>${au}</details>`}
+function applyState(s){if(!s||!REMOTE||!$("rst"))return;const r=$("rc");
+  r.querySelectorAll("[data-bus]").forEach(b=>b.classList.toggle("on",+b.dataset.n===(b.dataset.bus==="pg"?s.pg:s.pv)));
+  r.querySelectorAll("[data-t]").forEach(b=>b.classList.toggle("amb",b.dataset.t===s.ty));
+  r.querySelectorAll("[data-d]").forEach(b=>b.classList.toggle("amb",+b.dataset.d===s.du));
+  r.querySelectorAll("[data-g]").forEach(b=>{const k=b.dataset.g;b.classList.toggle("lit",k==="ftb"?!!s.ftb:!!s[k])});
+  r.querySelectorAll("[data-sc]").forEach(b=>b.classList.toggle("amb",!!(s.sc&&s.sc[+b.dataset.sc])));
+  r.querySelectorAll("[data-on]").forEach(b=>b.classList.toggle("lit",!!(s.au[+b.dataset.on]||[])[1]));
+  r.querySelectorAll("[data-fd]").forEach(i=>{if(document.activeElement!==i&&s.au[+i.dataset.fd])i.value=s.au[+i.dataset.fd][0]});
+  if(document.activeElement!==$("rtb"))$("rtb").value=s.tp;if(document.activeElement!==$("rea"))$("rea").value=s.ea;
+  $("rst").textContent="PGM "+NAMES[s.pg]+" / PVW "+NAMES[s.pv];$("rtm").textContent="REC "+fmt(s.tr)+"   STREAM "+fmt(s.ts)}
+$("rc").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(navigator.vibrate)navigator.vibrate(8);const d=b.dataset;
+  if(b.id==="rgo")openRemote($("rcode").value.trim());
+  else if(d.bus)send({a:d.bus==="pg"?"pgm":"pvw",n:+d.n});else if(d.t)send({a:"t",v:d.t});else if(d.d)send({a:"d",v:+d.d});
+  else if(d.g)send({a:"tog",k:d.g});else if(d.sc!=null)send({a:"sc",i:+d.sc});else if(d.on!=null)send({a:"on",i:+d.on});else if(d.exit)exitRemote()});
+let lastRc=0;const rcVal=t=>t.id==="rtb"?send({a:"tbar",v:+t.value}):t.dataset.fd!=null?send({a:"fd",i:+t.dataset.fd,v:+t.value}):t.id==="rea"?send({a:"ease",v:t.value}):0;
+$("rc").addEventListener("input",e=>{const n=Date.now();if(n-lastRc>60){lastRc=n;rcVal(e.target)}});
+$("rc").addEventListener("change",e=>rcVal(e.target));
+let pw=null;
+$("pop").onclick=()=>{
+  if(pw&&!pw.closed){pw.focus();return}
+  pw=window.open("","atemProgram","width=960,height=540");
+  if(!pw){$("cm").textContent="別ウィンドウがブロックされました。ポップアップを許可するか、このページを新しいタブで開いてお試しください。";return}
+  const d=pw.document;d.title="ATEM PROGRAM";
+  d.body.style.cssText="margin:0;background:#000;height:100vh;display:flex";
+  const v=d.createElement("video");v.style.cssText="width:100%;height:100%;object-fit:contain";
+  v.muted=true;v.autoplay=true;v.playsInline=true;v.srcObject=cpE.captureStream(30);
+  v.ondblclick=()=>{v.requestFullscreen&&v.requestFullscreen()};
+  d.body.appendChild(v);v.play().catch(()=>{});
+};
+
+let mr=null,chunks=[],mext="webm";
+const rmsg=m=>{$("rm").textContent=m};
+function startRec(){
+  if(!window.MediaRecorder){rmsg("このブラウザは録画に対応していません。");S.rec=0;return}
+  const mt=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm","video/mp4"].find(t=>MediaRecorder.isTypeSupported(t))||"";
+  mext=mt.startsWith("video/mp4")?"mp4":"webm";chunks=[];
+  try{ensureAC();const rs=new MediaStream([...cpE.captureStream(30).getVideoTracks(),...DEST.stream.getAudioTracks()]);
+  mr=new MediaRecorder(rs,mt?{mimeType:mt,videoBitsPerSecond:8e6}:{videoBitsPerSecond:8e6})}
+  catch(e){rmsg("録画を開始できませんでした("+e.name+")");S.rec=0;mr=null;return}
+  mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  mr.onstop=saveRec;mr.start(1000);rmsg("")
+}
+function stopRec(){if(mr&&mr.state!=="inactive")mr.stop()}
+async function saveRec(){
+  const blob=new Blob(chunks,{type:mext==="mp4"?"video/mp4":"video/webm"});chunks=[];
+  if(!blob.size){rmsg("録画データがありません。");return}
+  const d=new Date(),p=n=>String(n).padStart(2,"0");
+  const name=`ATEM_PGM_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.${mext}`;
+  try{
+    const dl=window.claude?await claude.use("downloads"):null;
+    if(dl){await dl.save({filename:name,data:blob});rmsg("保存しました: "+name)}
+    else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);rmsg("保存しました: "+name)}
+  }catch(e){rmsg(e&&e.code==="declined"?"保存がキャンセルされました。":"保存できませんでした("+((e&&(e.code||e.name))||"error")+")")}
+}
+ui();requestAnimationFrame(loop);
+</script>
+</body></html>
