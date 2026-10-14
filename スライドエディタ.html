@@ -55,6 +55,19 @@ input[type=color]{width:32px;height:30px;padding:0;border:1px solid var(--line);
 #rn{font-size:30px;font-weight:700;text-align:center}#rt{text-align:center;color:var(--mut);margin:4px 0 8px}
 #rnote{white-space:pre-wrap;font-size:18px;line-height:1.6;min-height:120px;border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0;background:var(--bg)}
 #rl{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+#show{overflow:hidden}#wrap{overflow-x:hidden}
+#rcI{font-size:20px;font-weight:700;letter-spacing:.1em}
+#bcode{font-weight:700;letter-spacing:.08em;padding:4px 10px;border-radius:6px;border:1px dashed var(--line);color:var(--mut)}#bcode.on{color:#fff;background:#1a9d4b;border-color:#1a9d4b}
+@keyframes a-fade{from{opacity:0}}
+@keyframes a-up{from{opacity:0;transform:translateY(60px)}}
+@keyframes a-left{from{opacity:0;transform:translateX(-160px)}}
+@keyframes a-right{from{opacity:0;transform:translateX(160px)}}
+@keyframes a-zoom{from{opacity:0;transform:scale(.3)}}
+@keyframes a-spin{from{opacity:0;transform:rotate(-180deg) scale(.2)}}
+@keyframes a-bounce{0%{opacity:0;transform:translateY(-200px)}60%{opacity:1;transform:translateY(24px)}80%{transform:translateY(-12px)}100%{transform:none}}
+@keyframes t-fade{from{opacity:0}}@keyframes t-slide{from{transform:translateX(100%)}}@keyframes t-slideb{from{transform:translateX(-100%)}}@keyframes t-up{from{transform:translateY(100%)}}
+@keyframes t-zoom{from{opacity:0;transform:scale(.4)}}@keyframes t-flip{from{opacity:0;transform:perspective(1400px) rotateY(90deg)}}@keyframes t-wipe{from{clip-path:inset(0 100% 0 0)}}
+.tr-fade{animation:t-fade .7s both}.tr-slide{animation:t-slide .6s both}.tr-slideb{animation:t-slideb .6s both}.tr-up{animation:t-up .6s both}.tr-zoom{animation:t-zoom .6s both}.tr-flip{animation:t-flip .8s both}.tr-wipe{animation:t-wipe .8s both}
 #print{display:none}
 @media print{@page{size:1280px 720px;margin:0}body>#app{display:none}#print{display:block}#print .slide{position:relative;zoom:.8889;page-break-after:always;box-shadow:none}html,body{background:#fff;height:auto}}
 @media (max-width:700px){#thumbs{display:none}}
@@ -72,13 +85,16 @@ input[type=color]{width:32px;height:30px;padding:0;border:1px solid var(--line);
   <span class="sep"></span>
   <button id="up">前面</button><button id="dn">背面</button><button id="del">削除</button>
   <span class="sep"></span>
+  <select id="an" title="選択中の要素のアニメーション"><option value="none">要素アニメ：なし</option><option value="fade">フェードイン</option><option value="up">下から</option><option value="left">左から</option><option value="right">右から</option><option value="zoom">ズーム</option><option value="bounce">バウンド</option><option value="spin">回転</option><option value="type">タイプライター（文字）</option><option value="char">1文字ずつ（文字）</option></select><input id="ad" type="number" min="0" max="30" step="0.5" value="0" style="width:64px" title="開始までの待ち秒数"><span>秒後</span>
+  <select id="tr" title="このスライドへの切り替え効果"><option value="none">切替：なし</option><option value="fade">フェード</option><option value="slide">スライド</option><option value="up">下から</option><option value="zoom">ズーム</option><option value="flip">フリップ</option><option value="wipe">ワイプ</option></select><button id="prevB">▶ プレビュー</button>
+  <span class="sep"></span>
   <button id="undo">↶</button><button id="redo">↷</button>
   <span class="sep"></span>
   <button id="addS">＋スライド</button><button id="dupS">複製</button><button id="delS">スライド削除</button>
   <span class="sep"></span>
   <button id="pdf">PDF保存/印刷</button><button id="exp">JSON書出</button><button id="imp">読込</button><input id="jf" type="file" accept=".json" hidden>
   <button id="reset">初期化</button>
-  <span class="sep"></span><button id="play" class="pri">▶ スライドショー</button><button id="remB">📱 リモコン</button>
+  <span class="sep"></span><button id="play" class="pri">▶ スライドショー</button><button id="remB">📱 リモコン</button><span id="bcode" title="スマホのリモコンに入力する6桁のコード"></span>
  </div>
  <div id="main"><div id="thumbs"></div><div id="mid"><div id="wrap"><div id="frame"></div></div><textarea id="note" placeholder="スピーカーノート（スマホリモコンに表示されます）"></textarea></div></div>
  <div id="hint">ドラッグで移動／右下の●でサイズ変更／文字はダブルクリックで編集／矢印キーで微調整（Shiftで大きく）／Delete削除／Ctrl+Zで元に戻す</div>
@@ -105,21 +121,22 @@ function push(){hist.push(snap());if(hist.length>80)hist.shift();fut=[];save()}
 function save(){try{localStorage.setItem(KEY,snap())}catch(e){}}
 function undo(){if(!hist.length)return;fut.push(snap());S=JSON.parse(hist.pop());cur=Math.min(cur,S.length-1);sel=null;save();draw()}
 function redo(){if(!fut.length)return;hist.push(snap());S=JSON.parse(fut.pop());cur=Math.min(cur,S.length-1);sel=null;save();draw()}
-function mk(e,live){
+function mk(e,live,an){
  const d=document.createElement('div');d.className='el '+e.t;d.dataset.id=e.id;
  d.style.cssText=`left:${e.x}px;top:${e.y}px;width:${e.w}px;`+(e.t=='i'?`height:${e.h}px;`:`min-height:${e.h}px;font-size:${e.fs}px;color:${e.c};font-weight:${e.b?700:400};text-align:${e.a};`);
- if(e.t=='i'){const im=new Image();im.src=e.k?IMG[e.k]:e.src;im.draggable=false;d.appendChild(im)}else d.textContent=e.s;
+ if(e.t=='i'){const im=new Image();im.src=e.k?IMG[e.k]:e.src;im.draggable=false;d.appendChild(im)}else if(an&&(e.an=='type'||e.an=='char'))charAnim(d,e);else d.textContent=e.s;
+ if(an&&e.an&&e.an!='none'&&e.an!='type'&&e.an!='char')d.style.animation=`a-${e.an} .8s ${+e.ad||0}s both`;
  if(live&&e.id===sel){d.classList.add('sel');const h=document.createElement('div');h.className='hd';d.appendChild(h)}
  return d}
-function slideEl(s,live){const d=document.createElement('div');d.className='slide';s.els.forEach(e=>d.appendChild(mk(e,live)));return d}
-function draw(){
+function slideEl(s,live,an){const d=document.createElement('div');d.className='slide';s.els.forEach(e=>d.appendChild(mk(e,live,an)));return d}
+function draw(pv){
  const f=$('frame'),w=$('wrap');
  scale=Math.min((w.clientWidth-32)/1440,(w.clientHeight-32)/810);if(scale<.2)scale=.2;
  f.style.width=1440*scale+'px';f.style.height=810*scale+'px';f.innerHTML='';
- const sl=slideEl(S[cur],true);sl.style.transform=`scale(${scale})`;f.appendChild(sl);
+ const sl=slideEl(S[cur],true,pv===true);sl.style.transform=`scale(${scale})`;f.appendChild(sl);
  const th=$('thumbs');th.innerHTML='';
  S.forEach((s,i)=>{const t=document.createElement('div');t.className='th'+(i==cur?' cur':'');t.appendChild(slideEl(s,false));const n=document.createElement('i');n.textContent=i+1;t.appendChild(n);t.onclick=()=>{cur=i;sel=null;draw()};th.appendChild(t)});
- $('note').value=S[cur].note||'';const e=cur_el();$('bold').classList.toggle('on',!!(e&&e.b));
+ $('note').value=S[cur].note||'';$('tr').value=S[cur].tr||'none';const e=cur_el();$('an').value=(e&&e.an)||'none';$('ad').value=(e&&e.ad)||0;$('bold').classList.toggle('on',!!(e&&e.b));
  if(e&&e.t=='t'){$('fs').value=e.fs;$('col').value=e.c;$('al').textContent={left:'左',center:'中',right:'右'}[e.a]}
 }
 const cur_el=()=>S[cur].els.find(e=>e.id===sel);
@@ -187,21 +204,21 @@ $('note').onchange=()=>{push();S[cur].note=$('note').value;save()};
 document.body.insertAdjacentHTML('beforeend',`<div id="show" hidden><div id="sf"></div><div id="stb"><button id="rcT"></button><span id="rcI"></span><span style="flex:1"></span><button id="stop">終了 (Esc)</button></div><div id="pg"></div></div>
 <div id="dlg" hidden><div class="box"><h3>スライドショー</h3><button id="dRc" class="big"></button><p class="mut">ON：スマホからスライド操作とノート表示ができます（PCは全画面でスライドを表示）。<br>OFF：全画面でスライドだけを表示します。</p><div class="row"><button id="dGo" class="pri">開始</button><button id="dX">キャンセル</button></div></div></div>
 <div id="rem" hidden><div class="box"><div id="r1"><h3>スマホリモコン</h3><p class="mut">PCのスライドショー画面に表示された6桁のコードを入力してください。</p><input id="rcode" inputmode="numeric" maxlength="6" placeholder="000000"><div class="row"><button id="rCon" class="pri">接続</button><button class="rx">閉じる</button></div><p id="rMsg" class="mut"></p></div><div id="r2" hidden><div id="rn"></div><div id="rt"></div><div class="row"><button id="rP" class="big">◀ 前へ</button><button id="rN" class="big pri">次へ ▶</button></div><div id="rnote"></div><div id="rl"></div><button class="rx big">切断して閉じる</button></div></div></div>`);
-let showing=false,si=0,rc=false,want=false,rcErr=false,rm=null,rcode='',offs=[],mvT,rcl=null,roffs=[],rint=0,got=false;
+let showing=false,si=0,rc=false,want=false,rcErr=false,rm=null,rcode=String(Math.floor(100000+Math.random()*900000)),offs=[],mvT,rcl=null,roffs=[],rint=0,got=false;
 const room$=async()=>{try{return typeof claude!=='undefined'?await claude.use('room'):null}catch(e){return null}};
 const titleOf=s=>{const t=s.els.find(e=>e.t=='t');return t?t.s.split('\n')[0].slice(0,30):'(文字なし)'};
 function sync(){if(rm&&rc)rm.emit('state',{n:si,total:S.length,note:S[si].note||'',titles:S.map(titleOf)}).catch(()=>{})}
-function renderShow(){const f=$('sf'),k=Math.min(innerWidth/1440,innerHeight/810);f.style.width=1440*k+'px';f.style.height=810*k+'px';f.innerHTML='';const s=slideEl(S[si],false);s.style.transform=`scale(${k})`;f.appendChild(s);$('pg').textContent=(si+1)+' / '+S.length;sync()}
-function go(n){n=Math.max(0,Math.min(S.length-1,Math.floor(+n)||0));if(n!==si){si=n;renderShow()}}
+function renderShow(a){const f=$('sf'),k=Math.min(innerWidth/1440,innerHeight/810);f.style.width=1440*k+'px';f.style.height=810*k+'px';f.innerHTML='';const s=slideEl(S[si],false,a);s.style.transform=`scale(${k})`;f.appendChild(s);$('pg').textContent=(si+1)+' / '+S.length;sync()}
+function go(n){n=Math.max(0,Math.min(S.length-1,Math.floor(+n)||0));if(n!==si){const d=n>si?1:-1;si=n;renderShow(true);playTr($('sf'),S[si].tr,d)}}
 function poke(ms){const s=$('show');s.classList.add('mv');clearTimeout(mvT);mvT=setTimeout(()=>s.classList.remove('mv'),ms)}
-function updRc(){const t='📱 スマホコントロール：'+(want?'ON':'OFF');$('dRc').textContent=t;$('dRc').classList.toggle('on',want);$('rcT').textContent='📱 スマホコントロール：'+(rc?'ON':'OFF');$('rcI').textContent=rcErr?'この環境ではスマホ連携を使えません':rc?`コード ${rcode} ／ スマホで同じページを開き「📱 リモコン」に入力`:''}
+function updRc(){const t='📱 スマホコントロール：'+(want?'ON':'OFF');$('dRc').textContent=t;$('dRc').classList.toggle('on',want);$('rcT').textContent='📱 スマホコントロール：'+(rc?'ON':'OFF');$('rcI').textContent=rcErr?'この環境ではスマホ連携を使えません':rc?`コード ${rcode}`:'';$('bcode').textContent='PCコード '+rcode;$('bcode').classList.toggle('on',rc)}
 async function hostOn(){rcErr=false;const r=await room$();if(!r||!r.join){rc=false;rcErr=true;updRc();return}
- rcode=String(Math.floor(100000+Math.random()*900000));rm=await r.join('show-'+rcode);rc=true;
+ rm=await r.join('show-'+rcode);rc=true;
  offs.push(rm.on('hello',()=>sync()),rm.on('cmd',m=>{const d=m.data||{};if(d.a=='next')go(si+1);else if(d.a=='prev')go(si-1);else if(d.a=='goto')go(d.n)}));
  updRc();sync()}
 function hostOff(){rc=false;offs.forEach(f=>f());offs=[];try{rm&&rm.leave()}catch(e){}rm=null;updRc()}
 async function openShow(){$('dlg').hidden=true;showing=true;sel=null;si=cur;$('show').hidden=false;try{await $('show').requestFullscreen()}catch(e){}
- if(want)await hostOn();else updRc();renderShow();poke(want?20000:2500)}
+ if(want)await hostOn();else updRc();renderShow(true);poke(want?20000:2500)}
 function closeShow(){if(!showing)return;showing=false;hostOff();rcErr=false;$('show').hidden=true;if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});cur=si;draw()}
 $('play').onclick=()=>{updRc();$('dlg').hidden=false};
 $('dRc').onclick=()=>{want=!want;updRc()};$('dGo').onclick=openShow;$('dX').onclick=()=>{$('dlg').hidden=true};
@@ -224,7 +241,18 @@ $('rCon').onclick=async()=>{const code=$('rcode').value.trim();if(!/^\d{6}$/.tes
  $('r1').hidden=true;$('r2').hidden=false;$('rn').textContent='接続中…';$('rt').textContent='PCでスライドショーを開始してください';
  rcl.emit('hello',{});rint=setInterval(()=>{if(!got&&rcl)rcl.emit('hello',{})},2000)};
 $('rP').onclick=()=>rcl&&rcl.emit('cmd',{a:'prev'});$('rN').onclick=()=>rcl&&rcl.emit('cmd',{a:'next'});
+function charAnim(d,e){const t=e.an=='type',b=+e.ad||0;let i=0;
+ for(const ch of e.s){if(ch=='\n'){d.appendChild(document.createElement('br'));continue}
+  const s=document.createElement('span');s.textContent=ch;
+  if(t)s.style.animation=`a-fade .01s ${b+i*.06}s both`;else{s.style.display='inline-block';s.style.animation=`a-up .5s ${b+i*.07}s both`}
+  d.appendChild(s);i++}}
+function playTr(f,t,dir){if(!t||t=='none')return;f.className='';void f.offsetWidth;f.className='tr-'+(t=='slide'&&dir<0?'slideb':t)}
+$('an').onchange=()=>edit(e=>{e.an=$('an').value;if(e.t=='i'&&(e.an=='type'||e.an=='char'))e.an='fade'});
+$('ad').onchange=()=>edit(e=>{e.ad=Math.max(0,+$('ad').value||0)});
+$('tr').onchange=()=>{push();S[cur].tr=$('tr').value;save()};
+$('prevB').onclick=()=>{draw(true);playTr($('frame'),S[cur].tr,1)};
 addEventListener('resize',()=>showing?renderShow():draw());
+updRc();
 S.forEach(s=>s.els.forEach(e=>nid=Math.max(nid,e.id)));
 draw();
 </script>
