@@ -61,7 +61,8 @@ input[type=color]{width:100%;height:30px;padding:0;border:1px solid #3a3e44;bord
 .tm{font-variant-numeric:tabular-nums;color:var(--dim);min-width:64px}
 @media(max-width:720px){#lay .eg{grid-template-columns:1fr!important}#cap8{grid-template-columns:repeat(4,1fr)!important}.mon{grid-template-columns:1fr}.ctl{grid-template-columns:1fr}.row{grid-template-columns:repeat(5,1fr)}.aud{grid-template-columns:repeat(8,1fr)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-</style></head>
+</style><script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
 <body>
 <div class="dev">
 <div class="hd"><b>ATEM Mini Extreme ISO G2</b><span>Webシミュレーター(画面キャプチャー入力) / 1-8: プレビュー, Shift+1-8: プログラム, Space: AUTO, Enter: CUT</span></div>
@@ -451,19 +452,42 @@ function doCmd(d){
   case "fd":if(AU[i]&&v>=0&&v<=100){AU[i].r.value=v;AU[i].r.dispatchEvent(new Event("input"))}break;
   case "on":if(AU[i])AU[i].b.click();break}}
 const stateObj=()=>({pg:S.pgm,pv:S.pvw,ty:S.type,du:S.dur,ea:S.ease||"lin",tp:S.tp<0?0:Math.round(S.tp*100),k1:S.k1,dsk:S.dsk,pip:S.pip,cap:S.cap,clk:S.clk||0,tmr:S.tmr||0,safe:S.safe||0,afv:S.afv||0,lim:S.lim||0,strm:S.strm,rec:S.rec,ftb:S.ftbDir||0,ts:Math.round(S.ts),tr:Math.round(S.tr),au:AU.map(a=>[a.v,a.on?1:0]),sc:SC.map(x=>x?1:0)});
-(async()=>{try{if(!window.claude)return;const room=await claude.use("room");if(!room)return;
-  CODE=rcStore("atem_code")||String(Math.random()*1e6|0).padStart(6,"0");rcStore("atem_code",CODE);
-  HR=await room.join("atem-"+CODE);HR.on("cmd",m=>{if(!REMOTE)doCmd(m.data)});
+function askAllow(c){const d=document.createElement("div");d.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:20;background:#2b2f35;border:1px solid #555;border-radius:8px;padding:10px;display:flex;gap:8px;align-items:center";
+  d.innerHTML='<span style="flex:1">リモコンの接続要求があります。許可しますか?</span>';
+  const y=document.createElement("button"),n=document.createElement("button");y.textContent="許可";n.textContent="拒否";y.className=n.className="sm";
+  y.onclick=()=>{c.ok=true;d.remove()};n.onclick=()=>{c.close();d.remove()};d.append(y,n);document.body.appendChild(d)}
+function peerHost(code){return new Promise((res,rej)=>{const p=new Peer("atemsw-"+code),L={},conns=[];
+  const api={on(t,f){(L[t]=L[t]||[]).push(f)},emit(t,d){conns.forEach(c=>{if(c.ok&&c.open)c.send({t,d})});return Promise.resolve()}};
+  p.on("open",()=>res(api));p.on("error",rej);
+  p.on("connection",c=>{conns.push(c);c.ok=false;askAllow(c);
+    c.on("data",m=>{if(c.ok&&m&&L[m.t])L[m.t].forEach(f=>f({data:m.d}))});
+    c.on("close",()=>{const i=conns.indexOf(c);if(i>=0)conns.splice(i,1)})})})}
+function peerRemote(code){return new Promise((res,rej)=>{const p=new Peer(),L={};p.on("error",rej);
+  p.on("open",()=>{const c=p.connect("atemsw-"+code,{reliable:true});
+    c.on("open",()=>res({on(t,f){(L[t]=L[t]||[]).push(f)},emit(t,d){if(c.open)c.send({t,d});return Promise.resolve()},leave(){try{p.destroy()}catch(e){}}}));
+    c.on("data",m=>{if(m&&L[m.t])L[m.t].forEach(f=>f({data:m.d}))});
+    c.on("close",()=>{const e=$("rst");if(e)e.textContent="切断されました"});
+    setTimeout(()=>rej(new Error("timeout")),12000)})})}
+async function startPeerHost(){for(let k=0;k<6;k++){const code=k===0&&rcStore("atem_code")?rcStore("atem_code"):String(Math.random()*1e6|0).padStart(6,"0");
+  try{const h=await peerHost(code);CODE=code;rcStore("atem_code",code);return h}catch(e){if(!(e&&e.type==="unavailable-id"))throw e}}}
+(async()=>{try{
+  const room=window.claude?await claude.use("room"):null;
+  if(room){CODE=rcStore("atem_code")||String(Math.random()*1e6|0).padStart(6,"0");rcStore("atem_code",CODE);HR=await room.join("atem-"+CODE)}
+  else if(window.Peer)HR=await startPeerHost();
+  if(!HR){$("rci").textContent="リモコン機能を利用できません(ネットワークを確認してください)";return}
+  HR.on("cmd",m=>{if(!REMOTE)doCmd(m.data)});
   setInterval(()=>{if(!REMOTE)HR.emit("st",stateObj()).catch(()=>{})},400);
-  $("rci").textContent="リモコンコード: "+CODE+"(スマホで同じページを開き「リモコンモード」で入力)"}catch(e){}})();
+  $("rci").textContent="リモコンコード: "+CODE+"(スマホで同じページを開き「リモコンモード」で入力)"}
+  catch(e){$("rci").textContent="リモコンコードを取得できませんでした。ページを再読み込みしてください。"}})();
 const send=o=>{if(RR)RR.emit("cmd",o).catch(()=>{})};
 $("rcb").onclick=()=>{document.querySelector(".dev").style.display="none";const r=$("rc");r.style.display="block";
   r.innerHTML=`<div class="rh"><b>リモコン接続</b><button class="rb sm2" data-exit="1">戻る</button></div><div class="lbl">PC側に表示されているコード(6桁)</div><input type="text" id="rcode" inputmode="numeric" maxlength="6" value="${rcStore("atem_rcode")||""}"><button class="rb" id="rgo" style="width:100%">接続</button><div class="lbl" id="rerr" style="margin-top:8px"></div>`};
 async function openRemote(code){const er=$("rerr");
   if(!/^\d{6}$/.test(code)){er.textContent="6桁の数字を入力してください。";return}
-  try{const room=window.claude?await claude.use("room"):null;if(!room){er.textContent="接続できません。同じアカウントでサインインしているか確認してください。";return}
-    RR=await room.join("atem-"+code);rcStore("atem_rcode",code);REMOTE=true;buildRemote();RR.on("st",m=>applyState(m.data))}
-  catch(e){er.textContent="接続に失敗しました。"}}
+  try{const room=window.claude?await claude.use("room"):null;
+    if(room)RR=await room.join("atem-"+code);else if(window.Peer)RR=await peerRemote(code);else{er.textContent="接続できません。";return}
+    rcStore("atem_rcode",code);REMOTE=true;buildRemote();RR.on("st",m=>applyState(m.data))}
+  catch(e){er.textContent="接続に失敗しました。コードを確認し、PC側のページを開いたままにしてください。"}}
 function exitRemote(){REMOTE=false;try{if(RR)RR.leave()}catch(e){}RR=null;$("rc").style.display="none";document.querySelector(".dev").style.display=""}
 function buildRemote(){
   const B=(c,a,t)=>`<button class="rb ${c}" ${a}>${t}</button>`;
