@@ -79,12 +79,13 @@ input[type=color]{width:32px;height:30px;padding:0;border:1px solid var(--line);
   <button id="addS">＋スライド</button><button id="dupS">複製</button><button id="delS">スライド削除</button>
   <span class="sep"></span>
   <button id="play">▶発表</button><button id="rem">📱リモコン</button>
+  <button id="pdfi">📄PDF読込</button><input id="pf" type="file" accept="application/pdf,.pdf" hidden>
   <button id="pdf">PDF保存/印刷</button><button id="exp">JSON書出</button><button id="imp">読込</button><input id="jf" type="file" accept=".json" hidden>
-  <button id="reset">初期化</button>
+  <button id="reset">初期化</button><span id="sv" style="margin-left:auto;color:var(--mut);font-size:12px"></span>
  </div>
  <div id="main"><div id="thumbs"></div><div id="wrap"><div id="frame"></div></div></div>
  <div id="nt"><textarea id="note" placeholder="スピーカーノート（接続したスマホのリモコンに表示されます）"></textarea></div>
- <div id="hint">ドラッグで移動／右下の●でサイズ変更／文字はダブルクリックで編集／矢印キーで微調整（Shiftで大きく）／Delete削除／Ctrl+Zで元に戻す／動きは要素を選んで設定（▶確認で再生）、スライド切替は発表モードで再生</div>
+ <div id="hint">ドラッグで移動／右下の●でサイズ変更／文字はダブルクリックで編集／矢印キーで微調整（Shiftで大きく）／Delete削除／自動保存（このブラウザ内・更新しても残ります）／Ctrl+Zで元に戻す／動きは要素を選んで設定（▶確認で再生）、スライド切替は発表モードで再生</div>
 </div>
 <div id="print"></div>
 <div id="pres"></div>
@@ -103,11 +104,20 @@ const INIT=()=>[
 ];
 let S,cur=0,sel=null,hist=[],fut=[],nid=100,scale=1;
 const $=id=>document.getElementById(id),KEY='slide-editor-v1';
-try{const r=localStorage.getItem(KEY);if(r)S=JSON.parse(r)}catch(e){}
-if(!S||!S.length)S=INIT();
+S=INIT();
 const snap=()=>JSON.stringify(S);
 function push(){hist.push(snap());if(hist.length>80)hist.shift();fut=[];save()}
-function save(){try{localStorage.setItem(KEY,snap())}catch(e){}
+let ready=false,dirty=false,svT,dbp;
+const setSv=t=>{const x=document.getElementById('sv');if(x)x.textContent=t};
+const idb=()=>dbp||(dbp=new Promise((ok,ng)=>{const r=indexedDB.open('slide-editor-db',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>ok(r.result);r.onerror=()=>ng(r.error)}));
+const dbGet=async()=>{const d=await idb();return new Promise((ok,ng)=>{const q=d.transaction('kv').objectStore('kv').get('deck');q.onsuccess=()=>ok(q.result);q.onerror=()=>ng(q.error)})};
+const dbPut=async v=>{const d=await idb();return new Promise((ok,ng)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,'deck');t.oncomplete=ok;t.onerror=()=>ng(t.error);t.onabort=()=>ng(t.error)})};
+async function flush(){if(!ready||!dirty)return;dirty=false;
+ try{await dbPut({S,cur});setSv('✓ 自動保存済み')}
+ catch(e){try{localStorage.setItem(KEY,snap());setSv('✓ 保存済み（簡易）')}catch(_){setSv('⚠ 保存できません。JSON書出で控えを取ってください')}}}
+addEventListener('visibilitychange',()=>{if(document.hidden){dirty=true;flush()}});
+addEventListener('pagehide',()=>{dirty=true;flush()});
+function save(){dirty=true;setSv('保存中…');clearTimeout(svT);svT=setTimeout(flush,400);
  try{if(conns.length){clearTimeout(window._bt);window._bt=setTimeout(()=>broadcast(true),600)}}catch(e){}}
 function undo(){if(!hist.length)return;fut.push(snap());S=JSON.parse(hist.pop());cur=Math.min(cur,S.length-1);sel=null;save();draw()}
 function redo(){if(!fut.length)return;hist.push(snap());S=JSON.parse(fut.pop());cur=Math.min(cur,S.length-1);sel=null;save();draw()}
@@ -292,7 +302,29 @@ async function remoteMode(){
  q('rp').onclick=()=>{c&&c.open&&c.send({d:-1});navigator.vibrate&&navigator.vibrate(15)};
  q('rn').onclick=()=>{c&&c.open&&c.send({d:1});navigator.vibrate&&navigator.vibrate(15)};
 }
-if(/^#r=/.test(location.hash))remoteMode();else draw();
+/* ===== PDF読込 ===== */
+$('pdfi').onclick=()=>$('pf').click();
+$('pf').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;
+ const rep_=confirm('「'+f.name+'」からスライドを作成します。\n\nOK：今のスライドをすべて置き換える\nキャンセル：今のスライドの後ろに追加する');
+ try{setSv('PDFを準備中…');await loadJs('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise,out=[];
+  for(let i=1;i<=pdf.numPages;i++){setSv(`PDF読込中 ${i}/${pdf.numPages}`);
+   const pg=await pdf.getPage(i),v0=pg.getViewport({scale:1}),fit=Math.min(1440/v0.width,810/v0.height),vp=pg.getViewport({scale:fit*1.4}),cv=document.createElement('canvas');
+   cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
+   await pg.render({canvasContext:cx,viewport:vp}).promise;
+   const w=Math.round(v0.width*fit),hh=Math.round(v0.height*fit);
+   out.push({els:[{id:++nid,t:'i',x:Math.round((1440-w)/2),y:Math.round((810-hh)/2),w,h:hh,src:cv.toDataURL('image/jpeg',.82)}]})}
+  push();if(rep_){S=out;cur=0}else{S.push(...out);cur=S.length-out.length}sel=null;draw();save();
+ }catch(e){setSv('⚠ PDFを読み込めませんでした');alert('PDFを読み込めませんでした。ネット接続（pdf.jsの読み込み）とファイルを確認してください。')}};
+/* ===== 起動（保存データの読み込み） ===== */
+async function boot(){
+ try{const d=await dbGet();if(d&&d.S&&d.S.length){S=d.S;cur=Math.min(d.cur||0,S.length-1)}
+  else{const r=localStorage.getItem(KEY);if(r){const x=JSON.parse(r);if(x&&x.length)S=x}}}
+ catch(e){try{const r=localStorage.getItem(KEY);if(r){const x=JSON.parse(r);if(x&&x.length)S=x}}catch(_){}}
+ S.forEach(s=>s.els.forEach(e=>nid=Math.max(nid,e.id)));ready=true;draw();setSv('✓ 自動保存');
+ try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}}
+if(/^#r=/.test(location.hash))remoteMode();else boot();
 </script>
 </body>
 </html>
