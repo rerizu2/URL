@@ -46,6 +46,7 @@ input[type=color]{width:32px;height:30px;padding:0;border:1px solid var(--line);
 #rc .bt{display:flex;gap:12px;flex:1}#rc .bt button{flex:1;min-height:15vh;font-size:30px;font-weight:700;background:var(--acc);color:#fff;border:0;border-radius:16px}
 #rc .bt button:first-child{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
 #rc .ls button{display:block;width:100%;text-align:left;margin-bottom:6px;padding:10px}
+#rsl{position:relative;width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
 #rc .ls button.cur{background:var(--accbg);border-color:var(--acc)}
 #rno{flex:1;overflow:auto;white-space:pre-wrap;line-height:1.6;font-size:22px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:30vh}
 #nt{flex:none;padding:6px 10px;background:var(--panel);border-top:1px solid var(--line)}
@@ -102,7 +103,8 @@ try{const r=localStorage.getItem(KEY);if(r)S=JSON.parse(r)}catch(e){}
 if(!S||!S.length)S=INIT();
 const snap=()=>JSON.stringify(S);
 function push(){hist.push(snap());if(hist.length>80)hist.shift();fut=[];save()}
-function save(){try{localStorage.setItem(KEY,snap())}catch(e){}}
+function save(){try{localStorage.setItem(KEY,snap())}catch(e){}
+ try{if(conns.length){clearTimeout(window._bt);window._bt=setTimeout(()=>broadcast(true),600)}}catch(e){}}
 function undo(){if(!hist.length)return;fut.push(snap());S=JSON.parse(hist.pop());cur=Math.min(cur,S.length-1);sel=null;save();draw()}
 function redo(){if(!fut.length)return;hist.push(snap());S=JSON.parse(fut.pop());cur=Math.min(cur,S.length-1);sel=null;save();draw()}
 function mk(e,live){
@@ -245,8 +247,8 @@ document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement
 function loadJs(u){return new Promise((ok,ng)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=ng;document.head.appendChild(s)})}
 const PEERJS='https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';
 let hostPeer=null,conns=[];
-const state=()=>({cur,n:S.length,note:S[cur].note||'',t:S.map(s=>{const e=s.els.find(x=>x.t=='t');return e?e.s.split('\n')[0].slice(0,28):'(空)'})});
-function broadcast(){conns.forEach(c=>{try{c.open&&c.send(state())}catch(e){}})}
+const state=full=>({...(full?{S}:{}),cur,n:S.length,note:S[cur].note||'',t:S.map(s=>{const e=s.els.find(x=>x.t=='t');return e?e.s.split('\n')[0].slice(0,28):'(空)'})});
+function broadcast(full){conns.forEach(c=>{try{c.open&&c.send(state(full))}catch(e){}})}
 async function openRemote(){
  $('rm').style.display='flex';
  if(hostPeer)return;
@@ -259,7 +261,7 @@ async function openRemote(){
    try{new QRCode($('qr'),{text:u,width:200,height:200})}catch(e){$('qr').textContent='下のURLをスマホで開いてください'}
   });
   hostPeer.on('connection',c=>{conns.push(c);
-   c.on('open',()=>{$('rm').style.display='none';if(!presOn)startPres();$('rs').textContent='📱 接続中（'+conns.filter(x=>x.open).length+'台）';c.send(state())});
+   c.on('open',()=>{$('rm').style.display='none';if(!presOn)startPres();$('rs').textContent='📱 接続中（'+conns.filter(x=>x.open).length+'台）';c.send(state(true))});
    c.on('data',m=>{if(m.go!=null)go(m.go);else if(m.d)go(cur+m.d)});
    c.on('close',()=>{conns=conns.filter(x=>x!==c);$('rs').textContent='接続待ち'})});
   hostPeer.on('error',e=>{$('rs').textContent='接続エラー: '+e.type;hostPeer=null});
@@ -268,16 +270,17 @@ async function openRemote(){
 $('rem').onclick=openRemote;$('rx').onclick=()=>$('rm').style.display='none';
 /* ===== スマホ側（#r=ID で開いたとき） ===== */
 async function remoteMode(){
- document.body.innerHTML='<div id="rc"><div id="rst" style="text-align:center;color:var(--mut)">接続中…</div><div id="rt" style="text-align:center;font-size:20px;font-weight:700"></div><div id="rno"></div><div style="display:flex;gap:8px;justify-content:flex-end"><button id="fm">A−</button><button id="fp">A＋</button></div><div class="bt"><button id="rp">◀ 前へ</button><button id="rn">次へ ▶</button></div><div class="ls" id="rl"></div></div>';
+ document.body.innerHTML='<div id="rc"><div id="rst" style="text-align:center;color:var(--mut)">接続中…</div><div id="rsl"></div><div id="rt" style="text-align:center;font-size:20px;font-weight:700"></div><div id="rno"></div><div style="display:flex;gap:8px;justify-content:flex-end"><button id="fm">A−</button><button id="fp">A＋</button></div><div class="bt"><button id="rp">◀ 前へ</button><button id="rn">次へ ▶</button></div><div class="ls" id="rl"></div></div>';
  const q=id=>document.getElementById(id),hid=location.hash.slice(3);let c=null;
  try{await loadJs(PEERJS)}catch(e){q('rst').textContent='通信ライブラリを読み込めません';return}
  const p=new Peer();
  p.on('open',()=>{c=p.connect(hid,{reliable:true});
   c.on('open',()=>q('rst').textContent='✅ 接続しました');
-  c.on('data',s=>{q('rno').textContent=s.note||'（ノートなし）';q('rt').textContent=(s.cur+1)+' / '+s.n+'　'+s.t[s.cur];
+  c.on('data',s=>{if(s.S)S=s.S;last=s;showSl();q('rno').textContent=s.note||'（ノートなし）';q('rt').textContent=(s.cur+1)+' / '+s.n+'　'+s.t[s.cur];
    q('rl').innerHTML='';s.t.forEach((t,i)=>{const b=document.createElement('button');b.textContent=(i+1)+'. '+t;if(i==s.cur)b.className='cur';b.onclick=()=>c.send({go:i});q('rl').appendChild(b)})});
   c.on('close',()=>q('rst').textContent='❌ 切断されました。QRを読み直してください')});
  p.on('error',e=>q('rst').textContent='接続エラー: '+e.type+'（PC側でリモコンを開いているか確認）');
+ let last=null;const showSl=()=>{if(!last||!S[last.cur])return;const b=q('rsl'),sc=b.clientWidth/1440;b.style.height=b.clientWidth*810/1440+'px';b.innerHTML='';const sl=slideEl(S[last.cur],false);sl.style.transform=`scale(${sc})`;b.appendChild(sl)};addEventListener('resize',showSl);
  let fz=22;const sz=d=>{fz=Math.max(14,Math.min(48,fz+d));q('rno').style.fontSize=fz+'px'};q('fm').onclick=()=>sz(-2);q('fp').onclick=()=>sz(2);
  q('rp').onclick=()=>{c&&c.open&&c.send({d:-1});navigator.vibrate&&navigator.vibrate(15)};
  q('rn').onclick=()=>{c&&c.open&&c.send({d:1});navigator.vibrate&&navigator.vibrate(15)};
