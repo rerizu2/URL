@@ -71,7 +71,7 @@ input[type=color]{width:32px;height:30px;padding:0;border:1px solid var(--line);
   <button id="bold"><b>B</b></button><button id="al" title="配置">左</button>
   <span class="sep"></span>
   <button id="up">前面</button><button id="dn">背面</button><button id="del">削除</button>
-  <span class="sep"></span><span style="color:var(--mut)">文字・画像の動き</span><select id="an" title="選択中の要素のアニメーション"><option value="none">なし</option><option value="fade">フェード</option><option value="up">下から</option><option value="down">上から</option><option value="left">左から</option><option value="right">右から</option><option value="zoom">ズーム</option><option value="pop">ポップ</option><option value="blur">ぼかし</option><option value="wipe">ワイプ</option><option value="type">タイプ打ち(文字)</option><option value="char">1文字ずつ(文字)</option></select><span style="color:var(--mut)">時間</span><input id="ad" type="number" min="0.1" max="10" step="0.1" style="width:60px"><span style="color:var(--mut)">遅延</span><input id="adl" type="number" min="0" max="20" step="0.1" style="width:60px"><button id="pv">▶確認</button>
+  <span class="sep"></span><span style="color:var(--mut)">文字・画像の動き</span><select id="an" title="選択中の要素のアニメーション"><option value="none">なし</option><option value="fade">フェード</option><option value="up">下から</option><option value="down">上から</option><option value="left">左から</option><option value="right">右から</option><option value="zoom">ズーム</option><option value="pop">ポップ</option><option value="blur">ぼかし</option><option value="wipe">ワイプ</option><option value="type">タイプ打ち(文字)</option><option value="char">1文字ずつ(文字)</option></select><span style="color:var(--mut)">時間</span><input id="ad" type="number" min="0.1" max="10" step="0.1" style="width:60px"><span style="color:var(--mut)">遅延</span><input id="adl" type="number" min="0" max="20" step="0.1" style="width:60px"><button id="pv">▶確認</button><input id="bgc" type="color" value="#ffffff" title="スライドの背景色">
   <span class="sep"></span><span style="color:var(--mut)">スライド切替</span><select id="tr" title="このスライドが表示されるときの動き"><option value="none">なし</option><option value="fade">フェード</option><option value="slide">横スライド</option><option value="rise">下から</option><option value="zoom">ズーム</option></select><input id="trd" type="number" min="0.1" max="3" step="0.1" style="width:60px" title="切替時間(秒)">
   <span class="sep"></span>
   <button id="undo">↶</button><button id="redo">↷</button>
@@ -123,11 +123,11 @@ function undo(){if(!hist.length)return;fut.push(snap());S=JSON.parse(hist.pop())
 function redo(){if(!fut.length)return;hist.push(snap());S=JSON.parse(fut.pop());cur=Math.min(cur,S.length-1);sel=null;save();draw()}
 function mk(e,live){
  const d=document.createElement('div');d.className='el '+e.t;d.dataset.id=e.id;
- d.style.cssText=`left:${e.x}px;top:${e.y}px;width:${e.w}px;`+(e.t=='i'?`height:${e.h}px;`:`min-height:${e.h}px;font-size:${e.fs}px;color:${e.c};font-weight:${e.b?700:400};text-align:${e.a};`);
+ d.style.cssText=`left:${e.x}px;top:${e.y}px;width:${e.w}px;`+(e.t=='i'?`height:${e.h}px;`:`min-height:${e.h}px;font-size:${e.fs}px;color:${e.c};line-height:${e.lh||1.35};font-weight:${e.b?700:400};text-align:${e.a};`);
  if(e.t=='i'){const im=new Image();im.src=e.k?IMG[e.k]:e.src;im.draggable=false;d.appendChild(im)}else d.textContent=e.s;
  if(live&&e.id===sel){d.classList.add('sel');const h=document.createElement('div');h.className='hd';d.appendChild(h)}
  return d}
-function slideEl(s,live){const d=document.createElement('div');d.className='slide';s.els.forEach(e=>d.appendChild(mk(e,live)));return d}
+function slideEl(s,live){const d=document.createElement('div');d.className='slide';if(s.bg)d.style.background=s.bg;s.els.forEach(e=>d.appendChild(mk(e,live)));return d}
 function draw(){
  const f=$('frame'),w=$('wrap');
  scale=Math.min((w.clientWidth-32)/1440,(w.clientHeight-32)/810);if(scale<.2)scale=.2;
@@ -136,7 +136,7 @@ function draw(){
  const th=$('thumbs');th.innerHTML='';
  S.forEach((s,i)=>{const t=document.createElement('div');t.className='th'+(i==cur?' cur':'');t.appendChild(slideEl(s,false));const n=document.createElement('i');n.textContent=i+1;t.appendChild(n);t.onclick=()=>{cur=i;sel=null;draw()};th.appendChild(t)});
  const nt=$('note');if(document.activeElement!==nt)nt.value=S[cur].note||'';const e=cur_el();$('bold').classList.toggle('on',!!(e&&e.b));
- const A=(e&&e.an)||{};$('an').value=A.t||'none';$('ad').value=A.d??.6;$('adl').value=A.l??0;$('tr').value=S[cur].tr||'none';$('trd').value=S[cur].trd??.6;$('an').disabled=$('ad').disabled=$('adl').disabled=!e;
+ const A=(e&&e.an)||{};$('an').value=A.t||'none';$('ad').value=A.d??.6;$('adl').value=A.l??0;$('tr').value=S[cur].tr||'none';$('trd').value=S[cur].trd??.6;$('bgc').value=S[cur].bg||'#ffffff';$('an').disabled=$('ad').disabled=$('adl').disabled=!e;
  if(e&&e.t=='t'){$('fs').value=e.fs;$('col').value=e.c;$('al').textContent={left:'左',center:'中',right:'右'}[e.a]}
 }
 const cur_el=()=>S[cur].els.find(e=>e.id===sel);
@@ -233,6 +233,7 @@ $('ad').onchange=()=>setAn(a=>a.d=Math.max(.1,parseFloat($('ad').value)||.6));
 $('adl').onchange=()=>setAn(a=>a.l=Math.max(0,parseFloat($('adl').value)||0));
 $('tr').onchange=()=>{push();S[cur].tr=$('tr').value;save()};
 $('trd').onchange=()=>{push();S[cur].trd=Math.max(.1,parseFloat($('trd').value)||.6);save()};
+$('bgc').onchange=()=>{push();S[cur].bg=$('bgc').value;draw()};
 $('pv').onclick=()=>{sel=null;draw();const m=play($('frame').querySelector('.slide'),S[cur]);setTimeout(draw,m+300)};
 /* ===== 発表モード ===== */
 let presOn=false;
@@ -302,21 +303,55 @@ async function remoteMode(){
  q('rp').onclick=()=>{c&&c.open&&c.send({d:-1});navigator.vibrate&&navigator.vibrate(15)};
  q('rn').onclick=()=>{c&&c.open&&c.send({d:1});navigator.vibrate&&navigator.vibrate(15)};
 }
-/* ===== PDF読込 ===== */
+/* ===== PDF読込（文字・画像を個別の要素として取り込む） ===== */
 $('pdfi').onclick=()=>$('pf').click();
+const hex=c=>{if(typeof c!=='string')return '#000000';if(c[0]=='#')return c.length==4?'#'+[...c.slice(1)].map(x=>x+x).join(''):c;const m=c.match(/[\d.]+/g);return m?'#'+m.slice(0,3).map(v=>(+v|0).toString(16).padStart(2,'0')).join(''):'#000000'};
+function imgURL(src,mw){const w=src.width||src.naturalWidth,h=src.height||src.naturalHeight;if(!w||!h)return null;
+ const k=Math.min(1,mw/w),cw=Math.max(1,Math.round(w*k)),ch=Math.max(1,Math.round(h*k)),c=document.createElement('canvas');c.width=cw;c.height=ch;const x=c.getContext('2d');x.drawImage(src,0,0,cw,ch);
+ let al=false;try{const d=x.getImageData(0,0,cw,ch).data,st=4*Math.max(1,(d.length/4/4000)|0);for(let i=3;i<d.length;i+=st)if(d[i]<250){al=true;break}}catch(e){}
+ return al?c.toDataURL('image/png'):c.toDataURL('image/jpeg',.85)}
+async function pdfPage(pg){
+ const v0=pg.getViewport({scale:1}),fit=Math.min(1440/v0.width,810/v0.height),R=1.4,vp=pg.getViewport({scale:fit*R}),v1=pg.getViewport({scale:fit}),
+  ox=Math.round((1440-v0.width*fit)/2),oy=Math.round((810-v0.height*fit)/2),cv=document.createElement('canvas');
+ cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
+ const glyphs=[],imgs=[],realDraw=cx.drawImage.bind(cx);
+ cx.fillText=function(s,x,y){const m=this.getTransform();glyphs.push({x:(m.a*x+m.c*y+m.e)/R,y:(m.b*x+m.d*y+m.f)/R,f:this.fillStyle})};
+ cx.strokeText=()=>{};
+ cx.drawImage=function(src,...a){
+  if(src instanceof HTMLCanvasElement&&src.width>=cv.width*.9&&src.height>=cv.height*.9)return realDraw(src,...a);
+  const m=this.getTransform();let dx,dy,dw,dh;
+  if(a.length>=8)[dx,dy,dw,dh]=a.slice(4,8);else if(a.length>=4)[dx,dy,dw,dh]=a;else{dx=a[0];dy=a[1];dw=src.width;dh=src.height}
+  const P=[[dx,dy],[dx+dw,dy],[dx,dy+dh],[dx+dw,dy+dh]].map(([x,y])=>[(m.a*x+m.c*y+m.e)/R,(m.b*x+m.d*y+m.f)/R]),xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),
+   L=Math.min(...xs),T=Math.min(...ys),W=Math.max(...xs)-L,H=Math.max(...ys)-T;
+  if(W<6||H<6||imgs.length>=40)return;const u=imgURL(src,1600);if(u)imgs.push({u,x:L,y:T,w:W,h:H})};
+ await pg.render({canvasContext:cx,viewport:vp}).promise;
+ const tc=await pg.getTextContent(),its=[];
+ for(const it of tc.items){if(!it.str)continue;const t=pdfjsLib.Util.transform(v1.transform,it.transform);its.push({s:it.str,x:t[4],y:t[5],fs:Math.hypot(t[2],t[3]),w:it.width*fit})}
+ const lines=[];
+ for(const it of its){const l=lines[lines.length-1];
+  if(l&&Math.abs(it.y-l.y)<it.fs*.35&&it.x>=l.e-it.fs*.6&&it.x-l.e<it.fs*3){const gap=it.x-l.e>it.fs*.25&&!/\s$/.test(l.s)&&!/^\s/.test(it.s);l.s+=(gap?' ':'')+it.s;l.e=it.x+it.w;l.fs=Math.max(l.fs,it.fs)}
+  else lines.push({s:it.s,x:it.x,y:it.y,e:it.x+it.w,fs:it.fs})}
+ const paras=[];
+ for(const l of lines){if(!l.s.trim())continue;const p=paras[paras.length-1];
+  if(p){const q=p.L[p.L.length-1],dy=l.y-q.y;if(dy>q.fs*.9&&dy<q.fs*1.9&&Math.abs(l.x-p.x)<q.fs*.7&&Math.abs(l.fs-q.fs)<q.fs*.15){p.L.push(l);p.lh=dy/q.fs;continue}}
+  paras.push({L:[l],x:l.x,lh:1.35})}
+ const col=(x,y)=>{let b=null,bd=1e9;for(const g of glyphs){const d=Math.abs(g.x-x)+Math.abs(g.y-y);if(d<bd){bd=d;b=g}}return b&&bd<40?hex(b.f):'#000000'};
+ const d=cx.getImageData(0,0,cv.width,cv.height).data,r0=d[0],g0=d[1],b0=d[2];let uni=true;
+ for(let i=0;i<d.length;i+=4*97)if(Math.abs(d[i]-r0)+Math.abs(d[i+1]-g0)+Math.abs(d[i+2]-b0)>24){uni=false;break}
+ const els=[];
+ if(!uni)els.push({id:++nid,t:'i',x:ox,y:oy,w:Math.round(v0.width*fit),h:Math.round(v0.height*fit),src:cv.toDataURL('image/jpeg',.82)});
+ imgs.forEach(im=>els.push({id:++nid,t:'i',x:Math.round(ox+im.x),y:Math.round(oy+im.y),w:Math.round(im.w),h:Math.round(im.h),src:im.u}));
+ paras.forEach(p=>{const f=p.L[0],fs=Math.max(8,Math.round(f.fs)),lh=Math.max(1,Math.min(2.2,+p.lh.toFixed(2))),e=Math.max(...p.L.map(l=>l.e)),mx=Math.min(...p.L.map(l=>l.x));
+  els.push({id:++nid,t:'t',x:Math.round(ox+mx-8),y:Math.round(oy+f.y-4-fs*((lh-1)/2+.88)),w:Math.round(e-mx+fs*1.5+24),h:Math.round(p.L.length*fs*lh+8),s:p.L.map(l=>l.s.replace(/\s+$/,'')).join('\n'),fs,lh,c:col(f.x,f.y),b:0,a:'left'})});
+ return{bg:hex(`rgb(${r0},${g0},${b0})`),els}}
 $('pf').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;
- const rep_=confirm('「'+f.name+'」からスライドを作成します。\n\nOK：今のスライドをすべて置き換える\nキャンセル：今のスライドの後ろに追加する');
- try{setSv('PDFを準備中…');await loadJs('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
-  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise,out=[];
-  for(let i=1;i<=pdf.numPages;i++){setSv(`PDF読込中 ${i}/${pdf.numPages}`);
-   const pg=await pdf.getPage(i),v0=pg.getViewport({scale:1}),fit=Math.min(1440/v0.width,810/v0.height),vp=pg.getViewport({scale:fit*1.4}),cv=document.createElement('canvas');
-   cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);
-   await pg.render({canvasContext:cx,viewport:vp}).promise;
-   const w=Math.round(v0.width*fit),hh=Math.round(v0.height*fit);
-   out.push({els:[{id:++nid,t:'i',x:Math.round((1440-w)/2),y:Math.round((810-hh)/2),w,h:hh,src:cv.toDataURL('image/jpeg',.82)}]})}
+ const rep_=confirm('「'+f.name+'」からスライドを作成します。\n文字と画像は1つずつ編集・移動できる要素として取り込みます。\n\nOK：今のスライドをすべて置き換える\nキャンセル：今のスライドの後ろに追加する');
+ try{setSv('PDFを準備中…');const V='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';await loadJs(V+'pdf.min.js');
+  pdfjsLib.GlobalWorkerOptions.workerSrc=V+'pdf.worker.min.js';
+  const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer(),cMapUrl:V+'cmaps/',cMapPacked:true}).promise,out=[];
+  for(let i=1;i<=pdf.numPages;i++){setSv(`PDF読込中 ${i}/${pdf.numPages}`);out.push(await pdfPage(await pdf.getPage(i)))}
   push();if(rep_){S=out;cur=0}else{S.push(...out);cur=S.length-out.length}sel=null;draw();save();
- }catch(e){setSv('⚠ PDFを読み込めませんでした');alert('PDFを読み込めませんでした。ネット接続（pdf.jsの読み込み）とファイルを確認してください。')}};
+ }catch(e){console.error(e);setSv('⚠ PDFを読み込めませんでした');alert('PDFを読み込めませんでした。ネット接続（pdf.jsの読み込み）とファイルを確認してください。')}};
 /* ===== 起動（保存データの読み込み） ===== */
 async function boot(){
  try{const d=await dbGet();if(d&&d.S&&d.S.length){S=d.S;cur=Math.min(d.cur||0,S.length-1)}
