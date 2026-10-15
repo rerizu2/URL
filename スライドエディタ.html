@@ -47,6 +47,10 @@ input[type=color]{width:32px;height:30px;padding:0;border:1px solid var(--line);
 #rc .bt button:first-child{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
 #rc .ls button{display:block;width:100%;text-align:left;margin-bottom:6px;padding:10px}
 #rsl{position:relative;width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+#rl{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.tb{position:relative;aspect-ratio:16/9;border:3px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;cursor:pointer}
+.tb.cur{border-color:var(--acc)}.tb .slide{pointer-events:none}
+.tb i{position:absolute;left:4px;bottom:3px;font-style:normal;font-size:12px;background:#000a;color:#fff;border-radius:4px;padding:0 6px;z-index:3}
 #rc .ls button.cur{background:var(--accbg);border-color:var(--acc)}
 #rno{flex:1;overflow:auto;white-space:pre-wrap;line-height:1.6;font-size:22px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:30vh}
 #nt{flex:none;padding:6px 10px;background:var(--panel);border-top:1px solid var(--line)}
@@ -277,10 +281,13 @@ async function remoteMode(){
  p.on('open',()=>{c=p.connect(hid,{reliable:true});
   c.on('open',()=>q('rst').textContent='✅ 接続しました');
   c.on('data',s=>{if(s.S)S=s.S;last=s;showSl();q('rno').textContent=s.note||'（ノートなし）';q('rt').textContent=(s.cur+1)+' / '+s.n+'　'+s.t[s.cur];
-   q('rl').innerHTML='';s.t.forEach((t,i)=>{const b=document.createElement('button');b.textContent=(i+1)+'. '+t;if(i==s.cur)b.className='cur';b.onclick=()=>c.send({go:i});q('rl').appendChild(b)})});
+   s.S?showList():markCur()});
   c.on('close',()=>q('rst').textContent='❌ 切断されました。QRを読み直してください')});
  p.on('error',e=>q('rst').textContent='接続エラー: '+e.type+'（PC側でリモコンを開いているか確認）');
- let last=null;const showSl=()=>{if(!last||!S[last.cur])return;const b=q('rsl'),sc=b.clientWidth/1440;b.style.height=b.clientWidth*810/1440+'px';b.innerHTML='';const sl=slideEl(S[last.cur],false);sl.style.transform=`scale(${sc})`;b.appendChild(sl)};addEventListener('resize',showSl);
+ let last=null;const showSl=()=>{if(!last||!S[last.cur])return;const b=q('rsl'),sc=b.clientWidth/1440;b.style.height=b.clientWidth*810/1440+'px';b.innerHTML='';const sl=slideEl(S[last.cur],false);sl.style.transform=`scale(${sc})`;b.appendChild(sl)};const showList=()=>{const L=q('rl');L.innerHTML='';if(!last)return;S.forEach((s,i)=>{const b=document.createElement('div');b.className='tb'+(i==last.cur?' cur':'');L.appendChild(b);
+  const sl=slideEl(s,false);sl.style.transform=`scale(${(b.clientWidth-6)/1440})`;b.appendChild(sl);const n=document.createElement('i');n.textContent=i+1;b.appendChild(n);b.onclick=()=>c&&c.open&&c.send({go:i})})};
+ const markCur=()=>[...q('rl').children].forEach((x,i)=>x.classList.toggle('cur',i==last.cur));
+ addEventListener('resize',()=>{showSl();showList()});
  let fz=22;const sz=d=>{fz=Math.max(14,Math.min(48,fz+d));q('rno').style.fontSize=fz+'px'};q('fm').onclick=()=>sz(-2);q('fp').onclick=()=>sz(2);
  q('rp').onclick=()=>{c&&c.open&&c.send({d:-1});navigator.vibrate&&navigator.vibrate(15)};
  q('rn').onclick=()=>{c&&c.open&&c.send({d:1});navigator.vibrate&&navigator.vibrate(15)};
