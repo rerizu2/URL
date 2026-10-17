@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ITパスポート風 CBT模擬試験</title>
+<style>
+:root{--bg:#eceff3;--panel:#fff;--text:#111;--sub:#555;--line:#222;--soft:#c9ced8;--acc:#1763c7;--org:#ff9b7a;--red:#e4002b;--ok:#17803d;--ng:#d03030;--hl:#fff3a8;--cell:#dbe9fb;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171d;--panel:#1d222b;--text:#e8ecf5;--sub:#a3adc0;--line:#8d97ab;--soft:#394152;--acc:#6ea1ff;--org:#c9684a;--red:#ff4d6a;--ok:#4cc77f;--ng:#ff7a7a;--hl:#5a4d10;--cell:#24344f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14171d;--panel:#1d222b;--text:#e8ecf5;--sub:#a3adc0;--line:#8d97ab;--soft:#394152;--acc:#6ea1ff;--org:#c9684a;--red:#ff4d6a;--ok:#4cc77f;--ng:#ff7a7a;--hl:#5a4d10;--cell:#24344f;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Hiragino Sans","Noto Sans JP",Meiryo,system-ui,sans-serif;line-height:1.6}
+.hidden{display:none!important}
+.win{max-width:1040px;margin:0 auto;background:var(--panel);min-height:100vh;border:1px solid var(--soft)}
+.tbar{font-size:.72rem;color:var(--sub);padding:3px 8px}
+.head{display:flex;align-items:center;gap:14px;padding:8px 18px;flex-wrap:wrap;border-bottom:4px solid var(--line)}
+.logo{font-weight:900;font-size:2.3rem;color:var(--red);letter-spacing:-2px;line-height:1}
+.ttl{font-size:1.25rem;font-weight:700}
+.hr{margin-left:auto;text-align:right;font-size:.85rem}
+.badge{background:var(--org);color:#111;padding:2px 12px;border:1px solid var(--line);font-weight:700;font-size:.8rem}
+.btn{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:6px 14px;cursor:pointer;border-radius:3px}
+.btn:hover{background:var(--cell)}.btn:disabled{opacity:.4;cursor:default}
+.btn.org{background:var(--org);color:#111;font-weight:700}
+.btn.big{padding:12px 26px;font-size:1rem}
+.body{padding:18px}
+.fields{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin:18px 0}
+.fields table td{padding:4px 8px}
+.fields input{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:4px 8px;width:200px}
+.note{color:#ef7a00;font-weight:800;font-size:1.3rem;border-left:3px solid var(--line);padding-left:14px}
+.note small{display:block;font-size:.85rem}
+.notice{border:1px solid var(--line);height:170px;overflow:auto;padding:10px 14px;font-size:.9rem;margin-top:18px}
+.top{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;padding:8px 14px;border-bottom:4px solid var(--line)}
+.top .id{font-size:.85rem;line-height:1.4}
+.rt{text-decoration:underline;font-size:.95rem}
+.rt b{font-size:1.5rem;margin:0 2px}
+.rt.warn{color:var(--ng)}
+.top select{font:inherit;background:var(--panel);color:var(--text)}
+.sp{flex:1}
+.qh{font-weight:800;padding:8px 14px 4px;font-size:1.05rem}
+#qbox{margin:0 14px;border:1px solid var(--line);min-height:300px;padding:14px 22px;white-space:pre-wrap;background:#fff;color:#000;line-height:1.9;overflow:auto}
+.ansrow{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;padding:12px 14px;border-bottom:3px solid var(--line)}
+.ansbox{border:1px solid var(--line);padding:6px 18px;display:flex;gap:22px}
+.ansbox label{cursor:pointer;white-space:nowrap}
+.bot{display:flex;gap:10px;align-items:flex-end;padding:10px 14px;flex-wrap:wrap}
+.stw{overflow-x:auto;max-width:100%;flex:1 1 340px}
+table.st{border-collapse:collapse;font-size:.78rem;text-align:center}
+.st td,.st th{border:1px solid var(--line);min-width:38px;padding:2px 4px;cursor:pointer;height:28px}
+.st th.vl{background:var(--acc);color:#fff;writing-mode:vertical-rl;letter-spacing:2px;cursor:default;min-width:26px}
+.st td.cur{background:var(--cell);font-weight:800}
+.st td.fl{background:var(--hl)}
+.res{background:var(--bg);padding:18px 22px}
+.res h2{font-size:1.5rem;margin:.4em 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+.lb{color:var(--acc);font-weight:800;margin:10px 0 4px}
+.box{background:var(--panel);border:1px solid var(--line);padding:14px 22px}
+.big-s{font-size:2.3rem;font-weight:800;text-align:center}
+.cat{display:flex;justify-content:space-between;padding:6px 10px;font-size:1.05rem}
+.cat b{font-size:1.5rem}
+.low{color:var(--ng)}
+.crit td{padding:2px 14px 2px 0}
+.verdict{font-weight:800;font-size:1.2rem;margin-top:12px}
+.rv{border-top:1px solid var(--soft);padding:10px 0;font-size:.92rem}
+.tag{display:inline-block;padding:0 10px;border-radius:99px;color:#fff;font-size:.78rem;margin-right:6px}
+.tag.ok{background:var(--ok)}.tag.ng{background:var(--ng)}
+dialog{border:1px solid var(--line);background:var(--panel);color:var(--text);max-width:480px;width:92%;padding:18px;max-height:85vh;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+#dlgMsg{white-space:pre-wrap;margin:0 0 14px}
+.rtab{border-collapse:collapse;width:100%;font-size:.9rem;margin-bottom:12px}
+.rtab td,.rtab th{border:1px solid var(--soft);padding:3px 8px;text-align:center}
+.rtab tr.go{cursor:pointer}.rtab tr.go:hover{background:var(--cell)}
+.ed fieldset{border:1px solid var(--line);margin:0 0 14px;padding:8px 14px 12px}
+.ed legend{font-weight:800;padding:0 6px}
+.ed label{display:inline-block;margin:4px 14px 4px 0;font-size:.9rem}
+.ed input:not([type=radio]),.ed textarea,.ed select{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:4px 8px}
+.ed textarea{width:100%;display:block;margin:4px 0}
+.ed .hint{color:var(--sub);font-size:.85rem;margin:0 0 6px}
+.wn{background:var(--hl);border:1px solid var(--line);padding:8px 12px;margin-bottom:12px}
+.qc{border:1px solid var(--soft);background:var(--bg);padding:10px;margin-bottom:10px}
+.qct{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.qo{display:flex;gap:8px;align-items:center;margin:3px 0}
+.qo label{margin:0;white-space:nowrap}
+.qo .qop{flex:1;min-width:0}
+</style>
+</head>
+<body>
+<div class="win">
+
+<!-- ログイン画面 -->
+<section id="login">
+  <div class="tbar">ITパスポート風 模擬試験　ログイン</div>
+  <div class="head">
+    <span class="logo">CBT</span><span class="ttl">ITパスポート試験（模擬）</span>
+    <div class="hr"><span class="badge">模擬体験</span>　現在時刻：<span class="clock"></span><br><span id="lSub">公開問題風 サンプル</span></div>
+  </div>
+  <div class="body">
+    <p style="margin:0">受験番号、利用者ID、確認コードを入力後、試験前のお知らせを確認の上、ログインボタンを押してください。<br><small id="lHint" style="color:var(--acc)">※模擬体験のため、入力は不要です（利用者IDに氏名を入力すると、試験画面に表示されます）。</small></p>
+    <p id="lSched" style="font-weight:700;margin:12px 0 0"></p>
+    <div class="fields">
+      <table>
+        <tr><td>受験番号</td><td><input id="inNo" maxlength="12"></td></tr>
+        <tr><td>利用者ID</td><td><input id="inId"></td></tr>
+        <tr><td>確認コード</td><td><input id="inCode" style="width:90px"></td></tr>
+      </table>
+    </div>
+    <div style="text-align:center"><button class="btn big" id="loginBtn">ログイン</button></div>
+    <div class="notice" id="notice" style="white-space:pre-wrap">
+      <b>＜＜試験前のお知らせ＞＞</b><br><br>
+      1. ログイン後、同意事項が表示されますので、内容をご理解の上「同意する」を押してください。<br><br>
+      2. 試験時間は <span id="minTxt"></span> 分です。残り時間は画面上部に表示されます。<br><br>
+      3. 「試験終了」ボタンを押すと、試験時間の途中でも試験を終了することができます。<br><br>
+      4. 「後で見直すためにチェックする」を付けた問題は、解答状況と「解答見直し」で確認できます。<br><br>
+      5. 白黒反転・背景色変更・文字色変更・表示倍率で、問題の見やすさを調整できます。<br><br>
+      6. 評価点は1,000点満点です。総合評価点が600点以上、かつ各分野（ストラテジ系・マネジメント系・テクノロジ系）が300点以上で合格となります。<br><br>
+      ※これは学習用の模擬アプリです。実際の試験とは出題内容・採点方式が異なります。
+    </div>
+  </div>
+</section>
+
+<!-- 試験画面 -->
+<section id="exam" class="hidden">
+  <div class="top">
+    <div class="id">受験番号：<span id="hNo"></span><br>氏名：<span id="hName"></span></div>
+    <span class="rt" id="rt">残り時間: <b id="rm">0</b>分 <b id="rs">0</b>秒</span>
+    <button class="btn" id="bInv">白黒反転</button>
+    <button class="btn" id="bBg">背景色変更</button>
+    <button class="btn" id="bFg">文字色変更</button>
+    <span class="sp"></span>
+    <label style="font-size:.85rem">表示倍率: <select id="zoom"><option>100</option><option>115</option><option selected>130</option><option>150</option><option>180</option></select>%</label>
+    <button class="btn org" id="bEnd">模擬体験終了</button>
+    <button class="btn" id="bHelp">ヘルプ</button>
+  </div>
+  <div class="qh" id="qh"></div>
+  <div id="qbox"></div>
+  <div class="ansrow">
+    <span>解答欄</span>
+    <div class="ansbox" id="ansbox"></div>
+    <label><input type="checkbox" id="chk"> 後で見直すためにチェックする</label>
+  </div>
+  <div class="bot">
+    <div class="stw"><table class="st" id="st"></table></div>
+    <button class="btn big" id="prev">＜ 前の問へ</button>
+    <button class="btn big" id="next">次の問へ ＞</button>
+    <button class="btn" id="bRev">解答見直し</button>
+    <button class="btn big org" id="bFin">試験終了</button>
+  </div>
+</section>
+
+<!-- 待機画面 -->
+<section id="wait" class="hidden">
+  <div class="tbar">ITパスポート風 模擬試験　待機中</div>
+  <div class="head">
+    <span class="logo">CBT</span><span class="ttl"></span>
+    <div class="hr">現在時刻：<span class="clock"></span><br>受験番号：<span id="wNo"></span>　氏名：<span id="wName"></span></div>
+  </div>
+  <div class="body" style="text-align:center;padding:48px 18px">
+    <p style="font-size:1.2rem;font-weight:700">同意が完了しました。試験開始時刻になると、自動的に試験が始まります。</p>
+    <p>試験開始時刻：<b id="wAt"></b>　／　試験終了時刻：<b id="wEnd"></b></p>
+    <div class="big-s" style="margin:18px 0">開始まで <span id="wLeft"></span></div>
+    <p style="color:var(--sub)">このまま画面を閉じずにお待ちください。</p>
+    <button class="btn big" id="wBack">ログイン画面に戻る</button>
+  </div>
+</section>
+
+<!-- 結果画面 -->
+<section id="result" class="hidden">
+  <div class="tbar">ITパスポート風 模擬試験　試験結果</div>
+  <div class="head">
+    <span class="logo">CBT</span><span class="ttl">ITパスポート試験（模擬）</span>
+    <div class="hr">現在時刻：<span class="clock"></span><br>受験番号：<span id="rNo"></span>　氏名：<span id="rName"></span></div>
+  </div>
+  <div class="res">
+    <h2>あなたの試験結果は以下のとおりです。</h2>
+    <div class="grid2">
+      <div>
+        <div class="lb">総合評価点</div>
+        <div class="box big-s"><span id="tot"></span> / 1,000 点</div>
+        <div class="lb">分野別評価点</div>
+        <div class="box" id="cats"></div>
+      </div>
+      <div>
+        <div class="lb" style="color:var(--text)">合否について</div>
+        <div class="box">
+          <b>合格基準点は以下のとおりです。</b>
+          <table class="crit" id="crit"></table>
+          <div class="verdict" id="verdict"></div>
+          <p style="font-size:.82rem;color:var(--sub);margin-bottom:0">※模擬用の簡易採点（正答率×1,000点）です。本試験の採点方式とは異なります。</p>
+        </div>
+      </div>
+    </div>
+    <div class="lb" style="margin-top:18px">順位・集計</div>
+    <div class="box" id="rankBox">集計中…</div>
+    <div class="lb" style="margin-top:14px">回答データの送信</div>
+    <div class="box" id="sendBox">送信中…</div>
+    <div style="text-align:right;margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn big" id="bRank">集計を更新</button>
+      <button class="btn big" id="bView">解答・解説を見る</button>
+      <button class="btn big" id="bClose">閉じる</button>
+    </div>
+    <div class="box hidden" id="review" style="margin-top:18px"></div>
+  </div>
+</section>
+
+<!-- 作成・編集画面 -->
+<section id="editor" class="hidden">
+  <div class="tbar">ITパスポート風 模擬試験　作成・編集</div>
+  <div class="head">
+    <span class="logo">CBT</span><span style="font-size:1.25rem;font-weight:700">試験の作成・編集</span><span class="badge" id="edMode"></span>
+    <div class="hr"><button class="btn big org" id="eSave">保存</button> <button class="btn big" id="eClose">閉じる</button></div>
+  </div>
+  <div class="body ed">
+    <div id="edWarn" class="wn hidden">すでに保存された試験があります。保存すると置き換えられます。</div>
+    <fieldset><legend>① 再ログイン用の情報（自分で決める）</legend>
+      <p class="hint">保存後、次回この3つを入力してログインすると、再びこの画面で編集できます。</p>
+      <label>受験番号 <input id="eNo"></label><label>利用者ID <input id="eId"></label><label>確認コード <input id="eCode"></label>
+    </fieldset>
+    <fieldset><legend>② 待機（ログイン）画面</legend>
+      <label>試験名 <input id="eTitle" size="28"></label><label>サブ表示 <input id="eSub" size="24"></label>
+      <label style="display:block">試験前のお知らせ<textarea id="eNotice" rows="8"></textarea></label>
+    </fieldset>
+    <fieldset><legend>③ 試験設定</legend>
+      <label>制限時間（分） <input id="eMin" type="number" min="1" style="width:80px"></label>
+      <label>総合の合格点（/1,000） <input id="eTot" type="number" style="width:90px"></label>
+      <label>分野別の合格点（/1,000） <input id="eCat" type="number" style="width:90px"></label>
+      <label>試験開始日時 <input id="eStart" type="datetime-local"></label><label>試験終了日時 <input id="eEnd" type="datetime-local"></label><p class="hint">開始日時になると、同意済みの受験者の試験が自動的に始まります（空欄の場合は同意後すぐに開始）。終了日時になると、受験中の人も自動的に採点され、それ以降は受験できません。各人の制限時間は、終了日時を超えない範囲になります。</p>
+      <div>分野名：<input id="eC0" size="12"> <input id="eC1" size="12"> <input id="eC2" size="12"></div>
+    </fieldset>
+    <fieldset><legend>④ 問題</legend>
+      <p class="hint">各問の正解は、選択肢の左のラジオボタンで指定します。</p>
+      <div id="eQs"></div>
+      <button class="btn" id="eAdd">＋ 問題を追加</button> <button class="btn" id="eSample">サンプル問題を読み込む</button>
+    </fieldset>
+    <fieldset><legend>⑤ 受験者用の確認コード</legend>
+      <p class="hint">受験者は、このコードを「確認コード」欄に入力してログインします（受験番号・利用者IDは空欄で構いません）。保存すると有効になります。</p>
+      <label><input type="checkbox" id="eNeed"> 受験に確認コードを必須にする</label>
+      <label><input type="checkbox" id="eOnce"> 1つのコードは1回のみ有効</label>
+      <div><label>作成数 <input id="eCnt" type="number" min="1" max="50" value="5" style="width:70px"></label><button class="btn" id="eGen">コードを作成</button> <button class="btn" id="eCopy">一覧を表示・コピー</button></div>
+      <div style="overflow-x:auto;margin-top:8px"><table class="rtab" id="eCodes"></table></div>
+    </fieldset>
+    <fieldset><legend>⑥ 集計結果</legend>
+      <p class="hint">受験を終えた人の結果を、確認コード別・クラス別（受験番号の最初の4桁が同じ人）に、順位つきで表示します。</p>
+      <button class="btn" id="eAgg">集計を表示・更新</button> <button class="btn" id="eAggClr">結果をすべて消去</button>
+      <div id="aggOut" style="overflow-x:auto;margin-top:8px"></div>
+      <h3 style="margin:14px 0 4px">受験者から受け取った回答データの取り込み</h3>
+      <p class="hint">自動送信できなかった受験者から届いた「送信用データ」を貼り付けて取り込みます。</p>
+      <textarea id="impBox" rows="3" placeholder="送信用データを貼り付け"></textarea>
+      <button class="btn" id="impBtn">取り込む</button> <button class="btn" id="eCsv">全員の回答をCSVで表示</button>
+    </fieldset>
+    <fieldset><legend>⑦ 書き出し／読み込み（別の端末へ移すとき）</legend>
+      <p class="hint">受験番号などのログイン情報は含まれません。</p>
+      <textarea id="eJson" rows="4" placeholder="ここにJSONが表示されます／貼り付けて読み込み"></textarea>
+      <button class="btn" id="eExp">書き出し</button> <button class="btn" id="eImp">読み込み</button>
+    </fieldset>
+  </div>
+</section>
+
+</div>
+
+<dialog id="dlg">
+  <p id="dlgMsg"></p>
+  <div id="dlgX"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn" id="dlgNo">戻る</button>
+    <button class="btn org" id="dlgYes">OK</button>
+  </div>
+</dialog>
+
+<script>
+/* ===== 設定・問題データ（編集して差し替え可能）===== */
+const DEF_CONFIG={minutes:30,total:600,cat:300};
+const DEF_CATS=["ストラテジ系","マネジメント系","テクノロジ系"];
+const DEF_Q=[
+{c:0,q:"著作権に関する記述として，適切なものはどれか。",o:["著作物を創作した時点で著作権が発生し，登録などの手続は不要である","著作権は文化庁への登録を済ませて初めて発生する","著作権は出願して審査に合格すると発生する","著作権は著作物を発行した時点で消滅する"],a:0,e:"著作権は創作と同時に自動的に発生します（無方式主義）。"},
+{c:0,q:"SWOT分析において，自社を取り巻く外部環境のうち，自社にとってプラスに働く要因を表すものはどれか。",o:["強み","弱み","機会","脅威"],a:2,e:"外部環境のプラス要因が機会（Opportunity）、マイナス要因が脅威（Threat）です。"},
+{c:0,q:"固定費が400万円，変動費率が60%の製品がある。損益分岐点売上高は何万円か。",o:["600","800","1,000","1,600"],a:2,e:"損益分岐点売上高＝固定費÷(1−変動費率)＝400÷0.4＝1,000万円。"},
+{c:0,q:"業務プロセスを根本から見直して再設計し，劇的な効率化を図る手法はどれか。",o:["BPR","CRM","ERP","SCM"],a:0,e:"BPR（Business Process Re-engineering）の説明です。"},
+{c:1,q:"PDCAサイクルにおけるC（Check）で行う活動はどれか。",o:["計画の策定","計画の実施","実施結果の評価・点検","改善策の実施"],a:2,e:"Checkは実施結果を計画と照らして評価・点検する段階です。"},
+{c:1,q:"作業の開始・終了日程を横棒で表し，進捗を管理しやすくした図表はどれか。",o:["パレート図","ガントチャート","散布図","特性要因図"],a:1,e:"横棒で日程を示す進捗管理の図表がガントチャートです。"},
+{c:1,q:"サービスの提供者と利用者の間で，サービス品質の水準をあらかじめ取り決めた合意を何というか。",o:["SLA","NDA","RFP","BCP"],a:0,e:"SLA（Service Level Agreement）です。NDAは秘密保持契約、RFPは提案依頼書、BCPは事業継続計画。"},
+{c:1,q:"アローダイアグラムにおいて，プロジェクト全体の所要日数を決定する最も長い経路を何というか。",o:["フリーパス","クリティカルパス","ガイドライン","ベースライン"],a:1,e:"最も余裕のない最長経路がクリティカルパスです。"},
+{c:2,q:"2進数1011を10進数で表したものはどれか。",o:["9","10","11","13"],a:2,e:"8+0+2+1＝11。"},
+{c:2,q:"HTTP通信の暗号化に利用されるプロトコルはどれか。",o:["FTP","TLS","SMTP","DHCP"],a:1,e:"HTTPSはHTTPをTLSで暗号化したものです。"},
+{c:2,q:"関係データベースにおいて，他の表の主キーを参照するための列を何というか。",o:["外部キー","候補キー","複合キー","代理キー"],a:0,e:"他の表の主キーを参照する列が外部キーです。"},
+{c:2,q:"情報セキュリティの3要素に含まれないものはどれか。",o:["機密性","完全性","可用性","効率性"],a:3,e:"3要素は機密性・完全性・可用性です。"}
+];
+
+/* ===== 状態 ===== */
+const $=id=>document.getElementById(id),K=["ア","イ","ウ","エ"];
+const BG=["#ffffff","#fff8d6","#e6f3ff","#e8f7e8","#f3e8ff"],FG=["#000000","#0b3d91","#8a1c1c","#1b5e20"];
+let ans,chk,cur,remain,tid,examNo,examName,disp={inv:0,bg:0,fg:0};
+
+/* ===== 保存データ ===== */
+const KEY="cbt_exam_v1",cp=o=>JSON.parse(JSON.stringify(o)),KN=()=>({no:"",id:"",code:""});
+const DEF={title:"ITパスポート試験（模擬）",sub:"公開問題風 サンプル",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されますので、内容をご理解の上「同意する」を押してください。\n\n2. 試験時間は画面上部の残り時間で確認できます。\n\n3. 「試験終了」ボタンを押すと、試験時間の途中でも試験を終了することができます。\n\n4. 「後で見直すためにチェックする」を付けた問題は、解答状況と「解答見直し」で確認できます。\n\n※これは学習用の模擬アプリです。",minutes:DEF_CONFIG.minutes,total:DEF_CONFIG.total,cat:DEF_CONFIG.cat,cats:DEF_CATS,q:DEF_Q,creds:null,codes:[],needCode:false,once:false,startAt:"",endAt:""};
+function loadExam(){try{const o=JSON.parse(localStorage.getItem(KEY)||"null");if(o&&Array.isArray(o.q)&&o.q.length)return Object.assign(cp(DEF),o)}catch(e){}return cp(DEF)}
+let EX=loadExam(),CONFIG,CATS,Q;
+function applyExam(){
+  CONFIG={minutes:EX.minutes,total:EX.total,cat:EX.cat};CATS=EX.cats;Q=EX.q;
+  document.querySelectorAll(".ttl").forEach(e=>e.textContent=EX.title);
+  $("lSub").textContent=EX.sub;$("notice").textContent=EX.notice;
+  $("lSched").textContent=(EX.startAt||EX.endAt)?"試験日時："+(EX.startAt?fmt(new Date(EX.startAt).getTime()):"")+" 〜 "+(EX.endAt?fmt(new Date(EX.endAt).getTime()):""):"";
+  $("lHint").textContent=EX.needCode?"※確認コードを入力してください。利用者IDには氏名を入力してください（空欄でも構いません）。":"※模擬体験のため、入力は不要です（利用者IDに氏名を入力すると、試験画面に表示されます）。";
+}
+applyExam();
+
+/* ===== 作成・編集モード ===== */
+let draft,pend=null,wtid=null,deadline=0,examKey="",examCode="",lastRec=null,sharedOK=false,DB=null,UID=null;
+function fmt(t){return new Date(t).toLocaleString("ja-JP",{dateStyle:"medium",timeStyle:"short"})}
+const endTs=()=>{const t=EX.endAt?new Date(EX.endAt).getTime():0;return t>0?t:0};
+
+/* 共有データベース（使えない場合はこの端末内に保存） */
+async function syncExam(){
+  if(!DB)return;
+  try{const sn=await DB.doc("exam/config").get();
+    if(sn.exists){const o=sn.data();if(o&&Array.isArray(o.q)&&o.q.length){EX=Object.assign(cp(DEF),o);applyExam()}}}catch(e){}
+}
+(async()=>{
+  try{if(window.claude&&typeof claude.use==="function"){DB=await claude.use("db");const u=await claude.use("user");UID=u?await u.id():null}}catch(e){DB=null}
+  await syncExam();
+})();
+const LKEY="cbt_results_v1";
+const clsOf=no=>{const t=String(no||"").replace(/\s/g,"");return t.length>=4?t.slice(0,4):""};
+const rkey=r=>r.uid&&r.uid!=="local"?r.uid:"L|"+r.no+"|"+r.name;
+function localRes(){try{return JSON.parse(localStorage.getItem(LKEY)||"[]")}catch(e){return []}}
+async function saveResult(rec){
+  rec.uid=(DB&&UID)?UID:"local";
+  if(DB&&UID){try{await DB.doc("results/"+UID).set(rec);return true}catch(e){}}
+  const a=localRes().filter(r=>rkey(r)!==rkey(rec));a.push(rec);
+  try{localStorage.setItem(LKEY,JSON.stringify(a))}catch(e){}
+  return false;
+}
+async function loadResults(){
+  let a=[];
+  if(DB){try{const sn=await DB.collection("results").get();a=sn.docs.map(d=>Object.assign({},d.data(),{uid:d.id}))}catch(e){}}
+  localRes().forEach(r=>{if(!a.some(x=>rkey(x)===rkey(r)))a.push(r)});
+  return a.filter(r=>r.done);
+}
+function markStart(){
+  if(DB&&UID&&examCode)DB.doc("results/"+UID).set({no:examKey,name:examName,code:examCode,done:false,at:Date.now(),uid:UID}).catch(()=>{});
+}
+async function codeUsed(c,e){
+  if(DB&&UID){try{const sn=await DB.collection("results").where("code","==",c).get();return sn.docs.some(d=>d.id!==UID)}catch(x){}}
+  return !!(e&&e.u);
+}
+const stat=(g,rec)=>({n:g.length,rank:1+g.filter(r=>r.total>rec.total).length,avg:Math.round(g.reduce((a,r)=>a+r.total,0)/g.length),max:Math.max(...g.map(r=>r.total))});
+async function showRank(rec){
+  const box=$("rankBox");box.textContent="集計中…";
+  let list=(await loadResults()).filter(r=>rkey(r)!==rkey(rec));list.push(rec);
+  const rows=[[rec.code?`同じ確認コード（${rec.code}）`:"確認コードなし（全受験者）",stat(list.filter(r=>r.code===rec.code),rec)]];
+  const cl=clsOf(rec.no);
+  if(cl)rows.push([`クラス（受験番号の最初の4桁：${cl}）`,stat(list.filter(r=>clsOf(r.no)===cl),rec)]);
+  const te=endTs(),notes=[];
+  if(!cl)notes.push("受験番号の最初の4桁が入力されていないため、クラスの集計はありません。");
+  if(!sharedOK)notes.push("この結果は、この端末（ブラウザ）に保存された受験者のみで集計しています。");
+  notes.push(te&&Date.now()<te?`試験終了時刻（${fmt(te)}）まで受験者が増えるため、途中集計です。「集計を更新」で最新になります。`:"同点は同順位です。");
+  box.innerHTML=rows.map(([t,x])=>`<div class="cat"><span>${esc(t)}</span><span><b>${x.rank}</b> 位 / ${x.n}人　<small>平均 ${x.avg}点・最高 ${x.max}点</small></span></div>`).join("")+`<div style="color:var(--sub);font-size:.82rem;padding:6px 10px">※${notes.join("<br>※")}</div>`;
+}
+$("bRank").onclick=()=>{if(lastRec)showRank(lastRec)};
+
+/* 回答データの送信（自動送信できない場合は送信用データ） */
+const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+const hash=t=>{let x=0;for(const c of t)x=(x*31+c.charCodeAt(0))|0;return (x>>>0).toString(36)};
+function showSend(rec,sent){
+  const b=$("sendBox");b.innerHTML="";
+  const m=document.createElement("div");
+  if(sent){m.textContent="回答データは、作成者に送信されました。";b.append(m);return}
+  m.textContent="回答データを作成者へ自動送信できませんでした。下の送信用データをコピーして、作成者に送ってください。";
+  const ta=document.createElement("textarea");ta.readOnly=true;ta.rows=3;ta.value=enc(rec);
+  ta.style.cssText="width:100%;margin:8px 0;font:inherit;background:var(--panel);color:var(--text);border:1px solid var(--line)";
+  const bt=document.createElement("button");bt.className="btn";bt.textContent="コピー";
+  bt.onclick=()=>{ta.select();try{navigator.clipboard.writeText(ta.value)}catch(e){}bt.textContent="コピーしました"};
+  b.append(m,ta,bt);
+}
+$("impBtn").onclick=async()=>{
+  try{
+    const r=JSON.parse(decodeURIComponent(escape(atob($("impBox").value.trim()))));
+    if(!r||typeof r.total!=="number"||!Array.isArray(r.ans))throw 0;
+    r.done=true;r.no=String(r.no||"");r.name=String(r.name||"");r.code=String(r.code||"");
+    r.uid="imp-"+(r.at||0)+"-"+hash(r.no+"|"+r.name+"|"+r.code);
+    let ok=false;
+    if(DB){try{await DB.doc("results/"+r.uid).set(r);ok=true}catch(e){}}
+    if(!ok){const a=localRes().filter(x=>rkey(x)!==rkey(r));a.push(r);try{localStorage.setItem(LKEY,JSON.stringify(a))}catch(e){}}
+    $("impBox").value="";ask("取り込みました。「集計を表示・更新」で確認できます。",null);
+  }catch(x){ask("取り込めませんでした。受験者から届いた送信用データを、そのまま貼り付けてください。",null)}
+};
+$("eCsv").onclick=async()=>{
+  const all=await loadResults();
+  if(!all.length)return ask("受験結果はまだありません。",null);
+  const n=Math.max(...all.map(r=>(r.ans||[]).length)),q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const head=["受験番号","氏名","確認コード","総合点",...CATS,...Array.from({length:n},(_,i)=>"問"+(i+1))];
+  const rows=all.map(r=>[r.no,r.name,r.code,r.total,...(r.cats||[]).map(v=>v===null?"":v),...Array.from({length:n},(_,i)=>{const a=(r.ans||[])[i];return a===undefined?"":a<0?"未":K[a]})]);
+  const t=[head,...rows].map(x=>x.map(q).join(",")).join("\n");
+  const ta=document.createElement("textarea");ta.readOnly=true;ta.rows=8;ta.value=t;
+  ta.style.cssText="width:100%;margin-bottom:12px;font:inherit;background:var(--panel);color:var(--text);border:1px solid var(--line)";
+  ask("CSVです（コピーして表計算ソフトに貼り付けできます）。",null,null,ta);ta.select();
+  try{navigator.clipboard.writeText(t)}catch(e){}
+};
+
+/* 作成者向けの集計表示 */
+const ranked=g=>{g=g.slice().sort((a,b)=>b.total-a.total);return g.map(r=>[1+g.filter(x=>x.total>r.total).length,r])};
+const gsum=g=>`${g.length}人・平均 ${Math.round(g.reduce((a,r)=>a+r.total,0)/g.length)}点・最高 ${Math.max(...g.map(r=>r.total))}点`;
+const groupBy=(a,f)=>{const m=new Map();a.forEach(r=>{const k=f(r);if(!m.has(k))m.set(k,[]);m.get(k).push(r)});return m};
+function aggTable(g){
+  return `<table class="rtab"><tr><th>順位</th><th>受験番号</th><th>氏名</th><th>総合</th>${CATS.map(n=>`<th>${esc(n)}</th>`).join("")}</tr>`+ranked(g).map(([k,r])=>`<tr><td>${k}</td><td>${esc(r.no)}</td><td>${esc(r.name)}</td><td><b>${r.total}</b></td>${(r.cats||[]).map(v=>`<td>${v===null?"－":v}</td>`).join("")}</tr>`).join("")+"</table>";
+}
+$("eAgg").onclick=async()=>{
+  const out=$("aggOut");out.textContent="集計中…";
+  const all=await loadResults();
+  if(!all.length){out.textContent="受験結果はまだありません。";return}
+  let h="<h3>確認コード別</h3>";
+  groupBy(all,r=>r.code||"").forEach((g,k)=>{const cd=(EX.codes||[]).find(x=>x.c===k);h+=`<div class="lb" style="color:var(--text)">${k?"確認コード "+esc(k)+(cd&&cd.n?"（"+esc(cd.n)+"）":""):"確認コードなし"}　<small>${gsum(g)}</small></div>`+aggTable(g)});
+  h+="<h3>クラス別（受験番号の最初の4桁）</h3>";
+  groupBy(all,r=>clsOf(r.no)).forEach((g,k)=>{h+=`<div class="lb" style="color:var(--text)">${k?"クラス "+esc(k):"クラス不明（受験番号未入力）"}　<small>${gsum(g)}</small></div>`+aggTable(g)});
+  h+="<h3>個別の回答（○正解 ×不正解）</h3>"+all.slice().sort((a,b)=>(a.at||0)-(b.at||0)).map(r=>`<details style="margin-bottom:6px"><summary>${esc(r.name)}（${esc(r.no||"受験番号なし")}）　${r.total}点</summary><table class="rtab" style="max-width:360px"><tr><th>問</th><th>回答</th><th>判定</th></tr>${(r.ans||[]).map((a,i)=>`<tr><td>問${i+1}</td><td>${a<0?"未回答":K[a]}</td><td>${(r.ok||[])[i]?"○":"×"}</td></tr>`).join("")}</table></details>`).join("");
+  out.innerHTML=h;
+};
+$("eAggClr").onclick=()=>ask("保存されている受験結果をすべて消去します。よろしいですか？","消去する",async()=>{
+  try{localStorage.removeItem(LKEY)}catch(e){}
+  let ng=false;
+  if(DB){try{const sn=await DB.collection("results").get();await Promise.all(sn.docs.map(d=>DB.doc("results/"+d.id).delete()))}catch(e){ng=true}}
+  $("aggOut").textContent=ng?"共有データの一部を消去できませんでした（作成者のアカウントで操作してください）。":"消去しました。";
+});
+const startTs=()=>{const t=EX.startAt?new Date(EX.startAt).getTime():0;return t>0?t:0};
+function showWait(t){
+  clearInterval(wtid);
+  $("wNo").textContent=examNo;$("wName").textContent=examName;
+  $("wAt").textContent=fmt(t);$("wEnd").textContent=endTs()?fmt(endTs()):"設定なし";
+  const upd=()=>{
+    const ms=t-Date.now();
+    if(ms<=0){clearInterval(wtid);begin();return}
+    const s=Math.ceil(ms/1000);
+    $("wLeft").textContent=`${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`;
+  };
+  upd();wtid=setInterval(upd,250);show("wait");
+}
+$("wBack").onclick=()=>{clearInterval(wtid);show("login")};
+function renderCodes(){
+  const cs=draft.codes||[];
+  $("eCodes").innerHTML=cs.length?"<tr><th>確認コード</th><th>メモ（受験者名など）</th><th>状態</th><th></th></tr>"+cs.map((x,i)=>`<tr data-i="${i}"><td style="font-family:monospace;font-size:1.05rem;letter-spacing:2px"><b>${esc(x.c)}</b></td><td><input class="cn" value="${esc(x.n||"")}" size="14"></td><td>${x.u?"使用済み":"未使用"}</td><td>${x.u?'<button class="btn" data-a="rs">戻す</button> ':""}<button class="btn" data-a="rm">削除</button></td></tr>`).join(""):"<tr><td>コードはまだありません。</td></tr>";
+}
+function useCode(c){
+  const e=(EX.codes||[]).find(x=>x.c===c);if(!e)return;e.u=true;
+  try{localStorage.setItem(KEY,JSON.stringify(EX))}catch(x){}
+}
+$("eGen").onclick=()=>{
+  sync();const n=Math.min(50,Math.max(1,+$("eCnt").value||1)),have=new Set(draft.codes.map(x=>x.c));
+  const pin=()=>{let v;try{const a=new Uint32Array(1);crypto.getRandomValues(a);v=a[0]}catch(e){v=Math.random()*4e9|0}return String(100000+v%900000)};
+  for(let k=0;k<n;k++){let c=pin();while(have.has(c)||c===draft.creds.code)c=pin();have.add(c);draft.codes.push({c,n:"",u:false})}
+  draft.needCode=true;renderEd();
+};
+$("eCodes").onclick=e=>{
+  const b=e.target.closest("button[data-a]");if(!b)return;
+  sync();const i=+b.closest("tr").dataset.i;
+  if(b.dataset.a==="rm")draft.codes.splice(i,1);else draft.codes[i].u=false;
+  renderCodes();
+};
+$("eCopy").onclick=()=>{
+  sync();const t=draft.codes.map(x=>x.c+(x.n?"　"+x.n:"")).join("\n");
+  if(!t)return ask("確認コードがまだありません。",null);
+  const ta=document.createElement("textarea");ta.readOnly=true;ta.rows=Math.min(10,draft.codes.length+1);ta.value=t;
+  ta.style.cssText="width:100%;margin-bottom:12px;font:inherit;background:var(--panel);color:var(--text);border:1px solid var(--line)";
+  ask("受験者用の確認コード一覧です（クリップボードにもコピーしました）。",null,null,ta);ta.select();
+  try{navigator.clipboard.writeText(t)}catch(x){}
+};
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const blankQ=()=>({c:0,q:"",o:["","","",""],a:0,e:""});
+function openEditor(nw){
+  draft=nw?{title:"新しい試験",sub:"",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されます。\n\n2. 試験時間は画面上部の残り時間で確認できます。",minutes:30,total:600,cat:300,cats:["分野A","分野B","分野C"],q:[blankQ()],creds:KN(),codes:[],needCode:false,once:false,startAt:"",endAt:""}:cp(EX);
+  draft.creds=draft.creds||KN();
+  $("edMode").textContent=nw?"新規作成":"編集";
+  $("edWarn").classList.toggle("hidden",!(nw&&EX.creds));
+  renderEd();show("editor");
+}
+function renderEd(){
+  const d=draft,c=d.creds;$("eNeed").checked=!!d.needCode;$("eOnce").checked=!!d.once;renderCodes();
+  $("eNo").value=c.no;$("eId").value=c.id;$("eCode").value=c.code;
+  $("eTitle").value=d.title;$("eSub").value=d.sub;$("eNotice").value=d.notice;
+  $("eMin").value=d.minutes;$("eStart").value=d.startAt||"";$("eEnd").value=d.endAt||"";$("eTot").value=d.total;$("eCat").value=d.cat;
+  d.cats.forEach((n,k)=>$("eC"+k).value=n);
+  const box=$("eQs");box.innerHTML="";
+  d.q.forEach((q,i)=>{
+    const w=document.createElement("div");w.className="qc";w.dataset.i=i;
+    w.innerHTML=`<div class="qct"><b>問${i+1}</b><select class="qcat">${d.cats.map((n,k)=>`<option value="${k}">${esc(n)}</option>`).join("")}</select><span class="sp"></span><button class="btn" data-a="up">↑</button><button class="btn" data-a="dn">↓</button><button class="btn" data-a="del">削除</button></div><textarea class="qq" rows="3" placeholder="問題文"></textarea>${K.map((k,j)=>`<div class="qo"><label><input type="radio" name="ok${i}" value="${j}"> ${k}</label><input class="qop" data-j="${j}" placeholder="選択肢${k}"></div>`).join("")}<textarea class="qe" rows="2" placeholder="解説（任意）"></textarea>`;
+    w.querySelector(".qcat").value=q.c;w.querySelector(".qq").value=q.q;
+    w.querySelectorAll(".qop").forEach(x=>x.value=q.o[+x.dataset.j]);
+    w.querySelector('input[type=radio][value="'+q.a+'"]').checked=true;
+    w.querySelector(".qe").value=q.e;box.append(w);
+  });
+}
+function sync(){
+  const d=draft;
+  d.creds={no:$("eNo").value.trim(),id:$("eId").value.trim(),code:$("eCode").value.trim()};
+  d.title=$("eTitle").value.trim()||"試験";d.sub=$("eSub").value;d.notice=$("eNotice").value;
+  d.minutes=Math.max(1,+$("eMin").value||30);d.startAt=$("eStart").value||"";d.endAt=$("eEnd").value||"";d.total=+$("eTot").value||0;d.cat=+$("eCat").value||0;
+  d.cats=[0,1,2].map(k=>$("eC"+k).value.trim()||"分野"+(k+1));
+  d.q=[...$("eQs").children].map(w=>({c:+w.querySelector(".qcat").value,q:w.querySelector(".qq").value.trim(),o:[...w.querySelectorAll(".qop")].map(x=>x.value.trim()),a:+((w.querySelector("input[type=radio]:checked")||{}).value||0),e:w.querySelector(".qe").value.trim()}));
+  d.needCode=$("eNeed").checked;d.once=$("eOnce").checked;d.codes=d.codes||[];
+  [...$("eCodes").querySelectorAll("tr[data-i]")].forEach((r,i)=>{if(d.codes[i])d.codes[i].n=r.querySelector(".cn").value.trim()});
+}
+[0,1,2].forEach(k=>$("eC"+k).onchange=()=>{sync();renderEd()});
+$("eQs").onclick=e=>{
+  const b=e.target.closest("button[data-a]");if(!b)return;
+  sync();const i=+b.closest(".qc").dataset.i,q=draft.q,a=b.dataset.a;
+  if(a==="del"){if(q.length>1)q.splice(i,1)}
+  else if(a==="up"){if(i>0){[q[i-1],q[i]]=[q[i],q[i-1]]}}
+  else if(a==="dn"){if(i<q.length-1){[q[i+1],q[i]]=[q[i],q[i+1]]}}
+  renderEd();
+};
+$("eAdd").onclick=()=>{sync();draft.q.push(blankQ());renderEd();$("eQs").lastElementChild.scrollIntoView({block:"center"})};
+$("eSample").onclick=()=>ask("サンプル問題と設定を読み込みます（現在の入力内容は置き換わります）。","読み込む",()=>{const c=draft.creds,cd=[draft.codes,draft.needCode,draft.once];draft=cp(DEF);draft.creds=c;[draft.codes,draft.needCode,draft.once]=cd;renderEd()});
+$("eSave").onclick=async()=>{
+  sync();const d=draft,err=[];let fail=false;if(d.needCode&&!d.codes.length)err.push("確認コードを必須にするには、コードを1つ以上作成してください。");if(d.startAt&&d.endAt&&new Date(d.endAt)<=new Date(d.startAt))err.push("終了日時は開始日時より後にしてください。");
+  if(!d.creds.no||!d.creds.id||!d.creds.code)err.push("受験番号・利用者ID・確認コードをすべて入力してください（次回、この3つで再編集します）。");
+  d.q.forEach((q,i)=>{if(!q.q||q.o.some(o=>!o))err.push(`問${i+1}：問題文と選択肢ア〜エをすべて入力してください。`)});
+  if(err.length)return ask(err.join("\n"),null);
+  try{localStorage.setItem(KEY,JSON.stringify(d))}catch(x){fail=true}
+  let shared="";if(DB){try{await DB.doc("exam/config").set(cp(d));shared="ok"}catch(x){shared="ng"}}
+  EX=cp(d);applyExam();$("edMode").textContent="編集";$("edWarn").classList.add("hidden");
+  ask(fail?"ブラウザに保存できませんでした。このページを開いている間のみ有効です。「書き出し」でJSONを控えてください。":"保存しました。\n次回は、設定した受験番号・利用者ID・確認コードでログインすると再編集できます。\n受験するときは、3項目を空欄のままログインしてください。"+(shared==="ok"?"\n共有データベースにも保存しました。":shared==="ng"?"\n※共有データベースへ保存できませんでした（この設定はこのブラウザ内のみ有効です）。":""),null);
+};
+$("eClose").onclick=()=>ask("編集画面を閉じてログイン画面に戻ります。保存していない変更は失われます。","閉じる",()=>{["inNo","inId","inCode"].forEach(i=>$(i).value="");show("login")});
+$("eExp").onclick=()=>{sync();const o=cp(draft);delete o.creds;delete o.codes;delete o.needCode;delete o.once;$("eJson").value=JSON.stringify(o)};
+$("eImp").onclick=()=>{
+  try{
+    const o=JSON.parse($("eJson").value);if(!Array.isArray(o.q)||!o.q.length)throw 0;
+    const c=draft.creds,cd=[draft.codes,draft.needCode,draft.once];draft=Object.assign(cp(DEF),o);draft.creds=c;[draft.codes,draft.needCode,draft.once]=cd;
+    draft.cats=[0,1,2].map(k=>String((o.cats||[])[k]||"分野"+(k+1)));
+    draft.q=o.q.map(q=>({c:Math.min(2,Math.max(0,+q.c||0)),q:String(q.q||""),o:[0,1,2,3].map(j=>String((q.o||[])[j]||"")),a:Math.min(3,Math.max(0,+q.a||0)),e:String(q.e||"")}));
+    renderEd();
+  }catch(x){ask("読み込めませんでした。書き出したJSONを貼り付けてください。",null)}
+};
+
+
+function show(id){["login","exam","result","editor","wait"].forEach(x=>$(x).classList.toggle("hidden",x!==id));scrollTo(0,0)}
+const pad=n=>String(n).padStart(2,"0");
+function clock(){const d=new Date();document.querySelectorAll(".clock").forEach(e=>e.textContent=pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()))}
+setInterval(clock,1000);clock();
+
+/* 汎用ダイアログ */
+let yesFn=null;
+function ask(msg,yes,fn,extra){
+  $("dlgMsg").textContent=msg;$("dlgX").replaceChildren(...(extra?[extra]:[]));
+  $("dlgYes").classList.toggle("hidden",!yes);$("dlgYes").textContent=yes||"";
+  $("dlgNo").textContent=yes?"戻る":"閉じる";yesFn=fn;$("dlg").showModal();
+}
+$("dlgYes").onclick=()=>{$("dlg").close();yesFn&&yesFn()};
+$("dlgNo").onclick=()=>$("dlg").close();
+
+/* ログイン→同意→開始 */
+$("loginBtn").onclick=async()=>{await syncExam();
+  const n=$("inNo").value.trim(),i=$("inId").value.trim(),c=$("inCode").value.trim();
+  if(!n&&i==="00000"&&c==="1234")return openEditor(true);
+  if(EX.creds&&EX.creds.no&&n===EX.creds.no&&i===EX.creds.id&&c===EX.creds.code)return openEditor(false);
+  pend=null;
+  if(EX.needCode){
+    const e=(EX.codes||[]).find(x=>x.c===c);
+    if(!c)return ask("確認コードを入力してください。",null);
+    if(!e)return ask("確認コードが正しくありません。",null);
+    if(EX.once&&await codeUsed(c,e))return ask("この確認コードはすでに使用されています。",null);
+    pend=c;
+  }
+  consent();
+};
+const consent=()=>ask("【同意事項】\n・試験中に知り得た問題の内容を第三者に漏らさないこと。\n・試験官（本アプリ）の指示に従うこと。\n（模擬体験用の同意画面です）","同意する",start);
+function start(){
+  {const te=endTs();if(te&&Date.now()>=te)return ask("この試験の受付は終了しました。",null)}
+  examCode=pend||"";if(pend){useCode(pend);pend=null}
+  examNo=$("inNo").value.trim()||"IP0000 A001";examName=$("inId").value.trim()||"試験 太郎";examKey=$("inNo").value.trim();markStart();
+  const t=startTs();
+  if(t&&Date.now()<t)return showWait(t);
+  begin();
+}
+function begin(){
+  ans=Q.map(()=>-1);chk=Q.map(()=>false);cur=0;remain=CONFIG.minutes*60;{const te=endTs();if(te)remain=Math.max(1,Math.min(remain,Math.floor((te-Date.now())/1000)))}
+  disp={inv:0,bg:0,fg:0};deadline=Date.now()+remain*1000;clearInterval(tid);tick();tid=setInterval(tick,1000);
+  $("hNo").textContent=examNo;$("hName").textContent=examName;show("exam");render();
+}
+function tick(){
+  $("rm").textContent=Math.floor(remain/60);$("rs").textContent=pad(remain%60);
+  $("rt").classList.toggle("warn",remain<=60);
+  if(remain<=0){finish();return}remain=Math.max(0,Math.round((deadline-Date.now())/1000));
+}
+
+/* 表示 */
+function applyDisp(){
+  const b=BG[disp.bg],f=FG[disp.fg],q=$("qbox");
+  q.style.background=disp.inv?f:b;q.style.color=disp.inv?b:f;
+  q.style.fontSize=(+$("zoom").value/100*16)+"px";
+}
+function render(){
+  const q=Q[cur];
+  $("qh").textContent=`問${cur+1}〔${CATS[q.c]}〕`;
+  $("qbox").textContent=q.q+"\n\n"+q.o.map((t,i)=>`${K[i]}　${t}`).join("\n");
+  const ab=$("ansbox");ab.innerHTML="";
+  K.forEach((k,i)=>{
+    const l=document.createElement("label"),r=document.createElement("input");
+    r.type="radio";r.name="a";r.checked=ans[cur]===i;
+    r.onclick=()=>{ans[cur]=ans[cur]===i?-1:i;render()};
+    l.append(r," "+k);ab.append(l);
+  });
+  $("chk").checked=chk[cur];
+  $("prev").disabled=cur===0;$("next").disabled=cur===Q.length-1;
+  $("st").innerHTML='<tr><th class="vl" rowspan="2">解答状況</th>'+Q.map((_,i)=>`<td data-i="${i}" class="${i===cur?"cur":""}">問<br>${i+1}</td>`).join("")+"</tr><tr>"+Q.map((_,i)=>`<td data-i="${i}" class="${chk[i]?"fl":""}">${ans[i]<0?"&nbsp;":K[ans[i]]}</td>`).join("")+"</tr>";
+  applyDisp();
+}
+$("st").onclick=e=>{const t=e.target.closest("td");if(t){cur=+t.dataset.i;render()}};
+$("prev").onclick=()=>{cur--;render()};
+$("next").onclick=()=>{cur++;render()};
+$("chk").onchange=e=>{chk[cur]=e.target.checked;render()};
+$("bInv").onclick=()=>{disp.inv^=1;applyDisp()};
+$("bBg").onclick=()=>{disp.bg=(disp.bg+1)%BG.length;applyDisp()};
+$("bFg").onclick=()=>{disp.fg=(disp.fg+1)%FG.length;applyDisp()};
+$("zoom").onchange=applyDisp;
+$("bHelp").onclick=()=>ask("【操作ヘルプ】\n・解答欄のア〜エを選んで解答します（もう一度押すと解答を取り消せます）。\n・「解答状況」の番号を押すとその問題へ移動します。\n・黄色のマスは見直しチェック付きの問題です。\n・「解答見直し」で未解答・チェック付きの問題を一覧できます。\n・「試験終了」で採点画面へ進みます。",null);
+$("bEnd").onclick=()=>ask("模擬体験を終了してログイン画面に戻ります。よろしいですか？","終了する",()=>{clearInterval(tid);show("login")});
+
+/* 解答見直し */
+$("bRev").onclick=()=>{
+  const t=document.createElement("table");t.className="rtab";
+  t.innerHTML="<tr><th>問</th><th>分野</th><th>解答</th><th>チェック</th></tr>"+Q.map((q,i)=>`<tr class="go" data-i="${i}"><td>問${i+1}</td><td>${CATS[q.c]}</td><td>${ans[i]<0?"未解答":K[ans[i]]}</td><td>${chk[i]?"✔":""}</td></tr>`).join("");
+  t.onclick=e=>{const r=e.target.closest("tr.go");if(r){cur=+r.dataset.i;$("dlg").close();render()}};
+  ask("行を押すとその問題へ移動します。",null,null,t);
+};
+
+/* 試験終了→採点 */
+$("bFin").onclick=()=>{
+  const un=ans.filter(a=>a<0).length,fl=chk.filter(Boolean).length;
+  ask("試験を終了して採点します。よろしいですか？"+(un?`\n未解答が ${un} 問あります。`:"")+(fl?`\n見直しチェック付きが ${fl} 問あります。`:""),"試験終了",finish);
+};
+function finish(){
+  clearInterval(tid);if($("dlg").open)$("dlg").close();
+  const ok=Q.map((q,i)=>ans[i]===q.a),sc=n=>Math.round(n*1000);
+  const tot=sc(ok.filter(Boolean).length/Q.length);
+  const cs=CATS.map((_,c)=>{const idx=Q.map((q,i)=>q.c===c?i:-1).filter(i=>i>=0);return idx.length?sc(idx.filter(i=>ok[i]).length/idx.length):null});
+  const pass=tot>=CONFIG.total&&cs.every(s=>s===null||s>=CONFIG.cat);
+  const rec={no:examKey,name:examName,code:examCode,total:tot,cats:cs,ans:ans.slice(),ok:ok.slice(),done:true,at:Date.now()};
+  $("rNo").textContent=examNo;$("rName").textContent=examName;$("tot").textContent=tot.toLocaleString();
+  $("tot").className=tot<CONFIG.total?"low":"";
+  $("cats").innerHTML=CATS.map((n,i)=>`<div class="cat"><span>${n}</span><span class="${cs[i]!==null&&cs[i]<CONFIG.cat?"low":""}"><b>${cs[i]===null?"－":cs[i].toLocaleString()}</b> / 1,000 点</span></div>`).join("");
+  $("crit").innerHTML=`<tr><td>総合評価の基準</td><td>${CONFIG.total} 点以上</td></tr>`+CATS.map(n=>`<tr><td>${n}の基準</td><td>${CONFIG.cat} 点以上</td></tr>`).join("");
+  const v=$("verdict");v.textContent=pass?"判定：合格基準を満たしています":"判定：合格基準を満たしていません";v.style.color=pass?"var(--ok)":"var(--ng)";
+  const rv=$("review");rv.innerHTML="<b>解答・解説</b>";rv.classList.add("hidden");
+  Q.forEach((q,i)=>{
+    const d=document.createElement("div");d.className="rv";
+    const h=document.createElement("div");h.style.fontWeight="700";
+    const tg=document.createElement("span");tg.className="tag "+(ok[i]?"ok":"ng");tg.textContent=ok[i]?"正解":"不正解";
+    h.append(tg,`問${i+1}〔${CATS[q.c]}〕${q.q}`);
+    const a=document.createElement("div");a.textContent=`あなたの解答：${ans[i]<0?"未解答":K[ans[i]]+" "+q.o[ans[i]]} ／ 正解：${K[q.a]} ${q.o[q.a]}`;
+    const e=document.createElement("div");e.style.color="var(--sub)";e.textContent="解説："+q.e;
+    d.append(h,a,e);rv.append(d);
+  });
+  lastRec=rec;show("result");$("rankBox").textContent="集計中…";$("sendBox").textContent="送信中…";saveResult(rec).then(sent=>{sharedOK=sent;showRank(rec);showSend(rec,sent)});
+}
+$("bView").onclick=()=>$("review").classList.toggle("hidden");
+$("bClose").onclick=()=>show("login");
+</script>
+</body>
+</html>
