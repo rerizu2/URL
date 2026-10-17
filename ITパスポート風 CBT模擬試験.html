@@ -248,7 +248,13 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
       <textarea id="impBox" rows="3" placeholder="送信用データを貼り付け"></textarea>
       <button class="btn" id="impBtn">取り込む</button> <button class="btn" id="eCsv">全員の回答をCSVで表示</button>
     </fieldset>
-    <fieldset><legend>⑦ 書き出し／読み込み（別の端末へ移すとき）</legend>
+    <fieldset><legend>⑦ 他の端末でも受験できるようにする（GitHubで公開）</legend>
+      <p class="hint">このHTMLをGitHub Pagesで公開し、下で作る「exams.json」を同じ場所（index.htmlと同じフォルダ）に置いてコミットすると、どの端末でも確認コードで受験できます。GitHub上のページで操作すると、すでにある exams.json に自動で統合されます。</p>
+      <label>回答データの送り先メールアドレス（任意） <input id="eMail" type="email" size="30"></label>
+      <div><button class="btn" id="eGh">exams.json を作成</button> <button class="btn" id="eGhDl">ダウンロード</button> <button class="btn" id="eGhIssue">GitHubに届いた回答を取り込む</button></div>
+      <textarea id="ghBox" rows="4" placeholder="ここに exams.json の内容が表示されます"></textarea>
+    </fieldset>
+    <fieldset><legend>⑧ 書き出し／読み込み（別の端末へ移すとき）</legend>
       <p class="hint">受験番号などのログイン情報は含まれません。</p>
       <textarea id="eJson" rows="4" placeholder="ここにJSONが表示されます／貼り付けて読み込み"></textarea>
       <button class="btn" id="eExp">書き出し</button> <button class="btn" id="eImp">読み込み</button>
@@ -293,7 +299,7 @@ let ans,chk,cur,remain,tid,examNo,examName,disp={inv:0,bg:0,fg:0};
 
 /* ===== 保存データ ===== */
 const KEY="cbt_exam_v1",cp=o=>JSON.parse(JSON.stringify(o)),KN=()=>({no:"",id:"",code:""});
-const DEF={title:"ITパスポート試験（模擬）",sub:"公開問題風 サンプル",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されますので、内容をご理解の上「同意する」を押してください。\n\n2. 試験時間は画面上部の残り時間で確認できます。\n\n3. 「試験終了」ボタンを押すと、試験時間の途中でも試験を終了することができます。\n\n4. 「後で見直すためにチェックする」を付けた問題は、解答状況と「解答見直し」で確認できます。\n\n※これは学習用の模擬アプリです。",minutes:DEF_CONFIG.minutes,total:DEF_CONFIG.total,cat:DEF_CONFIG.cat,cats:DEF_CATS,q:DEF_Q,creds:null,codes:[],needCode:false,once:false,startAt:"",endAt:"",clearedAt:0,id:""};
+const DEF={title:"ITパスポート試験（模擬）",sub:"公開問題風 サンプル",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されますので、内容をご理解の上「同意する」を押してください。\n\n2. 試験時間は画面上部の残り時間で確認できます。\n\n3. 「試験終了」ボタンを押すと、試験時間の途中でも試験を終了することができます。\n\n4. 「後で見直すためにチェックする」を付けた問題は、解答状況と「解答見直し」で確認できます。\n\n※これは学習用の模擬アプリです。",minutes:DEF_CONFIG.minutes,total:DEF_CONFIG.total,cat:DEF_CONFIG.cat,cats:DEF_CATS,q:DEF_Q,creds:null,codes:[],needCode:false,once:false,startAt:"",endAt:"",clearedAt:0,id:"",mail:""};
 let EX=cp(DEF),CONFIG,CATS,Q;
 function applyExam(){
   CONFIG={minutes:EX.minutes,total:EX.total,cat:EX.cat};CATS=EX.cats;Q=EX.q;
@@ -312,10 +318,24 @@ const endTs=()=>{const t=EX.endAt?new Date(EX.endAt).getTime():0;return t>0?t:0}
 /* 共有データベース（使えない場合はこの端末内に保存） */
 const LEX="cbt_exams_v2";
 const localExams=()=>{try{return JSON.parse(localStorage.getItem(LEX)||"[]")}catch(e){return []}};
+async function remoteExams(){
+  try{
+    const r=await fetch("exams.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return [];
+    const a=await r.json();
+    return (Array.isArray(a)?a:(a.exams||[])).filter(x=>x&&x.id&&Array.isArray(x.q)&&x.q.length);
+  }catch(e){return []}
+}
+function ghRepo(){
+  const h=location.hostname;
+  if(!/\.github\.io$/.test(h))return "";
+  const o=h.split(".")[0],r=location.pathname.split("/")[1];
+  return r?o+"/"+r:o+"/"+o+".github.io";
+}
 async function loadExams(){
   const a=[];
   if(DB){try{const sn=await DB.collection("exams").get();sn.docs.forEach(d=>a.push(Object.assign(cp(DEF),d.data(),{id:d.id})))}catch(e){}}
   localExams().forEach(x=>{if(!a.some(y=>y.id===x.id))a.push(Object.assign(cp(DEF),x))});
+  (await remoteExams()).forEach(x=>{if(!a.some(y=>y.id===x.id))a.push(Object.assign(cp(DEF),x))});
   try{const o=JSON.parse(localStorage.getItem(KEY)||"null");if(o&&o.creds&&Array.isArray(o.q)&&o.q.length)a.push(Object.assign(cp(DEF),o,{id:"Lold"}))}catch(e){}
   if(DB){try{const sn=await DB.doc("exam/config").get();if(sn.exists&&sn.data().creds)a.push(Object.assign(cp(DEF),sn.data(),{id:"legacy"}))}catch(e){}}
   return a;
@@ -380,12 +400,16 @@ function showSend(rec,sent){
   const b=$("sendBox");b.innerHTML="";
   const m=document.createElement("div");
   if(sent){m.textContent="回答データは、作成者に送信されました。";b.append(m);return}
-  m.textContent="回答データを作成者へ自動送信できませんでした。下の送信用データをコピーして、作成者に送ってください。";
-  const ta=document.createElement("textarea");ta.readOnly=true;ta.rows=3;ta.value=enc(rec);
+  const data=enc(rec);
+  m.textContent="回答データを作成者へ自動送信できませんでした。次のいずれかの方法で、作成者に送ってください。";
+  const ta=document.createElement("textarea");ta.readOnly=true;ta.rows=3;ta.value=data;
   ta.style.cssText="width:100%;margin:8px 0;font:inherit;background:var(--panel);color:var(--text);border:1px solid var(--line)";
-  const bt=document.createElement("button");bt.className="btn";bt.textContent="コピー";
-  bt.onclick=()=>{ta.select();try{navigator.clipboard.writeText(ta.value)}catch(e){}bt.textContent="コピーしました"};
-  b.append(m,ta,bt);
+  const mk=(t,f)=>{const x=document.createElement("button");x.className="btn";x.style.cssText="margin:0 8px 6px 0";x.textContent=t;x.onclick=f;return x};
+  const btns=[mk("コピー",()=>{ta.select();try{navigator.clipboard.writeText(data)}catch(e){}})];
+  if(EX.mail)btns.push(mk("メールで送る",()=>{location.href="mailto:"+EX.mail+"?subject="+encodeURIComponent("【"+EX.title+"】回答データ（"+rec.name+"）")+"&body="+encodeURIComponent(data)}));
+  const gh=ghRepo();
+  if(gh)btns.push(mk("GitHubで送る（要ログイン）",()=>window.open("https://github.com/"+gh+"/issues/new?title="+encodeURIComponent("CBT結果:"+rec.examId+":"+rec.name)+"&body="+encodeURIComponent(data),"_blank")));
+  b.append(m,ta,...btns);
 }
 async function addImport(r){
   let ok=false;
@@ -404,6 +428,33 @@ $("impBtn").onclick=async()=>{
     await addImport(r);
     $("impBox").value="";ask("取り込みました。「集計を表示・更新」で確認できます。",null);
   }catch(x){ask("取り込めませんでした。受験者から届いた送信用データを、そのまま貼り付けてください。",null)}
+};
+$("eGh").onclick=async()=>{
+  sync();const d=cp(draft);delete d.from;
+  const base=(await remoteExams()).filter(e=>e.id!==d.id);base.push(d);
+  $("ghBox").value=JSON.stringify(base,null,1);
+};
+$("eGhDl").onclick=()=>{
+  const t=$("ghBox").value;if(!t)return ask("先に「exams.json を作成」を押してください。",null);
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"application/json"}));a.download="exams.json";a.click();
+};
+$("eGhIssue").onclick=async()=>{
+  const gh=ghRepo();if(!gh)return ask("GitHub Pages上のこのページから操作してください。",null);
+  try{
+    const r=await fetch("https://api.github.com/repos/"+gh+"/issues?state=all&per_page=100");if(!r.ok)throw 0;
+    let n=0;
+    for(const it of await r.json()){
+      if(!/^CBT結果:/.test(it.title||""))continue;
+      try{
+        const x=JSON.parse(decodeURIComponent(escape(atob(String(it.body||"").trim()))));
+        if(x.examId!==draft.id||typeof x.total!=="number"||!Array.isArray(x.ans))continue;
+        x.done=true;x.no=String(x.no||"");x.name=String(x.name||"");x.code=String(x.code||"");
+        x.uid="imp-"+(x.at||0)+"-"+hash(x.no+"|"+x.name+"|"+x.code);
+        await addImport(x);n++;
+      }catch(e){}
+    }
+    ask(n+"件の回答データを取り込みました。「集計を表示・更新」で確認できます。",null);
+  }catch(e){ask("GitHubから取得できませんでした（リポジトリが非公開の場合は取得できません）。",null)}
 };
 $("eCsv").onclick=async()=>{
   const all=await loadResults(draft);
@@ -486,7 +537,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const blankQ=()=>({c:0,q:"",o:["","","",""],a:0,e:""});
 function openEditor(ex){
   const nw=!ex,nid=(DB&&UID)?UID:"L"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-  draft=nw?{id:nid,title:"新しい試験",sub:"",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されます。\n\n2. 試験時間は画面上部の残り時間で確認できます。",minutes:30,total:600,cat:300,cats:["分野A","分野B","分野C"],q:[blankQ()],creds:KN(),codes:[],needCode:true,once:false,startAt:"",endAt:"",clearedAt:0}:cp(ex);
+  draft=nw?{id:nid,title:"新しい試験",sub:"",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されます。\n\n2. 試験時間は画面上部の残り時間で確認できます。",minutes:30,total:600,cat:300,cats:["分野A","分野B","分野C"],q:[blankQ()],creds:KN(),codes:[],needCode:true,once:false,startAt:"",endAt:"",clearedAt:0,mail:""}:cp(ex);
   if(!nw&&(ex.id==="legacy"||ex.id==="Lold")){draft.from=ex.id;draft.id=nid}
   draft.creds=draft.creds||KN();
   $("edMode").textContent=nw?"新規作成":"編集";
@@ -498,7 +549,7 @@ function renderEd(){
   const d=draft,c=d.creds;$("eNeed").checked=!!d.needCode;$("eOnce").checked=!!d.once;renderCodes();
   $("eNo").value=c.no;$("eId").value=c.id;$("eCode").value=c.code;
   $("eTitle").value=d.title;$("eSub").value=d.sub;$("eNotice").value=d.notice;
-  $("eMin").value=d.minutes;$("eStart").value=d.startAt||"";$("eEnd").value=d.endAt||"";$("eTot").value=d.total;$("eCat").value=d.cat;
+  $("eMin").value=d.minutes;$("eStart").value=d.startAt||"";$("eEnd").value=d.endAt||"";$("eMail").value=d.mail||"";$("eTot").value=d.total;$("eCat").value=d.cat;
   d.cats.forEach((n,k)=>$("eC"+k).value=n);
   const box=$("eQs");box.innerHTML="";
   d.q.forEach((q,i)=>{
@@ -514,7 +565,7 @@ function sync(){
   const d=draft;
   d.creds={no:$("eNo").value.trim(),id:$("eId").value.trim(),code:$("eCode").value.trim()};
   d.title=$("eTitle").value.trim()||"試験";d.sub=$("eSub").value;d.notice=$("eNotice").value;
-  d.minutes=Math.max(1,+$("eMin").value||30);d.startAt=$("eStart").value||"";d.endAt=$("eEnd").value||"";d.total=+$("eTot").value||0;d.cat=+$("eCat").value||0;
+  d.minutes=Math.max(1,+$("eMin").value||30);d.startAt=$("eStart").value||"";d.endAt=$("eEnd").value||"";d.mail=$("eMail").value.trim();d.total=+$("eTot").value||0;d.cat=+$("eCat").value||0;
   d.cats=[0,1,2].map(k=>$("eC"+k).value.trim()||"分野"+(k+1));
   d.q=[...$("eQs").children].map(w=>({c:+w.querySelector(".qcat").value,q:w.querySelector(".qq").value.trim(),o:[...w.querySelectorAll(".qop")].map(x=>x.value.trim()),a:+((w.querySelector("input[type=radio]:checked")||{}).value||0),e:w.querySelector(".qe").value.trim()}));
   d.needCode=$("eNeed").checked;d.once=$("eOnce").checked;d.codes=d.codes||[];
