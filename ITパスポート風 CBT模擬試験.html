@@ -233,8 +233,8 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
       <button class="btn" id="eAdd">＋ 問題を追加</button> <button class="btn" id="eSample">サンプル問題を読み込む</button>
     </fieldset>
     <fieldset><legend>⑤ 受験者用の確認コード</legend>
-      <p class="hint">受験者は、このコードを「確認コード」欄に入力してログインします（受験番号・利用者IDは空欄で構いません）。保存すると有効になります。</p>
-      <label><input type="checkbox" id="eNeed"> 受験に確認コードを必須にする</label>
+      <p class="hint">確認コードは、この試験を受けるためのパスワードです。受験者がログイン画面の「確認コード」欄にこのコードを入力すると、あなたが作成したこの試験を受けられます。保存すると有効になります。</p>
+      <label class="hidden"><input type="checkbox" id="eNeed" checked></label>
       <label><input type="checkbox" id="eOnce"> 1つのコードは1回のみ有効</label>
       <div><label>作成数 <input id="eCnt" type="number" min="1" max="50" value="5" style="width:70px"></label><button class="btn" id="eGen">コードを作成</button> <button class="btn" id="eCopy">一覧を表示・コピー</button></div>
       <div style="overflow-x:auto;margin-top:8px"><table class="rtab" id="eCodes"></table></div>
@@ -293,32 +293,43 @@ let ans,chk,cur,remain,tid,examNo,examName,disp={inv:0,bg:0,fg:0};
 
 /* ===== 保存データ ===== */
 const KEY="cbt_exam_v1",cp=o=>JSON.parse(JSON.stringify(o)),KN=()=>({no:"",id:"",code:""});
-const DEF={title:"ITパスポート試験（模擬）",sub:"公開問題風 サンプル",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されますので、内容をご理解の上「同意する」を押してください。\n\n2. 試験時間は画面上部の残り時間で確認できます。\n\n3. 「試験終了」ボタンを押すと、試験時間の途中でも試験を終了することができます。\n\n4. 「後で見直すためにチェックする」を付けた問題は、解答状況と「解答見直し」で確認できます。\n\n※これは学習用の模擬アプリです。",minutes:DEF_CONFIG.minutes,total:DEF_CONFIG.total,cat:DEF_CONFIG.cat,cats:DEF_CATS,q:DEF_Q,creds:null,codes:[],needCode:false,once:false,startAt:"",endAt:""};
-function loadExam(){try{const o=JSON.parse(localStorage.getItem(KEY)||"null");if(o&&Array.isArray(o.q)&&o.q.length)return Object.assign(cp(DEF),o)}catch(e){}return cp(DEF)}
-let EX=loadExam(),CONFIG,CATS,Q;
+const DEF={title:"ITパスポート試験（模擬）",sub:"公開問題風 サンプル",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されますので、内容をご理解の上「同意する」を押してください。\n\n2. 試験時間は画面上部の残り時間で確認できます。\n\n3. 「試験終了」ボタンを押すと、試験時間の途中でも試験を終了することができます。\n\n4. 「後で見直すためにチェックする」を付けた問題は、解答状況と「解答見直し」で確認できます。\n\n※これは学習用の模擬アプリです。",minutes:DEF_CONFIG.minutes,total:DEF_CONFIG.total,cat:DEF_CONFIG.cat,cats:DEF_CATS,q:DEF_Q,creds:null,codes:[],needCode:false,once:false,startAt:"",endAt:"",clearedAt:0,id:""};
+let EX=cp(DEF),CONFIG,CATS,Q;
 function applyExam(){
   CONFIG={minutes:EX.minutes,total:EX.total,cat:EX.cat};CATS=EX.cats;Q=EX.q;
   document.querySelectorAll(".ttl").forEach(e=>e.textContent=EX.title);
   $("lSub").textContent=EX.sub;$("notice").textContent=EX.notice;
   $("lSched").textContent=(EX.startAt||EX.endAt)?"試験日時："+(EX.startAt?fmt(new Date(EX.startAt).getTime()):"")+" 〜 "+(EX.endAt?fmt(new Date(EX.endAt).getTime()):""):"";
-  $("lHint").textContent=EX.needCode?"※確認コードを入力してください。利用者IDには氏名を入力してください（空欄でも構いません）。":"※模擬体験のため、入力は不要です（利用者IDに氏名を入力すると、試験画面に表示されます）。";
+  $("lHint").textContent="※試験の確認コードを入力してログインしてください。利用者IDには氏名、受験番号にはクラスがわかる番号（最初の4桁がクラス）を入力してください。";
 }
 applyExam();
 
 /* ===== 作成・編集モード ===== */
-let draft,pend=null,wtid=null,deadline=0,examKey="",examCode="",lastRec=null,sharedOK=false,DB=null,UID=null;
+let draft,wtid=null,deadline=0,examKey="",examCode="",lastRec=null,sharedOK=false,DB=null,UID=null;
 function fmt(t){return new Date(t).toLocaleString("ja-JP",{dateStyle:"medium",timeStyle:"short"})}
 const endTs=()=>{const t=EX.endAt?new Date(EX.endAt).getTime():0;return t>0?t:0};
 
 /* 共有データベース（使えない場合はこの端末内に保存） */
-async function syncExam(){
-  if(!DB)return;
-  try{const sn=await DB.doc("exam/config").get();
-    if(sn.exists){const o=sn.data();if(o&&Array.isArray(o.q)&&o.q.length){EX=Object.assign(cp(DEF),o);applyExam()}}}catch(e){}
+const LEX="cbt_exams_v2";
+const localExams=()=>{try{return JSON.parse(localStorage.getItem(LEX)||"[]")}catch(e){return []}};
+async function loadExams(){
+  const a=[];
+  if(DB){try{const sn=await DB.collection("exams").get();sn.docs.forEach(d=>a.push(Object.assign(cp(DEF),d.data(),{id:d.id})))}catch(e){}}
+  localExams().forEach(x=>{if(!a.some(y=>y.id===x.id))a.push(Object.assign(cp(DEF),x))});
+  try{const o=JSON.parse(localStorage.getItem(KEY)||"null");if(o&&o.creds&&Array.isArray(o.q)&&o.q.length)a.push(Object.assign(cp(DEF),o,{id:"Lold"}))}catch(e){}
+  if(DB){try{const sn=await DB.doc("exam/config").get();if(sn.exists&&sn.data().creds)a.push(Object.assign(cp(DEF),sn.data(),{id:"legacy"}))}catch(e){}}
+  return a;
+}
+async function storeExam(d){
+  let r="local";
+  if(DB&&UID){if(d.id===UID){try{await DB.doc("exams/"+UID).set(cp(d));r="ok"}catch(e){r="ng"}}else if(!/^L/.test(d.id))r="ng"}
+  if(r!=="ok"){const a=localExams().filter(x=>x.id!==d.id);a.push(cp(d));try{localStorage.setItem(LEX,JSON.stringify(a))}catch(e){r="ng"}}
+  if(r!=="ng"&&d.from==="Lold"){try{localStorage.removeItem(KEY)}catch(e){}}
+  if(r==="ok"&&d.from==="legacy"){try{await DB.doc("exam/config").delete()}catch(e){}}
+  return r;
 }
 (async()=>{
   try{if(window.claude&&typeof claude.use==="function"){DB=await claude.use("db");const u=await claude.use("user");UID=u?await u.id():null}}catch(e){DB=null}
-  await syncExam();
 })();
 const LKEY="cbt_results_v1";
 const clsOf=no=>{const t=String(no||"").replace(/\s/g,"");return t.length>=4?t.slice(0,4):""};
@@ -331,23 +342,26 @@ async function saveResult(rec){
   try{localStorage.setItem(LKEY,JSON.stringify(a))}catch(e){}
   return false;
 }
-async function loadResults(){
+async function loadResults(ex,all){
   let a=[];
-  if(DB){try{const sn=await DB.collection("results").get();a=sn.docs.map(d=>Object.assign({},d.data(),{uid:d.id}))}catch(e){}}
-  localRes().forEach(r=>{if(!a.some(x=>rkey(x)===rkey(r)))a.push(r)});
-  return a.filter(r=>r.done);
+  if(DB){
+    try{const sn=await DB.collection("results").where("examId","==",ex.id).get();a=sn.docs.map(d=>Object.assign({},d.data(),{uid:d.id}))}catch(e){}
+    try{const sn=await DB.doc("imports/"+ex.id).get();if(sn.exists)(sn.data().list||[]).forEach(r=>a.push(r))}catch(e){}
+  }
+  localRes().filter(r=>r.examId===ex.id).forEach(r=>{if(!a.some(x=>rkey(x)===rkey(r)))a.push(r)});
+  return a.filter(r=>(r.at||0)>(ex.clearedAt||0)&&(all||r.done));
 }
 function markStart(){
-  if(DB&&UID&&examCode)DB.doc("results/"+UID).set({no:examKey,name:examName,code:examCode,done:false,at:Date.now(),uid:UID}).catch(()=>{});
+  if(examCode)saveResult({examId:EX.id,no:examKey,name:examName,code:examCode,done:false,at:Date.now()});
 }
-async function codeUsed(c,e){
-  if(DB&&UID){try{const sn=await DB.collection("results").where("code","==",c).get();return sn.docs.some(d=>d.id!==UID)}catch(x){}}
-  return !!(e&&e.u);
+async function codeUsed(ex,c){
+  const me=(DB&&UID)?UID:"L|"+$("inNo").value.trim()+"|"+($("inId").value.trim()||"試験 太郎");
+  return (await loadResults(ex,true)).some(r=>r.code===c&&rkey(r)!==me);
 }
 const stat=(g,rec)=>({n:g.length,rank:1+g.filter(r=>r.total>rec.total).length,avg:Math.round(g.reduce((a,r)=>a+r.total,0)/g.length),max:Math.max(...g.map(r=>r.total))});
 async function showRank(rec){
   const box=$("rankBox");box.textContent="集計中…";
-  let list=(await loadResults()).filter(r=>rkey(r)!==rkey(rec));list.push(rec);
+  let list=(await loadResults(EX)).filter(r=>rkey(r)!==rkey(rec));list.push(rec);
   const rows=[[rec.code?`同じ確認コード（${rec.code}）`:"確認コードなし（全受験者）",stat(list.filter(r=>r.code===rec.code),rec)]];
   const cl=clsOf(rec.no);
   if(cl)rows.push([`クラス（受験番号の最初の4桁：${cl}）`,stat(list.filter(r=>clsOf(r.no)===cl),rec)]);
@@ -373,23 +387,29 @@ function showSend(rec,sent){
   bt.onclick=()=>{ta.select();try{navigator.clipboard.writeText(ta.value)}catch(e){}bt.textContent="コピーしました"};
   b.append(m,ta,bt);
 }
+async function addImport(r){
+  let ok=false;
+  if(DB&&UID&&draft.id===UID){
+    try{const sn=await DB.doc("imports/"+UID).get();const k=((sn.exists?sn.data().list:[])||[]).filter(x=>x.uid!==r.uid);k.push(r);await DB.doc("imports/"+UID).set({list:k});ok=true}catch(e){}
+  }
+  if(!ok){const a=localRes().filter(x=>rkey(x)!==rkey(r));a.push(r);try{localStorage.setItem(LKEY,JSON.stringify(a))}catch(e){}}
+}
 $("impBtn").onclick=async()=>{
   try{
     const r=JSON.parse(decodeURIComponent(escape(atob($("impBox").value.trim()))));
     if(!r||typeof r.total!=="number"||!Array.isArray(r.ans))throw 0;
+    if(r.examId!==draft.id)return ask("この試験の回答データではありません。",null);
     r.done=true;r.no=String(r.no||"");r.name=String(r.name||"");r.code=String(r.code||"");
     r.uid="imp-"+(r.at||0)+"-"+hash(r.no+"|"+r.name+"|"+r.code);
-    let ok=false;
-    if(DB){try{await DB.doc("results/"+r.uid).set(r);ok=true}catch(e){}}
-    if(!ok){const a=localRes().filter(x=>rkey(x)!==rkey(r));a.push(r);try{localStorage.setItem(LKEY,JSON.stringify(a))}catch(e){}}
+    await addImport(r);
     $("impBox").value="";ask("取り込みました。「集計を表示・更新」で確認できます。",null);
   }catch(x){ask("取り込めませんでした。受験者から届いた送信用データを、そのまま貼り付けてください。",null)}
 };
 $("eCsv").onclick=async()=>{
-  const all=await loadResults();
+  const all=await loadResults(draft);
   if(!all.length)return ask("受験結果はまだありません。",null);
   const n=Math.max(...all.map(r=>(r.ans||[]).length)),q=v=>'"'+String(v).replace(/"/g,'""')+'"';
-  const head=["受験番号","氏名","確認コード","総合点",...CATS,...Array.from({length:n},(_,i)=>"問"+(i+1))];
+  const head=["受験番号","氏名","確認コード","総合点",...draft.cats,...Array.from({length:n},(_,i)=>"問"+(i+1))];
   const rows=all.map(r=>[r.no,r.name,r.code,r.total,...(r.cats||[]).map(v=>v===null?"":v),...Array.from({length:n},(_,i)=>{const a=(r.ans||[])[i];return a===undefined?"":a<0?"未":K[a]})]);
   const t=[head,...rows].map(x=>x.map(q).join(",")).join("\n");
   const ta=document.createElement("textarea");ta.readOnly=true;ta.rows=8;ta.value=t;
@@ -403,24 +423,25 @@ const ranked=g=>{g=g.slice().sort((a,b)=>b.total-a.total);return g.map(r=>[1+g.f
 const gsum=g=>`${g.length}人・平均 ${Math.round(g.reduce((a,r)=>a+r.total,0)/g.length)}点・最高 ${Math.max(...g.map(r=>r.total))}点`;
 const groupBy=(a,f)=>{const m=new Map();a.forEach(r=>{const k=f(r);if(!m.has(k))m.set(k,[]);m.get(k).push(r)});return m};
 function aggTable(g){
-  return `<table class="rtab"><tr><th>順位</th><th>受験番号</th><th>氏名</th><th>総合</th>${CATS.map(n=>`<th>${esc(n)}</th>`).join("")}</tr>`+ranked(g).map(([k,r])=>`<tr><td>${k}</td><td>${esc(r.no)}</td><td>${esc(r.name)}</td><td><b>${r.total}</b></td>${(r.cats||[]).map(v=>`<td>${v===null?"－":v}</td>`).join("")}</tr>`).join("")+"</table>";
+  return `<table class="rtab"><tr><th>順位</th><th>受験番号</th><th>氏名</th><th>総合</th>${draft.cats.map(n=>`<th>${esc(n)}</th>`).join("")}</tr>`+ranked(g).map(([k,r])=>`<tr><td>${k}</td><td>${esc(r.no)}</td><td>${esc(r.name)}</td><td><b>${r.total}</b></td>${(r.cats||[]).map(v=>`<td>${v===null?"－":v}</td>`).join("")}</tr>`).join("")+"</table>";
 }
 $("eAgg").onclick=async()=>{
   const out=$("aggOut");out.textContent="集計中…";
-  const all=await loadResults();
+  const all=await loadResults(draft);
   if(!all.length){out.textContent="受験結果はまだありません。";return}
   let h="<h3>確認コード別</h3>";
-  groupBy(all,r=>r.code||"").forEach((g,k)=>{const cd=(EX.codes||[]).find(x=>x.c===k);h+=`<div class="lb" style="color:var(--text)">${k?"確認コード "+esc(k)+(cd&&cd.n?"（"+esc(cd.n)+"）":""):"確認コードなし"}　<small>${gsum(g)}</small></div>`+aggTable(g)});
+  groupBy(all,r=>r.code||"").forEach((g,k)=>{const cd=(draft.codes||[]).find(x=>x.c===k);h+=`<div class="lb" style="color:var(--text)">${k?"確認コード "+esc(k)+(cd&&cd.n?"（"+esc(cd.n)+"）":""):"確認コードなし"}　<small>${gsum(g)}</small></div>`+aggTable(g)});
   h+="<h3>クラス別（受験番号の最初の4桁）</h3>";
   groupBy(all,r=>clsOf(r.no)).forEach((g,k)=>{h+=`<div class="lb" style="color:var(--text)">${k?"クラス "+esc(k):"クラス不明（受験番号未入力）"}　<small>${gsum(g)}</small></div>`+aggTable(g)});
   h+="<h3>個別の回答（○正解 ×不正解）</h3>"+all.slice().sort((a,b)=>(a.at||0)-(b.at||0)).map(r=>`<details style="margin-bottom:6px"><summary>${esc(r.name)}（${esc(r.no||"受験番号なし")}）　${r.total}点</summary><table class="rtab" style="max-width:360px"><tr><th>問</th><th>回答</th><th>判定</th></tr>${(r.ans||[]).map((a,i)=>`<tr><td>問${i+1}</td><td>${a<0?"未回答":K[a]}</td><td>${(r.ok||[])[i]?"○":"×"}</td></tr>`).join("")}</table></details>`).join("");
   out.innerHTML=h;
 };
-$("eAggClr").onclick=()=>ask("保存されている受験結果をすべて消去します。よろしいですか？","消去する",async()=>{
-  try{localStorage.removeItem(LKEY)}catch(e){}
-  let ng=false;
-  if(DB){try{const sn=await DB.collection("results").get();await Promise.all(sn.docs.map(d=>DB.doc("results/"+d.id).delete()))}catch(e){ng=true}}
-  $("aggOut").textContent=ng?"共有データの一部を消去できませんでした（作成者のアカウントで操作してください）。":"消去しました。";
+$("eAggClr").onclick=()=>ask("この試験の受験結果をすべて消去します（集計から除かれます）。よろしいですか？","消去する",async()=>{
+  const cur=(await loadExams()).find(e=>e.id===draft.id);
+  if(!cur)return ask("この試験はまだ保存されていないため、消去する結果はありません。",null);
+  cur.clearedAt=Date.now();draft.clearedAt=cur.clearedAt;
+  const r=await storeExam(cur);
+  $("aggOut").textContent=r==="ng"?"消去を保存できませんでした（この試験を作成したアカウントで操作してください）。":"消去しました。";
 });
 const startTs=()=>{const t=EX.startAt?new Date(EX.startAt).getTime():0;return t>0?t:0};
 function showWait(t){
@@ -438,14 +459,11 @@ function showWait(t){
 $("wBack").onclick=()=>{clearInterval(wtid);show("login")};
 function renderCodes(){
   const cs=draft.codes||[];
-  $("eCodes").innerHTML=cs.length?"<tr><th>確認コード</th><th>メモ（受験者名など）</th><th>状態</th><th></th></tr>"+cs.map((x,i)=>`<tr data-i="${i}"><td style="font-family:monospace;font-size:1.05rem;letter-spacing:2px"><b>${esc(x.c)}</b></td><td><input class="cn" value="${esc(x.n||"")}" size="14"></td><td>${x.u?"使用済み":"未使用"}</td><td>${x.u?'<button class="btn" data-a="rs">戻す</button> ':""}<button class="btn" data-a="rm">削除</button></td></tr>`).join(""):"<tr><td>コードはまだありません。</td></tr>";
+  $("eCodes").innerHTML=cs.length?"<tr><th>確認コード（受験用パスワード）</th><th>メモ（受験者名など）</th><th></th></tr>"+cs.map((x,i)=>`<tr data-i="${i}"><td style="font-family:monospace;font-size:1.05rem;letter-spacing:2px"><b>${esc(x.c)}</b></td><td><input class="cn" value="${esc(x.n||"")}" size="14"></td><td><button class="btn" data-a="rm">削除</button></td></tr>`).join(""):"<tr><td>コードはまだありません。</td></tr>";
 }
-function useCode(c){
-  const e=(EX.codes||[]).find(x=>x.c===c);if(!e)return;e.u=true;
-  try{localStorage.setItem(KEY,JSON.stringify(EX))}catch(x){}
-}
-$("eGen").onclick=()=>{
+$("eGen").onclick=async()=>{
   sync();const n=Math.min(50,Math.max(1,+$("eCnt").value||1)),have=new Set(draft.codes.map(x=>x.c));
+  (await loadExams()).filter(e=>e.id!==draft.id).forEach(e=>(e.codes||[]).forEach(x=>have.add(x.c)));
   const pin=()=>{let v;try{const a=new Uint32Array(1);crypto.getRandomValues(a);v=a[0]}catch(e){v=Math.random()*4e9|0}return String(100000+v%900000)};
   for(let k=0;k<n;k++){let c=pin();while(have.has(c)||c===draft.creds.code)c=pin();have.add(c);draft.codes.push({c,n:"",u:false})}
   draft.needCode=true;renderEd();
@@ -466,11 +484,14 @@ $("eCopy").onclick=()=>{
 };
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const blankQ=()=>({c:0,q:"",o:["","","",""],a:0,e:""});
-function openEditor(nw){
-  draft=nw?{title:"新しい試験",sub:"",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されます。\n\n2. 試験時間は画面上部の残り時間で確認できます。",minutes:30,total:600,cat:300,cats:["分野A","分野B","分野C"],q:[blankQ()],creds:KN(),codes:[],needCode:false,once:false,startAt:"",endAt:""}:cp(EX);
+function openEditor(ex){
+  const nw=!ex,nid=(DB&&UID)?UID:"L"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  draft=nw?{id:nid,title:"新しい試験",sub:"",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されます。\n\n2. 試験時間は画面上部の残り時間で確認できます。",minutes:30,total:600,cat:300,cats:["分野A","分野B","分野C"],q:[blankQ()],creds:KN(),codes:[],needCode:true,once:false,startAt:"",endAt:"",clearedAt:0}:cp(ex);
+  if(!nw&&(ex.id==="legacy"||ex.id==="Lold")){draft.from=ex.id;draft.id=nid}
   draft.creds=draft.creds||KN();
   $("edMode").textContent=nw?"新規作成":"編集";
-  $("edWarn").classList.toggle("hidden",!(nw&&EX.creds));
+  $("edWarn").classList.add("hidden");
+  if(nw&&DB&&UID)loadExams().then(a=>{if(a.some(e=>e.id===UID))$("edWarn").classList.remove("hidden")});
   renderEd();show("editor");
 }
 function renderEd(){
@@ -509,23 +530,28 @@ $("eQs").onclick=e=>{
   renderEd();
 };
 $("eAdd").onclick=()=>{sync();draft.q.push(blankQ());renderEd();$("eQs").lastElementChild.scrollIntoView({block:"center"})};
-$("eSample").onclick=()=>ask("サンプル問題と設定を読み込みます（現在の入力内容は置き換わります）。","読み込む",()=>{const c=draft.creds,cd=[draft.codes,draft.needCode,draft.once];draft=cp(DEF);draft.creds=c;[draft.codes,draft.needCode,draft.once]=cd;renderEd()});
+$("eSample").onclick=()=>ask("サンプル問題と設定を読み込みます（現在の入力内容は置き換わります）。","読み込む",()=>{const c=draft.creds,cd=[draft.codes,draft.needCode,draft.once];const id=draft.id,ca=draft.clearedAt,fr=draft.from;draft=cp(DEF);draft.id=id;draft.clearedAt=ca;draft.from=fr;draft.creds=c;[draft.codes,draft.needCode,draft.once]=cd;renderEd()});
 $("eSave").onclick=async()=>{
-  sync();const d=draft,err=[];let fail=false;if(d.needCode&&!d.codes.length)err.push("確認コードを必須にするには、コードを1つ以上作成してください。");if(d.startAt&&d.endAt&&new Date(d.endAt)<=new Date(d.startAt))err.push("終了日時は開始日時より後にしてください。");
+  sync();const d=draft,err=[];
   if(!d.creds.no||!d.creds.id||!d.creds.code)err.push("受験番号・利用者ID・確認コードをすべて入力してください（次回、この3つで再編集します）。");
+  if(!d.codes.length)err.push("受験者用の確認コードを1つ以上作成してください（受験者はこのコードで、この試験を受けます）。");
+  if(d.startAt&&d.endAt&&new Date(d.endAt)<=new Date(d.startAt))err.push("終了日時は開始日時より後にしてください。");
   d.q.forEach((q,i)=>{if(!q.q||q.o.some(o=>!o))err.push(`問${i+1}：問題文と選択肢ア〜エをすべて入力してください。`)});
+  const others=(await loadExams()).filter(e=>e.id!==d.id&&e.id!==d.from);
+  if(others.some(e=>e.creds&&e.creds.no===d.creds.no&&e.creds.id===d.creds.id&&e.creds.code===d.creds.code))err.push("この受験番号・利用者ID・確認コードの組み合わせは、すでに他の試験で使われています。変更してください。");
+  const dup=d.codes.filter(x=>others.some(e=>(e.codes||[]).some(y=>y.c===x.c))).map(x=>x.c);
+  if(dup.length)err.push("次の確認コードは、すでに他の試験で使われています："+dup.join("、")+"（削除して作り直してください）");
   if(err.length)return ask(err.join("\n"),null);
-  try{localStorage.setItem(KEY,JSON.stringify(d))}catch(x){fail=true}
-  let shared="";if(DB){try{await DB.doc("exam/config").set(cp(d));shared="ok"}catch(x){shared="ng"}}
-  EX=cp(d);applyExam();$("edMode").textContent="編集";$("edWarn").classList.add("hidden");
-  ask(fail?"ブラウザに保存できませんでした。このページを開いている間のみ有効です。「書き出し」でJSONを控えてください。":"保存しました。\n次回は、設定した受験番号・利用者ID・確認コードでログインすると再編集できます。\n受験するときは、3項目を空欄のままログインしてください。"+(shared==="ok"?"\n共有データベースにも保存しました。":shared==="ng"?"\n※共有データベースへ保存できませんでした（この設定はこのブラウザ内のみ有効です）。":""),null);
+  const r=await storeExam(d);
+  $("edMode").textContent="編集";$("edWarn").classList.add("hidden");
+  ask("保存しました。\n次回は、設定した受験番号・利用者ID・確認コードでログインすると再編集できます。\n受験者は、確認コードを入力してログインすると、この試験を受けられます。"+(r==="ok"?"\n共有データベースにも保存しました。":r==="ng"?"\n※共有データベースへ保存できませんでした（この試験はこのブラウザ内のみ有効です）。":"\n※この端末内に保存しました（他の端末の受験者は、この試験を受けられません）。"),null);
 };
 $("eClose").onclick=()=>ask("編集画面を閉じてログイン画面に戻ります。保存していない変更は失われます。","閉じる",()=>{["inNo","inId","inCode"].forEach(i=>$(i).value="");show("login")});
-$("eExp").onclick=()=>{sync();const o=cp(draft);delete o.creds;delete o.codes;delete o.needCode;delete o.once;$("eJson").value=JSON.stringify(o)};
+$("eExp").onclick=()=>{sync();const o=cp(draft);delete o.creds;delete o.codes;delete o.needCode;delete o.once;delete o.id;delete o.clearedAt;delete o.from;$("eJson").value=JSON.stringify(o)};
 $("eImp").onclick=()=>{
   try{
     const o=JSON.parse($("eJson").value);if(!Array.isArray(o.q)||!o.q.length)throw 0;
-    const c=draft.creds,cd=[draft.codes,draft.needCode,draft.once];draft=Object.assign(cp(DEF),o);draft.creds=c;[draft.codes,draft.needCode,draft.once]=cd;
+    const c=draft.creds,cd=[draft.codes,draft.needCode,draft.once],id0=draft.id,ca0=draft.clearedAt,fr0=draft.from;draft=Object.assign(cp(DEF),o);draft.creds=c;[draft.codes,draft.needCode,draft.once]=cd;draft.id=id0;draft.clearedAt=ca0;draft.from=fr0;
     draft.cats=[0,1,2].map(k=>String((o.cats||[])[k]||"分野"+(k+1)));
     draft.q=o.q.map(q=>({c:Math.min(2,Math.max(0,+q.c||0)),q:String(q.q||""),o:[0,1,2,3].map(j=>String((q.o||[])[j]||"")),a:Math.min(3,Math.max(0,+q.a||0)),e:String(q.e||"")}));
     renderEd();
@@ -533,7 +559,7 @@ $("eImp").onclick=()=>{
 };
 
 
-function show(id){["login","exam","result","editor","wait"].forEach(x=>$(x).classList.toggle("hidden",x!==id));scrollTo(0,0)}
+function show(id){if(id==="login"&&EX.id){EX=cp(DEF);applyExam()}["login","exam","result","editor","wait"].forEach(x=>$(x).classList.toggle("hidden",x!==id));scrollTo(0,0)}
 const pad=n=>String(n).padStart(2,"0");
 function clock(){const d=new Date();document.querySelectorAll(".clock").forEach(e=>e.textContent=pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds()))}
 setInterval(clock,1000);clock();
@@ -549,24 +575,21 @@ $("dlgYes").onclick=()=>{$("dlg").close();yesFn&&yesFn()};
 $("dlgNo").onclick=()=>$("dlg").close();
 
 /* ログイン→同意→開始 */
-$("loginBtn").onclick=async()=>{await syncExam();
+$("loginBtn").onclick=async()=>{
   const n=$("inNo").value.trim(),i=$("inId").value.trim(),c=$("inCode").value.trim();
-  if(!n&&i==="00000"&&c==="1234")return openEditor(true);
-  if(EX.creds&&EX.creds.no&&n===EX.creds.no&&i===EX.creds.id&&c===EX.creds.code)return openEditor(false);
-  pend=null;
-  if(EX.needCode){
-    const e=(EX.codes||[]).find(x=>x.c===c);
-    if(!c)return ask("確認コードを入力してください。",null);
-    if(!e)return ask("確認コードが正しくありません。",null);
-    if(EX.once&&await codeUsed(c,e))return ask("この確認コードはすでに使用されています。",null);
-    pend=c;
-  }
-  consent();
+  if(!n&&i==="00000"&&c==="1234")return openEditor(null);
+  const exams=await loadExams();
+  const mine=n&&exams.find(e=>e.creds&&e.creds.no===n&&e.creds.id===i&&e.creds.code===c);
+  if(mine)return openEditor(mine);
+  if(!c)return ask("確認コードを入力してください。",null);
+  const ex=exams.find(e=>(e.codes||[]).some(x=>x.c===c));
+  if(!ex)return ask("確認コードが正しくありません。",null);
+  if(ex.once&&await codeUsed(ex,c))return ask("この確認コードはすでに使用されています。",null);
+  EX=ex;applyExam();examCode=c;consent();
 };
-const consent=()=>ask("【同意事項】\n・試験中に知り得た問題の内容を第三者に漏らさないこと。\n・試験官（本アプリ）の指示に従うこと。\n（模擬体験用の同意画面です）","同意する",start);
+const consent=()=>ask(EX.title+"\n\n【同意事項】\n・試験中に知り得た問題の内容を第三者に漏らさないこと。\n・試験官（本アプリ）の指示に従うこと。\n（模擬体験用の同意画面です）","同意する",start);
 function start(){
   {const te=endTs();if(te&&Date.now()>=te)return ask("この試験の受付は終了しました。",null)}
-  examCode=pend||"";if(pend){useCode(pend);pend=null}
   examNo=$("inNo").value.trim()||"IP0000 A001";examName=$("inId").value.trim()||"試験 太郎";examKey=$("inNo").value.trim();markStart();
   const t=startTs();
   if(t&&Date.now()<t)return showWait(t);
@@ -635,7 +658,7 @@ function finish(){
   const tot=sc(ok.filter(Boolean).length/Q.length);
   const cs=CATS.map((_,c)=>{const idx=Q.map((q,i)=>q.c===c?i:-1).filter(i=>i>=0);return idx.length?sc(idx.filter(i=>ok[i]).length/idx.length):null});
   const pass=tot>=CONFIG.total&&cs.every(s=>s===null||s>=CONFIG.cat);
-  const rec={no:examKey,name:examName,code:examCode,total:tot,cats:cs,ans:ans.slice(),ok:ok.slice(),done:true,at:Date.now()};
+  const rec={examId:EX.id,no:examKey,name:examName,code:examCode,total:tot,cats:cs,ans:ans.slice(),ok:ok.slice(),done:true,at:Date.now()};
   $("rNo").textContent=examNo;$("rName").textContent=examName;$("tot").textContent=tot.toLocaleString();
   $("tot").className=tot<CONFIG.total?"low":"";
   $("cats").innerHTML=CATS.map((n,i)=>`<div class="cat"><span>${n}</span><span class="${cs[i]!==null&&cs[i]<CONFIG.cat?"low":""}"><b>${cs[i]===null?"－":cs[i].toLocaleString()}</b> / 1,000 点</span></div>`).join("");
