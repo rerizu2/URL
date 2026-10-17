@@ -242,6 +242,8 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
     <fieldset><legend>⑥ 集計結果</legend>
       <p class="hint">受験を終えた人の結果を、確認コード別・クラス別（受験番号の最初の4桁が同じ人）に、順位つきで表示します。</p>
       <button class="btn" id="eAgg">集計を表示・更新</button> <button class="btn" id="eAggClr">結果をすべて消去</button>
+      <div style="margin-top:8px"><button class="btn org" id="eZip">個人成績表（PDF）をクラス別フォルダのZIPで作成</button></div>
+      <p class="hint">ZIPの中は「クラス○○○○」（受験番号の最初の4桁）のフォルダごとに、個人成績表のPDFが入ります。全員の成績一覧（成績一覧.csv）も入ります。</p>
       <div id="aggOut" style="overflow-x:auto;margin-top:8px"></div>
       <h3 style="margin:14px 0 4px">受験者から受け取った回答データの取り込み</h3>
       <p class="hint">自動送信できなかった受験者から届いた「送信用データ」を貼り付けて取り込みます。</p>
@@ -313,7 +315,7 @@ applyExam();
 
 /* ===== 作成・編集モード ===== */
 /* Googleスプレッドシート連携：Apps Script のウェブアプリURLを設定（または config.json の sheetUrl） */
-const SHEET_URL="https://script.google.com/macros/s/AKfycbyB-Q6oL_oIDvZU63W8A30ZFlczjICpiXlnXndV2lBb7upRNW5ul9cEFeBjf8gpUQbv/exec";
+const SHEET_URL="";
 let SHEET=SHEET_URL;
 async function post(action,body){
   try{
@@ -481,6 +483,137 @@ $("eGhIssue").onclick=async()=>{
     }
     ask(n+"件の回答データを取り込みました。「集計を表示・更新」で確認できます。",null);
   }catch(e){ask("GitHubから取得できませんでした（リポジトリが非公開の場合は取得できません）。",null)}
+};
+/* ---- ZIP・PDFの作成（ライブラリ不要） ---- */
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=u=>{let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0};
+function makeZip(files){
+  const te=new TextEncoder(),parts=[],cen=[],d=new Date();let off=0;
+  const dt=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),dd=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  files.forEach(f=>{
+    const nm=te.encode(f.name),crc=crc32(f.data),sz=f.data.length;
+    const h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(10,dt,true);h.setUint16(12,dd,true);
+    h.setUint32(14,crc,true);h.setUint32(18,sz,true);h.setUint32(22,sz,true);h.setUint16(26,nm.length,true);
+    parts.push(new Uint8Array(h.buffer),nm,f.data);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(12,dt,true);c.setUint16(14,dd,true);
+    c.setUint32(16,crc,true);c.setUint32(20,sz,true);c.setUint32(24,sz,true);c.setUint16(28,nm.length,true);c.setUint32(42,off,true);
+    cen.push(new Uint8Array(c.buffer),nm);
+    off+=30+nm.length+sz;
+  });
+  const cs=cen.reduce((a,x)=>a+x.length,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...cen,new Uint8Array(e.buffer)],{type:"application/zip"});
+}
+function makePdf(jpegs,w,h){
+  const te=new TextEncoder(),ch=[],xr=[];let len=0;
+  const put=x=>{const u=typeof x==="string"?te.encode(x):x;ch.push(u);len+=u.length};
+  const obj=(n,f)=>{xr[n]=len;put(n+" 0 obj\n");f();put("\nendobj\n")};
+  const np=jpegs.length;
+  put("%PDF-1.4\n");
+  obj(1,()=>put("<< /Type /Catalog /Pages 2 0 R >>"));
+  obj(2,()=>put("<< /Type /Pages /Count "+np+" /Kids ["+jpegs.map((_,i)=>(3+3*i)+" 0 R").join(" ")+"] >>"));
+  jpegs.forEach((j,i)=>{
+    const pn=3+3*i,cn=pn+1,im=pn+2,cs="q 595.28 0 0 841.89 0 0 cm /Im0 Do Q";
+    obj(pn,()=>put("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 "+im+" 0 R >> >> /Contents "+cn+" 0 R >>"));
+    obj(cn,()=>put("<< /Length "+cs.length+" >>\nstream\n"+cs+"\nendstream"));
+    obj(im,()=>{put("<< /Type /XObject /Subtype /Image /Width "+w+" /Height "+h+" /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "+j.length+" >>\nstream\n");put(j);put("\nendstream")});
+  });
+  const xo=len,n=3*np+3;
+  put("xref\n0 "+n+"\n0000000000 65535 f \n");
+  for(let i=1;i<n;i++)put(String(xr[i]).padStart(10,"0")+" 00000 n \n");
+  put("trailer\n<< /Size "+n+" /Root 1 0 R >>\nstartxref\n"+xo+"\n%%EOF");
+  const out=new Uint8Array(len);let p=0;ch.forEach(u=>{out.set(u,p);p+=u.length});
+  return out;
+}
+function dl(blob,name){
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),8000);
+}
+function drawReport(g,d){
+  const W=1240,H=1754,M=80,r=d.r,cs=r.cats||[],F='"Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif';
+  const T=(s,x,y,sz,o)=>{o=o||{};g.font=(o.b?"700 ":"400 ")+sz+"px "+F;g.fillStyle=o.c||"#111";g.textAlign=o.a||"left";g.textBaseline="alphabetic";g.fillText(String(s),x,y)};
+  const L=(x1,y1,x2,y2,w,c)=>{g.strokeStyle=c||"#111";g.lineWidth=w||2;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke()};
+  g.fillStyle="#fff";g.fillRect(0,0,W,H);
+  T("CBT",M,120,64,{b:1,c:"#e4002b"});
+  T(d.title,M+170,100,34,{b:1});T("個人成績表",M+170,142,26,{c:"#555"});
+  T("作成日："+d.today,W-M,142,22,{a:"right",c:"#555"});
+  L(M,170,W-M,170,6);
+  [["氏名",r.name||"（未入力）"],["受験番号",r.no||"（未入力）"],["クラス",d.cls||"（不明）"],["確認コード",r.code||"－"],["受験日時",d.at]].forEach((x,i)=>{
+    const X=M+(i%2)*520,Y=225+Math.floor(i/2)*52;T(x[0],X,Y,24,{c:"#555"});T(x[1],X+150,Y,30,{b:1});
+  });
+  L(M,360,W-M,360,1,"#bbb");
+  T("総合評価点",M,410,26,{b:1,c:"#1763c7"});
+  g.strokeStyle="#111";g.lineWidth=2;g.strokeRect(M,430,560,120);
+  T(r.total.toLocaleString(),M+300,520,84,{b:1,a:"right"});T("/ 1,000 点",M+320,520,34);
+  const pc=d.pass?"#17803d":"#d03030",bw0=W-2*M-620;
+  g.strokeStyle=pc;g.lineWidth=5;g.strokeRect(M+620,430,bw0,120);
+  T(d.pass?"合　格":"不合格",M+620+bw0/2,510,64,{b:1,c:pc,a:"center"});
+  T("合格基準：総合"+d.tTotal+"点以上、各分野"+d.tCat+"点以上",M,590,22,{c:"#555"});
+  T("分野別評価点",M,650,26,{b:1,c:"#1763c7"});
+  d.cats.forEach((n,i)=>{
+    const v=cs[i],Y=700+i*56,bx=M+300,bw=520;
+    T(n,M,Y,28);
+    if(v===null||v===undefined){T("－（出題なし）",bx,Y,26,{c:"#777"});return}
+    g.fillStyle="#e5e8ee";g.fillRect(bx,Y-26,bw,32);
+    g.fillStyle=v>=d.tCat?"#1763c7":"#d03030";g.fillRect(bx,Y-26,bw*v/1000,32);
+    L(bx+bw*d.tCat/1000,Y-32,bx+bw*d.tCat/1000,Y+12,3,"#111");
+    T(v.toLocaleString()+" 点",bx+bw+30,Y,30,{b:1});
+  });
+  T("順位・集計",M,880,26,{b:1,c:"#1763c7"});
+  [[d.cls?"クラス（"+d.cls+"）":"クラス",d.sCls],["確認コード（"+(r.code||"－")+"）",d.sCode]].forEach((x,i)=>{
+    const Y=930+i*52,s=x[1];T(x[0],M,Y,28);
+    if(!s)T("集計なし（受験番号の最初の4桁が未入力）",M+360,Y,24,{c:"#777"});
+    else{T(s.rank+" 位 / "+s.n+" 人",M+360,Y,32,{b:1});T("平均 "+s.avg+"点　最高 "+s.max+"点",M+660,Y,26,{c:"#444"})}
+  });
+  const n=d.q.length,rpc=Math.max(20,Math.ceil(n/5)),rh=Math.min(30,Math.floor(600/rpc)),cols=Math.ceil(n/rpc),cw=(W-2*M)/cols,fs=Math.min(22,rh-6);
+  T("各問の回答（○正解 ×不正解）",M,1030,26,{b:1,c:"#1763c7"});
+  for(let c=0;c<cols;c++){
+    const X=M+c*cw;
+    g.fillStyle="#eef2f8";g.fillRect(X,1050,cw-12,rh);
+    ["問","回答","正解","判定"].forEach((h,k)=>T(h,X+[8,cw*.28,cw*.52,cw*.78][k],1050+rh-7,fs-2,{b:1}));
+    for(let j=0;j<rpc;j++){
+      const i=c*rpc+j;if(i>=n)break;
+      const Y=1050+rh*(j+2)-7,a=(r.ans||[])[i],ok=(r.ok||[])[i];
+      T(i+1,X+8,Y,fs);T(a===undefined||a<0?"未":K[a],X+cw*.28,Y,fs);T(K[d.q[i].a],X+cw*.52,Y,fs);
+      T(ok?"○":"×",X+cw*.78,Y,fs,{b:1,c:ok?"#17803d":"#d03030"});
+      L(X,Y+7,X+cw-12,Y+7,1,"#ddd");
+    }
+  }
+  T("この成績表は、CBT模擬試験アプリで自動作成されました。",W/2,H-40,18,{a:"center",c:"#888"});
+}
+$("eZip").onclick=async()=>{
+  const out=$("aggOut");out.textContent="準備中…";
+  try{
+    sync();
+    const all=await loadResults(draft);
+    if(!all.length){out.textContent="受験結果はまだありません。";return}
+    const byCode=groupBy(all,r=>r.code||""),byCls=groupBy(all,r=>clsOf(r.no));
+    const san=t=>String(t).replace(/[\\\/:*?"<>|\s]+/g,"_");
+    const cv=document.createElement("canvas");cv.width=1240;cv.height=1754;const g=cv.getContext("2d");
+    const files=[],used=new Set(),rows=[],te=new TextEncoder(),today=new Date().toLocaleDateString("ja-JP");
+    const list=all.slice().sort((a,b)=>(clsOf(a.no)||"~").localeCompare(clsOf(b.no)||"~")||b.total-a.total);
+    for(let i=0;i<list.length;i++){
+      const r=list[i],cls=clsOf(r.no),cs=r.cats||[];
+      out.textContent="個人成績表を作成中… "+(i+1)+" / "+list.length;
+      await new Promise(x=>setTimeout(x,0));
+      const sCode=stat(byCode.get(r.code||""),r),sCls=cls?stat(byCls.get(cls),r):null;
+      const pass=r.total>=draft.total&&cs.every(v=>v===null||v===undefined||v>=draft.cat);
+      drawReport(g,{r,title:draft.title,cats:draft.cats,q:draft.q,tTotal:draft.total,tCat:draft.cat,cls,sCode,sCls,pass,at:fmt(r.at||Date.now()),today});
+      const b=await new Promise(x=>cv.toBlob(x,"image/jpeg",0.92));
+      const pdf=makePdf([new Uint8Array(await b.arrayBuffer())],1240,1754);
+      const base=(cls?"クラス"+san(cls):"クラス未分類")+"/"+san(r.no||"番号なし")+"_"+san(r.name||"氏名なし");
+      let u=base,k=2;while(used.has(u))u=base+"_"+k++;used.add(u);
+      files.push({name:u+".pdf",data:pdf});
+      rows.push([cls||"未分類",r.no,r.name,r.code,r.total,...cs.map(v=>v==null?"":v),sCls?sCls.rank:"",sCode.rank,pass?"合格":"不合格"]);
+    }
+    const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+    const head=["クラス","受験番号","氏名","確認コード","総合点",...draft.cats,"クラス順位","確認コード内順位","判定"];
+    files.push({name:"成績一覧.csv",data:te.encode("\ufeff"+[head,...rows].map(x=>x.map(q).join(",")).join("\r\n"))});
+    dl(makeZip(files),"個人成績表_"+san(draft.title)+".zip");
+    out.textContent=list.length+"人分の個人成績表を作成しました（ZIPをダウンロードしました）。";
+  }catch(e){out.textContent="作成できませんでした："+((e&&e.message)||e)}
 };
 $("eCsv").onclick=async()=>{
   const all=await loadResults(draft);
