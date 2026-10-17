@@ -249,6 +249,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
       <button class="btn" id="impBtn">取り込む</button> <button class="btn" id="eCsv">全員の回答をCSVで表示</button>
     </fieldset>
     <fieldset><legend>⑦ 他の端末でも受験できるようにする（GitHubで公開）</legend>
+      <p class="hint" id="sheetNote"></p>
       <p class="hint">このHTMLをGitHub Pagesで公開し、下で作る「exams.json」を同じ場所（index.htmlと同じフォルダ）に置いてコミットすると、どの端末でも確認コードで受験できます。GitHub上のページで操作すると、すでにある exams.json に自動で統合されます。</p>
       <label>回答データの送り先メールアドレス（任意） <input id="eMail" type="email" size="30"></label>
       <div><button class="btn" id="eGh">exams.json を作成</button> <button class="btn" id="eGhDl">ダウンロード</button> <button class="btn" id="eGhIssue">GitHubに届いた回答を取り込む</button></div>
@@ -311,7 +312,16 @@ function applyExam(){
 applyExam();
 
 /* ===== 作成・編集モード ===== */
-let draft,wtid=null,deadline=0,examKey="",examCode="",lastRec=null,sharedOK=false,DB=null,UID=null;
+/* Googleスプレッドシート連携：Apps Script のウェブアプリURLを設定（または config.json の sheetUrl） */
+const SHEET_URL="https://script.google.com/macros/s/AKfycbyB-Q6oL_oIDvZU63W8A30ZFlczjICpiXlnXndV2lBb7upRNW5ul9cEFeBjf8gpUQbv/exec";
+let SHEET=SHEET_URL;
+async function post(action,body){
+  try{
+    const r=await fetch(SHEET,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({action},body))});
+    return await r.json();
+  }catch(e){return {ok:false,error:"net"}}
+}
+let draft,wtid=null,lastErr="",attemptId="",deadline=0,examKey="",examCode="",lastRec=null,sharedOK=false,DB=null,UID=null;
 function fmt(t){return new Date(t).toLocaleString("ja-JP",{dateStyle:"medium",timeStyle:"short"})}
 const endTs=()=>{const t=EX.endAt?new Date(EX.endAt).getTime():0;return t>0?t:0};
 
@@ -333,6 +343,7 @@ function ghRepo(){
 }
 async function loadExams(){
   const a=[];
+  if(SHEET)return a;
   if(DB){try{const sn=await DB.collection("exams").get();sn.docs.forEach(d=>a.push(Object.assign(cp(DEF),d.data(),{id:d.id})))}catch(e){}}
   localExams().forEach(x=>{if(!a.some(y=>y.id===x.id))a.push(Object.assign(cp(DEF),x))});
   (await remoteExams()).forEach(x=>{if(!a.some(y=>y.id===x.id))a.push(Object.assign(cp(DEF),x))});
@@ -341,6 +352,13 @@ async function loadExams(){
   return a;
 }
 async function storeExam(d){
+  if(SHEET){
+    const x=cp(d),auth=x.auth;delete x.auth;delete x.from;
+    const r=await post("saveExam",{exam:x,auth:auth});
+    if(r.ok){d.auth=cp(d.creds);return "ok"}
+    lastErr=r.error==="net"?"スプレッドシートに接続できませんでした。":(r.error||"保存できませんでした。");
+    return "err";
+  }
   let r="local";
   if(DB&&UID){if(d.id===UID){try{await DB.doc("exams/"+UID).set(cp(d));r="ok"}catch(e){r="ng"}}else if(!/^L/.test(d.id))r="ng"}
   if(r!=="ok"){const a=localExams().filter(x=>x.id!==d.id);a.push(cp(d));try{localStorage.setItem(LEX,JSON.stringify(a))}catch(e){r="ng"}}
@@ -350,12 +368,14 @@ async function storeExam(d){
 }
 (async()=>{
   try{if(window.claude&&typeof claude.use==="function"){DB=await claude.use("db");const u=await claude.use("user");UID=u?await u.id():null}}catch(e){DB=null}
+  if(!SHEET){try{const r=await fetch("config.json?t="+Date.now(),{cache:"no-store"});const c=await r.json();if(c&&c.sheetUrl)SHEET=c.sheetUrl}catch(e){}}
 })();
 const LKEY="cbt_results_v1";
 const clsOf=no=>{const t=String(no||"").replace(/\s/g,"");return t.length>=4?t.slice(0,4):""};
 const rkey=r=>r.uid&&r.uid!=="local"?r.uid:"L|"+r.no+"|"+r.name;
 function localRes(){try{return JSON.parse(localStorage.getItem(LKEY)||"[]")}catch(e){return []}}
 async function saveResult(rec){
+  if(SHEET){rec.uid=attemptId;const x=await post("submit",{rec:rec});if(x.ok)return true}
   rec.uid=(DB&&UID)?UID:"local";
   if(DB&&UID){try{await DB.doc("results/"+UID).set(rec);return true}catch(e){}}
   const a=localRes().filter(r=>rkey(r)!==rkey(rec));a.push(rec);
@@ -363,6 +383,10 @@ async function saveResult(rec){
   return false;
 }
 async function loadResults(ex,all){
+  if(SHEET){
+    const r=(draft&&ex===draft)?await post("results",{examId:ex.id,creds:ex.auth||ex.creds}):await post("ranks",{examId:ex.id});
+    return (r.rows||[]).filter(x=>all||x.done!==false);
+  }
   let a=[];
   if(DB){
     try{const sn=await DB.collection("results").where("examId","==",ex.id).get();a=sn.docs.map(d=>Object.assign({},d.data(),{uid:d.id}))}catch(e){}
@@ -372,9 +396,10 @@ async function loadResults(ex,all){
   return a.filter(r=>(r.at||0)>(ex.clearedAt||0)&&(all||r.done));
 }
 function markStart(){
-  if(examCode)saveResult({examId:EX.id,no:examKey,name:examName,code:examCode,done:false,at:Date.now()});
+  if(examCode&&!SHEET)saveResult({examId:EX.id,no:examKey,name:examName,code:examCode,done:false,at:Date.now()});
 }
 async function codeUsed(ex,c){
+  if(SHEET)return false;
   const me=(DB&&UID)?UID:"L|"+$("inNo").value.trim()+"|"+($("inId").value.trim()||"試験 太郎");
   return (await loadResults(ex,true)).some(r=>r.code===c&&rkey(r)!==me);
 }
@@ -412,6 +437,7 @@ function showSend(rec,sent){
   b.append(m,ta,...btns);
 }
 async function addImport(r){
+  if(SHEET){const x=await post("submit",{rec:r});if(x.ok)return}
   let ok=false;
   if(DB&&UID&&draft.id===UID){
     try{const sn=await DB.doc("imports/"+UID).get();const k=((sn.exists?sn.data().list:[])||[]).filter(x=>x.uid!==r.uid);k.push(r);await DB.doc("imports/"+UID).set({list:k});ok=true}catch(e){}
@@ -488,11 +514,12 @@ $("eAgg").onclick=async()=>{
   out.innerHTML=h;
 };
 $("eAggClr").onclick=()=>ask("この試験の受験結果をすべて消去します（集計から除かれます）。よろしいですか？","消去する",async()=>{
-  const cur=(await loadExams()).find(e=>e.id===draft.id);
+  if(SHEET&&!draft.auth)return ask("この試験はまだ保存されていないため、消去する結果はありません。",null);
+  const cur=SHEET?draft:(await loadExams()).find(e=>e.id===draft.id);
   if(!cur)return ask("この試験はまだ保存されていないため、消去する結果はありません。",null);
   cur.clearedAt=Date.now();draft.clearedAt=cur.clearedAt;
   const r=await storeExam(cur);
-  $("aggOut").textContent=r==="ng"?"消去を保存できませんでした（この試験を作成したアカウントで操作してください）。":"消去しました。";
+  $("aggOut").textContent=r==="err"?lastErr:r==="ng"?"消去を保存できませんでした（この試験を作成したアカウントで操作してください）。":"消去しました。";
 });
 const startTs=()=>{const t=EX.startAt?new Date(EX.startAt).getTime():0;return t>0?t:0};
 function showWait(t){
@@ -536,13 +563,14 @@ $("eCopy").onclick=()=>{
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const blankQ=()=>({c:0,q:"",o:["","","",""],a:0,e:""});
 function openEditor(ex){
-  const nw=!ex,nid=(DB&&UID)?UID:"L"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  const nw=!ex,nid=SHEET?"S"+Date.now().toString(36)+Math.random().toString(36).slice(2,5):(DB&&UID)?UID:"L"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   draft=nw?{id:nid,title:"新しい試験",sub:"",notice:"＜＜試験前のお知らせ＞＞\n\n1. ログイン後、同意事項が表示されます。\n\n2. 試験時間は画面上部の残り時間で確認できます。",minutes:30,total:600,cat:300,cats:["分野A","分野B","分野C"],q:[blankQ()],creds:KN(),codes:[],needCode:true,once:false,startAt:"",endAt:"",clearedAt:0,mail:""}:cp(ex);
   if(!nw&&(ex.id==="legacy"||ex.id==="Lold")){draft.from=ex.id;draft.id=nid}
   draft.creds=draft.creds||KN();
   $("edMode").textContent=nw?"新規作成":"編集";
   $("edWarn").classList.add("hidden");
   if(nw&&DB&&UID)loadExams().then(a=>{if(a.some(e=>e.id===UID))$("edWarn").classList.remove("hidden")});
+  $("sheetNote").textContent=SHEET?"現在の保存先：Googleスプレッドシート（試験・確認コード・受験結果がすべてシートに保存されます）。":"現在はGoogleスプレッドシートに接続されていません（index.html の SHEET_URL、または config.json の sheetUrl に Apps Script のURLを設定します）。";
   renderEd();show("editor");
 }
 function renderEd(){
@@ -594,8 +622,9 @@ $("eSave").onclick=async()=>{
   if(dup.length)err.push("次の確認コードは、すでに他の試験で使われています："+dup.join("、")+"（削除して作り直してください）");
   if(err.length)return ask(err.join("\n"),null);
   const r=await storeExam(d);
+  if(r==="err")return ask(lastErr,null);
   $("edMode").textContent="編集";$("edWarn").classList.add("hidden");
-  ask("保存しました。\n次回は、設定した受験番号・利用者ID・確認コードでログインすると再編集できます。\n受験者は、確認コードを入力してログインすると、この試験を受けられます。"+(r==="ok"?"\n共有データベースにも保存しました。":r==="ng"?"\n※共有データベースへ保存できませんでした（この試験はこのブラウザ内のみ有効です）。":"\n※この端末内に保存しました（他の端末の受験者は、この試験を受けられません）。"),null);
+  ask("保存しました。\n次回は、設定した受験番号・利用者ID・確認コードでログインすると再編集できます。\n受験者は、確認コードを入力してログインすると、この試験を受けられます。"+(r==="ok"?(SHEET?"\nGoogleスプレッドシートに保存しました。":"\n共有データベースにも保存しました。"):r==="ng"?"\n※共有データベースへ保存できませんでした（この試験はこのブラウザ内のみ有効です）。":"\n※この端末内に保存しました（他の端末の受験者は、この試験を受けられません）。"),null);
 };
 $("eClose").onclick=()=>ask("編集画面を閉じてログイン画面に戻ります。保存していない変更は失われます。","閉じる",()=>{["inNo","inId","inCode"].forEach(i=>$(i).value="");show("login")});
 $("eExp").onclick=()=>{sync();const o=cp(draft);delete o.creds;delete o.codes;delete o.needCode;delete o.once;delete o.id;delete o.clearedAt;delete o.from;$("eJson").value=JSON.stringify(o)};
@@ -629,6 +658,17 @@ $("dlgNo").onclick=()=>$("dlg").close();
 $("loginBtn").onclick=async()=>{
   const n=$("inNo").value.trim(),i=$("inId").value.trim(),c=$("inCode").value.trim();
   if(!n&&i==="00000"&&c==="1234")return openEditor(null);
+  if(SHEET){
+    if(n&&i){
+      const e=await post("edit",{creds:{no:n,id:i,code:c}});
+      if(e.ok&&e.exam){e.exam.auth={no:n,id:i,code:c};return openEditor(e.exam)}
+    }
+    if(!c)return ask("確認コードを入力してください。",null);
+    const o=await post("open",{code:c});
+    if(o.error==="used")return ask("この確認コードはすでに使用されています。",null);
+    if(!o.ok||!o.exam)return ask(o.error==="net"||!o.error?"スプレッドシートに接続できませんでした。":"確認コードが正しくありません。",null);
+    EX=Object.assign(cp(DEF),o.exam);applyExam();examCode=c;return consent();
+  }
   const exams=await loadExams();
   const mine=n&&exams.find(e=>e.creds&&e.creds.no===n&&e.creds.id===i&&e.creds.code===c);
   if(mine)return openEditor(mine);
@@ -641,7 +681,7 @@ $("loginBtn").onclick=async()=>{
 const consent=()=>ask(EX.title+"\n\n【同意事項】\n・試験中に知り得た問題の内容を第三者に漏らさないこと。\n・試験官（本アプリ）の指示に従うこと。\n（模擬体験用の同意画面です）","同意する",start);
 function start(){
   {const te=endTs();if(te&&Date.now()>=te)return ask("この試験の受付は終了しました。",null)}
-  examNo=$("inNo").value.trim()||"IP0000 A001";examName=$("inId").value.trim()||"試験 太郎";examKey=$("inNo").value.trim();markStart();
+  examNo=$("inNo").value.trim()||"IP0000 A001";examName=$("inId").value.trim()||"試験 太郎";examKey=$("inNo").value.trim();attemptId="A"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);markStart();
   const t=startTs();
   if(t&&Date.now()<t)return showWait(t);
   begin();
