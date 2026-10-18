@@ -254,6 +254,9 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
       <p class="hint" id="sheetNote"></p>
       <p class="hint">このHTMLをGitHub Pagesで公開し、下で作る「exams.json」を同じ場所（index.htmlと同じフォルダ）に置いてコミットすると、どの端末でも確認コードで受験できます。GitHub上のページで操作すると、すでにある exams.json に自動で統合されます。</p>
       <label>回答データの送り先メールアドレス（任意） <input id="eMail" type="email" size="30"></label>
+      <div style="margin-bottom:8px"><button class="btn org" id="eLink">受験用リンクを作成</button></div>
+      <textarea id="linkBox" rows="3" readonly placeholder="作成した受験用リンクがここに表示されます"></textarea>
+      <p class="hint">受験用リンクを開いた人は、どの端末でも、確認コードを入力するだけでこの試験を受けられます（保存先の設定は不要です）。試験を編集したときは、リンクを作り直してください。</p>
       <div><button class="btn" id="eGh">exams.json を作成</button> <button class="btn" id="eGhDl">ダウンロード</button> <button class="btn" id="eGhIssue">GitHubに届いた回答を取り込む</button></div>
       <textarea id="ghBox" rows="4" placeholder="ここに exams.json の内容が表示されます"></textarea>
     </fieldset>
@@ -315,7 +318,7 @@ applyExam();
 
 /* ===== 作成・編集モード ===== */
 /* Googleスプレッドシート連携：Apps Script のウェブアプリURLを設定（または config.json の sheetUrl） */
-const SHEET_URL="";
+const SHEET_URL="https://script.google.com/macros/s/AKfycbyB-Q6oL_oIDvZU63W8A30ZFlczjICpiXlnXndV2lBb7upRNW5ul9cEFeBjf8gpUQbv/exec";
 let SHEET=SHEET_URL;
 async function post(action,body){
   try{
@@ -330,6 +333,32 @@ const endTs=()=>{const t=EX.endAt?new Date(EX.endAt).getTime():0;return t>0?t:0}
 /* 共有データベース（使えない場合はこの端末内に保存） */
 const LEX="cbt_exams_v2";
 const localExams=()=>{try{return JSON.parse(localStorage.getItem(LEX)||"[]")}catch(e){return []}};
+/* ---- 受験用リンク：試験データをURLの#以降に含める（サーバー不要） ---- */
+function bytesToB64u(u){let t="";for(let i=0;i<u.length;i+=8192)t+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(t).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+function b64uToBytes(t){t=t.replace(/-/g,"+").replace(/_/g,"/");while(t.length%4)t+="=";const b=atob(t),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
+async function pipe_(bytes,Cls){const st=new Cls("deflate-raw"),w=st.writable.getWriter();w.write(bytes);w.close();return new Uint8Array(await new Response(st.readable).arrayBuffer())}
+async function packExam(ex){
+  const o=cp(ex);["creds","auth","from","clearedAt"].forEach(k=>delete o[k]);
+  const raw=new TextEncoder().encode(JSON.stringify(o));
+  return typeof CompressionStream==="function"?"z"+bytesToB64u(await pipe_(raw,CompressionStream)):"p"+bytesToB64u(raw);
+}
+async function unpackExam(t){
+  const b=b64uToBytes(t.slice(1));
+  return JSON.parse(new TextDecoder().decode(t[0]==="z"?await pipe_(b,DecompressionStream):b));
+}
+let HX=null;
+const HXP=(async()=>{
+  try{
+    const m=location.hash.match(/^#x=(.+)$/);if(!m)return;
+    const o=await unpackExam(m[1]);
+    if(o&&o.id&&Array.isArray(o.q)&&o.q.length){HX=o;$("lSub").textContent=o.title+"（受験用リンク）"}
+  }catch(e){}
+})();
+async function openHX(c){
+  await HXP;
+  if(HX&&c&&(HX.codes||[]).some(x=>x.c===c)){EX=Object.assign(cp(DEF),HX);applyExam();examCode=c;consent();return true}
+  return false;
+}
 async function remoteExams(){
   try{
     const r=await fetch("exams.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return [];
@@ -456,6 +485,14 @@ $("impBtn").onclick=async()=>{
     await addImport(r);
     $("impBox").value="";ask("取り込みました。「集計を表示・更新」で確認できます。",null);
   }catch(x){ask("取り込めませんでした。受験者から届いた送信用データを、そのまま貼り付けてください。",null)}
+};
+$("eLink").onclick=async()=>{
+  sync();const d=cp(draft);
+  if(!d.codes.length)return ask("先に確認コードを1つ以上作成してください。",null);
+  const u=location.href.split("#")[0]+"#x="+await packExam(d);
+  $("linkBox").value=u;
+  try{navigator.clipboard.writeText(u)}catch(e){}
+  ask("受験用リンクを作成しました（コピー済み）。\nこのリンクを開いた人は、確認コードを入力して、この試験を受けられます。\n※いま開いているページのURLを元に作られます。GitHub Pagesなど、公開されたURLのページで作成してください。"+(u.length>6000?"\n※リンクが長いため、一部のアプリでは途中で切れることがあります。":""),null);
 };
 $("eGh").onclick=async()=>{
   sync();const d=cp(draft);delete d.from;
@@ -799,7 +836,7 @@ $("loginBtn").onclick=async()=>{
     if(!c)return ask("確認コードを入力してください。",null);
     const o=await post("open",{code:c});
     if(o.error==="used")return ask("この確認コードはすでに使用されています。",null);
-    if(!o.ok||!o.exam)return ask(o.error==="net"||!o.error?"スプレッドシートに接続できませんでした。":"確認コードが正しくありません。",null);
+    if(!o.ok||!o.exam){if(await openHX(c))return;return ask(o.error==="net"||!o.error?"スプレッドシートに接続できませんでした。":"確認コードが正しくありません。",null)}
     EX=Object.assign(cp(DEF),o.exam);applyExam();examCode=c;return consent();
   }
   const exams=await loadExams();
@@ -807,7 +844,7 @@ $("loginBtn").onclick=async()=>{
   if(mine)return openEditor(mine);
   if(!c)return ask("確認コードを入力してください。",null);
   const ex=exams.find(e=>(e.codes||[]).some(x=>x.c===c));
-  if(!ex)return ask("確認コードが正しくありません。",null);
+  if(!ex){if(await openHX(c))return;return ask("確認コードが正しくありません。",null)}
   if(ex.once&&await codeUsed(ex,c))return ask("この確認コードはすでに使用されています。",null);
   EX=ex;applyExam();examCode=c;consent();
 };
