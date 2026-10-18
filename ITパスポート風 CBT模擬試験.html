@@ -231,6 +231,15 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
       <p class="hint">各問の正解は、選択肢の左のラジオボタンで指定します。</p>
       <div id="eQs"></div>
       <button class="btn" id="eAdd">＋ 問題を追加</button> <button class="btn" id="eSample">サンプル問題を読み込む</button>
+      <div style="margin-top:12px;padding-top:8px;border-top:1px dashed var(--soft)">
+        <b>CSVから問題を読み込む</b>
+        <p class="hint">列の順番：分野, 問題文, 選択肢ア, 選択肢イ, 選択肢ウ, 選択肢エ, 正解（ア〜エ または 1〜4）, 解説。1行目が見出しでも構いません。分野は、上で設定した分野名（または1〜3）で指定します。Excelで保存したCSV（Shift_JIS）や、スプレッドシートからコピーした表にも対応しています。</p>
+        <input type="file" id="csvFile" accept=".csv,.tsv,.txt,text/csv">
+        <textarea id="csvBox" rows="4" placeholder="またはここに、CSVの内容や、スプレッドシートからコピーした表を貼り付け"></textarea>
+        <label><input type="checkbox" id="csvAdd"> 今ある問題に追加する（オフの場合は置き換え）</label>
+        <div><button class="btn org" id="csvGo">読み込む</button> <button class="btn" id="csvTpl">ひな形CSV</button> <button class="btn" id="csvOut">今の問題をCSVにする</button></div>
+        <div id="csvMsg" class="hint"></div>
+      </div>
     </fieldset>
     <fieldset><legend>⑤ 受験者用の確認コード</legend>
       <p class="hint">確認コードは、この試験を受けるためのパスワードです。受験者がログイン画面の「確認コード」欄にこのコードを入力すると、あなたが作成したこの試験を受けられます。保存すると有効になります。</p>
@@ -777,6 +786,73 @@ $("eQs").onclick=e=>{
   else if(a==="up"){if(i>0){[q[i-1],q[i]]=[q[i],q[i-1]]}}
   else if(a==="dn"){if(i<q.length-1){[q[i+1],q[i]]=[q[i],q[i+1]]}}
   renderEd();
+};
+/* ---- CSVから問題を読み込む ---- */
+function parseCSV(t){
+  t=t.replace(/^\ufeff/,"");
+  const d=(t.split(/\r?\n/)[0]||"").includes("\t")?"\t":",",rows=[];
+  let row=[],f="",q=false;
+  for(let i=0;i<t.length;i++){
+    const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"'&&f==="")q=true;
+    else if(c===d){row.push(f);f=""}
+    else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(f);f="";rows.push(row);row=[]}
+    else f+=c;
+  }
+  if(f!==""||row.length){row.push(f);rows.push(row)}
+  return rows.filter(r=>r.some(x=>String(x).trim()!==""));
+}
+function toQuestions(rows,cats){
+  const qs=[],errs=[],AN={"ア":0,"イ":1,"ウ":2,"エ":3,"1":0,"2":1,"3":2,"4":3,"A":0,"B":1,"C":2,"D":3};
+  const start=rows.length&&(/分野|カテゴリ/.test(rows[0][0]||"")||/正解/.test(rows[0][6]||""))?1:0;
+  for(let i=start;i<rows.length;i++){
+    const r=rows[i].map(x=>String(x).trim()),no=i+1;
+    if(r.length<7){errs.push(no+"行目：列が足りません（7列以上必要です）");continue}
+    const cat=r[0].normalize("NFKC");
+    let ci=cat===""?0:cats.findIndex(n=>n===r[0]);
+    if(ci<0&&/^[1-3]$/.test(cat))ci=+cat-1;
+    if(ci<0){errs.push(no+"行目：分野「"+r[0]+"」が分野名にありません");continue}
+    if(!r[1]||r.slice(2,6).some(x=>!x)){errs.push(no+"行目：問題文と選択肢4つをすべて入力してください");continue}
+    const a=AN[r[6].normalize("NFKC").toUpperCase()];
+    if(a===undefined){errs.push(no+"行目：正解「"+r[6]+"」は、ア〜エ（または1〜4）で指定してください");continue}
+    qs.push({c:ci,q:r[1],o:r.slice(2,6),a:a,e:r[7]||""});
+  }
+  return {qs:qs,errs:errs};
+}
+async function csvText(f){
+  const buf=await f.arrayBuffer();
+  try{return new TextDecoder("utf-8",{fatal:true}).decode(buf)}catch(e){return new TextDecoder("shift_jis").decode(buf)}
+}
+$("csvFile").onchange=async e=>{const f=e.target.files[0];if(f)$("csvBox").value=await csvText(f)};
+$("csvGo").onclick=()=>{
+  sync();
+  const t=$("csvBox").value;
+  if(!t.trim())return ask("CSVファイルを選ぶか、内容を貼り付けてください。",null);
+  const r=toQuestions(parseCSV(t),draft.cats),qs=r.qs,errs=r.errs;
+  if(!qs.length)return ask("読み込める問題がありませんでした。\n"+errs.slice(0,8).join("\n"),null);
+  const add=$("csvAdd").checked,blank=draft.q.length===1&&!draft.q[0].q&&draft.q[0].o.every(o=>!o);
+  const apply=()=>{
+    draft.q=add&&!blank?draft.q.concat(qs):qs;renderEd();
+    $("csvMsg").textContent=qs.length+"問を読み込みました。";
+    if(errs.length)ask(qs.length+"問を読み込みました。\n次の行は読み込めませんでした：\n"+errs.slice(0,10).join("\n")+(errs.length>10?"\n…ほか"+(errs.length-10)+"件":""),null);
+  };
+  if(!add&&!blank)ask("今ある"+draft.q.length+"問を、読み込んだ"+qs.length+"問で置き換えます。よろしいですか？","置き換える",apply);else apply();
+};
+const csvQ=v=>'"'+String(v).replace(/"/g,'""')+'"';
+$("csvTpl").onclick=()=>{
+  const c=draft.cats,t=["分野,問題文,選択肢ア,選択肢イ,選択肢ウ,選択肢エ,正解,解説",
+    [c[0],"著作権が発生するのはいつか。","創作した時点","登録した時点","出願した時点","発行した時点","ア","創作と同時に自動的に発生します。"].map(csvQ).join(","),
+    [c[1],"PDCAサイクルのCは何を行うか。","計画","実行","評価・点検","改善","ウ","Checkは評価・点検です。"].map(csvQ).join(","),
+    [c[2],"2進数1011を10進数で表すといくつか。","9","10","11","13","ウ","8+2+1=11です。"].map(csvQ).join(",")].join("\r\n");
+  $("csvBox").value=t;
+  try{dl(new Blob(["\ufeff"+t],{type:"text/csv"}),"問題ひな形.csv")}catch(e){}
+};
+$("csvOut").onclick=()=>{
+  sync();
+  const t=["分野,問題文,選択肢ア,選択肢イ,選択肢ウ,選択肢エ,正解,解説"].concat(draft.q.map(q=>[draft.cats[q.c],q.q,...q.o,K[q.a],q.e].map(csvQ).join(","))).join("\r\n");
+  $("csvBox").value=t;
+  try{dl(new Blob(["\ufeff"+t],{type:"text/csv"}),"問題一覧.csv")}catch(e){}
 };
 $("eAdd").onclick=()=>{sync();draft.q.push(blankQ());renderEd();$("eQs").lastElementChild.scrollIntoView({block:"center"})};
 $("eSample").onclick=()=>ask("サンプル問題と設定を読み込みます（現在の入力内容は置き換わります）。","読み込む",()=>{const c=draft.creds,cd=[draft.codes,draft.needCode,draft.once];const id=draft.id,ca=draft.clearedAt,fr=draft.from;draft=cp(DEF);draft.id=id;draft.clearedAt=ca;draft.from=fr;draft.creds=c;[draft.codes,draft.needCode,draft.once]=cd;renderEd()});
