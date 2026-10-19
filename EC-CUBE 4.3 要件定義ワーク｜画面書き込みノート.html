@@ -55,7 +55,7 @@ aside h2{font-size:15px;margin:0}aside p{margin:0;color:var(--sub);font-size:12p
 <button class="btn on" data-t="circle" title="変えたい">① 丸で囲む</button><button class="btn" data-t="strike" title="消したい">② 横線で消す</button><button class="btn" data-t="ask" title="分からない">③ ？を書く</button><button class="btn" data-t="pen">フリーペン</button><button class="btn" data-t="eraser">消しゴム</button>
 <button class="sw on" data-c="#d62839" style="background:#d62839" aria-label="赤"></button><button class="sw" data-c="#1f5fd1" style="background:#1f5fd1" aria-label="青"></button><button class="sw" data-c="#1d2433" style="background:#1d2433" aria-label="黒"></button>
 <button class="btn on" data-w="0.004">細</button><button class="btn" data-w="0.007">太</button>
-<span class="sp"></span><button class="btn" id="undo">1つ戻す</button><button class="btn" id="clr">この画面を消す</button>
+<span class="sp"></span><button class="btn" id="undo">1つ戻す</button><button class="btn" id="clr" title="共有している全員の書き込みが消えます">この画面を消す</button>
 </div>
 <div class="tools" id="mst" hidden></div>
 <div class="tools" id="ppl" hidden></div>
@@ -63,10 +63,10 @@ aside h2{font-size:15px;margin:0}aside p{margin:0;color:var(--sub);font-size:12p
 <div class="stage" id="stage"><img id="im" alt=""><canvas id="cv"></canvas><div id="tl"></div><div id="cu"></div></div>
 </main>
 <aside><h2 id="ttl"></h2><p id="url"></p>
-<b>みんなの「こうしたい」</b><div id="oth"></div><label for="memo"><b>自分の「こうしたい」（全員に共有されます）</b></label>
+<label for="memo"><b>「こうしたい」（全員で同じ内容を共有・同時に編集できます）</b></label>
 <div class="mr"><button class="btn" data-s="① ">① 変えたい</button><button class="btn" data-s="② ">② 消したい</button><button class="btn" data-s="③ ">③ 分からない</button></div>
 <textarea id="memo" placeholder="例）&#10;① 写真：ジェラート→吉野杉の丸太&#10;② メニューの「ジェラート」は消す&#10;③ 販売種別Aって何？"></textarea>
-<p>「何を」「どう」まで書く。「いい感じに」だけだと作る人が困ります。分からないことは「？」でよい。</p><p>入力内容はチーム全員に共有されます（このブラウザにも保存されます）。</p></aside>
+<p id="minfo" class="lg"></p><p>「何を」「どう」まで書く。「いい感じに」だけだと作る人が困ります。分からないことは「？」でよい。</p><p>入力内容はチーム全員に共有されます（このブラウザにも保存されます）。</p></aside>
 </div></div>
 <div id="m" hidden><div class="mb"><b id="mh"></b><textarea id="mt"></textarea>
 <div class="mr"><button class="btn" id="c1">コピー</button><button class="btn" id="c2">文章でまとめる</button><button class="btn" id="c5">聞くことリスト</button><button class="btn" id="c3">バックアップ（JSON）</button><button class="btn" id="c4" hidden>JSONを取り込む</button><span class="sp"></span><button class="btn" id="x">閉じる</button></div></div></div>
@@ -91,14 +91,14 @@ function nav(){const n=$('#nav');let g='';n.innerHTML='';
 $('#sel').innerHTML=S.map((s,i)=>`<option value="${i}">${nm(s)}</option>`).join('');
 $('#sel').onchange=e=>go(+e.target.value);
 function go(i){if(i<0||i>=S.length)return;cur=i;try{localStorage.setItem('eccube-cur',i)}catch(e){}
- const s=S[i];$('#im').src=s.img;$('#ttl').textContent=nm(s);$('#url').textContent=s.u;$('#sel').value=i;$('#memo').value=D().memo;
- texts();nav();ppl();oth();fit();if(mm==='s'){pres({s:cur,x:null,y:null,live:null,ltx:null,lm:null});cursors()}$('.tools').scrollIntoView?.({block:'nearest'});}
+ const s=S[i];$('#im').src=s.img;$('#ttl').textContent=nm(s);$('#url').textContent=s.u;$('#sel').value=i;showMemo();
+ texts();nav();ppl();oth();fit();if(mm==='s'){fq.length=0;pres({s:cur,x:null,y:null,live:null,ltx:null,lm:null,fin:null,ed:null});cursors()}$('.tools').scrollIntoView?.({block:'nearest'});}
 $('#im').onload=fit;addEventListener('resize',fit);
 function fit(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;draw()}
 function draw(){const w=cv.width,h=cv.height;ctx.clearRect(0,0,w,h);ctx.lineCap=ctx.lineJoin='round';ctx.globalAlpha=1;
  const L=[...D().strokes,...(sh_?[sh_]:[])].map(s=>[s,s.c]);
- if(mm==='s')Object.keys(others).forEach(u=>{if(u===uid||hid.has(u))return;const d=others[u][cur];if(d)d.strokes.forEach(s=>L.push([s,pc(u),names[u]||s.n||'メンバー']))});
- if(mm==='s')peersOn().forEach(p=>{const s=p.presence.live;if(s&&(Array.isArray(s.p)||(s.a&&s.b)))L.push([{k:s.k,w:+s.w||.004,a:s.a,b:s.b,p:s.p},pcol(p),pname(p)])}); L.forEach(([s,col,who_])=>{ctx.strokeStyle=col;ctx.lineWidth=s.w*w;ctx.beginPath();
+ if(mm==='s')Object.keys(others).forEach(u=>{if(u===uid||hid.has(u))return;const d=others[u][cur];if(d)d.strokes.forEach(s=>{if(!D().strokes.some(x=>x.id===s.id))L.push([s,pc(u),names[u]||s.n||'メンバー'])})});
+ if(mm==='s')peersOn().forEach(p=>{const s=p.presence.live;if(s&&(Array.isArray(s.p)||(s.a&&s.b)))L.push([{k:s.k,w:+s.w||.004,a:s.a,b:s.b,p:s.p},pcol(p),pname(p)])}); if(mm==='s')peersOn().forEach(p=>{const f=p.presence.fin;if(!f||f.s!==cur||!Array.isArray(f.a))return;const u=p.presence.by,have=new Set(((others[u]&&others[u][cur])||{strokes:[]}).strokes.map(x=>x.id));f.a.forEach(s=>{if(s&&!have.has(s.id)&&(Array.isArray(s.p)||(s.a&&s.b)))L.push([{k:s.k,w:+s.w||.004,a:s.a,b:s.b,p:s.p},pcol(p),pname(p)])})});L.forEach(([s,col,who_])=>{ctx.strokeStyle=col;ctx.lineWidth=s.w*w;ctx.beginPath();
   if(s.k==='r'){const rw=Math.abs(s.a[0]-s.b[0])*w,rh=Math.abs(s.a[1]-s.b[1])*h;ctx.roundRect(Math.min(s.a[0],s.b[0])*w,Math.min(s.a[1],s.b[1])*h,rw,rh,Math.min(rw,rh)*.12)}
   else if(s.k==='l'){ctx.moveTo(s.a[0]*w,s.a[1]*h);ctx.lineTo(s.b[0]*w,s.b[1]*h)}
   else{s.p.forEach((p,k)=>k?ctx.lineTo(p[0]*w,p[1]*h):ctx.moveTo(p[0]*w,p[1]*h));if(s.p.length===1)ctx.lineTo(s.p[0][0]*w+.1,s.p[0][1]*h)}
@@ -118,9 +118,9 @@ cv.onpointerdown=e=>{if(!myName){askName();return}const p=pt(e);cv.setPointerCap
 cv.onpointermove=e=>{if(mm==='s')curs(e);if(!cs)return;const p=pt(e);if(cs==='e')erase(p);else if(cs==='s'){sh_.b=sh_.k==='l'?[p[0],sh_.a[1]]:p;draw()}else{cs.p.push(p);draw()}if(mm==='s'&&cs!=='e'){lv++;pres({live:liveOf()})}};
 cv.onpointerup=cv.onpointercancel=()=>{if(cs==='s'){const s=sh_;sh_=null;
   if(Math.hypot(s.b[0]-s.a[0],s.b[1]-s.a[1])>.015){D().strokes.push(s);const x=Math.min(s.a[0],s.b[0]),y=Math.max(s.a[1],s.b[1])+(s.k==='r'?.01:.015);draw();addText([x,Math.min(y,.93)],s.k==='r'?'① ':'② ')}else draw()}
- if(cs){save();nav();if(mm==='s')endLive()}cs=null};
+ if(cs){save();nav();if(mm==='s'){endLive();if(cs!=='e'){const z=D().strokes.at(-1);if(z)finAdd(z)}}}cs=null};
 function othT(){if(mm!=='s')return;Object.keys(others).forEach(u=>{if(u===uid||hid.has(u))return;const d=others[u][cur];if(!d)return;
- d.texts.forEach(t=>{const e=document.createElement('div');e.className='tx ro';e.style.cssText=`left:${t.x*100}%;top:${t.y*100}%;color:${pc(u)}`;
+ d.texts.forEach(t=>{if(D().texts.some(x=>x.id===t.id))return;const e=document.createElement('div');e.className='tx ro';e.style.cssText=`left:${t.x*100}%;top:${t.y*100}%;color:${pc(u)}`;
   const sm=document.createElement('small');sm.textContent=(names[u]||'メンバー')+'：';e.append(sm,document.createTextNode(t.t));tl.append(e)})});peersOn().forEach(p=>{const t=p.presence.ltx;if(!t||typeof t.t!=='string'||!t.t.trim())return;const u=p.presence.by;if(u&&others[u]&&others[u][cur]&&others[u][cur].texts.some(x=>x.t===t.t))return;const e=document.createElement('div');e.className='tx ro';e.style.left=(+t.x*100)+'%';e.style.top=(+t.y*100)+'%';e.style.color=pcol(p);const sm=document.createElement('small');sm.textContent=pname(p)+'：';e.append(sm,document.createTextNode(t.t));tl.append(e)})}
 function addText(p,pre=''){const t={id:Date.now()+1,n:myName,x:p[0],y:p[1],c:color,t:pre};D().texts.push(t);if(mm==='s')pres({ltx:{x:r3(t.x),y:r3(t.y),t:t.t}});save();texts(t.id)}
 function texts(f){tl.innerHTML='';othT();D().texts.forEach(t=>{const e=document.createElement('div');e.className='tx';
@@ -138,15 +138,15 @@ document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{wd=+b.dataset.w;
 setTool('circle');
 $('#undo').onclick=()=>{if(!myName)return askName();const d=D(),a=d.strokes.at(-1),b=d.texts.at(-1);if(!a&&!b)return;
  if(a&&(!b||a.id>b.id))d.strokes.pop();else d.texts.pop();save();texts();draw();nav()};
-let arm=0;$('#clr').onclick=e=>{if(!myName)return askName();if(!arm){arm=setTimeout(()=>{arm=0;e.target.textContent='この画面を消す'},3000);e.target.textContent='もう一度押すと消えます';return}
- clearTimeout(arm);arm=0;e.target.textContent='この画面を消す';const d=D();d.strokes=[];d.texts=[];save();texts();draw();nav()};
+let arm=0;$('#clr').onclick=e=>{if(!myName)return askName();if(!arm){arm=setTimeout(()=>{arm=0;e.target.textContent='この画面を消す'},3000);e.target.textContent='もう一度押すと全員分が消えます';return}
+ clearTimeout(arm);arm=0;e.target.textContent='この画面を消す';clearAll()};
 document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{if(!myName){askName();return}const m=$('#memo');m.value+=(m.value&&!m.value.endsWith('\n')?'\n':'')+b.dataset.s;m.focus();m.dispatchEvent(new Event('input'))});
-$('#memo').oninput=e=>{D().memo=e.target.value;D().mt=Date.now();save();nav();if(mm==='s'){pres({lm:{s:cur,t:e.target.value.slice(0,400)}});clearTimeout(lmT);lmT=setTimeout(()=>pres({lm:null}),2500)}};
+$('#memo').oninput=e=>{if(!myName){askName();return}const M=mget(cur);M.text=e.target.value;M.dirty=true;M.by=uid||'';M.w=myName;pushMemo(cur);pres({ed:cur});clearTimeout(lmT);lmT=setTimeout(()=>pres({ed:null}),2500);memoInfo()};$('#memo').oncompositionstart=()=>{comp=1};$('#memo').oncompositionend=()=>{comp=0;if(mq){const q=mq;mq=null;memoIn(...q)}};
 $('#prev').onclick=()=>go(cur-1);$('#next').onclick=()=>go(cur+1);
 addEventListener('keydown',e=>{const a=document.activeElement.tagName;if(['TEXTAREA','INPUT','SELECT'].includes(a)||document.activeElement.isContentEditable)return;
  if(e.key==='ArrowLeft')go(cur-1);if(e.key==='ArrowRight')go(cur+1)});
 function people(i){if(mm!=='s')return[{who:'',d:store[i]}];const r=[{who:'自分',d:store[i]}];
- Object.keys(others).sort().forEach(u=>{if(u!==uid&&!hid.has(u)&&others[u][i])r.push({who:names[u]||'メンバー',d:others[u][i]})});return r}
+ Object.keys(others).sort().forEach(u=>{if(u!==uid&&!hid.has(u)&&others[u][i])r.push({who:names[u]||'メンバー',d:others[u][i]})});const MM=memoSh[i];if(MM&&MM.text)r.push({who:(names[MM.by]||MM.w||'メンバー')+'（共有メモ）',d:{strokes:[],texts:[],memo:MM.text,mt:0}});return r}
 function md(){return S.map((s,i)=>people(i).map(({who,d})=>{if(!d||!(d.memo||d.texts.length))return'';
  return `## ${nm(s)}${who?`［${who}］`:''}  ${s.u}\n${d.memo?d.memo+'\n':''}${d.texts.length?'\n画面上の書き込み:\n'+d.texts.map(t=>'- '+t.t.replace(/\n/g,' ')).join('\n')+'\n':''}`}).filter(Boolean).join('\n')).filter(Boolean).join('\n')||'（まだ文章の書き込みがありません）'}
 function asks(){const o=[];S.forEach((s,i)=>people(i).forEach(({who,d})=>{if(!d)return;const l=[...d.memo.split('\n'),...d.texts.map(t=>t.t.replace(/\n/g,' '))].map(x=>x.trim()).filter(x=>x.startsWith('③'));
@@ -181,9 +181,9 @@ function ppl(){const e=$('#ppl');e.innerHTML='';const us=Object.keys(others).sor
  const l=document.createElement('span');l.className='lg';l.textContent='ほかの人の赤入れ：';e.append(l);
  us.forEach(u=>{const b=document.createElement('button'),i=document.createElement('i');b.className='btn chip'+(hid.has(u)?' off':'');i.style.background=pc(u);b.append(i,document.createTextNode(names[u]||'メンバー'));
   b.onclick=()=>{hid.has(u)?hid.delete(u):hid.add(u);ppl();draw();texts();oth()};e.append(b)})}
-function oth(){const e=$('#oth');e.innerHTML='';if(mm!=='s')return;const LM={};peersOn().forEach(p=>{const q=p.presence;if(q.lm&&typeof q.lm.t==='string'&&q.lm.s===cur)LM[q.by||q.sid]=q.lm.t});[...new Set([...Object.keys(others),...Object.keys(LM)])].sort().forEach(u=>{const d=others[u]&&others[u][cur];const tx=(u in LM)?LM[u]:(d&&d.memo);if(u===uid||hid.has(u)||!tx)return;
+function oth(){return;const e=$('#oth');e.innerHTML='';if(mm!=='s')return;const LM={};peersOn().forEach(p=>{const q=p.presence;if(q.lm&&typeof q.lm.t==='string'&&q.lm.s===cur)LM[q.by||q.sid]=q.lm.t});[...new Set([...Object.keys(others),...Object.keys(LM)])].sort().forEach(u=>{const d=others[u]&&others[u][cur];const tx=(u in LM)?LM[u]:(d&&d.memo);if(u===uid||hid.has(u)||!tx)return;
  const x=document.createElement('div');x.className='oth';x.style.borderColor=pc(u);const b=document.createElement('b');b.textContent=names[u]||'メンバー';x.append(b,document.createTextNode('\n'+tx));e.append(x)});if(!e.children.length){const n=document.createElement('p');n.textContent='ほかの人の「こうしたい」は、書き込まれるとここに表示されます。';e.append(n)}}
-async function initShared(){if(inited)return true;if(!window.claude)return initP2P();try{const c=window.claude;if(!c)return false;dbx=await c.use('db');userN=await c.use('user');if(!dbx||!userN)return false;uid=await userN.id();if(!uid)return false;
+async function initShared(){if(inited)return true;if(!window.claude)return initP2P();try{const c=window.claude;if(!c)return false;dbx=await c.use('db');userN=await c.use('user');if(!dbx||!userN)return false;uid=await userN.id();if(!uid)return false;uid=uid+'~'+tabId();
  inited=true;try{room=await c.use('room')}catch(e){room=null}if(room){room.presence({sid:sid,by:uid,who:myName||null,s:cur}).catch(()=>{});room.onPeers(onPeers)}dbx.collection('m').onSnapshot(onM,()=>{stat('共有データの受信に失敗しました。通信を確認してください。')});return true}catch(e){return false}}
 async function setMode(m){if(m==='s'){stat('共有モードに接続しています…');if(!await initShared()){stat(window.claude?'共有モードは、Claudeにログインした状態でこのページを開くと使えます。個人モードのままです。':'共有の接続に失敗しました。ネットワークが外部への接続（WebRTC）を許可していない可能性があります。個人モードのままです。');return}
   mm='s';store=sh;if(myName)putMeta()}else{mm='p';store=local;stat('');pres({s:null,x:null,y:null,live:null,ltx:null});cursors()}
@@ -201,15 +201,36 @@ function peersOn(){return room?room.peers().filter(p=>p.presence&&p.presence.sid
 function pcol(p){const u=p.presence.by;return u&&others[u]?pc(u):PAL[[...String(p.presence.sid)].reduce((a,c)=>a+c.charCodeAt(0),0)%PAL.length]}
 function pname(p){const q=p.presence;return String(q.who||names[q.by]||'メンバー').slice(0,20)}
 function cursors(){const l=$('#cu');l.innerHTML='';if(mm!=='s')return;peersOn().forEach(p=>{const q=p.presence;if(typeof q.x!=='number'||typeof q.y!=='number')return;const d=document.createElement('div');d.className='pcur';d.style.left=(q.x*100)+'%';d.style.top=(q.y*100)+'%';d.style.setProperty('--c',pcol(p));d.innerHTML='<svg width="16" height="20" viewBox="0 0 16 20"><path d="M1 1l13 8-6 2-3 8z" fill="currentColor" stroke="#fff" stroke-width="1.2"/></svg>';const s=document.createElement('span');s.textContent=pname(p)+(TL[q.tl]?'（'+TL[q.tl]+'）':'');d.append(s);l.append(d)})}
-function onM(s){const first=!pr.m;s.docs.forEach(d=>{try{const k=d.id,q=k.lastIndexOf('.');if(q<1)return;const u=k.slice(0,q),i=k.slice(q+1),x=d.data()||{};let p={};try{p=JSON.parse(x.j||'{}')}catch(e){}
+function onM(s){const first=!pr.m;s.docs.forEach(d=>{try{const k=d.id,q=k.lastIndexOf('.');if(q<1)return;const u=k.slice(0,q),i=k.slice(q+1),x=d.data()||{};if(u==='memo'){memoIn(+i,String(x.t||''),String(x.by||''),String(x.w||''),+x.v||0);return}if(u==='clear'){clearIn(+i,+x.ts||0,String(x.w||''));return}let p={};try{p=JSON.parse(x.j||'{}')}catch(e){}
  const v={strokes:Array.isArray(p.strokes)?p.strokes:[],texts:Array.isArray(p.texts)?p.texts:[],memo:String(x.memo||''),mt:+p.mt||0};others[u]=others[u]||{};
- if(x.w)names[u]=String(x.w).slice(0,20);
+ cf(i,v);if(x.w)names[u]=String(x.w).slice(0,20);
  if(u!==uid&&pr.m)notify(u,i,others[u][i],v);
  others[u][i]=v;
  if(u===uid&&!mineL.has(i)&&!touched.has(+i)){mineL.add(i);sh[i]=JSON.parse(JSON.stringify(v))}}catch(e){}});
- pr.m=1;
+ pr.m=1;if(first){Object.keys(memoSh).forEach(i=>{const M=memoSh[i];if(M&&M.text&&!M.rem){M.dirty=true;pushMemo(+i)}});Object.keys(sh).forEach(i=>{const d=sh[i];if(d&&d.memo){const M=mget(+i);if(!M.text&&!M.rem){M.text=d.memo;M.dirty=true;pushMemo(+i);d.memo='';touched.add(+i);push(+i);if(+i===cur)showMemo()}}})}
  if(first)Object.keys(sh).forEach(i=>{const d=sh[i];if(d&&(d.memo||(d.strokes&&d.strokes.length)||(d.texts&&d.texts.length))&&!(others[uid]&&others[uid][i])){touched.add(+i);push(+i)}});
  refresh()}
+const memoSh={},fq=[];let comp=0,mq=null;
+const mget=i=>memoSh[i]||(memoSh[i]={text:'',base:'',by:'',w:'',v:0,dirty:false,rem:false,pb:'',sent:false});
+function medit(a,b){let p=0;const m=Math.min(a.length,b.length);while(p<m&&a[p]===b[p])p++;let s=0;while(s<m-p&&a[a.length-1-s]===b[b.length-1-s])s++;return{p:p,e:a.length-s,t:b.slice(p,b.length-s)}}
+function merge3(b,l,r){const A=medit(b,l),B=medit(b,r),o=(B.p<A.p||(B.p===A.p&&B.e<=A.p))?[B,A]:[A,B];if(o[0].e>o[1].p)return r+(A.t?'\n'+A.t:'');return b.slice(0,o[0].p)+o[0].t+b.slice(o[0].e,o[1].p)+o[1].t+b.slice(o[1].e)}
+function showMemo(){const M=mget(cur),ta=$('#memo');if(ta.value!==M.text)ta.value=M.text;memoInfo()}
+function memoInfo(){const e=$('#minfo');if(!e)return;const M=memoSh[cur],typ=peersOn().filter(p=>p.presence.ed===cur).map(pname);const last=M&&M.text?'最後に入力した人：'+(M.by&&M.by===uid?(myName||'自分')+'（自分）':(names[M.by]||M.w||'メンバー')):'まだ誰も書いていません';e.textContent=last+(typ.length?'｜'+typ.join('、')+'さんが入力中…':'')}
+function memoIn(i,t,by,w,v){if(!Number.isFinite(i))return;if(comp&&i===cur){mq=[i,t,by,w,v];return}
+ const M=mget(i);M.rem=true;if(by&&by===uid&&v<=M.v)return;
+ const coll=(v===M.v&&M.v>0&&M.sent&&by!==uid);if(v<M.v&&!coll)return;
+ let res;if(coll)res=merge3(M.pb,M.text,t);else if(M.dirty)res=merge3(M.base,M.text,t);else res=t;
+ M.v=Math.max(M.v,v);M.base=t;M.by=by;M.w=w||M.w;M.sent=false;const old=M.text;M.text=res;
+ if(res!==t){M.dirty=true;pushMemo(i)}else M.dirty=false;
+ if(i===cur){const ta=$('#memo');if(ta.value!==res){const f=document.activeElement===ta,s=ta.selectionStart,e2=ta.selectionEnd;ta.value=res;if(f){let p0=0;const m=Math.min(old.length,res.length);while(p0<m&&old[p0]===res[p0])p0++;const d=res.length-old.length,mp=x=>x<=p0?x:Math.max(p0,Math.min(res.length,x+d));ta.setSelectionRange(mp(s),mp(e2))}}memoInfo()}
+ try{localStorage.setItem('eccube-memo',JSON.stringify(memoSh))}catch(e){}}
+function pushMemo(i){const M=mget(i);clearTimeout(tmr['m'+i]);tmr['m'+i]=setTimeout(async()=>{const w=M.text;M.pb=M.base;M.v=(M.v||0)+1;const v=M.v;M.by=uid||'';M.w=myName||'';
+ try{localStorage.setItem('eccube-memo',JSON.stringify(memoSh))}catch(e){}
+ if(p2p){p2bc({t:'memo',i:String(i),text:w,v:v,w:myName||''});M.base=w;M.sent=true;M.dirty=M.text!==w;return}
+ if(!dbx)return;
+ try{M.sent=true;await dbx.doc('m/memo.'+i).set({t:w,v:v,by:uid,w:myName||''});M.base=w;M.dirty=M.text!==w}catch(e){M.sent=false;M.v=v-1;stat('共有への保存に失敗しました（'+String((e&&(e.code||e.message))||e).slice(0,60)+'）。編集権限（Contributor以上）があるか、通信を確認してください。');toast('「こうしたい」の保存に失敗しました。ほかの人には表示されません。','#d62839')}},200)}
+function p2memos(){const o={};Object.keys(memoSh).forEach(i=>{const M=memoSh[i];if(M.text)o[i]={text:M.text,v:M.v,w:M.w}});return o}
+function finAdd(z){const c={id:z.id,k:z.k,w:z.w,a:z.a&&z.a.map(r3),b:z.b&&z.b.map(r3)};if(z.p){const st=Math.max(1,Math.ceil(z.p.length/60));c.p=z.p.filter((q,i)=>i%st===0||i===z.p.length-1).map(q=>[r3(q[0]),r3(q[1])])}fq.push(c);while(fq.length>2)fq.shift();pres({fin:{s:cur,a:fq}})}
 const pr={},tq={},fl={},dl={};
 function toast(m,col){const t=$('#toast');if(!t)return;const e=document.createElement('div');e.className='ti';e.textContent=m;if(col)e.style.borderLeftColor=col;t.append(e);while(t.children.length>4)t.firstChild.remove();setTimeout(()=>e.remove(),7000)}
 function later(k,f){clearTimeout(tq[k]);tq[k]=setTimeout(f,1800)}
@@ -226,9 +247,19 @@ function histTxt(){const r=[];S.forEach((s,i)=>people(i).forEach(({who,d})=>{if(
  r.sort((a,b)=>b[0]-a[0]);const f=t=>t?new Date(t).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'--';
  return r.length?r.slice(0,300).map(x=>f(x[0])+'　'+x[1]+'　'+x[2]+'　'+x[3]).join('\n'):'（まだ書き込みがありません）'}
 const TL={circle:'丸',strike:'横線',ask:'？',pen:'ペン',eraser:'消しゴム'};
+let clr={};try{clr=JSON.parse(localStorage.getItem('eccube-clr')||'{}')||{}}catch(e){}
+function cf(i,v){const T=clr[i]||0;if(T){v.strokes=v.strokes.filter(x=>x.id>T);v.texts=v.texts.filter(x=>x.id>T)}}
+function clearIn(i,T,w){if(!Number.isFinite(i)||!(T>0)||T<=(clr[i]||0))return;clr[i]=T;try{localStorage.setItem('eccube-clr',JSON.stringify(clr))}catch(e){}
+ const f=a=>Array.isArray(a)?a.filter(x=>x.id>T):[];let ch=false;const d=sh[i];
+ if(d){const ns=f(d.strokes),nt=f(d.texts);ch=ns.length!==d.strokes.length||nt.length!==d.texts.length;d.strokes=ns;d.texts=nt}
+ Object.keys(others).forEach(u=>{const o=others[u][i];if(o){o.strokes=f(o.strokes);o.texts=f(o.texts)}});
+ if(ch)push(i);if(i===cur){texts();draw()}nav();
+ if(w&&Date.now()-T<15000&&S[i])toast(w+'さんが「'+nm(S[i])+'」の書き込みを全員分消しました','#d62839')}
+function clearAll(){const T=Date.now();clearIn(cur,T,'');if(p2p)p2bc({t:'clear',i:String(cur),ts:T,w:myName||''});else if(dbx)dbx.doc('m/clear.'+cur).set({ts:T,by:uid,w:myName||''}).catch(e=>toast('全員分の削除の共有に失敗しました。通信を確認してください。','#d62839'))}
+function tabId(){try{let t=sessionStorage.getItem('eccube-tab');if(!t){t=Math.random().toString(36).slice(2,8);sessionStorage.setItem('eccube-tab',t)}return t}catch(e){return Math.random().toString(36).slice(2,8)}}
 function peerScan(){if(!room)return;room.peers().forEach(p=>{const q=p.presence;if(!q)return;const u=q.by;if(typeof u!=='string'||u===uid)return;if(q.who&&!names[u])names[u]=String(q.who).slice(0,20);})}
 function onlineNames(){return room?[...new Set(room.peers().map(p=>p.presence).filter(q=>q&&q.sid!==sid).map(q=>String(q.who||names[q.by]||'メンバー').slice(0,20)))]:[]}
-function onPeers(){peerScan();cursors();const a=peersOn().map(p=>JSON.stringify(p.presence.live||'')).join('|'),b=peersOn().map(p=>JSON.stringify(p.presence.ltx||'')).join('|');if(a!==sigL){sigL=a;draw()}if(b!==sigT){sigT=b;if(!document.activeElement.classList.contains('tx'))texts()}const c=peersOn().map(p=>JSON.stringify(p.presence.lm||'')).join('|');if(c!==sigM){sigM=c;oth()}const nn=room?room.peers().map(p=>p.presence&&(p.presence.s+':'+(p.presence.who||''))).join('|'):'';if(nn!==sigN){sigN=nn;nav();ppl()}}
+function onPeers(){peerScan();cursors();const a=peersOn().map(p=>JSON.stringify([p.presence.live||'',p.presence.fin||''])).join('|'),b=peersOn().map(p=>JSON.stringify(p.presence.ltx||'')).join('|');if(a!==sigL){sigL=a;draw()}if(b!==sigT){sigT=b;if(!document.activeElement.classList.contains('tx'))texts()}const c=peersOn().map(p=>JSON.stringify(p.presence.ed||'')).join('|');if(c!==sigM){sigM=c;memoInfo()}const nn=room?room.peers().map(p=>p.presence&&(p.presence.s+':'+(p.presence.who||''))).join('|'):'';if(nn!==sigN){sigN=nn;nav();ppl()}}
 // ===== GitHub公開用の共有（同じURLを開いている人と直接つながる／サーバー不要）=====
 let p2p=null,pconns={},pinfo={},ppres={},myPres={},pcb=null,pend={},pt2=0;
 const P2N=10;
@@ -239,24 +270,24 @@ function p2bc(m){Object.values(pconns).forEach(c=>{try{if(c.open)c.send(m)}catch
 function p2pres(o){Object.keys(o).forEach(k=>{const v=o[k];if(v===null)delete myPres[k];else myPres[k]=v;pend[k]=v});if(!pt2)pt2=setTimeout(()=>{pt2=0;const p=pend;pend={};p2bc({t:'pres',p:p})},40)}
 function p2push(i){clearTimeout(tmr[i]);tmr[i]=setTimeout(()=>{try{localStorage.setItem('eccube-sh',JSON.stringify(sh))}catch(e){}const d=sh[i]||{strokes:[],texts:[],memo:''};p2bc({t:'doc',i:String(i),j:JSON.stringify({strokes:d.strokes,texts:d.texts,mt:d.mt||0}),memo:d.memo});if(mm==='s')stat(p2txt())},60)}
 function p2docs(){const o={};Object.keys(sh).forEach(i=>{const d=sh[i];if(d&&(d.memo||d.strokes.length||d.texts.length))o[i]={j:JSON.stringify({strokes:d.strokes,texts:d.texts,mt:d.mt||0}),memo:d.memo}});return o}
-function p2put(u,i,d,nt){if(u===uid||!d)return;let p={};try{p=JSON.parse(d.j||'{}')}catch(e){}const v={strokes:Array.isArray(p.strokes)?p.strokes:[],texts:Array.isArray(p.texts)?p.texts:[],memo:String(d.memo||''),mt:+p.mt||0};others[u]=others[u]||{};if(nt)notify(u,i,others[u][i],v);others[u][i]=v}
+function p2put(u,i,d,nt){if(u===uid||!d)return;let p={};try{p=JSON.parse(d.j||'{}')}catch(e){}const v={strokes:Array.isArray(p.strokes)?p.strokes:[],texts:Array.isArray(p.texts)?p.texts:[],memo:String(d.memo||''),mt:+p.mt||0};cf(i,v);others[u]=others[u]||{};if(nt)notify(u,i,others[u][i],v);others[u][i]=v}
 function p2chg(){if(mm==='s')stat(p2txt());refresh();if(pcb)pcb()}
 function p2msg(from,m){if(!m||typeof m!=='object')return;
- if(m.t==='hello'&&typeof m.uid==='string'){pinfo[from]=m.uid;others[m.uid]=others[m.uid]||{};if(m.name)names[m.uid]=String(m.name).slice(0,20);Object.keys(m.docs||{}).forEach(i=>p2put(m.uid,i,m.docs[i]));ppres[from]=m.pres&&typeof m.pres==='object'?m.pres:{};p2chg();return}
+ if(m.t==='hello'&&typeof m.uid==='string'){pinfo[from]=m.uid;others[m.uid]=others[m.uid]||{};if(m.name)names[m.uid]=String(m.name).slice(0,20);Object.keys(m.docs||{}).forEach(i=>p2put(m.uid,i,m.docs[i]));Object.keys(m.memos||{}).forEach(i=>{const x=m.memos[i]||{};memoIn(+i,String(x.text||''),m.uid,String(x.w||''),+x.v||0)});Object.keys(m.clears||{}).forEach(i=>clearIn(+i,+m.clears[i]||0,''));ppres[from]=m.pres&&typeof m.pres==='object'?m.pres:{};p2chg();return}
  if(!pinfo[from])return;
- if(m.t==='doc'){p2put(pinfo[from],String(m.i),m,1);refresh()}
+ if(m.t==='clear'){clearIn(+m.i,+m.ts||0,String(m.w||''))}else if(m.t==='memo'){memoIn(+m.i,String(m.text||''),pinfo[from],String(m.w||''),+m.v||0)}else if(m.t==='doc'){p2put(pinfo[from],String(m.i),m,1);refresh()}
  else if(m.t==='name'){if(m.name)names[pinfo[from]]=String(m.name).slice(0,20);refresh();if(pcb)pcb()}
  else if(m.t==='pres'&&m.p&&typeof m.p==='object'){const q=ppres[from]=ppres[from]||{};Object.keys(m.p).forEach(k=>{if(m.p[k]===null)delete q[k];else q[k]=m.p[k]});if(pcb)pcb()}}
 function wire(c,mine){const id=c.peer,ini=mine?p2p.id:id;
  c.on('open',()=>{const old=pconns[id];if(old&&old!==c&&old.open){if(ini<old._ini){try{old.close()}catch(e){}}else{try{c.close()}catch(e){}return}}
-  c._ini=ini;pconns[id]=c;try{c.send({t:'hello',uid:uid,name:myName||'',docs:p2docs(),pres:myPres})}catch(e){}});
+  c._ini=ini;pconns[id]=c;try{c.send({t:'hello',uid:uid,name:myName||'',docs:p2docs(),memos:p2memos(),clears:clr,pres:myPres})}catch(e){}});
  c.on('data',m=>{if(pconns[id]===c)p2msg(id,m)});
  c.on('close',()=>{if(pconns[id]===c){delete pconns[id];delete pinfo[id];delete ppres[id];p2chg()}});
  c.on('error',()=>{})}
 async function initP2P(){try{
  await new Promise((ok,ng)=>{if(window.Peer)return ok();const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';s.onload=ok;s.onerror=ng;document.head.append(s)});
  try{uid=localStorage.getItem('eccube-uid')||''}catch(e){}
- if(!uid){uid=Math.random().toString(36).slice(2,14);try{localStorage.setItem('eccube-uid',uid)}catch(e){}}
+ if(!uid){uid=Math.random().toString(36).slice(2,14);try{localStorage.setItem('eccube-uid',uid)}catch(e){}}uid=uid+'~'+tabId();
  
  const base='eccwk-'+p2h()+'-';let peer=null,slot=-1,fatal=false;
  for(let k=0;k<P2N&&!peer&&!fatal;k++){peer=await new Promise(res=>{const p=new Peer(base+k);let done=false;const t=setTimeout(()=>{if(!done){done=true;fatal=true;try{p.destroy()}catch(e){}res(null)}},8000);
@@ -282,6 +313,6 @@ async function boot(){const rc=$('#rc');rc.hidden=true;stat('共有に接続し�
  if(ok){stat(p2p?p2txt():'共有につながりました。自分の赤入れはチーム全員に見えます。');if(myName)putMeta();setTimeout(migrate,3000)}
  else{rc.hidden=false;stat('共有に接続できませんでした。書き込みはこのブラウザに保存され、再接続すると共有されます。')}
  go(cur);refresh()}
-mm='s';store=sh;try{const o=JSON.parse(localStorage.getItem('eccube-sh')||'null');if(o&&typeof o==='object'){sh=o;store=sh}}catch(e){}
+mm='s';store=sh;try{const o=JSON.parse(localStorage.getItem('eccube-sh')||'null');if(o&&typeof o==='object'){sh=o;store=sh}}catch(e){}try{Object.assign(memoSh,JSON.parse(localStorage.getItem('eccube-memo')||'{}'))}catch(e){}
 go(cur);boot();
 </script></body></html>
