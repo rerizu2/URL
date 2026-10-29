@@ -1,0 +1,518 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>スライドショー</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      color: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    #authScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 24px;
+      background: #000;
+      text-align: center;
+    }
+
+    .heading {
+      font-size: clamp(22px, 5vw, 32px);
+      font-weight: 800;
+    }
+
+    .subtitle {
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    #pwInput {
+      width: min(88vw, 360px);
+      padding: 15px;
+      border: 1px solid #444;
+      border-radius: 10px;
+      outline: none;
+      background: #171717;
+      color: white;
+      text-align: center;
+    }
+
+    #pwInput:focus { border-color: #2dd4bf; }
+
+    #pwBtn {
+      min-width: 150px;
+      padding: 13px 25px;
+      border: 0;
+      border-radius: 10px;
+      background: #2dd4bf;
+      color: #001b18;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: .55; cursor: wait; }
+
+    #pwMsg {
+      max-width: 90vw;
+      min-height: 1.4em;
+      color: #ff7777;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    #slideshow {
+      position: fixed;
+      inset: 0;
+      display: none;
+      background: #000;
+    }
+
+    #slideshow img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity .8s ease;
+    }
+
+    #slideshow img.active { opacity: 1; }
+
+    #hiddenScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+      background: #000;
+      text-align: center;
+    }
+
+    .hiddenTitle {
+      font-size: clamp(24px, 5vw, 36px);
+      font-weight: 800;
+    }
+
+    .hiddenDescription {
+      color: #aaa;
+      font-size: 14px;
+      line-height: 1.9;
+    }
+
+    #status {
+      position: fixed;
+      z-index: 5;
+      left: 10px;
+      bottom: max(10px, env(safe-area-inset-bottom));
+      max-width: calc(100vw - 20px);
+      padding: 8px 11px;
+      border-radius: 7px;
+      background: rgb(0 0 0 / 65%);
+      color: #eee;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    #status:empty { display: none; }
+
+    #logoutBtn {
+      position: fixed;
+      z-index: 8;
+      top: max(10px, env(safe-area-inset-top));
+      right: 10px;
+      padding: 9px 13px;
+      border: 1px solid #777;
+      border-radius: 8px;
+      background: rgb(0 0 0 / 65%);
+      color: white;
+      cursor: pointer;
+    }
+
+    #logoutBtn[hidden] { display: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      #slideshow img { transition: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <section id="authScreen">
+    <div class="heading">スライドショー</div>
+    <div class="subtitle">パスワードを入力してください</div>
+
+    <input
+      id="pwInput"
+      type="password"
+      placeholder="パスワード"
+      autocomplete="current-password"
+      aria-label="パスワード">
+
+    <button id="pwBtn" type="button">ログイン</button>
+    <div id="pwMsg" role="alert"></div>
+  </section>
+
+  <main id="slideshow" aria-label="スライドショー"></main>
+
+  <section id="hiddenScreen">
+    <div class="hiddenTitle">スライドは非表示です</div>
+    <div class="hiddenDescription">
+      管理者がスプレッドシートの表示設定を有効にすると再開します。
+    </div>
+  </section>
+
+  <div id="status" role="status" aria-live="polite"></div>
+  <button id="logoutBtn" type="button" hidden>ログアウト</button>
+
+  <script>
+    "use strict";
+
+    // ★必ず自分のGASウェブアプリURLに変更してください
+    const GAS_WEB_APP_URL =
+      "https://script.google.com/macros/s/AKfycbzma0IRSSb5PRSbLpFT6bUA4bTdm4OU_xSJEfVWRBcHOcnBoHheYhpy02eyeg6JClthFQ/exec";
+
+    const authScreen = document.getElementById("authScreen");
+    const pwInput = document.getElementById("pwInput");
+    const pwBtn = document.getElementById("pwBtn");
+    const pwMsg = document.getElementById("pwMsg");
+    const slideshow = document.getElementById("slideshow");
+    const hiddenScreen = document.getElementById("hiddenScreen");
+    const statusBox = document.getElementById("status");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    let token = "";
+    let slideTimer = null;
+    let pollTimer = null;
+    let currentIndex = 0;
+    let intervalSeconds = 20;
+    let visible = true;
+    let photos = [];
+    let signature = "";
+    let busy = false;
+    let lastVersion = null;
+    let jsonpCounter = 0;
+    let activeRequest = 0;
+
+    function setStatus(message) {
+      statusBox.textContent = message || "";
+    }
+
+    function setLoginMessage(message) {
+      pwMsg.textContent = message || "";
+    }
+
+    /*
+     * JSONPリクエスト
+     * GAS側のdoGetがcallback名の関数を返す前提です。
+     */
+    function api(action, params = {}) {
+      return new Promise((resolve, reject) => {
+        if (
+          !GAS_WEB_APP_URL.startsWith(
+            "https://script.google.com/macros/s/"
+          ) ||
+          GAS_WEB_APP_URL.includes("ここをデプロイIDに変更")
+        ) {
+          reject(new Error("HTML内のGAS_WEB_APP_URLを設定してください。"));
+          return;
+        }
+
+        const callbackName = "__slideJsonp" + (++jsonpCounter);
+        const script = document.createElement("script");
+        let finished = false;
+
+        const cleanup = () => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timeout);
+          script.remove();
+          delete window[callbackName];
+        };
+
+        const timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error("サーバー応答がありません。GASのURLと公開設定を確認してください。"));
+        }, 20000);
+
+        window[callbackName] = data => {
+          cleanup();
+
+          if (!data || typeof data !== "object") {
+            reject(new Error("サーバー応答の形式が正しくありません。"));
+            return;
+          }
+
+          if (data.success === false && data.error) {
+            reject(new Error(data.error));
+            return;
+          }
+
+          resolve(data);
+        };
+
+        const query = new URLSearchParams({
+          action,
+          callback: callbackName,
+          ...params
+        });
+
+        script.async = true;
+        script.src = GAS_WEB_APP_URL + "?" + query.toString();
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("GASへの接続に失敗しました。"));
+        };
+
+        document.head.appendChild(script);
+      });
+    }
+
+    async function login() {
+      if (pwBtn.disabled) return;
+
+      const password = pwInput.value;
+      if (!password) {
+        setLoginMessage("パスワードを入力してください。");
+        return;
+      }
+
+      pwBtn.disabled = true;
+      setLoginMessage("認証しています…");
+
+      try {
+        const result = await api("login", { password });
+
+        if (!result.success || !result.token) {
+          setLoginMessage(result.message || "認証に失敗しました。");
+          return;
+        }
+
+        token = result.token;
+        pwInput.value = "";
+        setLoginMessage("");
+        authScreen.style.display = "none";
+        logoutBtn.hidden = false;
+
+        await refresh(true);
+
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(() => refresh(false), 5000);
+      } catch (error) {
+        setLoginMessage(error.message || "通信エラーが発生しました。");
+      } finally {
+        pwBtn.disabled = false;
+      }
+    }
+
+    pwBtn.addEventListener("click", login);
+
+    pwInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") login();
+    });
+
+    async function refresh(force) {
+      if (!token || busy) return;
+      busy = true;
+      const thisRequest = ++activeRequest;
+      const thisToken = token;
+
+      try {
+        const result = await api("photos", { token });
+
+        if (thisRequest !== activeRequest || token !== thisToken) return;
+
+        if (result.version !== undefined) {
+          lastVersion = String(result.version);
+        }
+
+        intervalSeconds = Math.max(
+          1,
+          Number(result.interval) || 20
+        );
+
+        if (result.visible === false) {
+          visible = false;
+          clearSlides();
+          slideshow.style.display = "none";
+          hiddenScreen.style.display = "flex";
+          setStatus("スライドは非表示に設定されています。");
+          return;
+        }
+
+        visible = true;
+        hiddenScreen.style.display = "none";
+        slideshow.style.display = "block";
+
+        if (!result.hasFolder) {
+          clearSlides();
+          setStatus("設定シートのB3にDriveフォルダIDを入力してください。");
+          return;
+        }
+
+        if (!Array.isArray(result.photos)) {
+          throw new Error("画像一覧の形式が正しくありません。");
+        }
+
+        const newSignature = JSON.stringify(
+          result.photos.map(p => [p.id, p.updated, p.name])
+        );
+
+        if (force || newSignature !== signature) {
+          signature = newSignature;
+          photos = result.photos;
+          buildSlides();
+        } else {
+          // 切り替え秒数が変わった場合はタイマーを再設定する
+          startTimer();
+        }
+
+        if (photos.length === 0) {
+          setStatus("フォルダに表示できる画像がありません。");
+        }
+      } catch (error) {
+        const message = error && error.message
+          ? error.message
+          : "通信エラーが発生しました。";
+
+        setStatus(message);
+
+        if (
+          message.includes("認証の有効期限") ||
+          message.includes("認証が必要")
+        ) {
+          showLogin("セッションが切れました。再度ログインしてください。");
+        }
+      } finally {
+        if (thisRequest === activeRequest) busy = false;
+      }
+    }
+
+    function clearSlides() {
+      stopTimer();
+      slideshow.replaceChildren();
+      currentIndex = 0;
+      photos = [];
+      signature = "";
+    }
+
+    function buildSlides() {
+      stopTimer();
+      slideshow.replaceChildren();
+      currentIndex = 0;
+
+      if (!visible || photos.length === 0) return;
+
+      photos.forEach((photo, index) => {
+        const img = document.createElement("img");
+        img.alt = photo.name || "スライド画像";
+        img.decoding = "async";
+        img.loading = index < 2 ? "eager" : "lazy";
+
+        if (index === 0) img.classList.add("active");
+
+        img.addEventListener("error", () => {
+          setStatus("画像を読み込めません。Driveの共有・アクセス権限を確認してください。");
+        });
+
+        img.addEventListener("load", () => setStatus(""));
+
+        img.src = photo.url;
+        slideshow.appendChild(img);
+      });
+
+      setStatus(photos.length + "枚の画像を取得しました。");
+      startTimer();
+    }
+
+    function stopTimer() {
+      if (slideTimer !== null) {
+        clearInterval(slideTimer);
+        slideTimer = null;
+      }
+    }
+
+    function startTimer() {
+      stopTimer();
+
+      const images = slideshow.querySelectorAll("img");
+      if (!visible || images.length <= 1) return;
+
+      slideTimer = setInterval(() => {
+        const currentImages = slideshow.querySelectorAll("img");
+        if (!visible || currentImages.length <= 1) {
+          stopTimer();
+          return;
+        }
+
+        currentImages[currentIndex].classList.remove("active");
+        currentIndex = (currentIndex + 1) % currentImages.length;
+        currentImages[currentIndex].classList.add("active");
+      }, intervalSeconds * 1000);
+    }
+
+    function showLogin(message) {
+      activeRequest++;
+      busy = false;
+      token = "";
+      stopTimer();
+
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+
+      slideshow.replaceChildren();
+      slideshow.style.display = "none";
+      hiddenScreen.style.display = "none";
+      logoutBtn.hidden = true;
+      authScreen.style.display = "flex";
+
+      photos = [];
+      signature = "";
+      setStatus("");
+      setLoginMessage(message || "");
+      pwInput.value = "";
+      pwInput.focus();
+    }
+
+    logoutBtn.addEventListener("click", async () => {
+      const oldToken = token;
+      showLogin("");
+
+      if (oldToken) {
+        try {
+          await api("logout", { token: oldToken });
+        } catch (_) {
+          // 画面のログアウトを優先
+        }
+      }
+    });
+  </script>
+</body>
+</html>
