@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ボディ・ボウリング 3D</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b0d1a;font-family:system-ui,"Hiragino Sans","Noto Sans JP",sans-serif;color:#fff}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.panel{position:fixed;background:rgba(10,14,35,.72);backdrop-filter:blur(6px);border:1px solid rgba(120,160,255,.35);border-radius:12px;padding:10px 12px}
+#score{top:10px;left:10px;right:10px;max-width:760px;margin:auto;max-height:34vh;overflow:auto}
+#score table{border-collapse:collapse;width:100%;text-align:center;font-size:13px}
+#score td,#score th{border:1px solid rgba(255,255,255,.2);padding:2px;min-width:30px}
+#score .m{font-size:12px;height:18px;color:#ffd166}
+#score .t{font-size:15px;font-weight:700;height:22px}
+#total{font-size:18px;font-weight:800;text-align:right;margin-top:4px}
+#cam{bottom:10px;right:10px;width:260px;padding:6px}
+#cam .w{position:relative;width:100%;aspect-ratio:4/3;background:#000;border-radius:8px;overflow:hidden}
+#cam video,#cam canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);object-fit:cover}
+#ctl{bottom:10px;left:10px;max-width:320px;font-size:13px;line-height:1.6}
+button,select{font:inherit;border-radius:8px;border:0;padding:8px 12px;margin:2px 2px 2px 0;cursor:pointer}
+button{background:#3b82f6;color:#fff;font-weight:700}
+button.s{background:#475569}
+select{background:#e2e8f0}
+#msg{position:fixed;left:0;right:0;top:36%;text-align:center;font-size:min(14vw,110px);font-weight:900;letter-spacing:.05em;text-shadow:0 0 30px #38bdf8,0 4px 0 #1e3a8a;pointer-events:none;opacity:0;transition:opacity .3s}
+#msg.on{opacity:1}
+#st{color:#7dd3fc;font-weight:700}
+@media(max-width:640px){#cam{width:150px}#ctl{max-width:200px;font-size:11px}#score td,#score th{min-width:22px;font-size:10px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="score" class="panel"><div id="tb"></div><div id="total"></div></div>
+<div id="msg"></div>
+<div id="ctl" class="panel">
+  <div>状態：<span id="st">待機中</span></div>
+  <div>
+    <button id="bCam">📷 カメラ開始</button>
+    <select id="hand"><option value="R">右手で投げる</option><option value="L">左手で投げる</option></select>
+  </div>
+  <div style="opacity:.85">
+    <b>遊び方</b>：全身がカメラに映る位置に立つ。<br>
+    ・体を左右に動かして狙う<br>
+    ・腕を下げてボールを後ろへ引き、<b>下から前上へ素早く振り上げる</b>と投球<br>
+    ・振りの速さ＝球速、手の横の動き＝カーブ<br>
+    <small>キー操作：←→で狙う / Space で投球</small>
+  </div>
+  <div style="margin-top:6px;border-top:1px solid #fff3;padding-top:6px">
+    <b>ニックネーム</b> <input id="nick" maxlength="10" placeholder="名前" style="width:120px;padding:8px;border-radius:8px;border:0"><br>
+    <b>オンライン対戦（最大6人）</b><br>
+    <button id="bHost">ルーム作成</button>
+    <input id="code" maxlength="4" placeholder="4桁" inputmode="numeric" style="width:64px;padding:8px;border-radius:8px;border:0"><button id="bJoin">参加</button><button id="bStart" style="display:none;background:#16a34a">ゲーム開始</button>
+    <div id="netst" style="color:#fbbf24"></div>
+  </div>
+  <button class="s" id="bThrow">テスト投球</button><button class="s" id="bReset">最初から</button>
+</div>
+<div id="cam" class="panel"><div class="w"><video id="v" playsinline muted></video><canvas id="o" width="320" height="240"></canvas></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+/* ---------- Three.js scene ---------- */
+const R=new THREE.WebGLRenderer({canvas:$('c'),antialias:true});
+R.setPixelRatio(Math.min(devicePixelRatio,2));R.shadowMap.enabled=true;
+const S=new THREE.Scene();S.background=new THREE.Color(0x0b0d1a);S.fog=new THREE.Fog(0x0b0d1a,18,45);
+const cam=new THREE.PerspectiveCamera(55,1,.1,100);
+function resize(){R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
+addEventListener('resize',resize);resize();
+S.add(new THREE.AmbientLight(0x8899ff,.55));
+const sun=new THREE.DirectionalLight(0xffffff,.9);sun.position.set(3,9,6);sun.castShadow=true;
+sun.shadow.camera.left=-6;sun.shadow.camera.right=6;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-16;sun.shadow.camera.far=40;
+S.add(sun);
+const spot=new THREE.SpotLight(0xffeedd,1.2,30,.5,.5);spot.position.set(0,8,-8);spot.target.position.set(0,0,-10);S.add(spot,spot.target);
+const LW=2.0,GW=.4; // lane width, gutter width
+function box(w,h,d,c,x,y,z,rough=.6){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:c,roughness:rough}));m.position.set(x,y,z);m.receiveShadow=true;S.add(m);return m}
+// lane (wood stripes via canvas texture)
+const tc=document.createElement('canvas');tc.width=256;tc.height=256;const g=tc.getContext('2d');
+for(let i=0;i<39;i++){g.fillStyle=`hsl(35,${55+Math.random()*10}%,${58+Math.random()*10}%)`;g.fillRect(i*6.6,0,6.6,256)}
+const tex=new THREE.CanvasTexture(tc);
+const lane=new THREE.Mesh(new THREE.BoxGeometry(LW,.2,32),new THREE.MeshStandardMaterial({map:tex,roughness:.25,metalness:.1}));
+lane.position.set(0,-.1,-3);lane.receiveShadow=true;S.add(lane);
+[-1,1].forEach(s=>{box(GW,.12,32,0x222633,s*(LW/2+GW/2),-.14,-3);box(.4,.5,32,0x1d2340,s*(LW/2+GW+.2),.05,-3)});
+box(8,.1,34,0x151a33,0,-.3,-3,.9); // floor
+box(8,3,.4,0x10142b,0,1.2,-20); // back wall
+// neon strips
+[-1,1].forEach(s=>{const n=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,32),new THREE.MeshBasicMaterial({color:s<0?0x22d3ee:0xf472b6}));n.position.set(s*(LW/2+GW+.42),.33,-3);S.add(n)});
+// arrows
+for(let i=-2;i<=2;i++){const a=new THREE.Mesh(new THREE.ConeGeometry(.07,.25,3),new THREE.MeshBasicMaterial({color:0x5b3a1a}));a.rotation.x=-Math.PI/2;a.position.set(i*.3,.005,4-Math.abs(i)*.4);S.add(a)}
+/* ball */
+const BR=.32;
+const ball=new THREE.Group();
+const bm=new THREE.Mesh(new THREE.SphereGeometry(BR,32,24),new THREE.MeshStandardMaterial({color:0x2563eb,roughness:.15,metalness:.4}));bm.castShadow=true;ball.add(bm);
+[[.1,.27,.1],[-.05,.29,.1],[.02,.3,-.08]].forEach(p=>{const h=new THREE.Mesh(new THREE.SphereGeometry(.045,10,8),new THREE.MeshBasicMaterial({color:0x000000}));h.position.set(...p);ball.add(h)});
+S.add(ball);
+/* pins */
+const pg=new THREE.LatheGeometry([[0,0],[.12,0],[.16,.1],[.19,.3],[.15,.55],[.08,.7],[.1,.8],[.13,.9],[.1,1.0],[0,1.02]].map(p=>new THREE.Vector2(p[0],p[1])),16);
+const pmat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.3});
+const stripe=new THREE.MeshStandardMaterial({color:0xdc2626});
+const pins=[];
+let idx=0;for(let r=0;r<4;r++)for(let i=0;i<=r;i++){
+  const m=new THREE.Group();const b=new THREE.Mesh(pg,pmat);b.castShadow=true;m.add(b);
+  const s=new THREE.Mesh(new THREE.CylinderGeometry(.155,.16,.04,16),stripe);s.position.y=.62;m.add(s);
+  S.add(m);pins.push({m,hx:(i-r/2)*.5,hz:-10-r*.45,x:0,z:0,vx:0,vz:0,down:false,gone:false,tilt:0,ax:0,az:0,id:idx++});
+}
+function resetPins(){pins.forEach(p=>{p.x=p.hx;p.z=p.hz;p.vx=p.vz=0;p.down=p.gone=false;p.tilt=0;p.m.visible=true;p.m.quaternion.identity();p.m.position.set(p.x,0,p.z)})}
+resetPins();
+/* ---------- game state ---------- */
+const newP=n=>({name:n||'プレイヤー',rolls:[],frame:0,ri:0,over:false});
+function clean(v){return String(v||'').replace(/[\u0000-\u001f]/g,'').trim().slice(0,10)||'プレイヤー'}
+let nick='プレイヤー';try{nick=clean(localStorage.getItem('bbNick')||nick)}catch(e){}
+let players=[newP(nick)],cur=0,me=0,online=false,started=false,isHost=false,conn=null,conns=[],roster=[],state='ready',timer=0;
+const myTurn=()=>!online||(started&&cur===me);
+const allOver=()=>players.every(x=>x.over);
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let B={x:0,z:9,vx:0,vz:0,spin:0,gutter:false,t:0};
+let aimX=0,keyAim=0,usingCam=false;
+const stEl=$('st');
+function setSt(t){stEl.textContent=t}
+function flash(t,ms=1500){const m=$('msg');m.textContent=t;m.classList.add('on');setTimeout(()=>m.classList.remove('on'),ms)}
+function throwBall(speed,vx,spin){
+  if(state!=='ready'||allOver()||!myTurn())return;
+  B={x:ball.position.x,z:9,vx:vx,vz:-speed,spin:spin,gutter:false,t:0};state='rolling';setSt('転がり中…');
+}
+function updateBall(dt){
+  B.t+=dt;
+  if(B.z>-4)B.vx+=B.spin*.9*dt;
+  B.x+=B.vx*dt;B.z+=B.vz*dt;
+  const lim=LW/2;
+  if(!B.gutter&&Math.abs(B.x)>lim+BR*.5){B.gutter=true;B.vx=0;B.spin=0;B.x=Math.sign(B.x)*(lim+GW/2)}
+  if(B.gutter)ball.position.y=BR-.12;else ball.position.y=BR;
+  ball.position.x=B.x;ball.position.z=B.z;
+  ball.rotation.x-=B.vz*dt/BR*-1;ball.rotation.z-=B.vx*dt/BR;
+  if(!B.gutter)for(const p of pins){
+    if(p.gone)continue;
+    const dx=p.x-B.x,dz=p.z-B.z,d=Math.hypot(dx,dz),min=BR+.17;
+    if(d<min&&d>0){
+      const sp=Math.hypot(B.vx,B.vz),nx=dx/d,nz=dz/d;
+      hit(p,nx*sp*1.05+B.vx*.3,nz*sp*1.05+B.vz*.3);
+      B.vx-=nx*sp*.08;B.vz*=.985;
+    }
+  }
+  if(B.z<-13||(B.t>6)){state='settle';timer=2.4;setSt('ピンを確認中…')}
+}
+function hit(p,vx,vz){
+  if(!p.down){p.down=true;const l=Math.hypot(vx,vz)||1;p.ax=vz/l;p.az=-vx/l}
+  p.vx=vx;p.vz=vz;
+}
+function updatePins(dt){
+  for(const p of pins){
+    if(p.gone||!p.down)continue;
+    p.tilt=Math.min(1.5,p.tilt+dt*5);
+    p.x+=p.vx*dt;p.z+=p.vz*dt;
+    p.vx*=.985;p.vz*=.985;
+    if(p.z<-14.5){p.z=-14.5;p.vz=0}
+    if(Math.abs(p.x)>1.4){p.x=Math.sign(p.x)*1.4;p.vx=0}
+    p.m.position.set(p.x,p.tilt>1?.12:0,p.z);
+    p.m.quaternion.setFromAxisAngle(new THREE.Vector3(p.ax,0,p.az).normalize(),p.tilt);
+  }
+  for(const a of pins)for(const b of pins){
+    if(a.id>=b.id||a.gone||b.gone)continue;
+    const sa=Math.hypot(a.vx,a.vz),sb=Math.hypot(b.vx,b.vz);
+    if(sa<.8&&sb<.8)continue;
+    const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz);
+    if(d<.4&&d>0){
+      const nx=dx/d,nz=dz/d;
+      if(sa>=sb){if(!b.down||sb<.5)hit(b,nx*sa*.85,nz*sa*.85);a.vx*=.7;a.vz*=.7}
+      else{if(!a.down||sa<.5)hit(a,-nx*sb*.85,-nz*sb*.85);b.vx*=.7;b.vz*=.7}
+    }
+  }
+}
+function finishRoll(){
+  const ids=[];pins.forEach(p=>{if(p.down&&!p.gone)ids.push(p.id)});
+  bcast({t:'roll',pi:cur,ids});
+  applyRoll(cur,ids);
+}
+function applyRoll(pi,ids){
+  net={ball:null,pins:null};
+  ids.forEach(i=>{const p=pins[i];p.down=true;p.gone=true;p.m.visible=false});
+  const down=ids.length,P=players[pi],first=P.rolls[P.rolls.length-1];
+  P.rolls.push(down);
+  let end=false,msg=down===0?'ガーター…':'';
+  if(P.frame<9){
+    if(P.ri===0&&down===10){msg='STRIKE!';end=true}
+    else if(P.ri===0)P.ri=1;
+    else{if(pins.every(p=>p.gone))msg='SPARE!';end=true}
+    if(end){P.frame++;P.ri=0}
+  }else{
+    if(P.ri===0){if(down===10){msg='STRIKE!';resetPins()}P.ri=1}
+    else if(P.ri===1){
+      if(first===10){P.ri=2;if(down===10){msg='STRIKE!';resetPins()}}
+      else if(first+down===10){msg='SPARE!';resetPins();P.ri=2}
+      else{P.over=true;end=true}
+    }else{if(down===10)msg='STRIKE!';P.over=true;end=true}
+  }
+  if(msg)flash(msg);
+  if(end){const nx=nextPlayer(pi);if(nx>=0)cur=nx;resetPins()}
+  state=(myTurn()&&!allOver())?'ready':'wait';
+  ball.position.set(0,BR,9);ball.rotation.set(0,0,0);
+  if(allOver())gameOver();
+  updStatus();drawScore();
+}
+function gameOver(){
+  const sc=players.map((p,i)=>({n:p.name,i,s:lastTotal(p.rolls)})).sort((x,y)=>y.s-x.s);
+  const w=sc[0];
+  flash(online?(w.i===me?'YOU WIN!':'🏆 '+w.n):'GAME OVER '+w.s,3500);
+  if(online)$('netst').textContent='結果：'+sc.map((x,k)=>(k+1)+'位 '+x.n+' '+x.s).join(' / ');
+}
+function updStatus(){
+  if(online&&!started)return setSt('ロビー待機中（'+roster.length+'人）');
+  if(allOver())return setSt('ゲーム終了（「最初から」で再開）');
+  if(online)return setSt(myTurn()?(usingCam?'あなたの番：腕を振り上げて！':'あなたの番（Spaceで投球）'):players[cur].name+' の番です…');
+  setSt(usingCam?'構え待ち：腕を下げて振り上げて！':'待機中（Spaceで投球）');
+}
+function nextPlayer(pi){const n=players.length;for(let k=1;k<=n;k++){const j=(pi+k)%n;if(!players[j].over)return j}return -1}
+function bcast(m,ex){
+  if(!online)return;
+  if(isHost)conns.forEach(c=>{if(c!==ex&&c.open)c.send(m)});
+  else if(conn&&conn.open)conn.send(m);
+}
+function lastTotal(r){const t=calc(r).filter(f=>f.t!=null).pop();return t?t.t:0}
+function calc(rolls){let s=0,i=0,F=[];
+  for(let f=0;f<10;f++){let m='',t=null;
+    if(i>=rolls.length){F.push({m:'',t:null});continue}
+    const a=rolls[i];
+    if(f<9){
+      if(a===10){m='X';if(i+2<rolls.length){s+=10+rolls[i+1]+rolls[i+2];t=s}i++}
+      else{const b=rolls[i+1];m=a||'-';
+        if(b!==undefined){if(a+b===10){m+='/';if(i+2<rolls.length){s+=10+rolls[i+2];t=s}}else{m+=b||'-';s+=a+b;t=s}}
+        i+=2}
+    }else{
+      const r=rolls.slice(i,i+3);
+      m=r.map((v,k)=>v===10?'X':(k>0&&r[k-1]!==10&&r[k-1]+v===10)?'/':(v||'-')).join(' ');
+      const need=(r[0]===10||(r.length>1&&r[0]+r[1]===10))?3:2;
+      if(r.length>=need){s+=r.reduce((p,c)=>p+c,0);t=s}
+    }
+    F.push({m,t});
+  }return F}
+function drawScore(){
+  let h='';
+  players.forEach((P,k)=>{
+    const F=calc(P.rolls),name=esc(P.name)+(online&&k===me?'★':'');
+    const hl=online&&started&&k===cur&&!allOver()?'outline:2px solid #fbbf24;':'';
+    h+=`<table style="margin-bottom:4px;${hl}"><tr><th rowspan=3 style="min-width:70px;max-width:90px;overflow:hidden">${name}</th>`+F.map((_,i)=>`<th>${i+1}</th>`).join('')+`<th rowspan=3>${lastTotal(P.rolls)}</th></tr><tr>`+F.map(f=>`<td class="m">${f.m||'&nbsp;'}</td>`).join('')+'</tr><tr>'+F.map(f=>`<td class="t">${f.t??''}</td>`).join('')+'</tr></table>';
+  });
+  $('tb').innerHTML=h;$('total').textContent='';
+}
+function restart(send){
+  net={ball:null,pins:null};
+  players=online?roster.map(n=>newP(n)):[newP(nick)];cur=0;resetPins();
+  state=myTurn()?'ready':'wait';ball.position.set(0,BR,9);ball.rotation.set(0,0,0);
+  drawScore();updStatus();
+  if(send!==false)bcast({t:'restart',names:roster});
+}
+/* ---------- main loop ---------- */
+let last=performance.now();
+function loop(now){
+  requestAnimationFrame(loop);
+  const dt=Math.min(.033,(now-last)/1000);last=now;
+  const target=clamp(usingCam?aimCam:keyAim,-.85,.85);
+  aimX+=(target-aimX)*Math.min(1,dt*8);
+  if(state==='ready'){ball.position.set(aimX,BR,9)}
+  else if(state==='rolling'){updateBall(dt)}
+  else if(state==='settle'){timer-=dt;if(timer<=0)finishRoll()}
+  if(state==='rolling'||state==='settle')updatePins(dt);else if(state==='wait')applyNet(dt);
+  sendSnap(now);
+  const tz=ball.position.z>8.5?11:clamp(ball.position.z+8,3,11);
+  cam.position.x+=((ball.position.x*.4)-cam.position.x)*dt*3;
+  cam.position.z+=(tz-cam.position.z)*dt*2.5;cam.position.y=2.6;
+  cam.lookAt(0,.6,-9);
+  R.render(S,cam);
+}
+cam.position.set(0,2.6,11);drawScore();requestAnimationFrame(loop);
+/* ---------- online (PeerJS, 1 vs 1) ---------- */
+let snapT=0,net={ball:null,pins:null};
+function sendSnap(now){
+  if(!online||!started||cur!==me||now-snapT<50)return;snapT=now;
+  bcast({t:'snap',b:[ball.position.x,ball.position.y,ball.position.z,ball.rotation.x,ball.rotation.z],
+    p:pins.map(p=>[p.x,p.z,p.tilt,p.ax,p.az,p.down?1:0])});
+}
+function applyNet(dt){
+  if(!net.ball)return;const k=Math.min(1,dt*18),b=net.ball;
+  ball.position.x+=(b[0]-ball.position.x)*k;ball.position.y=b[1];ball.position.z+=(b[2]-ball.position.z)*k;
+  ball.rotation.x=b[3];ball.rotation.z=b[4];
+  net.pins.forEach((q,i)=>{const p=pins[i];if(p.gone)return;
+    p.x+=(q[0]-p.x)*k;p.z+=(q[1]-p.z)*k;p.tilt+=(q[2]-p.tilt)*k;p.ax=q[3];p.az=q[4];p.down=!!q[5];
+    p.m.position.set(p.x,p.tilt>1?.12:0,p.z);
+    if(p.down)p.m.quaternion.setFromAxisAngle(new THREE.Vector3(p.ax,0,p.az).normalize(),p.tilt);else p.m.quaternion.identity();
+  });
+}
+/* group play: host = hub (star topology), up to 6 players */
+let roomCode='',peerH=null;
+function lobbyText(){return (isHost?'【'+roomCode+'】':'')+'ロビー：'+roster.join('、')+(isHost?'（全員そろったら「ゲーム開始」）':'（ホストの開始待ち）')}
+function welcomes(){
+  conns.forEach((c,k)=>{c.pidx=k+1;if(c.open)c.send({t:'welcome',idx:k+1,names:roster})});
+  players=roster.map(n=>newP(n));
+  $('netst').textContent=lobbyText();updStatus();drawScore();
+}
+function hostRoom(){
+  if(typeof Peer==='undefined'){alert('PeerJSを読み込めませんでした');return}
+  if(peerH||online)return;
+  nick=clean($('nick').value);
+  roomCode=String(Math.floor(1000+Math.random()*9000));
+  const pr=new Peer('bodybowl-'+roomCode);peerH=pr;
+  pr.on('open',()=>{isHost=true;roster=[nick];$('bStart').style.display='';$('netst').textContent='ルームコード：'+roomCode+'（最大6人。全員そろったら「ゲーム開始」）'});
+  pr.on('connection',c=>{c.on('data',d=>hostData(c,d));c.on('close',()=>onGuestLeave(c))});
+  pr.on('error',e=>{peerH=null;$('netst').textContent=e.type==='unavailable-id'?'コードが重複しました。もう一度押してください':'エラー：'+e.type});
+}
+function hostData(c,d){
+  if(d.t==='hi'){
+    if(c.pidx!==undefined)return;
+    if(started||roster.length>=6){c.pidx=-1;c.send({t:'full'});setTimeout(()=>c.close(),400);return}
+    c.pidx=roster.length;conns.push(c);roster.push(clean(d.name));online=true;state='wait';cur=0;resetPins();welcomes();
+  }else if(c.pidx>0){
+    if(d.t==='snap'){if(!myTurn()){net.ball=d.b;net.pins=d.p}bcast(d,c)}
+    else if(d.t==='roll'){applyRoll(d.pi,d.ids);bcast(d,c)}
+    else if(d.t==='reqRestart'&&started)restart();
+  }
+}
+function onGuestLeave(c){
+  const k=conns.indexOf(c);if(k<0)return;
+  if(!started){
+    conns.splice(k,1);roster.splice(k+1,1);
+    if(!conns.length){online=false;state='ready';players=[newP(nick)];$('netst').textContent='ルームコード：'+roomCode+'（参加者待ち）';updStatus();drawScore()}
+    else welcomes();
+  }else{applyDrop(c.pidx);bcast({t:'drop',idx:c.pidx},c)}
+}
+function applyDrop(idx){
+  const P=players[idx];if(!P||P.over)return;
+  P.over=true;P.name+='(退出)';
+  if(cur===idx){resetPins();net={ball:null,pins:null};const nx=nextPlayer(idx);if(nx>=0)cur=nx}
+  state=(myTurn()&&!allOver())?'ready':'wait';
+  ball.position.set(0,BR,9);ball.rotation.set(0,0,0);
+  if(allOver())gameOver();
+  updStatus();drawScore();
+}
+function startGame(){
+  if(!isHost||started)return;
+  if(!online){$('netst').textContent='ルームコード：'+roomCode+'（まだ誰も参加していません）';return}
+  started=true;$('bStart').style.display='none';restart(true);flash('ゲーム開始！',1200);
+}
+function joinRoom(){
+  if(typeof Peer==='undefined'){alert('PeerJSを読み込めませんでした');return}
+  const code=$('code').value.trim();
+  if(!/^\d{4}$/.test(code)){$('netst').textContent='4桁のコードを入力してください';return}
+  nick=clean($('nick').value);$('netst').textContent='接続中…';
+  const pr=new Peer();
+  pr.on('open',()=>{
+    const c=pr.connect('bodybowl-'+code,{reliable:true});
+    c.on('open',()=>{conn=c;isHost=false;c.send({t:'hi',name:nick})});
+    c.on('data',guestData);
+    c.on('close',()=>{if(!conn)return;online=false;started=false;conn=null;me=0;roster=[];restart(false);$('netst').textContent='接続が切れました（ひとりモードに戻ります）'});
+  });
+  pr.on('error',e=>{$('netst').textContent='接続できません：'+e.type});
+}
+function guestData(d){
+  if(d.t==='welcome'){online=true;started=false;me=d.idx;roster=d.names;players=roster.map(n=>newP(n));cur=0;resetPins();state='wait';$('netst').textContent=lobbyText();updStatus();drawScore()}
+  else if(d.t==='restart'){const first=!started;roster=d.names;started=true;restart(false);if(first)flash('ゲーム開始！',1200)}
+  else if(d.t==='snap'){if(!myTurn()){net.ball=d.b;net.pins=d.p}}
+  else if(d.t==='roll')applyRoll(d.pi,d.ids);
+  else if(d.t==='drop')applyDrop(d.idx);
+  else if(d.t==='full')$('netst').textContent='参加できません（満員、またはゲーム開始済み）';
+}
+$('nick').value=nick;
+$('nick').oninput=()=>{nick=clean($('nick').value);try{localStorage.setItem('bbNick',nick)}catch(e){}if(!online){players[0].name=nick;drawScore()}};
+$('bHost').onclick=hostRoom;$('bJoin').onclick=joinRoom;$('bStart').onclick=startGame;
+/* ---------- controls: keyboard / buttons ---------- */
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft')keyAim=clamp(keyAim-.12,-.85,.85);
+  if(e.key==='ArrowRight')keyAim=clamp(keyAim+.12,-.85,.85);
+  if(e.code==='Space'){e.preventDefault();testThrow()}
+});
+function testThrow(){throwBall(13+Math.random()*7,(Math.random()-.5)*.6,(Math.random()-.5)*1.5)}
+$('bThrow').onclick=testThrow;$('bReset').onclick=()=>{if(online&&!isHost){if(conn&&conn.open)conn.send({t:'reqRestart'})}else if(!online||started)restart()};
+/* ---------- body tracking (MediaPipe Pose) ---------- */
+let aimCam=0,hist=[],armed=false,cool=0;
+const vid=$('v'),oc=$('o'),ox=oc.getContext('2d');
+const CONN=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+function onPose(res){
+  ox.clearRect(0,0,320,240);
+  const L=res.poseLandmarks;
+  if(!L){setSt('体が見つかりません。全身を映してください');return}
+  ox.strokeStyle='#38bdf8';ox.lineWidth=3;
+  CONN.forEach(([a,b])=>{ox.beginPath();ox.moveTo(L[a].x*320,L[a].y*240);ox.lineTo(L[b].x*320,L[b].y*240);ox.stroke()});
+  ox.fillStyle='#fbbf24';[11,12,15,16,23,24].forEach(i=>{ox.beginPath();ox.arc(L[i].x*320,L[i].y*240,4,0,7);ox.fill()});
+  const hi=$('hand').value==='L'?15:16,w=L[hi];
+  const bodyX=1-(L[11].x+L[12].x)/2,hipY=(L[23].y+L[24].y)/2;
+  aimCam=(bodyX-.5)*3.4;
+  if(state!=='ready'||w.visibility<.3){return}
+  const t=performance.now();
+  hist.push({t,x:1-w.x,y:w.y});while(hist.length&&t-hist[0].t>220)hist.shift();
+  if(w.y>hipY-.03){armed=true}
+  setSt(armed?'振り上げて投げる！':'構え待ち：腕を下げて後ろへ引く');
+  if(hist.length<3||t<cool)return;
+  const o=hist[0],c=hist[hist.length-1],dt=(c.t-o.t)/1000;if(dt<.05)return;
+  const vy=(c.y-o.y)/dt,vx=(c.x-o.x)/dt;
+  if(armed&&vy<-1.4&&w.y<hipY+.12){
+    const pw=clamp((-vy-1.4)/2.6,0,1);
+    throwBall(10+13*pw,clamp(vx*.5,-1.5,1.5),clamp(vx*2.5,-2,2));
+    armed=false;hist=[];cool=t+1500;
+  }
+}
+$('bCam').onclick=async()=>{
+  if(typeof Pose==='undefined'){alert('MediaPipeを読み込めませんでした。ネット接続を確認してください。');return}
+  $('bCam').disabled=true;setSt('カメラ準備中…');
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'},audio:false});
+    vid.srcObject=stream;await vid.play();
+  }catch(e){setSt('カメラを使えません：'+e.message);$('bCam').disabled=false;return}
+  const pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${f}`});
+  pose.setOptions({modelComplexity:1,smoothLandmarks:true,minDetectionConfidence:.5,minTrackingConfidence:.5});
+  pose.onResults(onPose);
+  await pose.initialize();
+  usingCam=true;setSt('構え待ち：腕を下げて後ろへ引く');$('bCam').textContent='📷 カメラ動作中';
+  (async function tick(){
+    if(vid.readyState>=2){try{await pose.send({image:vid})}catch(e){}}
+    requestAnimationFrame(tick);
+  })();
+};
+</script>
+</body>
+</html>
