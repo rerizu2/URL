@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ワイヤレス・ディスプレイ</title>
+<style>
+:root{--bg:#0f1420;--card:#1a2233;--line:#2a3550;--text:#e8edf7;--sub:#8fa0c0;--ac:#4f8cff;--ok:#31c48d;--ng:#f05252}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,"Hiragino Sans","Yu Gothic",sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:24px 16px}
+h1{font-size:1.4rem;margin:0 0 4px}
+.sub{color:var(--sub);font-size:.9rem;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+label{display:block;font-size:.85rem;color:var(--sub);margin:10px 0 4px}
+input,select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:#0f1626;color:var(--text);font-size:1rem}
+button{padding:10px 16px;border:0;border-radius:8px;background:var(--ac);color:#fff;font-size:1rem;cursor:pointer}
+button.sec{background:#2a3550}
+button.ng{background:var(--ng)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.row>*{flex:1}
+.url{display:flex;gap:8px}
+.url input{flex:1}
+.url button{flex:0 0 auto}
+.st{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.8rem;background:#2a3550}
+.st.ok{background:rgba(49,196,141,.2);color:var(--ok)}
+.st.ng{background:rgba(240,82,82,.2);color:var(--ng)}
+.note{font-size:.82rem;color:var(--sub);line-height:1.6}
+.hidden{display:none!important}
+#viewer{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
+#viewer video{width:100%;height:100%;object-fit:contain;background:#000}
+#bar{position:fixed;top:10px;right:10px;display:flex;gap:8px;opacity:.9;transition:opacity .4s}
+#bar.fade{opacity:0}
+#login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:var(--bg)}
+#login .card{width:100%;max-width:380px}
+.msg{min-height:1.2em;margin-top:8px;font-size:.9rem}
+ul{padding-left:1.2em;margin:6px 0}
+</style>
+</head>
+<body>
+
+<!-- ホスト（配信する側） -->
+<div id="host" class="wrap hidden">
+  <h1>🖥️ ワイヤレス・ディスプレイ</h1>
+  <div class="sub">この画面を、URLとパスワードで別の端末に無線で映します（ホスト側）</div>
+
+  <div class="card">
+    <label>パスワード（4文字以上）</label>
+    <input id="pw" type="text" autocomplete="off">
+    <div class="row">
+      <div><label>フレームレート</label>
+        <select id="fps"><option value="15">15 fps（軽い）</option><option value="30" selected>30 fps</option><option value="60">60 fps（滑らか）</option></select></div>
+      <div><label>解像度の上限</label>
+        <select id="res"><option value="1280x720">1280×720</option><option value="1920x1080" selected>1920×1080</option><option value="2560x1440">2560×1440</option><option value="3840x2160">3840×2160</option></select></div>
+    </div>
+    <div class="row">
+      <button id="startBtn">① 配信を開始（画面を選ぶ）</button>
+      <button id="stopBtn" class="ng hidden">配信を停止</button>
+    </div>
+  </div>
+
+  <div id="shareCard" class="card hidden">
+    <div>状態：<span id="hostSt" class="st">準備中</span>　接続中の端末：<b id="count">0</b></div>
+    <label>接続用URL（パスワードは別途伝えてください）</label>
+    <div class="url"><input id="urlBox" readonly><button id="copyBtn" class="sec">コピー</button></div>
+    <div class="note" style="margin-top:10px">相手の端末でこのURLを開き、パスワードを入力すると映像が表示されます。</div>
+  </div>
+
+  <div class="card note">
+    <b>「拡張」にするには（重要）</b><br>
+    ブラウザだけでは、新しい仮想モニターは作れません。次の手順で「拡張ディスプレイ」として使えます。
+    <ul>
+      <li><b>Windows</b>：仮想ディスプレイドライバ（例：Virtual Display Driver / IddSampleDriver）を入れ、ディスプレイ設定で「表示画面を拡張する」にする</li>
+      <li><b>Mac</b>：BetterDisplay などで仮想ディスプレイを作る</li>
+      <li>配信開始時の画面選択で、その<b>仮想モニターを選択</b>する</li>
+      <li>仮想モニターを作らずに「全画面」を選ぶと、ミラー（複製）表示になります</li>
+    </ul>
+    映像は端末間で直接やり取り（WebRTC）されます。接続の仲介には PeerJS の公開サーバーを使います。
+  </div>
+</div>
+
+<!-- ビューア（受信する側） -->
+<div id="login" class="hidden">
+  <div class="card">
+    <h1>📺 画面に接続</h1>
+    <div class="sub">ホストから教えてもらったパスワードを入力</div>
+    <input id="vpw" type="password" placeholder="パスワード" autocomplete="off">
+    <div class="row"><button id="joinBtn">接続</button></div>
+    <div id="vmsg" class="msg"></div>
+  </div>
+</div>
+<div id="viewer" class="hidden">
+  <video id="vid" autoplay playsinline muted></video>
+  <div id="bar">
+    <button id="fsBtn" class="sec">全画面</button>
+    <button id="leaveBtn" class="ng">切断</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const PREFIX = 'wde-';
+const CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
+const rand = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => CHARS[b % CHARS.length]).join('');
+
+async function sha(text){
+  if(crypto.subtle){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2,'0')).join('');
+  }
+  let h = 5381; for(const c of text) h = ((h<<5)+h) ^ c.charCodeAt(0);
+  return String(h >>> 0);
+}
+
+const m = location.hash.match(/v=([a-z0-9]+)/);
+if (m) initViewer(m[1]); else initHost();
+
+/* ================= ホスト ================= */
+function initHost(){
+  $('host').classList.remove('hidden');
+  $('pw').value = rand(6);
+  let peer, stream = null, room = rand(6), salt = rand(12);
+  const authed = new Map();   // peerId -> conn
+  const calls = new Map();
+  const fails = new Map();
+
+  function updateCount(){ $('count').textContent = authed.size; }
+
+  function sendStreamTo(id){
+    if(!stream || calls.has(id)) return;
+    const call = peer.call(id, stream);
+    calls.set(id, call);
+    const drop = () => { calls.delete(id); authed.delete(id); updateCount(); };
+    call.on('close', drop); call.on('error', drop);
+  }
+
+  function openPeer(){
+    peer = new Peer(PREFIX + room);
+    peer.on('open', () => {
+      const base = location.href.split('#')[0];
+      $('urlBox').value = base + '#v=' + room;
+      $('hostSt').textContent = '接続待機中'; $('hostSt').className = 'st ok';
+    });
+    peer.on('error', e => {
+      if(e.type === 'unavailable-id'){ room = rand(6); openPeer(); return; }
+      $('hostSt').textContent = 'エラー: ' + e.type; $('hostSt').className = 'st ng';
+    });
+    peer.on('connection', conn => {
+      conn.on('open', () => conn.send({type:'hello', salt}));
+      conn.on('data', async msg => {
+        if(!msg || msg.type !== 'auth') return;
+        const expected = await sha(salt + $('pw').value);
+        const id = conn.peer;
+        if(msg.hash === expected){
+          authed.set(id, conn); updateCount();
+          conn.send({type:'ok'});
+          sendStreamTo(id);
+        }else{
+          const n = (fails.get(id)||0) + 1; fails.set(id, n);
+          conn.send({type:'ng', left: Math.max(0, 3-n)});
+          if(n >= 3) setTimeout(() => conn.close(), 300);
+        }
+      });
+      conn.on('close', () => { authed.delete(conn.peer); calls.get(conn.peer)?.close(); calls.delete(conn.peer); updateCount(); });
+    });
+  }
+
+  $('startBtn').onclick = async () => {
+    const pw = $('pw').value.trim();
+    if(pw.length < 4){ alert('パスワードは4文字以上にしてください'); return; }
+    const [w,h] = $('res').value.split('x').map(Number);
+    try{
+      stream = await navigator.mediaDevices.getDisplayMedia({
+        video:{ width:{ideal:w}, height:{ideal:h}, frameRate:{ideal:+$('fps').value} },
+        audio:false
+      });
+    }catch(e){ return; }
+    stream.getVideoTracks()[0].contentHint = 'detail';
+    stream.getVideoTracks()[0].onended = stop;
+    $('shareCard').classList.remove('hidden');
+    $('startBtn').classList.add('hidden'); $('stopBtn').classList.remove('hidden');
+    $('pw').disabled = true; $('fps').disabled = true; $('res').disabled = true;
+    openPeer();
+    // 事前に認証済みの端末があれば配信
+    authed.forEach((_, id) => sendStreamTo(id));
+  };
+
+  function stop(){
+    stream?.getTracks().forEach(t => t.stop()); stream = null;
+    calls.forEach(c => c.close()); calls.clear(); authed.clear(); updateCount();
+    peer?.destroy(); peer = null;
+    $('shareCard').classList.add('hidden');
+    $('startBtn').classList.remove('hidden'); $('stopBtn').classList.add('hidden');
+    $('pw').disabled = false; $('fps').disabled = false; $('res').disabled = false;
+    room = rand(6); salt = rand(12);
+  }
+  $('stopBtn').onclick = stop;
+  $('copyBtn').onclick = async () => {
+    try{ await navigator.clipboard.writeText($('urlBox').value); $('copyBtn').textContent = 'コピー済み'; }
+    catch{ $('urlBox').select(); }
+    setTimeout(() => $('copyBtn').textContent = 'コピー', 1500);
+  };
+}
+
+/* ================= ビューア ================= */
+function initViewer(room){
+  $('login').classList.remove('hidden');
+  let peer, conn, hideT;
+
+  const say = (t, ng) => { $('vmsg').textContent = t; $('vmsg').style.color = ng ? 'var(--ng)' : 'var(--sub)'; };
+
+  function join(){
+    const pw = $('vpw').value;
+    if(!pw) return;
+    $('joinBtn').disabled = true; say('接続中…');
+    peer?.destroy();
+    peer = new Peer();
+    peer.on('error', e => { say(e.type === 'peer-unavailable' ? 'ホストが見つかりません（配信が開始されているか確認）' : 'エラー: ' + e.type, true); $('joinBtn').disabled = false; });
+    peer.on('call', call => {
+      call.answer();
+      call.on('stream', s => {
+        $('vid').srcObject = s;
+        $('login').classList.add('hidden'); $('viewer').classList.remove('hidden');
+        $('vid').play().catch(()=>{});
+        poke();
+      });
+      call.on('close', () => leave('配信が終了しました'));
+    });
+    peer.on('open', () => {
+      conn = peer.connect(PREFIX + room, {reliable:true});
+      conn.on('data', async msg => {
+        if(msg.type === 'hello') conn.send({type:'auth', hash: await sha(msg.salt + pw)});
+        else if(msg.type === 'ok') say('認証OK。映像を待っています…');
+        else if(msg.type === 'ng'){ say(msg.left > 0 ? `パスワードが違います（残り${msg.left}回）` : '失敗が続いたため切断されました', true); $('joinBtn').disabled = false; }
+      });
+      conn.on('close', () => { if($('viewer').classList.contains('hidden')) $('joinBtn').disabled = false; });
+    });
+  }
+
+  function leave(t){
+    peer?.destroy(); peer = null;
+    $('vid').srcObject = null;
+    $('viewer').classList.add('hidden'); $('login').classList.remove('hidden');
+    $('joinBtn').disabled = false; say(t || '');
+    if(document.fullscreenElement) document.exitFullscreen();
+  }
+
+  function poke(){ $('bar').classList.remove('fade'); clearTimeout(hideT); hideT = setTimeout(() => $('bar').classList.add('fade'), 3000); }
+  document.addEventListener('mousemove', poke); document.addEventListener('touchstart', poke);
+
+  $('joinBtn').onclick = join;
+  $('vpw').addEventListener('keydown', e => { if(e.key === 'Enter') join(); });
+  $('leaveBtn').onclick = () => leave('切断しました');
+  $('fsBtn').onclick = () => document.fullscreenElement ? document.exitFullscreen() : $('viewer').requestFullscreen?.();
+}
+</script>
+</body>
+</html>
