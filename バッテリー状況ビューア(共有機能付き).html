@@ -12,7 +12,6 @@
     --sub-text: #6e6e73;
     --accent: #34c759;
     --accent-charging: #ffd60a;
-    --track: #e5e5ea;
     --border: #d2d2d7;
     --danger: #ff3b30;
     color-scheme: light dark;
@@ -25,7 +24,6 @@
       --sub-text: #a1a1a6;
       --accent: #32d74b;
       --accent-charging: #ffd60a;
-      --track: #3a3a3c;
       --border: #3a3a3c;
       --danger: #ff453a;
     }
@@ -36,56 +34,51 @@
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 24px);
-    min-height: 100%;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 20px;
+    justify-content: center;
+    padding: env(safe-area-inset-top, 0px) 16px env(safe-area-inset-bottom, 0px);
+    min-height: 100%;
   }
   .card {
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 28px 24px;
+    padding: 32px 28px;
     width: 100%;
-    max-width: 380px;
+    max-width: 360px;
+    text-align: center;
     box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    margin-top: 20px;
   }
   h1 {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 600;
-    margin: 0 0 20px;
+    margin: 0 0 24px;
     color: var(--sub-text);
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
   }
-  .my-battery-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .battery-icon-wrap { position: relative; flex-shrink: 0; }
-  .battery-shell {
-    width: 90px;
-    height: 42px;
-    border: 3px solid var(--text);
-    border-radius: 7px;
+  .battery-icon-wrap {
     position: relative;
-    padding: 3px;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  .battery-shell {
+    width: 120px;
+    height: 56px;
+    border: 3px solid var(--text);
+    border-radius: 8px;
+    position: relative;
+    padding: 4px;
     display: flex;
     align-items: center;
   }
   .battery-shell::after {
     content: "";
     position: absolute;
-    right: -8px;
+    right: -9px;
     top: 50%;
     transform: translateY(-50%);
-    width: 5px;
-    height: 16px;
+    width: 6px;
+    height: 20px;
     background: var(--text);
     border-radius: 0 3px 3px 0;
   }
@@ -97,16 +90,26 @@
     width: 0%;
   }
   .bolt {
-    position: absolute; top: 50%; left: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
-    width: 22px; height: 22px;
+    width: 28px;
+    height: 28px;
     display: none;
   }
   .bolt svg { width: 100%; height: 100%; }
   .bolt.show { display: block; }
-  .my-battery-info { flex: 1; }
-  .level { font-size: 34px; font-weight: 700; line-height: 1.1; }
-  .status-line { font-size: 14px; color: var(--sub-text); margin-top: 2px; }
+  .level {
+    font-size: 48px;
+    font-weight: 700;
+    margin: 8px 0 4px;
+  }
+  .status-line {
+    font-size: 15px;
+    color: var(--sub-text);
+    margin-bottom: 20px;
+  }
   .status-line.charging { color: #b58900; font-weight: 600; }
   @media (prefers-color-scheme: dark) {
     .status-line.charging { color: var(--accent-charging); }
@@ -114,114 +117,20 @@
   .details {
     text-align: left;
     border-top: 1px solid var(--border);
-    margin-top: 16px;
-    padding-top: 14px;
+    padding-top: 16px;
   }
-  .detail-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    padding: 6px 0;
+  }
   .detail-row .label { color: var(--sub-text); }
   .detail-row .value { font-weight: 600; }
-  .unsupported { font-size: 13px; color: var(--sub-text); line-height: 1.6; text-align: center; }
-
-  .share-row {
-    margin-top: 18px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .share-label { font-size: 14px; font-weight: 600; }
-  .share-sub { font-size: 12px; color: var(--sub-text); margin-top: 2px; }
-  .switch {
-    position: relative;
-    width: 50px; height: 30px;
-    flex-shrink: 0;
-  }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .slider {
-    position: absolute; cursor: pointer; inset: 0;
-    background-color: var(--track);
-    border-radius: 30px;
-    transition: 0.2s;
-  }
-  .slider::before {
-    content: "";
-    position: absolute;
-    height: 24px; width: 24px;
-    left: 3px; bottom: 3px;
-    background-color: white;
-    border-radius: 50%;
-    transition: 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  }
-  input:checked + .slider { background-color: var(--accent); }
-  input:checked + .slider::before { transform: translateX(20px); }
-  input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
-
-  .shared-list { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 380px; }
-  .shared-item {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    flex-shrink: 0;
-    object-fit: cover;
-  }
-  .shared-info { flex: 1; min-width: 0; }
-  .shared-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .shared-meta { font-size: 12px; color: var(--sub-text); margin-top: 2px; }
-  .mini-battery { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .mini-shell {
-    width: 40px; height: 20px;
-    border: 2px solid var(--text);
-    border-radius: 4px;
-    position: relative;
-    padding: 2px;
-    display: flex;
-    align-items: center;
-  }
-  .mini-shell::after {
-    content: "";
-    position: absolute;
-    right: -5px; top: 50%;
-    transform: translateY(-50%);
-    width: 3px; height: 10px;
-    background: var(--text);
-    border-radius: 0 2px 2px 0;
-  }
-  .mini-fill { height: 100%; border-radius: 2px; background: var(--accent); }
-  .mini-pct { font-size: 13px; font-weight: 700; width: 36px; text-align: right; }
-  .mini-bolt { width: 14px; height: 14px; display: none; }
-  .mini-bolt.show { display: block; }
-  .empty-shared {
-    text-align: center;
+  .unsupported {
+    font-size: 14px;
     color: var(--sub-text);
-    font-size: 13px;
-    padding: 20px 0;
-  }
-  .section-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--sub-text);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    width: 100%;
-    max-width: 380px;
-    margin: 4px 0 -2px 4px;
-  }
-  .note {
-    font-size: 12px;
-    color: var(--sub-text);
-    text-align: center;
-    max-width: 380px;
-    line-height: 1.5;
+    line-height: 1.6;
   }
 </style>
 </head>
@@ -229,22 +138,18 @@
   <div class="card">
     <h1>このデバイスのバッテリー</h1>
     <div id="supported-view" style="display:none;">
-      <div class="my-battery-row">
-        <div class="battery-icon-wrap">
-          <div class="battery-shell">
-            <div class="battery-fill" id="batteryFill"></div>
-          </div>
-          <div class="bolt" id="chargingBolt">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#ffffff" stroke="#000000" stroke-width="0.8" stroke-linejoin="round"/>
-            </svg>
-          </div>
+      <div class="battery-icon-wrap">
+        <div class="battery-shell">
+          <div class="battery-fill" id="batteryFill"></div>
         </div>
-        <div class="my-battery-info">
-          <div class="level" id="levelText">--%</div>
-          <div class="status-line" id="statusText">取得中...</div>
+        <div class="bolt" id="chargingBolt">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#ffffff" stroke="#000000" stroke-width="0.8" stroke-linejoin="round"/>
+          </svg>
         </div>
       </div>
+      <div class="level" id="levelText">--%</div>
+      <div class="status-line" id="statusText">取得中...</div>
       <div class="details">
         <div class="detail-row">
           <span class="label">充電時間の目安</span>
@@ -255,29 +160,12 @@
           <span class="value" id="dischargingTimeText">—</span>
         </div>
       </div>
-
-      <div class="share-row">
-        <div>
-          <div class="share-label">充電状況を共有</div>
-          <div class="share-sub" id="shareSubText">この端末が充電中かどうかだけを相手に見せます</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="shareToggle" disabled>
-          <span class="slider"></span>
-        </label>
-      </div>
     </div>
     <div id="unsupported-view" class="unsupported" style="display:none;">
       お使いのブラウザは Battery Status API に対応していません。<br>
-      (この機能は多くの最新ブラウザで無効化・廃止されています。Chromeの一部環境などでのみ利用できる場合があります)
+      (iOS/Safariでは利用できません。Chromeの一部環境などでのみ利用できる場合があります)
     </div>
   </div>
-
-  <div class="section-title">共有されている充電状況</div>
-  <div class="shared-list" id="sharedList">
-    <div class="empty-shared" id="sharedEmpty">まだ誰も共有していません</div>
-  </div>
-  <div class="note">このリンクを開いている人どうしで、オンにした人の「この端末が充電中かどうか」だけがここに表示されます(バッテリー残量は共有されません)。</div>
 
 <script>
 function formatSeconds(sec) {
@@ -289,29 +177,9 @@ function formatSeconds(sec) {
   return `${m}分`;
 }
 
-function timeAgo(ms) {
-  if (!ms) return "";
-  const sec = Math.max(0, Math.floor((Date.now() - ms) / 1000));
-  if (sec < 60) return "たった今";
-  const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}分前`;
-  const h = Math.floor(min / 60);
-  return `${h}時間前`;
-}
+function initBatteryUI(battery) {
+  document.getElementById('supported-view').style.display = 'block';
 
-let latestBattery = null; // {level, charging, chargingTime, dischargingTime}
-let dbNs = null;
-let userNs = null;
-let myId = null;
-let sharing = false;
-let lastWritten = null;
-
-function colorVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-function renderMyBatteryUI() {
-  if (!latestBattery) return;
   const fillEl = document.getElementById('batteryFill');
   const boltEl = document.getElementById('chargingBolt');
   const levelEl = document.getElementById('levelText');
@@ -319,171 +187,51 @@ function renderMyBatteryUI() {
   const chargingTimeEl = document.getElementById('chargingTimeText');
   const dischargingTimeEl = document.getElementById('dischargingTimeText');
 
-  const pct = Math.round(latestBattery.level * 100);
-  const charging = latestBattery.charging;
-
-  levelEl.textContent = `${pct}%`;
-  fillEl.style.width = `${pct}%`;
-  fillEl.style.background = charging ? colorVar('--accent-charging') : (pct <= 20 ? colorVar('--danger') : colorVar('--accent'));
-  boltEl.classList.toggle('show', charging);
-  statusEl.textContent = charging ? '充電中' : '放電中';
-  statusEl.classList.toggle('charging', charging);
-  chargingTimeEl.textContent = charging ? formatSeconds(latestBattery.chargingTime) : '—';
-  dischargingTimeEl.textContent = !charging ? formatSeconds(latestBattery.dischargingTime) : '—';
-}
-
-async function maybeWriteShare() {
-  if (!sharing || !dbNs || !myId) return;
-  const payload = {
-    charging: latestBattery.charging,
-    updatedAt: Date.now(),
-  };
-  const changed = !lastWritten ||
-    lastWritten.charging !== payload.charging ||
-    (Date.now() - (lastWritten.updatedAt || 0)) > 55000;
-  if (!changed) return;
-  lastWritten = payload;
-  try {
-    await dbNs.collection('battery').doc(myId).set(payload);
-  } catch (e) {
-    console.error('battery share write failed', e);
-  }
-}
-
-function initBatteryUI(battery) {
-  document.getElementById('supported-view').style.display = 'block';
-
-  function updateAll() {
-    latestBattery = {
-      level: battery.level,
-      charging: battery.charging,
-      chargingTime: battery.chargingTime,
-      dischargingTime: battery.dischargingTime,
-    };
-    renderMyBatteryUI();
-    maybeWriteShare();
+  function colorForLevel(pct, charging) {
+    if (charging) return getComputedStyle(document.documentElement).getPropertyValue('--accent-charging');
+    if (pct <= 20) return getComputedStyle(document.documentElement).getPropertyValue('--danger');
+    return getComputedStyle(document.documentElement).getPropertyValue('--accent');
   }
 
-  updateAll();
-  battery.addEventListener('chargingchange', updateAll);
-  battery.addEventListener('levelchange', updateAll);
-  battery.addEventListener('chargingtimechange', updateAll);
-  battery.addEventListener('dischargingtimechange', updateAll);
-
-  // Heartbeat so "updatedAt" stays fresh while sharing is on, even if nothing changes.
-  setInterval(() => { if (sharing) maybeWriteShare(); }, 60000);
-
-  setupShareToggle();
-}
-
-function setupShareToggle() {
-  const toggle = document.getElementById('shareToggle');
-  const subText = document.getElementById('shareSubText');
-  toggle.disabled = false;
-  toggle.addEventListener('change', async () => {
-    sharing = toggle.checked;
-    if (!dbNs || !myId) {
-      subText.textContent = 'サインインすると共有できます';
-      toggle.checked = false;
-      sharing = false;
-      return;
-    }
-    if (sharing) {
-      subText.textContent = '充電中かどうかを相手に見せています';
-      lastWritten = null;
-      maybeWriteShare();
-    } else {
-      subText.textContent = 'この端末が充電中かどうかだけを相手に見せます';
-      try {
-        await dbNs.collection('battery').doc(myId).delete();
-      } catch (e) {
-        console.error('battery unshare failed', e);
-      }
-    }
-  });
-}
-
-function renderSharedList(snapshot) {
-  const listEl = document.getElementById('sharedList');
-  const emptyEl = document.getElementById('sharedEmpty');
-  const docs = snapshot.docs.filter(d => d.exists && d.id !== myId);
-
-  if (docs.length === 0) {
-    listEl.innerHTML = '';
-    listEl.appendChild(emptyEl);
-    return;
+  function updateAllBatteryInfo() {
+    updateChargeInfo();
+    updateLevelInfo();
+    updateChargingInfo();
+    updateDischargingInfo();
   }
 
-  const ids = docs.map(d => d.id);
-  userNs ? userNs.profiles(ids).then(profiles => {
-    listEl.innerHTML = '';
-    docs.forEach(d => {
-      const data = d.data();
-      const profile = profiles[d.id] || { name: '', avatarUrl: '' };
-      const item = document.createElement('div');
-      item.className = 'shared-item';
-
-      const avatar = document.createElement('img');
-      avatar.className = 'avatar';
-      avatar.src = profile.avatarUrl || '';
-      avatar.alt = '';
-
-      const info = document.createElement('div');
-      info.className = 'shared-info';
-      const nameEl = document.createElement('div');
-      nameEl.className = 'shared-name';
-      nameEl.textContent = profile.name || 'メンバー';
-      const metaEl = document.createElement('div');
-      metaEl.className = 'shared-meta';
-      metaEl.textContent = timeAgo(data.updatedAt);
-      info.appendChild(nameEl);
-      info.appendChild(metaEl);
-
-      const mini = document.createElement('div');
-      mini.className = 'mini-battery';
-      const statusEl = document.createElement('div');
-      statusEl.className = 'mini-pct';
-      statusEl.style.width = 'auto';
-      statusEl.style.color = data.charging ? colorVar('--accent') : colorVar('--sub-text');
-      statusEl.textContent = data.charging ? '充電中' : '未充電';
-      const boltEl = document.createElement('div');
-      boltEl.className = 'mini-bolt' + (data.charging ? ' show' : '');
-      boltEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="' + colorVar('--accent-charging') + '" stroke="' + colorVar('--text') + '" stroke-width="0.8" stroke-linejoin="round"/></svg>';
-
-      mini.appendChild(boltEl);
-      mini.appendChild(statusEl);
-
-      item.appendChild(avatar);
-      item.appendChild(info);
-      item.appendChild(mini);
-      listEl.appendChild(item);
-    });
-  }) : null;
-}
-
-async function initSharing() {
-  try {
-    userNs = await claude.use('user');
-    dbNs = await claude.use('db');
-  } catch (e) {
-    console.error('capability init failed', e);
-    return;
+  function updateChargeInfo() {
+    const charging = battery.charging;
+    boltEl.classList.toggle('show', charging);
+    statusEl.textContent = charging ? '充電中' : '放電中';
+    statusEl.classList.toggle('charging', charging);
   }
-  if (!userNs || !dbNs) return;
-  myId = await userNs.id();
-  if (!myId) return;
 
-  let loadTimer = setTimeout(() => {
-    document.getElementById('sharedEmpty').textContent = 'データを取得できませんでした。しばらくしてから再度お試しください。';
-  }, 10000);
+  function updateLevelInfo() {
+    const pct = Math.round(battery.level * 100);
+    levelEl.textContent = `${pct}%`;
+    fillEl.style.width = `${pct}%`;
+    fillEl.style.background = colorForLevel(pct, battery.charging);
+  }
 
-  dbNs.collection('battery').onSnapshot((snap) => {
-    clearTimeout(loadTimer);
-    renderSharedList(snap);
-  }, (err) => {
-    clearTimeout(loadTimer);
-    console.error('battery snapshot error', err);
-  });
+  function updateChargingInfo() {
+    chargingTimeEl.textContent = battery.charging
+      ? formatSeconds(battery.chargingTime)
+      : '—';
+  }
+
+  function updateDischargingInfo() {
+    dischargingTimeEl.textContent = !battery.charging
+      ? formatSeconds(battery.dischargingTime)
+      : '—';
+  }
+
+  updateAllBatteryInfo();
+
+  battery.addEventListener('chargingchange', updateChargeInfo);
+  battery.addEventListener('levelchange', updateLevelInfo);
+  battery.addEventListener('chargingtimechange', updateChargingInfo);
+  battery.addEventListener('dischargingtimechange', updateDischargingInfo);
 }
 
 if ('getBattery' in navigator) {
@@ -492,10 +240,6 @@ if ('getBattery' in navigator) {
   });
 } else {
   document.getElementById('unsupported-view').style.display = 'block';
-}
-
-if (window.claude) {
-  initSharing();
 }
 </script>
 </body>
