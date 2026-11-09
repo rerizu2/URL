@@ -10,7 +10,7 @@
 :root[data-theme="dark"]{--bg:#14171d;--panel:#1d222b;--ink:#e8ebf1;--mut:#9aa3b2;--line:#323946;--acc:#6b95ff;--accbg:#26304a}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic",Meiryo,sans-serif;font-size:14px}
-#app{display:flex;flex-direction:column;height:100%}
+#app{display:none;flex-direction:column;height:100%}
 #bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
 #bar b{margin-right:8px}
 button,select,input[type=number]{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 9px;cursor:pointer}
@@ -60,19 +60,33 @@ input[type=color]{width:32px;height:30px;padding:0;border:1px solid var(--line);
 #pz{position:absolute;inset:0;transform-origin:0 0;transition:transform .2s ease-out}
 #ld{display:none;position:absolute;border-radius:50%;background:#ff2b2b;box-shadow:0 0 18px 8px #ff2b2baa;z-index:20;pointer-events:none}
 #pres .hint{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#fff9;font:14px sans-serif;pointer-events:none}
-#vw2{display:none;position:fixed;inset:0;background:#000;z-index:80;color:#fff;font:14px sans-serif}
-#vz{position:absolute;inset:0;overflow:hidden}
-#vbar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;justify-content:center;padding:8px calc(10px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px));background:#000a;z-index:5}
+#vw2{display:none;position:fixed;inset:0;background:#0b0d12;z-index:80;color:#fff;font:14px sans-serif;flex-direction:column}
+#vz{position:relative;flex:none;overflow:hidden;background:#000;width:100%}
+#vbar{flex:none;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;padding:8px 10px;background:#161a22}
 #vbar button{background:#222;color:#fff;border-color:#555}
 #vst{min-width:150px;text-align:center}
-@media print{@page{size:1280px 720px;margin:0}body>#app{display:none}#print{display:block}#print .slide{position:relative;zoom:.8889;page-break-after:always;box-shadow:none}html,body{background:#fff;height:auto}}
+#vlog{flex:1;overflow:auto;padding:10px 12px calc(14px + env(safe-area-inset-bottom,0px))}
+.vlh{color:#9aa3b2;font-size:12px;margin-bottom:8px}
+.vg{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+#vw2 .tb{border-color:#323946}#vw2 .tb.cur{border-color:#6b95ff}
+#home{display:none;position:fixed;inset:0;overflow:auto;background:var(--bg);padding:16px 16px 28px}
+#hh{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+#hvw{margin-bottom:12px;color:var(--mut);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.cth{position:relative;aspect-ratio:16/9;background:#fff;overflow:hidden;cursor:pointer;border-bottom:1px solid var(--line)}
+.cth .slide{pointer-events:none}
+.cn{padding:8px 12px 0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cm{padding:2px 12px 8px;color:var(--mut);font-size:12px}
+.cb{display:flex;gap:6px;padding:0 12px 12px;flex-wrap:wrap}
+@media print{#home,#vw2{display:none!important}@page{size:1280px 720px;margin:0}body>#app{display:none}#print{display:block}#print .slide{position:relative;zoom:.8889;page-break-after:always;box-shadow:none}html,body{background:#fff;height:auto}}
 @media (max-width:700px){#thumbs{display:none}}
 </style>
 </head>
 <body>
 <div id="app">
  <div id="bar">
-  <b>スライドエディタ</b>
+  <button id="home">🏠 ホーム</button><b id="dname" title="クリックで名前変更" style="cursor:pointer"></b>
   <button id="addT">＋文字</button><button id="addI">＋画像</button><input id="file" type="file" accept="image/*" hidden>
   <span class="sep"></span>
   <select id="fs" title="文字サイズ"></select>
@@ -100,7 +114,8 @@ input[type=color]{width:32px;height:30px;padding:0;border:1px solid var(--line);
 <div id="print"></div>
 <div id="pres"><div id="pz"><div id="ld"></div></div></div>
 <div id="rm"><div class="box"><b>スマホをリモコンにする</b><p style="font-size:13px;color:var(--mut);margin:8px 0">スマホのカメラでQRを読み取り、開いたページで操作します（同じWi-Fiでなくても可）。</p><div id="qr">準備中…</div><input id="ru" readonly><p id="rs" style="font-size:13px;margin:8px 0">接続待ち</p><button id="rx">閉じる</button></div></div>
-<div id="vw2"><div id="vz"></div><div id="vbar"><button id="vp">◀</button><span id="vst">接続中…</span><button id="vn">▶</button><label><input type="checkbox" id="vf" checked> 発表者に追従</label><button id="vx">閉じる</button></div></div>
+<div id="vw2"><div id="vz"></div><div id="vbar"><button id="vp">◀</button><span id="vst">接続中…</span><button id="vn">▶</button><label><input type="checkbox" id="vf" checked> 発表者に追従</label><button id="vx">閉じる</button></div><div id="vlog"></div></div>
+<div id="home"><div id="hh"><b style="font-size:20px">🖼️ スライド</b><span style="flex:1"></span><button id="hnew">＋新規作成</button><button id="hview">👁 IDで見る</button></div><div id="hvw"></div><div id="hgrid"></div></div>
 <script>
 /* 初期スライドの画像データ（元ファイルの const IMG={...}; をここに貼ると初期画像が表示されます）。無い場合は灰色の枠になります */
 const IMG={};
@@ -123,12 +138,18 @@ function push(){hist.push(snap());if(hist.length>80)hist.shift();fut=[];save()}
 let ready=false,dirty=false,svT,dbp;
 const setSv=t=>{const x=document.getElementById('sv');if(x)x.textContent=t};
 const idb=()=>dbp||(dbp=new Promise((ok,ng)=>{const r=indexedDB.open('slide-editor-db',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>ok(r.result);r.onerror=()=>ng(r.error)}));
-const dbGet=async()=>{const d=await idb();return new Promise((ok,ng)=>{const q=d.transaction('kv').objectStore('kv').get('deck');q.onsuccess=()=>ok(q.result);q.onerror=()=>ng(q.error)})};
-const dbPut=async v=>{const d=await idb();return new Promise((ok,ng)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,'deck');t.oncomplete=ok;t.onerror=()=>ng(t.error);t.onabort=()=>ng(t.error)})};
+const dbGet=async(k='deck')=>{const d=await idb();return new Promise((ok,ng)=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>ok(q.result);q.onerror=()=>ng(q.error)})};
+const dbPut=async(v,k='deck')=>{const d=await idb();return new Promise((ok,ng)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=ok;t.onerror=()=>ng(t.error);t.onabort=()=>ng(t.error)})};
+const dbDel=async k=>{const d=await idb();return new Promise((ok,ng)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').delete(k);t.oncomplete=ok;t.onerror=()=>ng(t.error)})};
+let IDX=[],DID='';
+const dkey=id=>'d:'+id,uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const saveIdx=()=>dbPut(IDX,'idx').catch(()=>{try{localStorage.setItem(KEY+'-idx',JSON.stringify(IDX))}catch(e){}});
+function titleOf(d){for(const sl of d)for(const e of sl.els)if(e.t=='t'&&e.s.trim())return e.s.split('\n')[0].slice(0,30);return '無題のスライド'}
 async function flush(){
- if(!ready||!dirty)return;dirty=false;const data={S,cur,t:Date.now()};
- try{await dbPut(data);setSv('✓ 自動保存済み '+new Date().toLocaleTimeString())}
- catch(e){try{localStorage.setItem(KEY,JSON.stringify(S));setSv('✓ 保存済み（簡易）')}
+ if(!ready||!dirty||!DID)return;dirty=false;const data={S,cur,t:Date.now()},ix=IDX.find(x=>x.id==DID);
+ if(ix){ix.t=data.t;ix.n=S.length;if(!ix.custom)ix.name=titleOf(S);$('dname').textContent=ix.name}
+ try{await dbPut(data,dkey(DID));await saveIdx();setSv('✓ 自動保存済み '+new Date().toLocaleTimeString())}
+ catch(e){try{localStorage.setItem(KEY+DID,JSON.stringify(S));setSv('✓ 保存済み（簡易）')}
   catch(_){dirty=true;setSv('⚠ 保存できません。「JSON書出」で控えを取ってください')}}}
 addEventListener('visibilitychange',()=>{if(document.hidden){dirty=true;flush()}});
 addEventListener('pagehide',()=>{dirty=true;flush()});
@@ -225,7 +246,7 @@ addEventListener('keydown',ev=>{
  const st=ev.shiftKey?20:2,d={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]}[k];
  if(d){ev.preventDefault();push();e.x+=d[0];e.y+=d[1];draw()}
 });
-addEventListener('resize',()=>{draw();if($('vw2').style.display=='block')vShow(false)});
+addEventListener('resize',()=>{if(DID)draw();if($('vw2').style.display=='block')vShow(false)});
 S.forEach(s=>s.els.forEach(e=>nid=Math.max(nid,e.id)));
 /* ===== アニメーション ===== */
 const KF={fade:[{opacity:0},{opacity:1}],up:[{opacity:0,transform:'translateY(60px)'},{opacity:1,transform:'none'}],down:[{opacity:0,transform:'translateY(-60px)'},{opacity:1,transform:'none'}],
@@ -350,7 +371,7 @@ async function remoteMode(){
 }
 /* ===== オンライン公開（4桁ID）：Claudeの共有データベース経由 ===== */
 const getDB=()=>window.claude&&claude.use?claude.use('db').catch(()=>null):Promise.resolve(null);
-let pubCode='',pubT;try{pubCode=localStorage.getItem('slide-pub')||''}catch(e){}
+let pubCode='',pubT;
 const setPub=t=>{$('pst').textContent=t};
 async function pubSync(){
  if(!pubCode)return;const db=await getDB();if(!db){setPub('⚠ この環境ではオンライン公開を使えません');return}
@@ -364,26 +385,40 @@ async function pubSync(){
   setPub('🌐公開中 ID: '+pubCode)
  }catch(e){setPub('⚠ 公開の同期に失敗しました（編集権限を確認）')}}
 async function pubCur(){if(!pubCode)return;const db=await getDB();if(db)try{await db.doc('pub/'+pubCode).update({cur})}catch(e){}}
+async function unpub(code){const db=await getDB();if(!db)return;try{const m=(await db.doc('pub/'+code).get()).data();await db.doc('pub/'+code).delete();for(let i=0;m&&i<m.n;i++)await db.doc('pubc/'+code+'_'+i).delete()}catch(e){}}
 $('pub').onclick=async()=>{
  const db=await getDB();if(!db){alert('この環境ではオンライン公開を使えません。Claudeで公開したページから開いてください。');return}
+ const ix=IDX.find(x=>x.id==DID);
  if(pubCode){if(!confirm('ID '+pubCode+' で公開中です。公開を停止しますか？\n（OK＝停止 / キャンセル＝公開を続ける）'))return;
-  try{const m=(await db.doc('pub/'+pubCode).get()).data();await db.doc('pub/'+pubCode).delete();for(let i=0;m&&i<m.n;i++)await db.doc('pubc/'+pubCode+'_'+i).delete()}catch(e){}
-  pubCode='';try{localStorage.removeItem('slide-pub')}catch(e){}setPub('');return}
+  await unpub(pubCode);pubCode='';if(ix){ix.pub='';saveIdx()}setPub('');return}
  let id=prompt('公開用の4桁のIDを入力してください（空欄で自動発行）','');if(id===null)return;id=id.trim();
  if(!id){for(let i=0;i<20;i++){const c=String(Math.floor(Math.random()*10000)).padStart(4,'0');if(!(await db.doc('pub/'+c).get()).exists){id=c;break}}}
  if(!/^\d{4}$/.test(id)){alert('4桁の数字で入力してください');return}
  if((await db.doc('pub/'+id).get()).exists&&!confirm('ID '+id+' は既に使われています。上書きしますか？'))return;
- pubCode=id;try{localStorage.setItem('slide-pub',id)}catch(e){}
+ pubCode=id;if(ix){ix.pub=id;saveIdx()}
  setPub('公開準備中…');await pubSync();alert('公開しました。\nこのページを開いて「👁 IDで見る」に「'+id+'」を入力すると閲覧できます。\n（このページを開ける人だけが閲覧できます）')};
-/* 閲覧側 */
-let vS=null,vCur=0,vVer=0,vUn=null,vCode='',vLast=-1;
+/* 閲覧側：上＝現在のスライド（発表者に自動追従）／下＝流れてきたスライドの記録 */
+let vS=null,vCur=0,vVer=0,vUn=null,vCode='',vLast=-1,vPc=-1,vLog=[];
+const vKey=()=>'slide-vlog-'+vCode;
 function vShow(an){
- if(!vS||!vS[vCur])return;const z=$('vz'),k=Math.min(innerWidth/1440,innerHeight/810),sl=slideEl(vS[vCur],false);
- z.innerHTML='';sl.style.transform=`scale(${k})`;sl.style.left=(innerWidth-1440*k)/2+'px';sl.style.top=(innerHeight-810*k)/2+'px';z.appendChild(sl);
+ if(!vS||!vS[vCur])return;const z=$('vz');z.style.height=Math.round(Math.min(innerHeight*.58,innerWidth*810/1440))+'px';
+ const k=Math.min(z.clientWidth/1440,z.clientHeight/810),sl=slideEl(vS[vCur],false);
+ z.innerHTML='';sl.style.transform=`scale(${k})`;sl.style.left=(z.clientWidth-1440*k)/2+'px';sl.style.top=(z.clientHeight-810*k)/2+'px';z.appendChild(sl);
  if(an&&vLast!==vCur)play(sl,vS[vCur]);vLast=vCur;$('vst').textContent=`ID ${vCode}　${vCur+1} / ${vS.length}`}
-function vGo(d){if(!vS)return;$('vf').checked=false;vCur=Math.max(0,Math.min(vS.length-1,vCur+d));vShow(true)}
+function vLogDraw(){
+ const L=$('vlog');L.innerHTML='<div class="vlh">これまでに流れたスライド（新しい順・タップで拡大）</div>';
+ const g=document.createElement('div');g.className='vg';L.appendChild(g);
+ vLog.forEach(e=>{const b=document.createElement('div');b.className='tb'+(e.i==vCur?' cur':'');g.appendChild(b);
+  if(vS&&vS[e.i]){const sl=slideEl(vS[e.i],false);sl.style.transform=`scale(${(b.clientWidth-6)/1440})`;b.appendChild(sl)}
+  const n=document.createElement('i');n.textContent=(e.i+1)+'枚目　'+new Date(e.t).toLocaleTimeString('ja-JP');b.appendChild(n);
+  b.onclick=()=>{$('vf').checked=false;vCur=e.i;vShow(true);vLogDraw();scrollTo(0,0)}})}
+function vLogAdd(i){if(vLog.length&&vLog[0].i==i)return;vLog.unshift({i,t:Date.now()});vLog=vLog.slice(0,200);try{localStorage.setItem(vKey(),JSON.stringify(vLog))}catch(e){}}
+function vGo(d){if(!vS)return;$('vf').checked=false;vCur=Math.max(0,Math.min(vS.length-1,vCur+d));vShow(true);vLogDraw()}
 async function openView(code,hash){
- vCode=code;vS=null;vVer=0;vLast=-1;$('vw2').style.display='block';$('vx').style.display=hash?'none':'';$('vz').innerHTML='';
+ vCode=code;vS=null;vVer=0;vLast=-1;vCur=0;vPc=-1;$('vf').checked=true;
+ try{vLog=JSON.parse(localStorage.getItem(vKey())||'[]')}catch(e){vLog=[]}
+ try{const a=JSON.parse(localStorage.getItem('slide-viewed')||'[]').filter(x=>x!=code);a.unshift(code);localStorage.setItem('slide-viewed',JSON.stringify(a.slice(0,8)))}catch(e){}
+ $('vw2').style.display='flex';$('vx').textContent=hash?'ホームへ':'閉じる';$('vx').dataset.h=hash?'1':'';$('vz').innerHTML='';$('vz').style.height=Math.round(Math.min(innerHeight*.58,innerWidth*810/1440))+'px';vLogDraw();
  const st=$('vst'),db=await getDB();if(!db){st.textContent='この環境では閲覧できません';return}
  st.textContent='接続中…';if(vUn)vUn();
  vUn=db.doc('pub/'+code).onSnapshot(async s=>{
@@ -391,13 +426,47 @@ async function openView(code,hash){
   const m=s.data();
   if(m.v!==vVer){vVer=m.v;st.textContent='読み込み中…';
    try{let t='';for(let i=0;i<m.n;i++)t+=(await db.doc('pubc/'+code+'_'+i).get()).data().s;vS=JSON.parse(t)}catch(e){st.textContent='読み込めませんでした';return}}
-  if(!vS)return;if($('vf').checked||vCur>=vS.length)vCur=m.cur||0;vCur=Math.max(0,Math.min(vS.length-1,vCur));vShow(true)},
+  if(!vS)return;const c=Math.max(0,Math.min(vS.length-1,m.cur||0));
+  if(vPc!==c){vPc=c;vLogAdd(c)}
+  if($('vf').checked||vCur>=vS.length)vCur=c;
+  vShow(true);vLogDraw()},
   ()=>{st.textContent='接続エラー'});
 }
-$('vw').onclick=()=>{const c=(prompt('スライドの4桁IDを入力してください','')||'').trim();if(!c)return;if(!/^\d{4}$/.test(c)){alert('4桁の数字で入力してください');return}openView(c,false)};
-$('vx').onclick=()=>{if(vUn)vUn();vUn=null;$('vw2').style.display='none'};
+function askView(){const c=(prompt('スライドの4桁IDを入力してください','')||'').trim();if(!c)return;if(!/^\d{4}$/.test(c)){alert('4桁の数字で入力してください');return}openView(c,false)}
+$('vw').onclick=askView;$('hview').onclick=askView;
+$('vx').onclick=()=>{if($('vx').dataset.h){location.href=location.href.split('#')[0];return}if(vUn)vUn();vUn=null;$('vw2').style.display='none';if(!DID)renderHome()};
 $('vp').onclick=()=>vGo(-1);$('vn').onclick=()=>vGo(1);
-$('vf').onchange=()=>{if($('vf').checked)getDB().then(db=>db&&db.doc('pub/'+vCode).get()).then(s=>{if(s&&s.exists){vCur=s.data().cur||0;vShow(true)}})};
+$('vf').onchange=()=>{if($('vf').checked&&vS&&vPc>=0){vCur=vPc;vShow(true);vLogDraw()}};
+/* ===== ホーム（作成したスライド一覧） ===== */
+async function renderHome(){
+ const g=$('hgrid');g.innerHTML='';let vv=[];try{vv=JSON.parse(localStorage.getItem('slide-viewed')||'[]')}catch(e){}
+ const hv=$('hvw');hv.innerHTML='';if(vv.length){hv.append('最近見たID：');vv.forEach(c=>{const b=document.createElement('button');b.textContent='👁 '+c;b.onclick=()=>openView(c,false);hv.appendChild(b)})}
+ if(!IDX.length){g.textContent='まだスライドがありません。「＋新規作成」から作れます。';return}
+ [...IDX].sort((a,b)=>b.t-a.t).forEach(x=>{
+  const c=document.createElement('div');c.className='card';
+  c.innerHTML='<div class="cth"></div><div class="cn"></div><div class="cm"></div><div class="cb"><button>開く</button><button>名前変更</button><button>複製</button><button>削除</button></div>';
+  c.querySelector('.cn').textContent=x.name;c.querySelector('.cm').textContent=(x.n||'?')+'枚　'+new Date(x.t).toLocaleString('ja-JP')+(x.pub?'　🌐ID '+x.pub:'');
+  const [bo,br,bd,bx]=c.querySelectorAll('button'),th=c.querySelector('.cth');g.appendChild(c);
+  th.onclick=bo.onclick=()=>openDeck(x.id);
+  br.onclick=()=>{const n=prompt('スライドの名前',x.name);if(n&&n.trim()){x.name=n.trim();x.custom=true;saveIdx();renderHome()}};
+  bd.onclick=async()=>{try{const d=await dbGet(dkey(x.id)),id=uid();await dbPut({...d,t:Date.now()},dkey(id));IDX.push({id,name:x.name+'（コピー）',custom:true,t:Date.now(),n:x.n});await saveIdx();renderHome()}catch(e){alert('複製できませんでした')}};
+  bx.onclick=async()=>{if(!confirm('「'+x.name+'」を削除しますか？'+(x.pub?'\n（オンライン公開も停止されます）':'')))return;if(x.pub)await unpub(x.pub);try{await dbDel(dkey(x.id))}catch(e){}IDX=IDX.filter(y=>y!==x);await saveIdx();renderHome()};
+  (async()=>{try{const d=await dbGet(dkey(x.id));if(d&&d.S&&d.S[0]){const sl=slideEl(d.S[0],false);sl.style.transform=`scale(${th.clientWidth/1440})`;th.appendChild(sl)}}catch(e){}})()})}
+async function showHome(){
+ if(DID){await flush();if(pubCode){clearTimeout(pubT);await pubSync()}}
+ DID='';pubCode='';sel=null;$('app').style.display='none';$('home').style.display='block';renderHome()}
+async function openDeck(id){
+ let d=null;try{d=await dbGet(dkey(id))}catch(e){}
+ if(!d||!d.S){try{const r=localStorage.getItem(KEY+id);if(r)d={S:JSON.parse(r),cur:0}}catch(e){}}
+ if(!d||!d.S||!d.S.length){alert('このスライドを読み込めませんでした');return}
+ S=d.S;cur=Math.min(d.cur||0,S.length-1);DID=id;sel=null;hist=[];fut=[];dirty=false;
+ const ix=IDX.find(x=>x.id==id);pubCode=(ix&&ix.pub)||'';nid=100;S.forEach(s=>s.els.forEach(e=>nid=Math.max(nid,e.id)));
+ $('home').style.display='none';$('app').style.display='flex';$('dname').textContent=ix?ix.name:'';draw();setSv('✓ 自動保存');setPub(pubCode?'🌐公開中 ID: '+pubCode:'');
+ if(pubCode)pubSync()}
+$('home').onclick=showHome;
+$('dname').onclick=()=>{const ix=IDX.find(x=>x.id==DID);if(!ix)return;const n=prompt('スライドの名前',ix.name);if(n&&n.trim()){ix.name=n.trim();ix.custom=true;$('dname').textContent=ix.name;saveIdx()}};
+$('hnew').onclick=async()=>{const n=prompt('新しいスライドの名前','新しいスライド');if(!n||!n.trim())return;const id=uid(),S0=[{els:[T(1,120,300,1200,120,n.trim(),72,{b:1})]}];
+ await dbPut({S:S0,cur:0,t:Date.now()},dkey(id));IDX.push({id,name:n.trim(),custom:true,t:Date.now(),n:1});await saveIdx();openDeck(id)};
 /* ===== PDF読込（文字・画像を個別の要素として取り込む） ===== */
 $('pdfi').onclick=()=>$('pf').click();
 const hex=c=>{if(typeof c!=='string')return '#000000';if(c[0]=='#')return c.length==4?'#'+[...c.slice(1)].map(x=>x+x).join(''):c;const m=c.match(/[\d.]+/g);return m?'#'+m.slice(0,3).map(v=>(+v|0).toString(16).padStart(2,'0')).join(''):'#000000'};
@@ -447,14 +516,17 @@ $('pf').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)
   for(let i=1;i<=pdf.numPages;i++){setSv(`PDF読込中 ${i}/${pdf.numPages}`);out.push(await pdfPage(await pdf.getPage(i)))}
   push();if(rep_){S=out;cur=0}else{S.push(...out);cur=S.length-out.length}sel=null;draw();save();await flush();
  }catch(e){console.error(e);setSv('⚠ PDFを読み込めませんでした');alert('PDFを読み込めませんでした。ネット接続（pdf.jsの読み込み）とファイルを確認してください。')}};
-/* ===== 起動（保存データの読み込み） ===== */
+/* ===== 起動 ===== */
 async function boot(){
- try{const d=await dbGet();if(d&&d.S&&d.S.length){S=d.S;cur=Math.min(d.cur||0,S.length-1)}
-  else{const r=localStorage.getItem(KEY);if(r){const x=JSON.parse(r);if(x&&x.length)S=x}}}
- catch(e){try{const r=localStorage.getItem(KEY);if(r){const x=JSON.parse(r);if(x&&x.length)S=x}}catch(_){}}
- S.forEach(s=>s.els.forEach(e=>nid=Math.max(nid,e.id)));ready=true;draw();setSv('✓ 自動保存');
- try{const ok=navigator.storage&&navigator.storage.persist&&await navigator.storage.persist();if(!ok)setSv('✓ 自動保存（容量不足時は消えることがあります。JSON書出も併用を）')}catch(e){}
- if(pubCode){setPub('🌐公開中 ID: '+pubCode);pubSync()}}
+ try{IDX=(await dbGet('idx'))||[]}catch(e){try{IDX=JSON.parse(localStorage.getItem(KEY+'-idx')||'[]')}catch(_){IDX=[]}}
+ if(!IDX.length){
+  let old=null;try{const d=await dbGet('deck');if(d&&d.S&&d.S.length)old=d}catch(e){}
+  if(!old)try{const r=localStorage.getItem(KEY);if(r){const x=JSON.parse(r);if(x&&x.length)old={S:x,cur:0}}}catch(e){}
+  const S0=old?old.S:INIT(),id=uid();
+  try{await dbPut({S:S0,cur:(old&&old.cur)||0,t:Date.now()},dkey(id))}catch(e){try{localStorage.setItem(KEY+id,JSON.stringify(S0))}catch(_){}}
+  IDX=[{id,name:titleOf(S0),t:Date.now(),n:S0.length}];await saveIdx()}
+ ready=true;showHome();
+ try{const ok=navigator.storage&&navigator.storage.persist&&await navigator.storage.persist();if(!ok)setSv('（容量不足時は消えることがあります。JSON書出も併用を）')}catch(e){}}
 if(/^#r=/.test(location.hash))remoteMode();
 else if(/^#v=\d{4}$/.test(location.hash))openView(location.hash.slice(3),true);
 else boot();
