@@ -245,23 +245,12 @@
     let loggingIn = false, qrLastTry = "", qrLastAt = 0;   // ログイン判定はサーバー(GAS)側で行います
     let currentLang = 'ja', currentPage = 'home', videoStream = null, isScanning = false;
 
-    /* =====================================================
-       Googleスプレッドシート連携の設定 (GASのURLは、この1つだけです)
-       Code.gs をウェブアプリとして公開したURLを、下の SHEET_API_URL に貼ります。
-       空のままなら、このHTML内の初期データ(お知らせなど)を表示します。
+    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbw0d80lRpBwjdgKcNIL2cPZVYff8EK-gBkPj5w1w9suf4nYHB2XTGmj4wd_cMEsIIF0/exec";
 
-       【お知らせ】   A:日付 / B:文字 / C:画像URL / D:リンクURL / E:リンクの表示名
-       【求人票シート】 A:番号 / B:事業所名 / C:職種名 / D:届いた日 / E:区分(県内/県外) / F:求人票URL
-       【設定】       A:キー / B:値 (編集モードの保存で自動作成されます)
-       ※ 1行目は見出し行(読み込まれません)
-       ===================================================== */
-    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycby9MzT39SyqobvTA_SDY5S4nD0L-6AvsKExvD90JA9L7eE2jXzNs3MWS_rJt6_BgbPk/exec";    // ★ここにGASのウェブアプリURLを貼る
-
-    let sheetNews = null;        // スプレッドシートのお知らせ（読み込み後に入る）
-    let jobList = [];            // [番号, 事業所名, 職種, 届いた日, 区分, 求人票URL]
+    let sheetNews = null;
+    let jobList = [];
     let jobsLoaded = false;
 
-    // --- 安全対策の共通関数 ---
     function escapeHTML(s) {
       return String(s == null ? "" : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
