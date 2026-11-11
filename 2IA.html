@@ -158,6 +158,9 @@
     .hero-edit button { cursor: pointer; padding: 4px 10px; border-radius: 8px; border: none; font-weight: bold; }
     .size-wrap { text-align: center; } .size-ctl { font-size: 12px; align-items: center; gap: 6px; background: rgba(255,255,255,.9); color: #333; border-radius: 10px; padding: 2px 10px; } .size-ctl input { width: 160px; }
     #edit-bar select { border: none; border-radius: 12px; padding: 5px 8px; font-size: 12px; }
+    body.editing .hero-img { cursor: pointer; }
+    #hero-size-pop { position: fixed; top: 110px; left: 50%; transform: translateX(-50%); z-index: 19500; background: #fff; color: #333; border-radius: 12px; padding: 12px 18px; box-shadow: 0 6px 24px rgba(0,0,0,.35); font-size: 13px; }
+    #hero-size-pop .hs-row { margin: 7px 0; } #hero-size-pop input[type=number] { width: 80px; padding: 3px 6px; } #hero-size-pop button { padding: 4px 12px; border-radius: 8px; border: 1px solid #4361ee; background: #fff; color: #4361ee; font-weight: bold; cursor: pointer; }
     .edit-drop { outline: 3px dashed #ff4d6d !important; }
     .blk { position: relative; border: 1px dashed #b8c4ec; border-radius: 10px; padding: 10px; margin: 10px 0; }
     .btools { position: absolute; top: 2px; right: 4px; }
@@ -487,9 +490,9 @@
     function toggleMenu() { document.getElementById("nav-list").classList.toggle("show"); }
     const heroImages = [];
     let heroIdx = 0; 
-    function showHeroImage(idx) { const img = document.querySelector(".hero-img"); if(!img) return; img.style.opacity = 0; setTimeout(() => { img.src = heroImages[idx]; img.onload = () => img.style.opacity = 1; }, 300); }
-    function nextHero() { heroIdx = (heroIdx + 1) % heroImages.length; showHeroImage(heroIdx); }
-    function prevHero() { heroIdx = (heroIdx - 1 + heroImages.length) % heroImages.length; showHeroImage(heroIdx); }
+    function showHeroImage(idx) { const img = document.querySelector(".hero-img"); if(!img || !heroImages.length) return; img.style.opacity = 0; setTimeout(() => { img.src = heroImages[idx]; applyHeroHeight(); img.onload = () => { img.style.opacity = 1; if (isEditing()) renderHeroSizePop(); }; }, 300); }
+    function nextHero() { if (!heroImages.length) return; heroIdx = (heroIdx + 1) % heroImages.length; showHeroImage(heroIdx); }
+    function prevHero() { if (!heroImages.length) return; heroIdx = (heroIdx - 1 + heroImages.length) % heroImages.length; showHeroImage(heroIdx); }
     setInterval(() => { if (!isEditing()) nextHero(); }, 5000);
 
     async function toggleQRReader() { 
@@ -529,13 +532,13 @@
     const E = escapeHTML;
     // ----- サイト全体の設定(画像・リンク・フッター)。スプレッドシート「設定」シートで上書きされます -----
     const SITE = {
-      "heroImages": "", "heroHeight": "", "qrImage": "", "qrWidth": "200", "kyujinBot": "",
+      "heroImages": "", "heroSizes": "", "heroHeight": "", "qrImage": "", "qrWidth": "200", "kyujinBot": "",
       "footerText": "Enjoy 2IA Blue Life! 💻️", "footerCopy": "© 2026 王寺工業高等学校 2年A組"
     };
-    const SITE_LABELS = {heroImages:'トップ画像', heroHeight:'トップ画像の高さ(px・空=自動)', qrWidth:'QRコードの幅(px)', qrImage:'QRコード画像', footerText:'フッターの文', footerCopy:'コピーライト', kyujinBot:'求人票AIチャットのURL'};
+    const SITE_LABELS = {heroImages:'トップ画像', heroHeight:'トップ画像の高さ(px・空=自動)', heroSizes:'トップ画像ごとのサイズ(自動で作られます)', qrWidth:'QRコードの幅(px)', qrImage:'QRコード画像', footerText:'フッターの文', footerCopy:'コピーライト', kyujinBot:'求人票AIチャットのURL'};
     const TEXT_LABELS = {heroTitle:'トップ見出し', heroSub:'トップ小見出し', heroTitle1IA:'トップ見出し(1IA風)', heroSub1IA:'トップ小見出し(1IA風)', headerLogo:'ロゴ', headerLogo1IA:'ロゴ(1IA風)', newsTitle:'お知らせの見出し', aboutTitle:'説明の見出し', aboutP:'説明の文', qrTitle:'QRの見出し', loginTitle:'ログイン見出し', loginTitle1IA:'ログイン見出し(1IA風)', loginMsg:'ログインの文', emptyEvent:'イベント欄の文'};
     const TEXT_KEYS_SKIP = ['newsList', 'nav'];
-    const NON_URL = ['heroImages','heroHeight','qrImage','qrWidth','footerText','footerCopy'];
+    const NON_URL = ['heroImages','heroSizes','heroHeight','qrImage','qrWidth','footerText','footerCopy'];
 
     function flat() {
       const o = {};
@@ -619,7 +622,13 @@
       let mm = null; try { if (s.menus) mm = sanitizeMenus(JSON.parse(s.menus)); } catch (e) {}
       MENUS = mm || sanitizeMenus(defaultMenus());
     }
-    function applyHeroHeight() { const im = document.querySelector('.hero-img'); if (im) im.style.height = +SITE.heroHeight ? (+SITE.heroHeight) + 'px' : 'auto'; }
+    function getHeroSizes() { try { const o = JSON.parse(SITE.heroSizes || '{}'); return (o && typeof o === 'object') ? o : {}; } catch (e) { return {}; } }
+    function applyHeroHeight() {   // 表示中のトップ画像に、その画像のサイズを当てる(画像ごとに別々)
+      const im = document.querySelector('.hero-img'); if (!im) return;
+      const sz = getHeroSizes()[heroImages[heroIdx] || ''] || {}, w = +sz.w || 0, h = +sz.h || +SITE.heroHeight || 0;
+      im.style.maxWidth = '100%'; im.style.width = w ? w + 'px' : ''; im.style.margin = w ? '0 auto' : '';
+      im.style.height = h ? h + 'px' : 'auto'; im.style.objectFit = sz.fit || 'cover';
+    }
     function applySite() {
       const imgs = SITE.heroImages.split('\n').map(x => toImageUrl(x.trim())).filter(Boolean);
       if (imgs.length) { heroImages.length = 0; imgs.forEach(u => heroImages.push(u)); heroIdx = 0; const im = document.querySelector('.hero-img'); if (im) im.src = heroImages[0]; }
@@ -944,21 +953,62 @@
     function heroTools(on) {
       const h = document.querySelector('.hero'); if (!h) return;
       const old = h.querySelector('.hero-edit'); if (old) old.remove();
-      if (!on) { h.ondragover = h.ondrop = h.ondragleave = null; return; }
+      const him = h.querySelector('.hero-img'); if (him) him.onclick = on ? openHeroSize : null;
+      if (!on) { closeHeroSize(); h.ondragover = h.ondrop = h.ondragleave = null; return; }
       const d = document.createElement('div'); d.className = 'hero-edit';
-      d.innerHTML = `<button type="button" onclick="pickImageOrUrl(heroAddUrl)">🖼️ 画像を追加</button><button type="button" onclick="heroDel()">🗑 この画像を削除</button><label style="font-size:12px">高さ <input type="number" min="0" max="1200" step="10" style="width:70px" value="${+SITE.heroHeight || ''}" placeholder="自動" oninput="heroSetH(this.value)">px</label><small>画像をドロップしても追加できます</small>`;
+      d.innerHTML = `<button type="button" onclick="pickImageOrUrl(heroAddUrl)">🖼️ 画像を追加</button><button type="button" onclick="heroDel()">🗑 この画像を削除</button><button type="button" onclick="openHeroSize()">📐 サイズ</button><label style="font-size:12px">高さ <input type="number" min="0" max="1200" step="10" style="width:70px" value="${+SITE.heroHeight || ''}" placeholder="自動" oninput="heroSetH(this.value)">px</label><small>画像をドロップしても追加できます</small>`;
       h.appendChild(d); dropImage(h, heroAddUrl);
+    }
+    // --- トップ画像をクリック → その画像だけの縦・横サイズを細かく調整 ---
+    let heroLock = false;
+    function openHeroSize() {
+      if (!isEditing() || !heroImages.length) return;
+      if (!document.getElementById('hero-size-pop')) { const p = document.createElement('div'); p.id = 'hero-size-pop'; document.body.appendChild(p); }
+      renderHeroSizePop();
+    }
+    function closeHeroSize() { const p = document.getElementById('hero-size-pop'); if (p) p.remove(); }
+    function renderHeroSizePop() {
+      const p = document.getElementById('hero-size-pop'); if (!p) return;
+      const im = document.querySelector('.hero-img'), sz = getHeroSizes()[heroImages[heroIdx] || ''] || {}, fit = sz.fit || 'cover';
+      p.innerHTML = `<b>📐 この画像のサイズ (${heroIdx + 1}/${heroImages.length}枚目)</b>
+        <div class="hs-row">横 <input type="number" id="hs-w" min="20" max="3000" value="${+sz.w || ''}" placeholder="自動" oninput="heroSizeSet('w',this.value)">px
+          &nbsp;縦 <input type="number" id="hs-h" min="20" max="3000" value="${+sz.h || ''}" placeholder="自動" oninput="heroSizeSet('h',this.value)">px</div>
+        <div class="hs-row"><label><input type="checkbox" ${heroLock ? 'checked' : ''} onchange="heroLock=this.checked"> 縦横比を固定</label>
+          &nbsp;はめ方 <select onchange="heroSizeSet('fit',this.value)"><option value="cover" ${fit === 'cover' ? 'selected' : ''}>切り抜き</option><option value="contain" ${fit === 'contain' ? 'selected' : ''}>全体を表示</option><option value="fill" ${fit === 'fill' ? 'selected' : ''}>引き伸ばし</option></select></div>
+        <div class="hs-row"><small>元の大きさ: ${im ? im.naturalWidth : 0}×${im ? im.naturalHeight : 0}px / 空欄=自動</small></div>
+        <div class="hs-row"><button type="button" onclick="heroSizeReset()">自動に戻す</button> <button type="button" onclick="closeHeroSize()">閉じる</button></div>`;
+    }
+    function heroSizeSet(k, v) {
+      const url = heroImages[heroIdx]; if (!url) return;
+      const all = getHeroSizes(), cur = Object.assign({}, all[url] || {});
+      if (k === 'fit') cur.fit = v;
+      else {
+        cur[k] = +v ? Math.min(3000, Math.max(20, Math.round(+v))) : 0;
+        const im = document.querySelector('.hero-img'), r = im && im.naturalHeight ? im.naturalWidth / im.naturalHeight : 0;
+        if (heroLock && +v && r) {   // 縦横比を固定: もう一方を自動で計算
+          if (k === 'w') { cur.h = Math.round(cur.w / r); document.getElementById('hs-h').value = cur.h; }
+          else { cur.w = Math.round(cur.h * r); document.getElementById('hs-w').value = cur.w; }
+        }
+      }
+      if (!cur.w) delete cur.w; if (!cur.h) delete cur.h;
+      if (!cur.w && !cur.h && (!cur.fit || cur.fit === 'cover')) delete all[url]; else all[url] = cur;
+      SITE.heroSizes = Object.keys(all).length ? JSON.stringify(all) : ''; markDirty(); applyHeroHeight();
+    }
+    function heroSizeReset() {
+      const all = getHeroSizes(); delete all[heroImages[heroIdx]];
+      SITE.heroSizes = Object.keys(all).length ? JSON.stringify(all) : ''; markDirty(); applyHeroHeight(); renderHeroSizePop();
     }
     function heroSetH(v) { SITE.heroHeight = +v ? String(Math.max(50, +v)) : ''; markDirty(); applyHeroHeight(); }
     function heroAddUrl(url) {
       const a = heroImages.slice(); a.push(url); SITE.heroImages = a.join('\n'); markDirty(); applySite();
-      heroIdx = heroImages.length - 1; const im = document.querySelector('.hero-img'); im.src = heroImages[heroIdx]; im.style.opacity = 1;
+      heroIdx = heroImages.length - 1; const im = document.querySelector('.hero-img'); im.src = heroImages[heroIdx]; im.style.opacity = 1; applyHeroHeight();
     }
     function heroDel() {
       if (heroImages.length <= 1) { alert('トップ画像は最低1枚必要です'); return; }
       if (!confirm('表示中のトップ画像を削除しますか?')) return;
-      heroImages.splice(heroIdx, 1); SITE.heroImages = heroImages.join('\n'); markDirty();
-      heroIdx = Math.min(heroIdx, heroImages.length - 1); const im = document.querySelector('.hero-img'); im.src = heroImages[heroIdx]; im.style.opacity = 1;
+      const gone = heroImages.splice(heroIdx, 1)[0]; SITE.heroImages = heroImages.join('\n'); markDirty();
+      const sizes = getHeroSizes(); if (sizes[gone]) { delete sizes[gone]; SITE.heroSizes = Object.keys(sizes).length ? JSON.stringify(sizes) : ''; }
+      heroIdx = Math.min(heroIdx, heroImages.length - 1); const im = document.querySelector('.hero-img'); im.src = heroImages[heroIdx]; im.style.opacity = 1; applyHeroHeight();
     }
 
     // --- メニュー(ヘッダー)の編集 ---
