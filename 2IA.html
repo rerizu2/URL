@@ -156,6 +156,8 @@
     #edit-bar input { width: 150px; padding: 5px 8px; border-radius: 12px; border: none; font-size: 12px; }
     .hero-edit { position: absolute; top: 10px; right: 10px; z-index: 20; display: flex; gap: 6px; align-items: center; background: rgba(0,0,0,.65); padding: 6px 10px; border-radius: 10px; color: #fff; flex-wrap: wrap; }
     .hero-edit button { cursor: pointer; padding: 4px 10px; border-radius: 8px; border: none; font-weight: bold; }
+    .size-wrap { text-align: center; } .size-ctl { font-size: 12px; align-items: center; gap: 6px; background: rgba(255,255,255,.9); color: #333; border-radius: 10px; padding: 2px 10px; } .size-ctl input { width: 160px; }
+    #edit-bar select { border: none; border-radius: 12px; padding: 5px 8px; font-size: 12px; }
     .edit-drop { outline: 3px dashed #ff4d6d !important; }
     .blk { position: relative; border: 1px dashed #b8c4ec; border-radius: 10px; padding: 10px; margin: 10px 0; }
     .btools { position: absolute; top: 2px; right: 4px; }
@@ -175,6 +177,7 @@
     <button type="button" onclick="saveLive()">💾 保存</button>
     <button type="button" onclick="openEditor()">⚙ 詳細設定</button>
     <button type="button" onclick="exitEdit()">✕ 終了</button>
+    <select id="eb-res" title="アップロードする画像の大きさ(長いほうの辺)"><option value="800">画像: 小(800px)</option><option value="1600" selected>画像: 標準(1600px)</option><option value="2400">画像: 大(2400px)</option></select>
     <input type="password" id="eb-key" placeholder="編集パスワード" oninput="sessionStorage.setItem('oji-edit-key', this.value)">
     <span id="eb-msg"></span>
   </div>
@@ -255,7 +258,7 @@
        【設定】       A:キー / B:値 (編集モードの保存で自動作成されます)
        ※ 1行目は見出し行(読み込まれません)
        ===================================================== */
-    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycby1ynaHQhchmuwKAC9I5ph85E6mfEHcaHQuKVCzWAD2yW723pyNQnm7Ve8uMlZ7Ol6i/exec";    // ★ここにGASのウェブアプリURLを貼る
+    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbzc9NOJ1vm1R_y7IjKHTwwAl02FSt1C6T_weDVnOsz6SiQRENRwlLUZzeYaKgpeRJFG/exec";    // ★ここにGASのウェブアプリURLを貼る
 
     let sheetNews = null;        // スプレッドシートのお知らせ（読み込み後に入る）
     let jobList = [];            // [番号, 事業所名, 職種, 届いた日, 区分, 求人票URL]
@@ -279,7 +282,7 @@
     // --- スプレッドシート読み込み ---
     function applyLoaded(data) {   // ログイン成功時にGASから受け取ったデータを反映
       if (data.settings) applySettings(data.settings);
-      sheetNews = (data.news || []).map(r => ({ date: normDate(r.date), text: r.text, img: r.img || "", url: r.url || "", linkText: r.linkText || "" }));
+      sheetNews = (data.news || []).map(r => ({ date: normDate(r.date), text: r.text, img: r.img || "", url: r.url || "", linkText: r.linkText || "", imgW: r.imgW || "" }));
       jobList = (data.jobs || []).map(r => [r.no || "", r.company || "", r.job || "", normDate(r.date), r.region || "", r.url || ""]);
       jobsLoaded = true;
       applyTranslations(); applySite();
@@ -373,7 +376,7 @@
         const linkLabel = item.linkText || t.detailsText;
         return `<li><span class="news-date">${escapeHTML(item.date)}</span><span class="news-text">${escapeHTML(item.text)}</span>`
           + (url ? `<a href="${escapeHTML(url)}" target="_blank" rel="noopener" class="news-link">【${escapeHTML(linkLabel)}】</a>` : "")
-          + (img ? `<img src="${escapeHTML(img)}" alt="" class="news-img" loading="lazy">` : "")
+          + (img ? `<img src="${escapeHTML(img)}" alt="" class="news-img" loading="lazy"${+item.imgW ? ` style="width:${+item.imgW}px;max-width:100%"` : ""}>` : "")
           + `</li>`;
       }).join("") + `</ul>`;
     }
@@ -383,7 +386,7 @@
       document.getElementById("nav-list").classList.remove("show");
 
       if (page === 'home') {
-        html = `<div class="card"><h2 data-t="newsTitle">${E(t.newsTitle)}</h2>${renderNews(t)}</div><div class="card"><h2 data-t="aboutTitle">${E(t.aboutTitle)}</h2><p data-t="aboutP" style="text-align:center;">${E(t.aboutP)}</p></div><div class="card"><h2 data-t="qrTitle">${E(t.qrTitle)}</h2><img id="qr-img" src="${E(SITE.qrImage)}" style="width:200px; display:block; margin:0 auto; border-radius:15px;"></div>`;
+        html = `<div class="card"><h2 data-t="newsTitle">${E(t.newsTitle)}</h2>${renderNews(t)}</div><div class="card"><h2 data-t="aboutTitle">${E(t.aboutTitle)}</h2><p data-t="aboutP" style="text-align:center;">${E(t.aboutP)}</p></div><div class="card"><h2 data-t="qrTitle">${E(t.qrTitle)}</h2><img id="qr-img" src="${E(SITE.qrImage)}" style="width:${+SITE.qrWidth || 200}px; max-width:100%; display:block; margin:0 auto; border-radius:15px;"></div>`;
       } 
       else if (page === 'kyujin') {
         html = `<h1 data-ml="kyujin">${E(menuTitle('kyujin'))}</h1>
@@ -526,13 +529,13 @@
     const E = escapeHTML;
     // ----- サイト全体の設定(画像・リンク・フッター)。スプレッドシート「設定」シートで上書きされます -----
     const SITE = {
-      "heroImages": "", "qrImage": "", "kyujinBot": "",
+      "heroImages": "", "heroHeight": "", "qrImage": "", "qrWidth": "200", "kyujinBot": "",
       "footerText": "Enjoy 2IA Blue Life! 💻️", "footerCopy": "© 2026 王寺工業高等学校 2年A組"
     };
-    const SITE_LABELS = {heroImages:'トップ画像', qrImage:'QRコード画像', footerText:'フッターの文', footerCopy:'コピーライト', kyujinBot:'求人票AIチャットのURL'};
+    const SITE_LABELS = {heroImages:'トップ画像', heroHeight:'トップ画像の高さ(px・空=自動)', qrWidth:'QRコードの幅(px)', qrImage:'QRコード画像', footerText:'フッターの文', footerCopy:'コピーライト', kyujinBot:'求人票AIチャットのURL'};
     const TEXT_LABELS = {heroTitle:'トップ見出し', heroSub:'トップ小見出し', heroTitle1IA:'トップ見出し(1IA風)', heroSub1IA:'トップ小見出し(1IA風)', headerLogo:'ロゴ', headerLogo1IA:'ロゴ(1IA風)', newsTitle:'お知らせの見出し', aboutTitle:'説明の見出し', aboutP:'説明の文', qrTitle:'QRの見出し', loginTitle:'ログイン見出し', loginTitle1IA:'ログイン見出し(1IA風)', loginMsg:'ログインの文', emptyEvent:'イベント欄の文'};
     const TEXT_KEYS_SKIP = ['newsList', 'nav'];
-    const NON_URL = ['heroImages','qrImage','footerText','footerCopy'];
+    const NON_URL = ['heroImages','heroHeight','qrImage','qrWidth','footerText','footerCopy'];
 
     function flat() {
       const o = {};
@@ -570,7 +573,7 @@
         if (type === 'page') o.blocks = (Array.isArray(m.blocks) ? m.blocks : []).slice(0, 60).map(b => {
           const t = BLOCK_TYPES.includes(b.t) ? b.t : 'text', u = String(b.url || '').trim();
           const url = t === 'image' ? (safeUrl(u) || (/^[\w\-.\/%]+$/.test(u) ? u : '')) : (t === 'embed' || t === 'link') ? safeUrl(u) : '';
-          return { t, text: String(b.text || '').slice(0, 2000), url, h: Math.min(2000, Math.max(100, +b.h || 500)) };
+          return { t, text: String(b.text || '').slice(0, 2000), url, h: Math.min(2000, Math.max(100, +b.h || 500)), w: Math.min(100, Math.max(5, +b.w || 100)) };
         });
         out.push(o);
       });
@@ -595,7 +598,7 @@
         if (b.t === 'heading') return `<h2>${E(b.text)}</h2>`;
         if (b.t === 'text') return `<p style="margin:8px 0;white-space:pre-wrap">${E(b.text)}</p>`;
         if (b.t === 'link') return b.url ? `<p style="margin:8px 0"><a href="${E(b.url)}" target="_blank" rel="noopener">${E(b.text || b.url)}</a></p>` : '';
-        if (b.t === 'image') return b.url ? `<img src="${E(toImageUrl(b.url) || b.url)}" style="max-width:100%;border-radius:15px;margin:8px 0">` : '';
+        if (b.t === 'image') return b.url ? `<img src="${E(toImageUrl(b.url) || b.url)}" style="width:${+b.w || 100}%;max-width:100%;border-radius:15px;margin:8px 0">` : '';
         return '';
       }).join('');
     }
@@ -616,9 +619,11 @@
       let mm = null; try { if (s.menus) mm = sanitizeMenus(JSON.parse(s.menus)); } catch (e) {}
       MENUS = mm || sanitizeMenus(defaultMenus());
     }
+    function applyHeroHeight() { const im = document.querySelector('.hero-img'); if (im) im.style.height = +SITE.heroHeight ? (+SITE.heroHeight) + 'px' : 'auto'; }
     function applySite() {
       const imgs = SITE.heroImages.split('\n').map(x => toImageUrl(x.trim())).filter(Boolean);
       if (imgs.length) { heroImages.length = 0; imgs.forEach(u => heroImages.push(u)); heroIdx = 0; const im = document.querySelector('.hero-img'); if (im) im.src = heroImages[0]; }
+      applyHeroHeight();
       const ft = document.getElementById('footer-text'), fc = document.getElementById('footer-copy');
       if (ft) ft.innerText = SITE.footerText; if (fc) fc.innerText = SITE.footerCopy;
     }
@@ -634,7 +639,7 @@
       return h;
     }
 
-    const newsRowHtml = n => `<tr>
+    const newsRowHtml = n => `<tr data-imgw="${E(n.imgW || '')}">
       <td style="width:105px"><input class="n-date" value="${E(n.date)}" placeholder="2026/11/10"></td>
       <td><input class="n-text" value="${E(n.text)}"></td>
       <td><input class="n-img" value="${E(n.img)}" placeholder="画像URL(任意)"></td>
@@ -732,7 +737,7 @@
     async function saveEditor() {
       const v = (tr, c) => tr.querySelector(c).value.trim();
       const news = [...document.querySelectorAll('#e-news tr')]
-        .map(tr => ({ date: normDate(v(tr,'.n-date')), text: v(tr,'.n-text'), img: v(tr,'.n-img'), url: v(tr,'.n-url'), linkText: v(tr,'.n-ltext') }))
+        .map(tr => ({ date: normDate(v(tr,'.n-date')), text: v(tr,'.n-text'), img: v(tr,'.n-img'), url: v(tr,'.n-url'), linkText: v(tr,'.n-ltext'), imgW: tr.dataset.imgw || '' }))
         .filter(n => n.text);
       const jobs = jobsBuilt ? [...document.querySelectorAll('#e-jobs tr')]
         .map(tr => [v(tr,'.j-no'), v(tr,'.j-company'), v(tr,'.j-job'), normDate(v(tr,'.j-date')), v(tr,'.j-region'), v(tr,'.j-url')])
@@ -896,7 +901,7 @@
       if (!SHEET_API_URL.startsWith('http')) { setBarMsg('⚠ SHEET_API_URL が未設定です'); return; }
       if (!key) { setBarMsg('⚠ 編集パスワードを入力してください'); return; }
       sessionStorage.setItem('oji-edit-key', key);
-      const news = (sheetNews || []).map(n => ({ date: normDate(n.date), text: n.text, img: n.img || '', url: n.url || '', linkText: n.linkText || '' })).filter(n => n.text);
+      const news = (sheetNews || []).map(n => ({ date: normDate(n.date), text: n.text, img: n.img || '', url: n.url || '', linkText: n.linkText || '', imgW: n.imgW || '' })).filter(n => n.text);
       setBarMsg('保存中...');
       try {
         const r = await fetch(SHEET_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ key, news, settings: collectSettings() }) });
@@ -912,7 +917,7 @@
       if (!SHEET_API_URL.startsWith('http')) throw new Error('SHEET_API_URL が未設定です');
       if (!key) throw new Error('編集バーに編集パスワードを入力してください');
       setBarMsg('画像をアップロード中...');
-      const data = await fileToDataUrl(file);
+      const data = await fileToDataUrl(file, +(document.getElementById('eb-res') || {}).value || 1600);
       const r = await fetch(SHEET_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ key, action: 'upload', data, name: file.name || '' }) });
       const j = await r.json(); if (!j.ok) throw new Error(j.error);
       setBarMsg('✅ 画像を追加しました。アドレスは「画像」シートに記録されました(保存を押すとページに確定)'); return j.url;
@@ -941,9 +946,10 @@
       const old = h.querySelector('.hero-edit'); if (old) old.remove();
       if (!on) { h.ondragover = h.ondrop = h.ondragleave = null; return; }
       const d = document.createElement('div'); d.className = 'hero-edit';
-      d.innerHTML = '<button type="button" onclick="pickImageOrUrl(heroAddUrl)">🖼️ 画像を追加</button><button type="button" onclick="heroDel()">🗑 この画像を削除</button><small>ここに画像をドロップしても追加できます</small>';
+      d.innerHTML = `<button type="button" onclick="pickImageOrUrl(heroAddUrl)">🖼️ 画像を追加</button><button type="button" onclick="heroDel()">🗑 この画像を削除</button><label style="font-size:12px">高さ <input type="number" min="0" max="1200" step="10" style="width:70px" value="${+SITE.heroHeight || ''}" placeholder="自動" oninput="heroSetH(this.value)">px</label><small>画像をドロップしても追加できます</small>`;
       h.appendChild(d); dropImage(h, heroAddUrl);
     }
+    function heroSetH(v) { SITE.heroHeight = +v ? String(Math.max(50, +v)) : ''; markDirty(); applyHeroHeight(); }
     function heroAddUrl(url) {
       const a = heroImages.slice(); a.push(url); SITE.heroImages = a.join('\n'); markDirty(); applySite();
       heroIdx = heroImages.length - 1; const im = document.querySelector('.hero-img'); im.src = heroImages[heroIdx]; im.style.opacity = 1;
@@ -997,6 +1003,7 @@
         [[li.querySelector('.news-date'), 'date'], [li.querySelector('.news-text'), 'text']].forEach(([el, f]) => {
           el.contentEditable = true; el.onkeydown = noEnter; el.onblur = () => { it[f] = el.innerText.trim(); markDirty(); };
         });
+        if (it.img) li.insertAdjacentHTML('beforeend', `<span class="etool size-ctl" style="flex-basis:100%">画像の幅 <input type="range" min="80" max="800" step="10" value="${+it.imgW || 420}" oninput="newsSize(${i},this.value,this)"> <span>${+it.imgW || 420}px</span></span>`);
         li.insertAdjacentHTML('beforeend', `<span class="etool"><b onclick="newsLink(${i})" title="リンク">🔗</b><b onclick="newsImg(${i})" title="画像">🖼</b><b onclick="newsMove(${i},-1)">▲</b><b onclick="newsMove(${i},1)">▼</b><b onclick="newsDel(${i})" title="削除">🗑</b></span>`);
       });
       const ul = c.querySelector('.news-list');
@@ -1013,7 +1020,7 @@
         else if (b.t === 'text') inner = `<p data-b="${mi}.${j}.text" style="white-space:pre-wrap;min-height:1.5em">${E(b.text)}</p>`;
         else if (b.t === 'link') inner = `<p>🔗 <span data-b="${mi}.${j}.text">${E(b.text || 'リンク名')}</span> <b class="etool" style="cursor:pointer;color:#4361ee" onclick="blkUrl(${mi},${j})">[URL変更]</b> <small>${E(b.url)}</small></p>`;
         else if (b.t === 'embed') inner = `<div class="eb">埋め込みURL <input value="${E(b.url)}" placeholder="https://..." onchange="MENUS[${mi}].blocks[${j}].url=this.value.trim();markDirty();showPage(currentPage,true)"> 高さ <input type="number" style="width:80px" value="${+b.h || 500}" onchange="MENUS[${mi}].blocks[${j}].h=+this.value;markDirty();showPage(currentPage,true)">px</div>${safeUrl(b.url) ? `<iframe src="${E(b.url)}" style="width:100%;height:${+b.h || 500}px"></iframe>` : ''}`;
-        else if (b.t === 'image') inner = `<div class="img-slot" data-bi="${mi}.${j}">${b.url ? `<img src="${E(toImageUrl(b.url) || b.url)}" style="max-width:100%;border-radius:10px">` : '🖼️ クリックまたは画像をドロップして追加'}</div>`;
+        else if (b.t === 'image') inner = `<div class="img-slot" data-bi="${mi}.${j}">${b.url ? `<img src="${E(toImageUrl(b.url) || b.url)}" style="width:${+b.w || 100}%;max-width:100%;border-radius:10px">` : '🖼️ クリックまたは画像をドロップして追加'}</div>${b.url ? `<div class="size-wrap"><span class="etool size-ctl">幅 <input type="range" min="10" max="100" value="${+b.w || 100}" oninput="blkW(${mi},${j},this.value,this)"> <span>${+b.w || 100}%</span></span></div>` : ''}`;
         return `<div class="blk">${tl(j)}${inner}</div>`;
       }).join('') + `<div class="add-bar">＋ 追加: ${BLOCK_TYPES.map(k => `<button type="button" onclick="blkAdd(${mi},'${k}')">${BN[k].split('(')[0]}</button>`).join('')}</div>`;
     }
@@ -1023,6 +1030,9 @@
     function blkAdd(mi, t) { (MENUS[mi].blocks = MENUS[mi].blocks || []).push({ t, text: t === 'heading' ? '見出し' : t === 'text' ? '文章' : t === 'link' ? 'リンク名' : '', url: '', h: 500 }); reblk(); }
     function blkUrl(mi, j) { const b = MENUS[mi].blocks[j], u = prompt('リンク先URL', b.url || ''); if (u !== null) { b.url = u.trim(); reblk(); } }
 
+    function qrSetW(v, el) { SITE.qrWidth = String(v); const q = document.getElementById('qr-img'); if (q) q.style.width = v + 'px'; el.nextElementSibling.textContent = v + 'px'; markDirty(); }
+    function newsSize(i, v, el) { sheetNews[i].imgW = String(v); const im = document.querySelectorAll('.news-list li')[i].querySelector('.news-img'); if (im) im.style.width = v + 'px'; el.nextElementSibling.textContent = v + 'px'; markDirty(); }
+    function blkW(mi, j, v, el) { MENUS[mi].blocks[j].w = +v; const im = document.querySelectorAll('.blk')[j] && document.querySelectorAll('.blk')[j].querySelector('.img-slot img'); if (im) im.style.width = v + '%'; el.nextElementSibling.textContent = v + '%'; markDirty(); }
     // --- 表示中のページを編集可能にする ---
     function enhancePage(page) {
       const c = document.getElementById('page-content');
@@ -1043,7 +1053,8 @@
       if (page === 'home') {
         newsEnhance(c);
         const q = c.querySelector('#qr-img');
-        if (q) { q.style.cursor = 'pointer'; q.style.minHeight = '80px'; q.style.background = '#eef2ff'; q.title = 'クリックまたは画像をドロップして変更'; const set = u => { SITE.qrImage = u; markDirty(); showPage('home', true); }; q.onclick = () => pickImageOrUrl(set); dropImage(q, set); }
+        if (q) { q.style.cursor = 'pointer'; q.style.minHeight = '80px'; q.style.background = '#eef2ff'; q.title = 'クリックまたは画像をドロップして変更'; const set = u => { SITE.qrImage = u; markDirty(); showPage('home', true); }; q.onclick = () => pickImageOrUrl(set); dropImage(q, set);
+          q.insertAdjacentHTML('afterend', `<div class="size-wrap"><span class="etool size-ctl">サイズ <input type="range" min="60" max="500" value="${+SITE.qrWidth || 200}" oninput="qrSetW(this.value, this)"> <span>${+SITE.qrWidth || 200}px</span></span></div>`); }
       }
       if (page === 'kyujin') c.insertAdjacentHTML('afterbegin', '<button type="button" class="edit-btn" onclick="openEditor();document.getElementById(\'jobs-det\').open=true">💼 求人票の一覧を編集</button>');
     }
