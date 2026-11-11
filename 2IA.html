@@ -245,12 +245,23 @@
     let loggingIn = false, qrLastTry = "", qrLastAt = 0;   // ログイン判定はサーバー(GAS)側で行います
     let currentLang = 'ja', currentPage = 'home', videoStream = null, isScanning = false;
 
-    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbw0d80lRpBwjdgKcNIL2cPZVYff8EK-gBkPj5w1w9suf4nYHB2XTGmj4wd_cMEsIIF0/exec";
+    /* =====================================================
+       Googleスプレッドシート連携の設定 (GASのURLは、この1つだけです)
+       Code.gs をウェブアプリとして公開したURLを、下の SHEET_API_URL に貼ります。
+       空のままなら、このHTML内の初期データ(お知らせなど)を表示します。
 
-    let sheetNews = null;
-    let jobList = [];
+       【お知らせ】   A:日付 / B:文字 / C:画像URL / D:リンクURL / E:リンクの表示名
+       【求人票シート】 A:番号 / B:事業所名 / C:職種名 / D:届いた日 / E:区分(県内/県外) / F:求人票URL
+       【設定】       A:キー / B:値 (編集モードの保存で自動作成されます)
+       ※ 1行目は見出し行(読み込まれません)
+       ===================================================== */
+    const SHEET_API_URL = "https://script.google.com/macros/s/AKfycby1ynaHQhchmuwKAC9I5ph85E6mfEHcaHQuKVCzWAD2yW723pyNQnm7Ve8uMlZ7Ol6i/exec";    // ★ここにGASのウェブアプリURLを貼る
+
+    let sheetNews = null;        // スプレッドシートのお知らせ（読み込み後に入る）
+    let jobList = [];            // [番号, 事業所名, 職種, 届いた日, 区分, 求人票URL]
     let jobsLoaded = false;
 
+    // --- 安全対策の共通関数 ---
     function escapeHTML(s) {
       return String(s == null ? "" : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
@@ -794,7 +805,7 @@
         try {
           const data = await fileToDataUrl(imgs[i]);
           const r = await fetch(SHEET_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ key, action: 'upload', data }) });
+            body: JSON.stringify({ key, action: 'upload', data, name: imgs[i].name || '' }) });
           const j = await r.json();
           if (!j.ok) { heroMsg('❌ ' + j.error); return; }
           setHeroLines(heroLines().concat(j.url));
@@ -902,11 +913,13 @@
       if (!key) throw new Error('編集バーに編集パスワードを入力してください');
       setBarMsg('画像をアップロード中...');
       const data = await fileToDataUrl(file);
-      const r = await fetch(SHEET_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ key, action: 'upload', data }) });
+      const r = await fetch(SHEET_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ key, action: 'upload', data, name: file.name || '' }) });
       const j = await r.json(); if (!j.ok) throw new Error(j.error);
-      setBarMsg('✅ 画像を追加しました(保存を押すと確定)'); return j.url;
+      setBarMsg('✅ 画像を追加しました。アドレスは「画像」シートに記録されました(保存を押すとページに確定)'); return j.url;
     }
-    function upThen(f, cb) { uploadImage(f).then(cb).catch(e => setBarMsg('❌ ' + e.message)); }
+    function upThen(f, cb) {   // 画像を入れたら、ページの設定も自動でスプレッドシートに保存する
+      uploadImage(f).then(url => { cb(url); return saveLive(); }).catch(e => setBarMsg('❌ ' + e.message));
+    }
     function pickFile(cb) { const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*'; i.onchange = () => { if (i.files[0]) cb(i.files[0]); }; i.click(); }
     function pickImageOrUrl(cb) {
       const u = prompt('画像のURLを貼り付けてください。\n(空欄のままOKを押すと、パソコンの画像ファイルを選べます)');
