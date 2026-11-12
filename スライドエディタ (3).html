@@ -373,8 +373,23 @@ async function remoteMode(){
 const getDB=()=>window.claude&&claude.use?claude.use('db').catch(()=>null):Promise.resolve(null);
 let pubCode='',pubT;
 const setPub=t=>{$('pst').textContent=t};
+/* 公開の通信方式：Claude上＝共有データベース／GitHub等＝PeerJS（発表者がページを開いている間だけ閲覧可） */
+let pubPeer=null,pubConns=[],pubOn='';
+const pubPayload=full=>({cur,...(full?{S:S.map(s=>({...s,note:undefined}))}:{})});
+function peerStop(){try{pubPeer&&pubPeer.destroy()}catch(e){}pubPeer=null;pubConns=[];pubOn=''}
+async function peerHost(code){
+ try{await loadJs(PEERJS)}catch(e){return 'lib'}
+ peerStop();
+ return new Promise(ok=>{const pr=new Peer('slideview-'+code);pubPeer=pr;pubOn=code;
+  pr.on('open',()=>ok('ok'));
+  pr.on('error',e=>{if(e.type=='unavailable-id'){pubPeer=null;pubOn='';ok('used')}else ok('err')});
+  pr.on('disconnected',()=>{try{pr.reconnect()}catch(e){}});
+  pr.on('connection',c=>{pubConns.push(c);c.on('open',()=>c.send(pubPayload(true)));c.on('close',()=>{pubConns=pubConns.filter(x=>x!==c)})})})}
 async function pubSync(){
- if(!pubCode)return;const db=await getDB();if(!db){setPub('⚠ この環境ではオンライン公開を使えません');return}
+ if(!pubCode)return;const db=await getDB();
+ if(!db){
+  if(pubOn!=pubCode){const r=await peerHost(pubCode);if(r!='ok'){setPub(r=='used'?'⚠ このIDは他で使われています。公開を停止して取り直してください':'⚠ 公開に失敗しました（ネット接続を確認）');return}}
+  pubConns.forEach(c=>{try{c.open&&c.send(pubPayload(true))}catch(e){}});setPub('🌐公開中 ID: '+pubCode+'（このページを開いている間だけ閲覧できます）');return}
  try{
   const t=JSON.stringify(S.map(s=>({...s,note:undefined}))),ch=[];
   for(let i=0;i<t.length;i+=100000)ch.push(t.slice(i,i+100000));
@@ -384,19 +399,27 @@ async function pubSync(){
   for(let i=ch.length;i<on;i++)await db.doc('pubc/'+pubCode+'_'+i).delete();
   setPub('🌐公開中 ID: '+pubCode)
  }catch(e){setPub('⚠ 公開の同期に失敗しました（編集権限を確認）')}}
-async function pubCur(){if(!pubCode)return;const db=await getDB();if(db)try{await db.doc('pub/'+pubCode).update({cur})}catch(e){}}
-async function unpub(code){const db=await getDB();if(!db)return;try{const m=(await db.doc('pub/'+code).get()).data();await db.doc('pub/'+code).delete();for(let i=0;m&&i<m.n;i++)await db.doc('pubc/'+code+'_'+i).delete()}catch(e){}}
+async function pubCur(){if(!pubCode)return;const db=await getDB();
+ if(!db){pubConns.forEach(c=>{try{c.open&&c.send(pubPayload(false))}catch(e){}});return}
+ try{await db.doc('pub/'+pubCode).update({cur})}catch(e){}}
+async function unpub(code){const db=await getDB();if(!db){peerStop();return}try{const m=(await db.doc('pub/'+code).get()).data();await db.doc('pub/'+code).delete();for(let i=0;m&&i<m.n;i++)await db.doc('pubc/'+code+'_'+i).delete()}catch(e){}}
 $('pub').onclick=async()=>{
- const db=await getDB();if(!db){alert('この環境ではオンライン公開を使えません。Claudeで公開したページから開いてください。');return}
- const ix=IDX.find(x=>x.id==DID);
+ const db=await getDB(),ix=IDX.find(x=>x.id==DID);
  if(pubCode){if(!confirm('ID '+pubCode+' で公開中です。公開を停止しますか？\n（OK＝停止 / キャンセル＝公開を続ける）'))return;
   await unpub(pubCode);pubCode='';if(ix){ix.pub='';saveIdx()}setPub('');return}
  let id=prompt('公開用の4桁のIDを入力してください（空欄で自動発行）','');if(id===null)return;id=id.trim();
- if(!id){for(let i=0;i<20;i++){const c=String(Math.floor(Math.random()*10000)).padStart(4,'0');if(!(await db.doc('pub/'+c).get()).exists){id=c;break}}}
- if(!/^\d{4}$/.test(id)){alert('4桁の数字で入力してください');return}
- if((await db.doc('pub/'+id).get()).exists&&!confirm('ID '+id+' は既に使われています。上書きしますか？'))return;
- pubCode=id;if(ix){ix.pub=id;saveIdx()}
- setPub('公開準備中…');await pubSync();alert('公開しました。\nこのページを開いて「👁 IDで見る」に「'+id+'」を入力すると閲覧できます。\n（このページを開ける人だけが閲覧できます）')};
+ if(id&&!/^\d{4}$/.test(id)){alert('4桁の数字で入力してください');return}
+ if(db){
+  if(!id){for(let i=0;i<20;i++){const c=String(Math.floor(Math.random()*10000)).padStart(4,'0');if(!(await db.doc('pub/'+c).get()).exists){id=c;break}}}
+  if(!id){alert('IDを発行できませんでした');return}
+  if((await db.doc('pub/'+id).get()).exists&&!confirm('ID '+id+' は既に使われています。上書きしますか？'))return;
+  pubCode=id}
+ else{
+  const L=id?[id]:Array.from({length:15},()=>String(Math.floor(Math.random()*10000)).padStart(4,'0'));let ok=false;setPub('公開準備中…');
+  for(const c of L){const r=await peerHost(c);if(r=='ok'){pubCode=c;ok=true;break}if(r=='lib'){setPub('');alert('通信ライブラリを読み込めません（ネット接続を確認）');return}}
+  if(!ok){setPub('');alert(id?'そのIDは使用中です':'IDを発行できませんでした');return}}
+ if(ix){ix.pub=pubCode;saveIdx()}
+ setPub('公開準備中…');await pubSync();alert('公開しました。ID：'+pubCode+'\nこのページの「👁 IDで見る」にIDを入力すると閲覧できます。'+(db?'\n（このページを開ける人だけが閲覧できます）':'\n（発表者がこのページを開いている間だけ閲覧できます）'))};
 /* 閲覧側：上＝現在のスライド（発表者に自動追従）／下＝流れてきたスライドの記録 */
 let vS=null,vCur=0,vVer=0,vUn=null,vCode='',vLast=-1,vPc=-1,vLog=[];
 const vKey=()=>'slide-vlog-'+vCode;
@@ -414,27 +437,35 @@ function vLogDraw(){
   b.onclick=()=>{$('vf').checked=false;vCur=e.i;vShow(true);vLogDraw();scrollTo(0,0)}})}
 function vLogAdd(i){if(vLog.length&&vLog[0].i==i)return;vLog.unshift({i,t:Date.now()});vLog=vLog.slice(0,200);try{localStorage.setItem(vKey(),JSON.stringify(vLog))}catch(e){}}
 function vGo(d){if(!vS)return;$('vf').checked=false;vCur=Math.max(0,Math.min(vS.length-1,vCur+d));vShow(true);vLogDraw()}
+let vPeer=null;
+function vApply(cur0){if(!vS)return;const c=Math.max(0,Math.min(vS.length-1,cur0||0));
+ if(vPc!==c){vPc=c;vLogAdd(c)}if($('vf').checked||vCur>=vS.length)vCur=c;vShow(true);vLogDraw()}
+async function peerView(code,st){
+ try{await loadJs(PEERJS)}catch(e){st.textContent='通信ライブラリを読み込めません';return}
+ st.textContent='接続中…';const pr=new Peer();vPeer=pr;
+ pr.on('open',()=>{const c=pr.connect('slideview-'+code,{reliable:true});
+  c.on('data',m=>{if(m.S){vS=m.S}vApply(m.cur)});
+  c.on('close',()=>{st.textContent='発表者との接続が切れました（閉じて、IDを入力し直してください）'});
+  setTimeout(()=>{if(!vS)st.textContent='ID '+code+' に接続できません（発表者がページを開いているか確認）'},9000)});
+ pr.on('error',e=>{st.textContent=e.type=='peer-unavailable'?'ID '+code+' は公開されていません':'接続エラー: '+e.type})}
 async function openView(code,hash){
  vCode=code;vS=null;vVer=0;vLast=-1;vCur=0;vPc=-1;$('vf').checked=true;
  try{vLog=JSON.parse(localStorage.getItem(vKey())||'[]')}catch(e){vLog=[]}
  try{const a=JSON.parse(localStorage.getItem('slide-viewed')||'[]').filter(x=>x!=code);a.unshift(code);localStorage.setItem('slide-viewed',JSON.stringify(a.slice(0,8)))}catch(e){}
  $('vw2').style.display='flex';$('vx').textContent=hash?'ホームへ':'閉じる';$('vx').dataset.h=hash?'1':'';$('vz').innerHTML='';$('vz').style.height=Math.round(Math.min(innerHeight*.58,innerWidth*810/1440))+'px';vLogDraw();
- const st=$('vst'),db=await getDB();if(!db){st.textContent='この環境では閲覧できません';return}
+ const st=$('vst'),db=await getDB();if(vPeer){try{vPeer.destroy()}catch(e){}vPeer=null}if(!db){peerView(code,st);return}
  st.textContent='接続中…';if(vUn)vUn();
  vUn=db.doc('pub/'+code).onSnapshot(async s=>{
   if(!s.exists){st.textContent='ID '+code+' は見つかりません';return}
   const m=s.data();
   if(m.v!==vVer){vVer=m.v;st.textContent='読み込み中…';
    try{let t='';for(let i=0;i<m.n;i++)t+=(await db.doc('pubc/'+code+'_'+i).get()).data().s;vS=JSON.parse(t)}catch(e){st.textContent='読み込めませんでした';return}}
-  if(!vS)return;const c=Math.max(0,Math.min(vS.length-1,m.cur||0));
-  if(vPc!==c){vPc=c;vLogAdd(c)}
-  if($('vf').checked||vCur>=vS.length)vCur=c;
-  vShow(true);vLogDraw()},
+  if(!vS)return;vApply(m.cur||0)},
   ()=>{st.textContent='接続エラー'});
 }
 function askView(){const c=(prompt('スライドの4桁IDを入力してください','')||'').trim();if(!c)return;if(!/^\d{4}$/.test(c)){alert('4桁の数字で入力してください');return}openView(c,false)}
 $('vw').onclick=askView;$('hview').onclick=askView;
-$('vx').onclick=()=>{if($('vx').dataset.h){location.href=location.href.split('#')[0];return}if(vUn)vUn();vUn=null;$('vw2').style.display='none';if(!DID)renderHome()};
+$('vx').onclick=()=>{if($('vx').dataset.h){location.href=location.href.split('#')[0];return}if(vUn)vUn();vUn=null;if(vPeer){try{vPeer.destroy()}catch(e){}vPeer=null}$('vw2').style.display='none';if(!DID)renderHome()};
 $('vp').onclick=()=>vGo(-1);$('vn').onclick=()=>vGo(1);
 $('vf').onchange=()=>{if($('vf').checked&&vS&&vPc>=0){vCur=vPc;vShow(true);vLogDraw()}};
 /* ===== ホーム（作成したスライド一覧） ===== */
@@ -462,7 +493,7 @@ async function openDeck(id){
  S=d.S;cur=Math.min(d.cur||0,S.length-1);DID=id;sel=null;hist=[];fut=[];dirty=false;
  const ix=IDX.find(x=>x.id==id);pubCode=(ix&&ix.pub)||'';nid=100;S.forEach(s=>s.els.forEach(e=>nid=Math.max(nid,e.id)));
  $('home').style.display='none';$('app').style.display='flex';$('dname').textContent=ix?ix.name:'';draw();setSv('✓ 自動保存');setPub(pubCode?'🌐公開中 ID: '+pubCode:'');
- if(pubCode)pubSync()}
+ if(pubOn&&pubOn!=pubCode)peerStop();if(pubCode)pubSync()}
 $('gohome').onclick=showHome;
 $('dname').onclick=()=>{const ix=IDX.find(x=>x.id==DID);if(!ix)return;const n=prompt('スライドの名前',ix.name);if(n&&n.trim()){ix.name=n.trim();ix.custom=true;$('dname').textContent=ix.name;saveIdx()}};
 $('hnew').onclick=async()=>{const n=prompt('新しいスライドの名前','新しいスライド');if(!n||!n.trim())return;const id=uid(),S0=[{els:[T(1,120,300,1200,120,n.trim(),72,{b:1})]}];
