@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アンケートサイト</title>
+<style>
+:root { --bg:#f4f6fb; --card:#fff; --text:#1f2937; --sub:#6b7280; --accent:#4f46e5; --line:#e5e7eb; --danger:#dc2626; }
+* { box-sizing: border-box; }
+body { margin:0; font-family:"Hiragino Sans","Meiryo",sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+header { padding:12px 20px; background:var(--card); border-bottom:1px solid var(--line); }
+h1 { font-size:1.2rem; margin:0; cursor:pointer; display:inline-block; }
+h2 { margin:0 0 12px; font-size:1.3rem; }
+main { max-width:760px; margin:20px auto; padding:0 16px 60px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
+.card h3 { margin:0 0 4px; font-size:1.05rem; }
+.sub { color:var(--sub); font-size:.88rem; margin:0 0 8px; }
+.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.row.between { justify-content:space-between; }
+button { font:inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer; }
+button:hover { background:#f3f4f6; }
+button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+button.primary:hover { opacity:.9; }
+button.danger { color:var(--danger); }
+button:disabled { opacity:.5; cursor:wait; }
+input[type=text], input[type=password], textarea, select { width:100%; font:inherit; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+textarea { min-height:80px; resize:vertical; }
+label.field { display:block; margin:10px 0 4px; font-weight:600; font-size:.92rem; }
+.opt { display:flex; gap:8px; align-items:center; margin:6px 0; font-weight:400; }
+.req { color:var(--danger); margin-left:4px; }
+.bar-row { margin:8px 0; }
+.bar-label { display:flex; justify-content:space-between; font-size:.9rem; }
+.bar { height:12px; background:#eef2ff; border-radius:6px; overflow:hidden; }
+.bar > span { display:block; height:100%; background:var(--accent); }
+ul.answers { margin:0; padding-left:18px; max-height:220px; overflow:auto; }
+.msg { padding:12px; border-radius:8px; background:#ecfdf5; color:#065f46; margin-bottom:12px; }
+.err { background:#fef2f2; color:var(--danger); }
+.center { text-align:center; padding:30px 0; color:var(--sub); }
+.link { background:none; border:none; color:var(--accent); text-decoration:underline; padding:0; }
+</style>
+</head>
+<body>
+<header><h1 id="logo">📝 アンケートサイト</h1></header>
+<main id="app"></main>
+
+<script>
+/* ★ GASをウェブアプリとしてデプロイしたURL(…/exec)に書き換えてください */
+const API_URL = 'https://script.google.com/macros/s/AKfycbx4Wyw-jZ6B1rsVAG4AS4w5g-BF-KvHVQLbT1xsqimnQOdOPx1z0G1eOn9_hPlg6zs36A/exec';
+
+const app = document.getElementById('app');
+
+async function api(body) {
+  const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify(body) }); // text/plainで送信しCORSのプリフライトを回避
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error);
+  return j.data;
+}
+
+// 安全なDOM生成(textContentのみ使用しXSSを防止)
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  Object.entries(attrs || {}).forEach(([k, v]) => {
+    if (k === 'class') e.className = v;
+    else if (k.startsWith('on')) e[k] = v;
+    else if (['value', 'checked', 'disabled'].includes(k)) e[k] = v;
+    else e.setAttribute(k, v);
+  });
+  kids.flat().forEach(c => e.append(c));
+  return e;
+}
+const show = (...nodes) => { app.replaceChildren(...nodes); window.scrollTo(0, 0); };
+
+/* ---------- トップ: パスワード入力 ---------- */
+function home(message) {
+  const pw = h('input', { type: 'password', placeholder: 'パスワードを入力', autocomplete: 'off' });
+  const err = h('div', { class: 'msg err', style: 'display:none' });
+  const btn = h('button', { class: 'primary', onclick: go }, '開く');
+  async function go() {
+    if (!pw.value.trim()) return;
+    btn.disabled = true; err.style.display = 'none';
+    try {
+      const d = await api({ action: 'open', pw: pw.value.trim() });
+      d.type === 'answer' ? answer(d.survey, pw.value.trim()) : results(d.results, pw.value.trim());
+    } catch (e) { err.textContent = e.message; err.style.display = 'block'; btn.disabled = false; }
+  }
+  pw.onkeydown = e => { if (e.key === 'Enter') go(); };
+  show(message ? h('div', { class: 'msg' }, message) : '',
+    h('div', { class: 'card' },
+      h('h2', {}, 'アンケートに回答する'),
+      h('p', { class: 'sub' }, '教えてもらったパスワードを入力すると、アンケートが開きます。'),
+      err, pw, h('div', { class: 'row', style: 'margin-top:10px' }, btn)),
+    h('p', { class: 'sub' }, 'アンケートを作りたい方は ', h('button', { class: 'link', onclick: create }, 'こちらから作成')));
+  pw.focus();
+}
+
+/* ---------- 作成 ---------- */
+function create() {
+  const st = { title: '', description: '', answerPw: '', resultPw: '', questions: [{ text: '', type: 'text', required: false, options: '' }] };
+  const render = () => {
+    const qs = st.questions.map((q, i) => h('div', { class: 'card' },
+      h('div', { class: 'row between' }, h('strong', {}, '質問 ' + (i + 1)),
+        st.questions.length > 1 ? h('button', { class: 'danger', onclick: () => { st.questions.splice(i, 1); render(); } }, '削除') : ''),
+      h('label', { class: 'field' }, '質問文'),
+      h('input', { type: 'text', value: q.text, oninput: e => q.text = e.target.value }),
+      h('label', { class: 'field' }, '回答形式'),
+      (() => {
+        const s = h('select', { onchange: e => { q.type = e.target.value; render(); } },
+          h('option', { value: 'text' }, '自由記述'), h('option', { value: 'radio' }, '単一選択'), h('option', { value: 'checkbox' }, '複数選択'));
+        s.value = q.type; return s;
+      })(),
+      q.type !== 'text' ? [h('label', { class: 'field' }, '選択肢(1行に1つ)'),
+        h('textarea', { oninput: e => q.options = e.target.value }, q.options)] : '',
+      h('label', { class: 'opt' }, h('input', { type: 'checkbox', checked: q.required, onchange: e => q.required = e.target.checked }), '必須にする')));
+    show(h('h2', {}, 'アンケートを作成'),
+      h('div', { class: 'card' },
+        h('label', { class: 'field' }, 'タイトル'), h('input', { type: 'text', value: st.title, oninput: e => st.title = e.target.value }),
+        h('label', { class: 'field' }, '説明(任意)'), h('textarea', { oninput: e => st.description = e.target.value }, st.description),
+        h('label', { class: 'field' }, '回答用パスワード(回答者に伝えるもの・4文字以上)'),
+        h('input', { type: 'text', value: st.answerPw, oninput: e => st.answerPw = e.target.value }),
+        h('label', { class: 'field' }, '結果閲覧用パスワード(自分用・4文字以上・回答用と別のもの)'),
+        h('input', { type: 'text', value: st.resultPw, oninput: e => st.resultPw = e.target.value })),
+      ...qs,
+      h('div', { class: 'row' },
+        h('button', { onclick: () => { st.questions.push({ text: '', type: 'text', required: false, options: '' }); render(); } }, '＋ 質問を追加'),
+        h('button', { class: 'primary', onclick: save }, '作成してスプレッドシートに保存'),
+        h('button', { onclick: () => home() }, '戻る')));
+  };
+  const save = async e => {
+    const data = {
+      action: 'create', title: st.title.trim(), description: st.description.trim(),
+      answerPw: st.answerPw.trim(), resultPw: st.resultPw.trim(),
+      questions: st.questions.map(q => ({
+        text: q.text.trim(), type: q.type, required: q.required,
+        options: q.type === 'text' ? [] : q.options.split('\n').map(s => s.trim()).filter(Boolean)
+      }))
+    };
+    if (!data.title) return alert('タイトルを入力してください');
+    if (data.answerPw.length < 4 || data.resultPw.length < 4) return alert('パスワードは4文字以上にしてください');
+    if (data.answerPw === data.resultPw) return alert('回答用と結果用のパスワードは別にしてください');
+    for (const q of data.questions) {
+      if (!q.text) return alert('質問文が空の項目があります');
+      if (q.type !== 'text' && q.options.length < 2) return alert('選択肢は2つ以上入力してください');
+    }
+    e.target.disabled = true;
+    try {
+      await api(data);
+      show(h('div', { class: 'msg' }, 'アンケートを作成しました!スプレッドシートにも記録されています。'),
+        h('div', { class: 'card' },
+          h('p', {}, '回答用パスワード: ', h('strong', {}, data.answerPw)),
+          h('p', {}, '結果閲覧用パスワード: ', h('strong', {}, data.resultPw)),
+          h('p', { class: 'sub' }, 'このサイトのトップで回答用パスワードを入力すると回答画面、結果用パスワードを入力すると結果画面が開きます。パスワードは再表示できないので控えてください。')),
+        h('button', { class: 'primary', onclick: () => home() }, 'トップへ'));
+    } catch (err) { e.target.disabled = false; alert(err.message); }
+  };
+  render();
+}
+
+/* ---------- 回答 ---------- */
+function answer(s, pw) {
+  const form = s.questions.map((q, i) => {
+    const name = 'q' + i;
+    const input = q.type === 'text' ? h('textarea', { name })
+      : h('div', {}, q.options.map(o => h('label', { class: 'opt' }, h('input', { type: q.type, name, value: o }), o)));
+    return h('div', { class: 'card' }, h('label', { class: 'field' }, q.text, q.required ? h('span', { class: 'req' }, '*必須') : ''), input);
+  });
+  const btn = h('button', { class: 'primary', onclick: async () => {
+    const answers = s.questions.map((q, i) => {
+      const els = [...document.getElementsByName('q' + i)];
+      return q.type === 'text' ? els[0].value.trim() : els.filter(x => x.checked).map(x => x.value).join('、');
+    });
+    const miss = s.questions.findIndex((q, i) => q.required && !answers[i]);
+    if (miss >= 0) return alert('「' + s.questions[miss].text + '」は必須項目です');
+    btn.disabled = true;
+    try {
+      await api({ action: 'submit', pw, answers });
+      home('回答ありがとうございました!');
+    } catch (e) { btn.disabled = false; alert(e.message); }
+  } }, '送信');
+  show(h('h2', {}, s.title), h('p', { class: 'sub' }, s.description), ...form, btn);
+}
+
+/* ---------- 結果 ---------- */
+function results(r, pw) {
+  const cards = r.questions.map(q => {
+    let body;
+    if (q.type === 'text') {
+      body = q.answers.length ? h('ul', { class: 'answers' }, q.answers.map(a => h('li', {}, a))) : h('p', { class: 'sub' }, 'まだ回答がありません');
+    } else {
+      const max = Math.max(1, ...Object.values(q.counts));
+      body = Object.entries(q.counts).map(([o, n]) => h('div', { class: 'bar-row' },
+        h('div', { class: 'bar-label' }, h('span', {}, o), h('span', {}, n + '件' + (q.answered ? '(' + Math.round(n / q.answered * 100) + '%)' : ''))),
+        h('div', { class: 'bar' }, h('span', { style: 'width:' + (n / max * 100) + '%' }))));
+    }
+    return h('div', { class: 'card' }, h('h3', {}, q.text), body);
+  });
+  show(h('h2', {}, r.title + ' の結果'), h('p', { class: 'sub' }, '回答数: ' + r.total + '件'), ...cards,
+    h('div', { class: 'row' },
+      h('button', { onclick: async e => { e.target.disabled = true; try { results((await api({ action: 'open', pw })).results, pw); } catch (x) { alert(x.message); e.target.disabled = false; } } }, '更新'),
+      h('button', { onclick: () => home() }, 'トップへ')));
+}
+
+document.getElementById('logo').onclick = () => home();
+home();
+</script>
+</body>
+</html>
